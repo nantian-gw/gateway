@@ -1,6 +1,6 @@
 # Getting Started
 
-This document is intended for "end users." The goal is to get Aether Gateway running and complete basic validation with as little prerequisite knowledge as possible.
+This document is intended for "end users." The goal is to get Nantian Gateway running and complete basic validation with as little prerequisite knowledge as possible.
 If you need to modify code or extend capabilities, please read [Development Documentation](../development.md).
 
 ## 1. Kind Quick Start

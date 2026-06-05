@@ -1,6 +1,6 @@
 # IR Layering
 
-This document defines the IR layering boundaries for Aether Gateway. The goal is to prevent Kubernetes input models, cross-process transport models, and data plane runtime indices from continuing to intrude on each other.
+This document defines the IR layering boundaries for Nantian Gateway. The goal is to prevent Kubernetes input models, cross-process transport models, and data plane runtime indices from continuing to intrude on each other.
 
 In this document, IR is not a single structure, but a three-layer model:
 

@@ -2,7 +2,7 @@
 
 ## English Summary
 
-Aether Gateway has enough technical and documentation structure to be reviewed as a Gateway API implementation in progress: it has a split control/data plane, archived conformance evidence, a support matrix, governance documents, maintainer information, security policy, release notes, and an implementation review packet.
+Nantian Gateway has enough technical and documentation structure to be reviewed as a Gateway API implementation in progress: it has a split control/data plane, archived conformance evidence, a support matrix, governance documents, maintainer information, security policy, release notes, and an implementation review packet.
 
 It is not claiming official Gateway API recognition or mature CNCF community status yet. The remaining gaps are mostly non-code evidence: a final submission-target full-suite conformance run if the target moves, long-running production-like evidence, multiple active human maintainers, external contributors, named adopters, case studies, and a stable public release history.
 
@@ -104,5 +104,5 @@ The following order of convergence is recommended, rather than continuing to exp
 
 If you need to describe the current project status externally, the following phrasing is recommended:
 
-- “Aether Gateway is a Kubernetes Gateway API implementation in progress with archived full-suite conformance results, documented support boundaries, and baseline governance materials.”
+- “Nantian Gateway is a Kubernetes Gateway API implementation in progress with archived full-suite conformance results, documented support boundaries, and baseline governance materials.”
 - “The project is not yet claiming official implementation recognition or mature CNCF community status; maintainer diversity, adopter evidence, and release history are still being expanded.”

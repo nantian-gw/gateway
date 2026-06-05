@@ -11,7 +11,7 @@ spec:
   groups:
     - name: nantian-controlplane
       rules:
-        - alert: AetherGatewayControlplaneXDSSnapshotAckTimeouts
+        - alert: NantianGatewayControlplaneXDSSnapshotAckTimeouts
           expr: increase(nantian_gateway_controlplane_xds_snapshot_ack_timeouts_total[10m]) > 0
           for: 5m
           labels:
@@ -22,7 +22,7 @@ spec:
               The controlplane observed one or more snapshot ACK timeouts in the last 10 minutes.
               Check /v1/snapshot-sync, /v1/nodes, dataplane reconnect churn, and controlplane logs for slow or stalled consumers.
 
-        - alert: AetherGatewayControlplaneXDSPublishAckLagP99High
+        - alert: NantianGatewayControlplaneXDSPublishAckLagP99High
           expr: |
             histogram_quantile(
               0.99,
@@ -37,7 +37,7 @@ spec:
               The p99 latency from snapshot publish to matching ACK has stayed above 5 seconds for 15 minutes.
               Check /v1/snapshot-sync, dataplane readiness, xDS transport stability, and recent snapshot fanout pressure.
 
-        - alert: AetherGatewayControlplaneXDSNackBurst
+        - alert: NantianGatewayControlplaneXDSNackBurst
           expr: increase(nantian_gateway_controlplane_xds_publish_nack_lag_seconds_count[10m]) > 3
           for: 10m
           labels:
@@ -48,7 +48,7 @@ spec:
               More than 3 matching xDS NACKs were observed in the last 10 minutes.
               Check /v1/snapshot-sync, dataplane /v1/summary, and controlplane logs for the rejected version and error detail.
 
-        - alert: AetherGatewayControlplaneXDSInvalidRequestBurst
+        - alert: NantianGatewayControlplaneXDSInvalidRequestBurst
           expr: increase(nantian_gateway_controlplane_xds_stream_terminations_total{reason="invalid_request"}[10m]) > 0
           for: 5m
           labels:
@@ -59,7 +59,7 @@ spec:
               One or more xDS streams were terminated with reason="invalid_request" in the last 10 minutes.
               Check dataplane node_id wiring, stream identity stability, and controlplane logs for invalid initial requests or mid-stream node_id changes.
 
-        - alert: AetherGatewayControlplaneXDSStatusReportRejectionBurst
+        - alert: NantianGatewayControlplaneXDSStatusReportRejectionBurst
           expr: |
             increase(
               nantian_gateway_controlplane_xds_status_report_rejections_total{reason=~"invalid_request|unknown_node"}[10m]
@@ -74,7 +74,7 @@ spec:
               or the node had not established xDS identity first.
               Check dataplane node_id wiring, xDS reconnect ordering, and controlplane logs for rejected status reports.
 
-        - alert: AetherGatewayControlplaneAdminAPIErrorRateHigh
+        - alert: NantianGatewayControlplaneAdminAPIErrorRateHigh
           expr: |
             (
               sum(rate(nantian_gateway_controlplane_admin_requests_total{status_class="5xx"}[10m]))
@@ -92,7 +92,7 @@ spec:
               More than 5 percent of controlplane admin API requests returned 5xx responses for 15 minutes.
               Check admin endpoint logs, /v1/infrastructure, /v1/resources hot queries, and upstream Kubernetes API health.
 
-        - alert: AetherGatewayControlplaneNodeStatusPersistQueueBacklogHigh
+        - alert: NantianGatewayControlplaneNodeStatusPersistQueueBacklogHigh
           expr: |
             max_over_time(nantian_gateway_controlplane_node_status_persist_queue_depth[10m]) > 32
             or
@@ -106,7 +106,7 @@ spec:
               The node status persistence queue or debounce backlog stayed above 32 items during the last 10 minutes.
               Check Lease write latency, API server health, and whether node churn or reconnect storms are ongoing.
 
-        - alert: AetherGatewayControlplaneNodeStatusPersistDrops
+        - alert: NantianGatewayControlplaneNodeStatusPersistDrops
           expr: increase(nantian_gateway_controlplane_node_status_persist_dropped_total[10m]) > 0
           for: 5m
           labels:

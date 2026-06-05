@@ -8,7 +8,7 @@ LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
+NANTIAN_NAMESPACE="${NANTIAN_NAMESPACE:-nantian-gw}"
 TEST_NAMESPACE="${TEST_NAMESPACE:-nantian-http-security}"
 TEST_HOST="${TEST_HOST:-security.example.com}"
 GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-18080}"
@@ -51,7 +51,7 @@ kind_cluster_exists() {
 }
 
 nantian_stack_ready() {
-  k -n "${AETHER_NAMESPACE}" get deployment nantian-controlplane nantian-dataplane >/dev/null 2>&1
+  k -n "${NANTIAN_NAMESPACE}" get deployment nantian-controlplane nantian-dataplane >/dev/null 2>&1
 }
 
 smoke_http_ready() {
@@ -166,7 +166,7 @@ pick_admin_forward_port() {
 start_admin_port_forward() {
   pick_admin_forward_port
   PORT_FORWARD_LOG="${TMP_DIR}/port-forward.log"
-  k -n "${AETHER_NAMESPACE}" port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
+  k -n "${NANTIAN_NAMESPACE}" port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
     >"${PORT_FORWARD_LOG}" 2>&1 &
   PORT_FORWARD_PID="$!"
 

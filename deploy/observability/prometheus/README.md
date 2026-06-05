@@ -81,7 +81,7 @@ The Operator objects also assume:
 - Operator namespace: `monitoring`
 - Prometheus release label: `kube-prometheus-stack`
 
-If your cluster enforces Kubernetes `NetworkPolicy`, also apply `operator/networkpolicy-prometheus-scrape.yaml` or an equivalent policy. The base Aether Gateway manifests only allow the `nantian-gw` namespace to reach controlplane `18082/TCP` and dataplane `19080/TCP`; a Prometheus pod running in `monitoring` will otherwise discover targets but fail to scrape them.
+If your cluster enforces Kubernetes `NetworkPolicy`, also apply `operator/networkpolicy-prometheus-scrape.yaml` or an equivalent policy. The base Nantian Gateway manifests only allow the `nantian-gw` namespace to reach controlplane `18082/TCP` and dataplane `19080/TCP`; a Prometheus pod running in `monitoring` will otherwise discover targets but fail to scrape them.
 
 The native rules file and the Operator `PrometheusRule` create dataplane
 container resource recording rules:

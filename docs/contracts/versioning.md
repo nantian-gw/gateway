@@ -1,6 +1,6 @@
 # Contract Versioning And Compatibility
 
-This document defines the compatibility rules for externally consumed Aether Gateway contracts. It is the shared policy for release review, code review and future schema changes.
+This document defines the compatibility rules for externally consumed Nantian Gateway contracts. It is the shared policy for release review, code review and future schema changes.
 
 The goal is not to freeze every internal field. The goal is to make each public contract explicit enough that operators, automation clients and mixed-version data planes can reason about upgrades before they deploy them.
 

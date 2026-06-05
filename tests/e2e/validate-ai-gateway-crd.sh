@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
+NANTIAN_NAMESPACE="${NANTIAN_NAMESPACE:-nantian-gw}"
 
 TMP_DIR=""
 SUCCESS="false"

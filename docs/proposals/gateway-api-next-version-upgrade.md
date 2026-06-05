@@ -6,7 +6,7 @@ Owner: maintainers
 
 ## Summary
 
-Aether Gateway currently pins Gateway API `v1.5.1` across the Go control plane,
+Nantian Gateway currently pins Gateway API `v1.5.1` across the Go control plane,
 conformance harness, Kind CRD bundle, release scripts, and support matrix. This
 proposal defines how to move to the next stable Gateway API release after
 `v1.5.1` without silently expanding the public support surface or reusing stale

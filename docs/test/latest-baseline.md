@@ -1,4 +1,4 @@
-# Aether Gateway Latest Automation Baseline Record
+# Nantian Gateway Latest Automation Baseline Record
 
 This document records a combined view of the current repository's "most recent full `A1` sample" and "most recent archived sub-baseline evidence".
 It is not a replacement for the long-term archive directory, but provides maintainers with a recently reusable execution sample and aligns the `latest` pointer and long-term archives with current repository facts.

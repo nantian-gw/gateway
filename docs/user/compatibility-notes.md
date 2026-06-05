@@ -1,6 +1,6 @@
 # Compatibility Notes
 
-This document serves as the stable compatibility notes entry point for Aether Gateway.
+This document serves as the stable compatibility notes entry point for Nantian Gateway.
 It has a different responsibility from `CHANGELOG.md`:
 
 - `CHANGELOG.md` explains "what changed in this release"

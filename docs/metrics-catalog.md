@@ -1,6 +1,6 @@
 # Metrics Catalog
 
-This document catalogs all Prometheus metrics exposed by Aether Gateway — control plane and data plane.
+This document catalogs all Prometheus metrics exposed by Nantian Gateway — control plane and data plane.
 
 ---
 

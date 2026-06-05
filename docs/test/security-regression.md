@@ -1,4 +1,4 @@
-# Aether Gateway Security Regression Execution Template
+# Nantian Gateway Security Regression Execution Template
 
 This document turns the `SEC-*` items from `docs/test/plan.md` into a set of repeatable execution templates.
 The goal is not to replace a full security audit, but to ensure at least one round of structured security regression before every major release.

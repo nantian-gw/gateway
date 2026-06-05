@@ -5,7 +5,7 @@ Date: 2026-04-30
 
 ## Context
 
-Aether Gateway needs to deliver Gateway API-derived configuration from the Go
+Nantian Gateway needs to deliver Gateway API-derived configuration from the Go
 control plane to the Rust data plane. The runtime model includes Gateway API
 listeners/routes, stream routes, TLS material, backend policy output, mesh
 frontend metadata, workload hints and dataplane ACK/readiness status.
@@ -26,7 +26,7 @@ The protocol remains xDS-like in lifecycle shape:
 - node reports and ACKs
 - server-side publish/observe loop
 
-But the payload is a Aether Gateway IR, not Envoy LDS/RDS/CDS/EDS.
+But the payload is a Nantian Gateway IR, not Envoy LDS/RDS/CDS/EDS.
 
 ## Alternatives Considered
 

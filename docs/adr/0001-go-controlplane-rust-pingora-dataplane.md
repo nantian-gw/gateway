@@ -5,7 +5,7 @@ Date: 2026-04-30
 
 ## Context
 
-Aether Gateway needs to watch Kubernetes Gateway API resources, reconcile
+Nantian Gateway needs to watch Kubernetes Gateway API resources, reconcile
 status and derived infrastructure, publish runtime snapshots, and proxy
 multi-protocol traffic efficiently.
 

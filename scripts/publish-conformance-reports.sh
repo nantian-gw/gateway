@@ -50,7 +50,7 @@ fi
   cp -R "${REPORTS_ROOT}" reports/
 
   cat >README.md <<EOF
-# Aether Gateway Conformance Reports
+# Nantian Gateway Conformance Reports
 
 This branch is managed by automation.
 The canonical source tree lives on the default development branch.

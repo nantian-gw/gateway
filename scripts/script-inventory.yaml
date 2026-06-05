@@ -16,7 +16,7 @@ scripts:
     documented: true
   - path: scripts/audit-vendored-upstream.sh
     class: audit
-    purpose: Verify vendored Aether/runtime sources are not reintroduced.
+    purpose: Verify vendored Nantian/runtime sources are not reintroduced.
     owner: dataplane
     documented: true
   - path: scripts/build-kind-runtime-images-local.sh

@@ -17,7 +17,7 @@ If you need to modify code, add tests, or adjust repository structure, see [Deve
 
 ## Applicable Scenarios
 
-- Running Aether Gateway for the first time.
+- Running Nantian Gateway for the first time.
 - Confirming whether the current version supports the Gateway API capabilities you need before integration.
 - Validating basic Gateway, HTTPRoute, GRPCRoute, TCPRoute, UDPRoute, and TLSRoute behavior in Kind.
 - Choosing north-south / east-west traffic access patterns for production or long-term environments.

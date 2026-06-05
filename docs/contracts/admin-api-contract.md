@@ -1,6 +1,6 @@
 # Admin API Contract
 
-This document defines the formal contract entry point for the Aether Gateway administration surface. The current stable contract only covers the control plane and data plane admin APIs; the [`dashboard/`](../../dashboard/) directory in the repository is a consumer of these APIs, and the Node proxy is merely a same-origin access layer, not a new public aggregate API. The old frontend-specific aggregate API has been removed. Any future web console or SDK should establish dependencies based on this document and the machine-readable surface.
+This document defines the formal contract entry point for the Nantian Gateway administration surface. The current stable contract only covers the control plane and data plane admin APIs; the [`dashboard/`](../../dashboard/) directory in the repository is a consumer of these APIs, and the Node proxy is merely a same-origin access layer, not a new public aggregate API. The old frontend-specific aggregate API has been removed. Any future web console or SDK should establish dependencies based on this document and the machine-readable surface.
 
 ## Contract Files
 

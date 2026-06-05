@@ -1,4 +1,4 @@
-# Aether Gateway Structured Security Audit (2026-03)
+# Nantian Gateway Structured Security Audit (2026-03)
 
 This document records a round of "quasi-external" structured security audit results.
 The goal is not to substitute for a full third-party penetration test, but to formalize the most critical security boundaries of the current repository into traceable conclusions, evidence, and risk acceptance items.

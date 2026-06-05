@@ -121,7 +121,7 @@ mkdir -p "$(dirname "${OUTPUT_FILE}")"
 require_command kubectl
 
 {
-  printf '# Aether Gateway release install manifest\n'
+  printf '# Nantian Gateway release install manifest\n'
   printf '# Install profile: %s\n' "${install_profile}"
   printf '# Rendered from %s/.\n' "${SOURCE_REL}"
   printf '#\n'

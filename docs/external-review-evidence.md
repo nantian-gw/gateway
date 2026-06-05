@@ -1,6 +1,6 @@
 # External Review Evidence Ledger
 
-This ledger defines what evidence is required before Aether Gateway can claim
+This ledger defines what evidence is required before Nantian Gateway can claim
 that its governance, maintainership, roadmap, adopter, and case-study material
 is strong enough for a more formal external review.
 

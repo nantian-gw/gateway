@@ -1,6 +1,6 @@
 {
   "uid": "nantian-gw-obsv",
-  "title": "Aether Gateway",
+  "title": "Nantian Gateway",
   "schemaVersion": 39,
   "tags": [
     "controlplane",
@@ -2058,7 +2058,7 @@
     {
       "name": "DS_PROMETHEUS",
       "label": "Prometheus",
-      "description": "Prometheus datasource for Aether Gateway metrics",
+      "description": "Prometheus datasource for Nantian Gateway metrics",
       "type": "datasource",
       "pluginId": "prometheus",
       "pluginName": "Prometheus"

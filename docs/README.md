@@ -85,7 +85,7 @@ Suitable for the following scenarios:
 
 Suitable for the following scenarios:
 
-- Deploying Aether Gateway for the first time locally or in Kind.
+- Deploying Nantian Gateway for the first time locally or in Kind.
 - Verifying whether traffic is being forwarded through Gateway API rules.
 - Viewing current snapshots, routes, backends, and node status for control plane and data plane.
 - Externally evaluating current public compatibility evidence and whether the repository already has a public adopter entry.

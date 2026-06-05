@@ -1,6 +1,6 @@
 # Controlplane / Dataplane / Proto Version Skew Contract
 
-This document defines the current version skew boundaries for Aether Gateway across `controlplane`, `dataplane`, and `proto/gateway/control/v1`.
+This document defines the current version skew boundaries for Nantian Gateway across `controlplane`, `dataplane`, and `proto/gateway/control/v1`.
 The goal is not to encourage long-term mixed-version operation, but to clearly state "which combinations are acceptable during rolling upgrades / rollbacks, and which combinations should not be declared as supported," while providing automation entry points within the repository.
 
 ## 1. Current Support Boundaries

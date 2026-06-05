@@ -1,4 +1,4 @@
-# Aether Gateway Test Case Matrix
+# Nantian Gateway Test Case Matrix
 
 This document is the execution matrix version of the [Test Plan](./plan.md), used to turn the strategy document into an executable case catalog.
 

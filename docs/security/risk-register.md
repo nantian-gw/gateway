@@ -1,4 +1,4 @@
-# Aether Gateway Security Risk Acceptance Register
+# Nantian Gateway Security Risk Acceptance Register
 
 This document tracks known, reviewed, and temporarily accepted security residual risks for the current repository.
 The goal is not simply to "record issues and call it done," but to ensure every accepted item has an ID, scope, rationale, and follow-up actions.

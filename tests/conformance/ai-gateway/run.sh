@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
+NANTIAN_NAMESPACE="${NANTIAN_NAMESPACE:-nantian-gw}"
 SUCCESS="false"
 FAILURES=0
 
@@ -52,7 +52,7 @@ apiVersion: gateway.nantian.dev/v1alpha1
 kind: AIService
 metadata:
   name: conform-test
-  namespace: $AETHER_NAMESPACE
+  namespace: $NANTIAN_NAMESPACE
 spec:
   provider: openai
   model: gpt-4o
@@ -74,7 +74,7 @@ apiVersion: gateway.nantian.dev/v1alpha1
 kind: TokenPolicy
 metadata:
   name: conform-test
-  namespace: $AETHER_NAMESPACE
+  namespace: $NANTIAN_NAMESPACE
 spec:
   targetRefs:
     - group: gateway.nantian.dev

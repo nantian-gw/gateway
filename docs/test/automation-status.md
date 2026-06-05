@@ -1,4 +1,4 @@
-# Aether Gateway Automation Status and Maintenance Rules
+# Nantian Gateway Automation Status and Maintenance Rules
 
 This document answers three maintenance-period questions:
 

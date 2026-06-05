@@ -1,12 +1,12 @@
 # Implementation Review Packet
 
-This is the external review entrypoint for Aether Gateway. It aggregates the current architecture, Gateway API support matrix, conformance evidence, release/install/runbook materials, security posture, governance documents, maintainer state, and adopter/case-study status.
+This is the external review entrypoint for Nantian Gateway. It aggregates the current architecture, Gateway API support matrix, conformance evidence, release/install/runbook materials, security posture, governance documents, maintainer state, and adopter/case-study status.
 
-This packet is evidence navigation, not a certification claim. It does not mean Aether Gateway is officially recognized by Gateway API, production-complete, or a mature CNCF community project.
+This packet is evidence navigation, not a certification claim. It does not mean Nantian Gateway is officially recognized by Gateway API, production-complete, or a mature CNCF community project.
 
 ---
 
-This page is a material index for Aether Gateway external technical review, Gateway API implementation claim preparation, and community assessment.
+This page is a material index for Nantian Gateway external technical review, Gateway API implementation claim preparation, and community assessment.
 It is not equivalent to an official endorsement statement, nor does it prove that the project has reached mature CNCF community status. It simply aggregates currently available reviewable materials into a single entry point, making it easier for reviewers to quickly assess the evidence boundary.
 
 ## Current Status

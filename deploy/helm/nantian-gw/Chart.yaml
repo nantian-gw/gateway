@@ -1,6 +1,6 @@
 apiVersion: v2
 name: nantian-gw
-description: Aether Gateway — Kubernetes Gateway API implementation with Go control plane and Rust/Aether data plane (experimental internal chart)
+description: Nantian Gateway — Kubernetes Gateway API implementation with Go control plane and Rust/Nantian data plane (experimental internal chart)
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
@@ -16,4 +16,4 @@ home: https://github.com/pluto-wanjianbei/nantian-gw
 sources:
   - https://github.com/pluto-wanjianbei/nantian-gw
 maintainers:
-  - name: Aether Gateway Maintainers
+  - name: Nantian Gateway Maintainers

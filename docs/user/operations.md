@@ -1,6 +1,6 @@
 # Production Operations
 
-This document is intended for users who plan to run Aether Gateway in long-term environments. The focus is not on quick trials, but on minimizing the attack surface, enabling control channel security, standardizing upgrade/rollback, and certificate rotation. If you are already in a release window, please also read the [Release, Canary, and Rollback Runbook](release-runbook.md).
+This document is intended for users who plan to run Nantian Gateway in long-term environments. The focus is not on quick trials, but on minimizing the attack surface, enabling control channel security, standardizing upgrade/rollback, and certificate rotation. If you are already in a release window, please also read the [Release, Canary, and Rollback Runbook](release-runbook.md).
 
 If you prefer to start from the Kubernetes manifests in the repository rather than manually tweaking production parameters on the `base/` defaults, use the [deploy/kubernetes/overlays/production](../../deploy/kubernetes/overlays/production/README.md) overlay first.
 

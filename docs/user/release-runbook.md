@@ -1,6 +1,6 @@
 # Release, Canary, and Rollback Runbook
 
-This document is intended for maintainers who plan to deploy Aether Gateway to long-term environments. It does not repeat explanations of all deployment parameters; for configuration details, please refer to [Production Operations](operations.md) and [Gateway API Support Matrix](../gateway-api-support.md).
+This document is intended for maintainers who plan to deploy Nantian Gateway to long-term environments. It does not repeat explanations of all deployment parameters; for configuration details, please refer to [Production Operations](operations.md) and [Gateway API Support Matrix](../gateway-api-support.md).
 
 ## 1. Objective
 

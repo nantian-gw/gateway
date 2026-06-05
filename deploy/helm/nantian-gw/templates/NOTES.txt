@@ -1,5 +1,5 @@
 {{- $ns := include "nantian-gw.namespace" . }}
-Aether Gateway {{ .Chart.AppVersion }} has been installed.
+Nantian Gateway {{ .Chart.AppVersion }} has been installed.
 
 NAMESPACE: {{ $ns }}
 

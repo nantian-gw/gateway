@@ -119,7 +119,7 @@ EOF
 
 write_release_notes() {
   cat >"${OUTPUT_DIR}/RELEASE_NOTES.md" <<EOF
-# Aether Gateway ${RELEASE_TAG}
+# Nantian Gateway ${RELEASE_TAG}
 
 ## Breaking Changes
 
@@ -280,7 +280,7 @@ mkdir -p "${OUTPUT_DIR}/production"
 cp -R "${repo_root}/deploy/kubernetes/overlays/production/." "${OUTPUT_DIR}/production/"
 
 cat >"${OUTPUT_DIR}/README.txt" <<EOF
-Aether Gateway ${RELEASE_TAG}
+Nantian Gateway ${RELEASE_TAG}
 
 Included assets:
 - LICENSE

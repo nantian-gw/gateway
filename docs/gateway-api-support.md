@@ -2,7 +2,7 @@
 
 ## English Summary
 
-Aether Gateway targets Gateway API `v1.5.1` and currently declares `55` `GatewayClass.status.supportedFeatures`.
+Nantian Gateway targets Gateway API `v1.5.1` and currently declares `55` `GatewayClass.status.supportedFeatures`.
 The latest archived conformance report under `reports/conformance/latest/` is `2026-05-14-162416-90f5126a-full`, which is an `ALL_FEATURES=true` full-suite run for implementation version `90f5126a`.
 The latest clean full-suite conformance baseline is `2026-05-14-162416-90f5126a-full`.
 

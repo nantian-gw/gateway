@@ -393,7 +393,7 @@ func escapeSSEData(s string) string {
 // buildSystemPrompt constructs the system prompt with RAG context.
 func buildSystemPrompt(ragContext string) string {
 	var sb strings.Builder
-	sb.WriteString("You are a Kubernetes Gateway API expert assistant for Aether Gateway. ")
+	sb.WriteString("You are a Kubernetes Gateway API expert assistant for Nantian Gateway. ")
 	sb.WriteString("You help users understand their gateway topology, troubleshoot routing issues, ")
 	sb.WriteString("and generate valid Gateway API YAML manifests.\n\n")
 	sb.WriteString("When generating YAML manifests, always wrap them in ```yaml ... ``` code blocks. ")

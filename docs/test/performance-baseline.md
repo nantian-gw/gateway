@@ -1,4 +1,4 @@
-# Aether Gateway Performance Baseline Execution Template
+# Nantian Gateway Performance Baseline Execution Template
 
 This document consolidates the `PERF-*` items from `docs/test/plan.md` into an
 execution template that follows a “run the minimum baseline first, then expand

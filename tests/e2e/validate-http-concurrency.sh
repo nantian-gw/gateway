@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
+NANTIAN_NAMESPACE="${NANTIAN_NAMESPACE:-nantian-gw}"
 TEST_HOST="${TEST_HOST:-example.com}"
 GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-18080}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
@@ -42,7 +42,7 @@ kind_cluster_exists() {
 }
 
 nantian_stack_ready() {
-  k -n "${AETHER_NAMESPACE}" get deployment nantian-controlplane nantian-dataplane >/dev/null 2>&1
+  k -n "${NANTIAN_NAMESPACE}" get deployment nantian-controlplane nantian-dataplane >/dev/null 2>&1
 }
 
 smoke_http_ready() {

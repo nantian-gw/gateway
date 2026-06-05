@@ -320,7 +320,7 @@ dataplane:
       upstreamIdleTimeoutMs: 60000
       upstreamTcpKeepalive:
         enabled: true
-      # High-concurrency tuning (commented = Aether default)
+      # High-concurrency tuning (commented = Nantian default)
       # workStealing: true
       # downstreamTcpFastopen: 1024       # TFO backlog; set to enable TCP Fast Open
       # downstreamDscp: 46               # DSCP EF for expedited forwarding

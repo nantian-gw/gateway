@@ -2,7 +2,7 @@
 
 ## Declared Feature Set
 
-All features are implemented in the `aeg-ai` Rust crate within the Aether Gateway dataplane.
+All features are implemented in the `aeg-ai` Rust crate within the Nantian Gateway dataplane.
 
 ### Phase 1: Core
 

@@ -1,4 +1,4 @@
-# Aether Gateway Test Plan
+# Nantian Gateway Test Plan
 
 This document is based on four drafts (`docs/archive/test/v1.md` through `v4.md`) and aims to consolidate these “broad-coverage but somewhat generic” materials into a formal test plan applicable to the current repository.
 
@@ -37,7 +37,7 @@ The four drafts have different value and should be absorbed separately rather th
 | `v1.md` | Provides the skeleton of a complete testing system, emphasizing that Conformance, controller behavior, data plane protocols, security, performance, and canary/rollback must all be covered | Too generic, not aligned with the repository's existing scripts, management interfaces, and verification costs | Used as the upper-level framework for test layering and coverage |
 | `v2.md` | Provides a fairly complete test case catalog with `P0/P1/P2` priority thinking | Many test cases, but not aligned with the repository's currently supported scope and execution entry points | Used as the source for coverage matrix and priority design |
 | `v3.md` | Suitable for breaking test cases into tables and execution checklists, convenient for later import into Feishu/Jira/Excel | More of a test management sheet, not a formal technical plan within the repository | Adopt its “split sheets by resource/protocol” organization approach |
-| `v4.md` | Very complete on performance, capacity, soak, and canary stage testing | Still somewhat generic, lacking mapping to current Aether Gateway management plane, Kind workflow, and release scripts | Used as the primary source for performance and release-specific plans |
+| `v4.md` | Very complete on performance, capacity, soak, and canary stage testing | Still somewhat generic, lacking mapping to current Nantian Gateway management plane, Kind workflow, and release scripts | Used as the primary source for performance and release-specific plans |
 
 Final conclusions:
 

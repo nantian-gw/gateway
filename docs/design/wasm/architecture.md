@@ -6,7 +6,7 @@ The Wasm plugin system extends nantian-gw's data plane with user-defined logic c
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Aether Gateway                         │
+│                        Nantian Gateway                         │
 │                                                                 │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐                 │
 │  │  HTTP    │    │  Stream  │    │  gRPC    │                 │

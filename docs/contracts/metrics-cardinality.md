@@ -1,6 +1,6 @@
 # Metrics Cardinality And Golden Signals
 
-This document is the operator-facing contract for Aether Gateway Prometheus metrics, Grafana usage, and the admin API fields that support SLO review.
+This document is the operator-facing contract for Nantian Gateway Prometheus metrics, Grafana usage, and the admin API fields that support SLO review.
 
 The goal is to keep default metrics safe to scrape in production. New metrics may be added additively, but every new metric must define its purpose, label set, cardinality class, unit, and Grafana or alerting consumer before it becomes part of the default surface.
 
@@ -27,7 +27,7 @@ Controlplane observability HTTP surfaces must also have bounded runtime behavior
 | Controlled | Allowed on low-frequency inventory, admin, info, or `topk` Grafana views. Not allowed on default high-QPS histograms unless a review proves the bound is small. | `route_namespace`, `route_name`, `backend`, `node_id`, `snapshot_version`, `current_snapshot_status`. | The metric owner must document the expected upper bound and why the label is required. |
 | Forbidden on default high-frequency metrics | Not allowed on default counters, gauges, or histograms emitted for every request, stream, or datagram. | `pod` as an emitted metric label, endpoint address, client IP, raw host, path, method when not normalized, user-provided header value, user ID, token, request_id, raw error. | Use access logs, admin detail endpoints, exemplars, traces, or explicit debug metrics instead. |
 
-Prometheus service discovery may attach Kubernetes target labels such as `pod`, `namespace`, and `service`. That is separate from metric labels emitted by Aether Gateway. New code should not duplicate those labels inside metric families.
+Prometheus service discovery may attach Kubernetes target labels such as `pod`, `namespace`, and `service`. That is separate from metric labels emitted by Nantian Gateway. New code should not duplicate those labels inside metric families.
 
 ## Gateway Golden Signals
 

@@ -1,6 +1,6 @@
 # Changelog
 
-Stable release summary for Aether Gateway. Formal releases must include
+Stable release summary for Nantian Gateway. Formal releases must include
 key feature and behavior changes, pointers to known compatibility risks,
 and links to compatibility notes.
 

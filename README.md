@@ -1,4 +1,4 @@
-# Aether Gateway
+# Nantian Gateway
 
 A Kubernetes Gateway API implementation targeting v1.5.1 with 55 declared supported features.
 
@@ -7,7 +7,7 @@ A Kubernetes Gateway API implementation targeting v1.5.1 with 55 declared suppor
 
 ## Overview
 
-Aether Gateway provides a split-plane architecture for Kubernetes Gateway API. This repository contains the Go control plane, shared protobuf contract, deployment manifests, test suites, and documentation.
+Nantian Gateway provides a split-plane architecture for Kubernetes Gateway API. This repository contains the Go control plane, shared protobuf contract, deployment manifests, test suites, and documentation.
 
 The project is organized across three sibling repositories:
 
@@ -127,7 +127,7 @@ nantian-gw/
 
 ## Project Status
 
-Aether Gateway is suitable for continued Gateway API implementation work, internal evaluation, controlled trials, and contributor review. It has a working control plane, data plane, admin interfaces, Kind smoke tests, conformance workflow, production overlay, and open source governance materials. It is not yet presented as an officially recognized Gateway API implementation or a mature multi-maintainer open source community.
+Nantian Gateway is suitable for continued Gateway API implementation work, internal evaluation, controlled trials, and contributor review. It has a working control plane, data plane, admin interfaces, Kind smoke tests, conformance workflow, production overlay, and open source governance materials. It is not yet presented as an officially recognized Gateway API implementation or a mature multi-maintainer open source community.
 
 Latest conformance report: see `reports/conformance/`.
 

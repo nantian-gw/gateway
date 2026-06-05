@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory records durable architecture decisions for Aether Gateway.
+This directory records durable architecture decisions for Nantian Gateway.
 
 ADR format:
 
