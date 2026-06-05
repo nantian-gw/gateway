@@ -1,6 +1,3 @@
-# github.com/aether-gateway/proto v0.0.0-20260603144357-4effb1b5ea35
-## explicit; go 1.26.3
-github.com/aether-gateway/proto/gateway/control/v1
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
@@ -88,6 +85,9 @@ github.com/modern-go/reflect2
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 ## explicit
 github.com/munnerz/goautoneg
+# github.com/nantian-gw/proto v0.0.0-20260605105917-a0f473b63c54
+## explicit; go 1.26.3
+github.com/nantian-gw/proto/gateway/control/v1
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
