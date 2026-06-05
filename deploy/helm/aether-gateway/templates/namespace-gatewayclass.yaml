@@ -1,0 +1,20 @@
+{{- if .Values.namespace.create }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace.name }}
+  labels:
+    {{- include "aether-gateway.labels" . | nindent 4 }}
+{{- end }}
+---
+{{- if .Values.gatewayClass.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: {{ .Values.gatewayClass.controllerName | replace "gateway.networking.k8s.io/" "" | replace "." "-" }}
+  labels:
+    {{- include "aether-gateway.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controlplane
+spec:
+  controllerName: {{ .Values.gatewayClass.controllerName }}
+{{- end }}

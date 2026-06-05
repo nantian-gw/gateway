@@ -1,0 +1,14 @@
+{{- if .Values.controlplane.enabled }}
+{{- $ns := include "aether-gateway.namespace" . }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aether-gateway.name" . }}-controlplane-config
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- include "aether-gateway.controlplane.configYaml" . | nindent 4 }}
+{{- end }}

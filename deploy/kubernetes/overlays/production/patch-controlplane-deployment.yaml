@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aether-gateway-controlplane
+  namespace: aether-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: controlplane
+          volumeMounts:
+            - name: dataplane-admin-auth
+              mountPath: /etc/aether-gateway/dataplane-admin-auth
+              readOnly: true
+      volumes:
+        - name: grpc-tls
+          secret:
+            secretName: aether-gateway-controlplane-grpc-tls
+            optional: false
+        - name: admin-auth
+          secret:
+            secretName: aether-gateway-controlplane-admin-auth
+            optional: false
+        - name: dataplane-admin-auth
+          secret:
+            secretName: aether-gateway-dataplane-admin-auth
+            optional: false

@@ -1,0 +1,184 @@
+{{- if .Values.dataplane.enabled }}
+{{- $ns := include "aether-gateway.namespace" . }}
+{{- $dpName := include "aether-gateway.name" . }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $dpName }}-dataplane
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dataplane.replicas }}
+  minReadySeconds: 5
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 5
+  strategy:
+    {{- toYaml .Values.dataplane.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 8 }}
+        {{- include "aether-gateway.dataplane.labels" . | nindent 8 }}
+      {{- with .Values.dataplane.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ $dpName }}-dataplane
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.dataplane.terminationGracePeriodSeconds }}
+      {{- if .Values.dataplane.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      {{- include "aether-gateway.podSecurityContext" . | nindent 6 }}
+      {{- if .Values.dataplane.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.dataplane.podSecurityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_unprivileged_port_start
+            value: "0"
+      {{- end }}
+      {{- if .Values.dataplane.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range .Values.dataplane.topologySpreadConstraints }}
+        - maxSkew: {{ .maxSkew }}
+          topologyKey: {{ .topologyKey }}
+          whenUnsatisfiable: {{ .whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "aether-gateway.dataplane.selectorLabels" $ | nindent 14 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.dataplane.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dataplane.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dataplane.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- include "aether-gateway.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: dataplane
+          image: {{ include "aether-gateway.dataplane.image" . }}
+          imagePullPolicy: {{ .Values.dataplane.image.pullPolicy }}
+          env:
+            - name: PGW_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- with .Values.dataplane.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          args:
+            - "--config"
+            - "/etc/aether-gateway/config.yaml"
+          ports:
+            - name: http
+              containerPort: 10080
+            - name: https
+              containerPort: 443
+            - name: admin
+              containerPort: 19080
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: {{ .Values.dataplane.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.dataplane.probes.startup.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: {{ .Values.dataplane.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.dataplane.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.dataplane.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: admin
+            periodSeconds: {{ .Values.dataplane.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.dataplane.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.dataplane.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.dataplane.resources | nindent 12 }}
+          {{- include "aether-gateway.containerSecurityContext" . | nindent 10 }}
+          {{- if .Values.dataplane.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.dataplane.containerSecurityContext | nindent 12 }}
+          {{- else }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/aether-gateway
+              readOnly: true
+            {{- if or .Values.dataplane.xdsTLS.enabled .Values.certs.generate }}
+            - name: xds-tls
+              mountPath: /etc/aether-gateway/xds-tls
+              readOnly: true
+            {{- end }}
+            {{- if .Values.dataplane.adminAuth.existingSecret }}
+            - name: admin-auth
+              mountPath: /etc/aether-gateway/admin-auth
+              readOnly: true
+            {{- end }}
+            {{- if or .Values.dataplane.sessionPersistence.existingSecret .Values.dataplane.sessionPersistence.sharedSecret }}
+            - name: session-persistence
+              mountPath: /etc/aether-gateway/session-persistence
+              readOnly: true
+            {{- end }}
+            - name: tmp
+              mountPath: /tmp
+            {{- with .Values.dataplane.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $dpName }}-dataplane-config
+        {{- if or .Values.dataplane.xdsTLS.enabled .Values.certs.generate }}
+        - name: xds-tls
+          secret:
+            secretName: {{ .Values.dataplane.xdsTLS.existingSecret | default (printf "%s-grpc-client-tls" $dpName) }}
+        {{- end }}
+        {{- if .Values.dataplane.adminAuth.existingSecret }}
+        - name: admin-auth
+          secret:
+            secretName: {{ .Values.dataplane.adminAuth.existingSecret }}
+        {{- end }}
+        {{- if or .Values.dataplane.sessionPersistence.existingSecret .Values.dataplane.sessionPersistence.sharedSecret }}
+        - name: session-persistence
+          secret:
+            {{- if .Values.dataplane.sessionPersistence.existingSecret }}
+            secretName: {{ .Values.dataplane.sessionPersistence.existingSecret }}
+            {{- else }}
+            secretName: {{ $dpName }}-dataplane-session-persistence
+            {{- end }}
+        {{- end }}
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+        {{- with .Values.dataplane.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

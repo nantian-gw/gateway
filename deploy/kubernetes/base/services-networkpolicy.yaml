@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aether-gateway-controlplane-grpc
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+    gateway.nantian.dev/service-role: grpc
+spec:
+  selector:
+    app: aether-gateway-controlplane
+  ports:
+    - name: grpc
+      port: 18080
+      targetPort: grpc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aether-gateway-controlplane-admin
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+    gateway.nantian.dev/service-role: admin
+spec:
+  selector:
+    app: aether-gateway-controlplane
+  ports:
+    - name: admin
+      port: 18081
+      targetPort: admin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aether-gateway-controlplane-metrics
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+    gateway.nantian.dev/service-role: metrics
+spec:
+  selector:
+    app: aether-gateway-controlplane
+  ports:
+    - name: metrics
+      port: 18082
+      targetPort: metrics
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: aether-gateway-controlplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+spec:
+  podSelector:
+    matchLabels:
+      app: aether-gateway-controlplane
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: aether-gateway
+      ports:
+        - protocol: TCP
+          port: 18080
+        - protocol: TCP
+          port: 18081
+        - protocol: TCP
+          port: 18082
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - protocol: TCP
+          port: 18083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aether-gateway-dataplane-admin
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dataplane
+    gateway.nantian.dev/service-role: admin
+spec:
+  selector:
+    app: aether-gateway-dataplane
+  ports:
+    - name: admin
+      port: 19080
+      targetPort: admin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aether-gateway-dataplane-metrics
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dataplane
+    gateway.nantian.dev/service-role: metrics
+spec:
+  selector:
+    app: aether-gateway-dataplane
+  ports:
+    - name: metrics
+      port: 19080
+      targetPort: admin
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: aether-gateway-dataplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dataplane
+spec:
+  podSelector:
+    matchLabels:
+      app: aether-gateway-dataplane
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: aether-gateway
+      ports:
+        - protocol: TCP
+          port: 19080

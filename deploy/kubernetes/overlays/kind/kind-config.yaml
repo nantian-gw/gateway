@@ -1,0 +1,25 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: dual
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 18080
+        protocol: TCP
+      - containerPort: 30443
+        hostPort: 18443
+        protocol: TCP
+      - containerPort: 31300
+        hostPort: 5300
+        protocol: UDP
+      - containerPort: 31301
+        hostPort: 5301
+        protocol: UDP
+      - containerPort: 32000
+        hostPort: 19000
+        protocol: TCP
+      - containerPort: 32001
+        hostPort: 19001
+        protocol: TCP

@@ -1,0 +1,96 @@
+name: Feature Request
+description: Request a new capability, improvement, or infrastructure enhancement.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write in English or Chinese.
+
+        If the request changes public behavior, compatibility expectations, or cross-module design, consider writing a proposal under `docs/proposals/`.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - controlplane
+        - dataplane
+        - proto
+        - release / CI
+        - deploy/kind
+        - tests
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Describe the problem before the solution.
+      placeholder: What is missing, why the current behavior is insufficient, and what impact it causes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Change
+      description: Describe what you want to add or change.
+      placeholder: You can describe API, config, behavior changes, expected output, or interaction flow.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives And Tradeoffs
+      description: If you evaluated alternatives, explain why they were not chosen.
+
+  - type: dropdown
+    id: ownership
+    attributes:
+      label: Ownership
+      description: Choose the main review area based on `CODEOWNERS` when possible.
+      options:
+        - controlplane
+        - dataplane
+        - proto
+        - release / CI
+        - deploy/kind
+        - docs
+        - mixed / cross-cutting
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Suggested Validation
+      description: Start from the cheapest validation layer when possible.
+      placeholder: |
+        - unit test
+        - local process
+        - admin API
+        - kind smoke
+        - conformance
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility And Migration Impact
+      description: Explain whether this affects proto, config, manifests, admin APIs, or existing behavior.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I read the repository development constraints and understand this is not better deferred to e2e or conformance later.
+          required: true
+        - label: I described which parts of controlplane, dataplane, proto, release/CI, deploy, or docs are affected.
+          required: true
+        - label: If this request changes compatibility, upgrade flow, or cross-module design, I will also update `docs/user/compatibility-notes.md` or add a proposal under `docs/proposals/`.
+          required: false

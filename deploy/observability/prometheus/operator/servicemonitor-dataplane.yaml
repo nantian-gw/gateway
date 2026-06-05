@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: aether-gateway-dataplane
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - aether-gateway
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: dataplane
+      gateway.nantian.dev/service-role: metrics
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      honorLabels: true
+      authorization:
+        type: Bearer
+        credentials:
+          name: aether-gateway-dataplane-admin-token
+          key: token

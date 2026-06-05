@@ -1,0 +1,112 @@
+package translator
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+
+	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+)
+
+func listenerStatusSummary(statuses []gatewayv1.ListenerStatus, name gatewayv1.SectionName) *ir.ListenerStatus {
+	for _, item := range statuses {
+		if item.Name != name {
+			continue
+		}
+
+		out := &ir.ListenerStatus{
+			AttachedRoutes: int(item.AttachedRoutes),
+			Conditions:     convertConditions(item.Conditions),
+		}
+		out.Accepted = findConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionAccepted))
+		out.Programmed = findConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionProgrammed))
+		out.ResolvedRefs = findConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionResolvedRefs))
+		if out.AttachedRoutes == 0 && len(out.Conditions) == 0 {
+			return nil
+		}
+		return out
+	}
+
+	return nil
+}
+
+func routeStatusSummary(parents []gatewayv1.RouteParentStatus, defaultNamespace string) *ir.RouteStatus {
+	if len(parents) == 0 {
+		return nil
+	}
+
+	out := &ir.RouteStatus{
+		Parents: make([]ir.RouteParentStatus, 0, len(parents)),
+	}
+	for _, item := range parents {
+		parent := ir.RouteParentStatus{
+			ControllerName: string(item.ControllerName),
+			ParentRef:      routeParentRef(item.ParentRef, defaultNamespace),
+			Conditions:     convertConditions(item.Conditions),
+		}
+		parent.Accepted = findConditionSummary(parent.Conditions, string(gatewayv1.RouteConditionAccepted))
+		parent.ResolvedRefs = findConditionSummary(parent.Conditions, string(gatewayv1.RouteConditionResolvedRefs))
+		out.Parents = append(out.Parents, parent)
+	}
+
+	return out
+}
+
+func convertConditions(conditions []metav1.Condition) []ir.ConditionStatus {
+	if len(conditions) == 0 {
+		return nil
+	}
+
+	out := make([]ir.ConditionStatus, 0, len(conditions))
+	for _, condition := range conditions {
+		out = append(out, ir.ConditionStatus{
+			Type:               condition.Type,
+			Status:             string(condition.Status),
+			Reason:             condition.Reason,
+			Message:            condition.Message,
+			ObservedGeneration: condition.ObservedGeneration,
+			LastTransitionTime: condition.LastTransitionTime.UTC(),
+		})
+	}
+
+	return out
+}
+
+func findConditionSummary(conditions []ir.ConditionStatus, target string) *ir.ConditionStatus {
+	for _, condition := range conditions {
+		if condition.Type != target {
+			continue
+		}
+		item := condition
+		return &item
+	}
+	return nil
+}
+
+func routeParentRef(parent gatewayv1.ParentReference, defaultNamespace string) ir.ParentRef {
+	out := ir.ParentRef{
+		Name:        string(parent.Name),
+		SectionName: summaryStringValue(parent.SectionName),
+	}
+	if parent.Group != nil {
+		out.Group = string(*parent.Group)
+	}
+	if parent.Kind != nil {
+		out.Kind = string(*parent.Kind)
+	}
+	if parent.Namespace != nil {
+		out.Namespace = string(*parent.Namespace)
+	} else {
+		out.Namespace = defaultNamespace
+	}
+	if parent.Port != nil {
+		out.Port = uint32(*parent.Port)
+	}
+	return out
+}
+
+func summaryStringValue[T ~string](value *T) string {
+	if value == nil {
+		return ""
+	}
+	return string(*value)
+}

@@ -1,0 +1,38 @@
+{
+  "controlConfigurations": [
+    {
+      "name": "aether-gateway-controlplane-rbac-reviewed",
+      "description": "The controlplane must watch Secret references across namespaces and delete controller-managed resources during reconciliation.",
+      "attributes": {
+        "action": "alertOnly"
+      },
+      "rules": [
+        {
+          "ruleType": "postureException",
+          "apiGroups": [
+            ""
+          ],
+          "kinds": [
+            "ServiceAccount"
+          ],
+          "namespaces": [
+            "aether-gateway"
+          ],
+          "resourceNames": [
+            "aether-gateway-controlplane"
+          ]
+        }
+      ],
+      "settings": {
+        "postureControlInputs": [
+          {
+            "controlID": "C-0015"
+          },
+          {
+            "controlID": "C-0007"
+          }
+        ]
+      }
+    }
+  ]
+}

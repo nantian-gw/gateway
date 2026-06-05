@@ -1,0 +1,14 @@
+.git
+target
+dataplane/target
+controlplane/bin
+tmp
+coverage
+dashboard/.next
+dashboard/dist
+dashboard/out
+dashboard/build
+dashboard/node_modules
+**/*.log
+.npm
+node_modules

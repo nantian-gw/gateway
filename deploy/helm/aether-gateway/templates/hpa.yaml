@@ -1,0 +1,32 @@
+{{- if and .Values.dataplane.enabled .Values.hpa.enabled }}
+{{- $ns := include "aether-gateway.namespace" . }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "aether-gateway.name" . }}-dataplane
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    gateway.nantian.dev/addon: dataplane-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "aether-gateway.name" . }}-dataplane
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.hpa.targetCPUUtilization }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.hpa.targetMemoryUtilization }}
+{{- end }}

@@ -1,0 +1,96 @@
+{{- if .Values.rbac.create }}
+{{- $ns := include "aether-gateway.namespace" . }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "aether-gateway.name" . }}-controlplane
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "aether-gateway.name" . }}-dataplane
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "aether-gateway.name" . }}-controlplane
+  labels:
+    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "list", "patch", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["delete", "get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources:
+      ["gatewayclasses", "gateways", "httproutes", "grpcroutes", "tcproutes",
+       "udproutes", "tlsroutes", "referencegrants", "backendlbpolicies", "backendtlspolicies"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["listenersets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources:
+      ["gatewayclasses/status", "gateways/status", "httproutes/status",
+       "grpcroutes/status", "tcproutes/status", "udproutes/status",
+       "tlsroutes/status", "backendlbpolicies/status", "backendtlspolicies/status", "listenersets/status"]
+    verbs: ["get", "update"]
+  - apiGroups: ["multicluster.x-k8s.io"]
+    resources: ["serviceimports"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.aether.dev"]
+    resources: ["aiservices", "tokenpolicies", "wasmplugins"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.aether.dev"]
+    resources: ["aiservices/status", "tokenpolicies/status", "wasmplugins/status"]
+    verbs: ["get", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "aether-gateway.name" . }}-controlplane
+  labels:
+    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "aether-gateway.name" . }}-controlplane
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "aether-gateway.name" . }}-controlplane
+    namespace: {{ $ns }}
+{{- end }}

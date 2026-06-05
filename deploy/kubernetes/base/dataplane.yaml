@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aether-gateway-dataplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dataplane
+spec:
+  replicas: 2
+  minReadySeconds: 5
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: aether-gateway-dataplane
+  template:
+    metadata:
+      labels:
+        app: aether-gateway-dataplane
+        app.kubernetes.io/name: aether-gateway
+        app.kubernetes.io/part-of: aether-gateway
+        app.kubernetes.io/component: dataplane
+    spec:
+      serviceAccountName: aether-gateway-dataplane
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        sysctls:
+          - name: net.ipv4.ip_unprivileged_port_start
+            value: "0"
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: aether-gateway-dataplane
+      containers:
+        - name: dataplane
+          image: aether-gateway-dataplane:dev
+          imagePullPolicy: Always
+          env:
+            - name: PGW_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          args:
+            - "--config"
+            - "/etc/aether-gateway/config.yaml"
+          ports:
+            - name: http
+              containerPort: 10080
+            - name: https
+              containerPort: 443
+            - name: admin
+              containerPort: 19080
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: 2
+            failureThreshold: 45
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: admin
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_BIND_SERVICE"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/aether-gateway
+              readOnly: true
+            - name: xds-tls
+              mountPath: /etc/aether-gateway/xds-tls
+              readOnly: true
+            - name: admin-auth
+              mountPath: /etc/aether-gateway/admin-auth
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: aether-gateway-dataplane-config
+        - name: xds-tls
+          secret:
+            secretName: aether-gateway-dataplane-xds-tls
+            optional: true
+        - name: admin-auth
+          secret:
+            secretName: aether-gateway-dataplane-admin-auth
+            optional: true
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: aether-gateway-dataplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dataplane
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: aether-gateway-dataplane

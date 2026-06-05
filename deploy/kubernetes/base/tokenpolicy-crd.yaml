@@ -1,0 +1,69 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tokenpolicies.gateway.aether.dev
+spec:
+  group: gateway.aether.dev
+  names:
+    plural: tokenpolicies
+    singular: tokenpolicy
+    kind: TokenPolicy
+    listKind: TokenPolicyList
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required: [targetRefs]
+            properties:
+              targetRefs:
+                type: array
+                items:
+                  type: object
+                  required: [group, kind, name]
+                  properties:
+                    group:
+                      type: string
+                      maxLength: 253
+                    kind:
+                      type: string
+                      maxLength: 63
+                    name:
+                      type: string
+                      maxLength: 253
+                    namespace:
+                      type: string
+                      maxLength: 63
+                  x-kubernetes-preserve-unknown-fields: true
+              tokensPerMinute:
+                type: integer
+                format: int64
+                minimum: 0
+              tokensPerHour:
+                type: integer
+                format: int64
+                minimum: 0
+              requestsPerMinute:
+                type: integer
+                format: int64
+                minimum: 0
+              scope:
+                type: string
+              burst:
+                type: number
+              onLimit:
+                type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true

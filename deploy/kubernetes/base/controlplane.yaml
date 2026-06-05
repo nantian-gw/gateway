@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aether-gateway-controlplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+spec:
+  replicas: 2
+  minReadySeconds: 5
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: aether-gateway-controlplane
+  template:
+    metadata:
+      labels:
+        app: aether-gateway-controlplane
+        app.kubernetes.io/name: aether-gateway
+        app.kubernetes.io/part-of: aether-gateway
+        app.kubernetes.io/component: controlplane
+    spec:
+      serviceAccountName: aether-gateway-controlplane
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: aether-gateway-controlplane
+      containers:
+        - name: controlplane
+          image: aether-gateway-controlplane:dev
+          imagePullPolicy: Always
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          args:
+            - "-config"
+            - "/etc/aether-gateway/config.yaml"
+          ports:
+            - name: grpc
+              containerPort: 18080
+            - name: admin
+              containerPort: 18081
+            - name: metrics
+              containerPort: 18082
+            - name: healthz
+              containerPort: 18083
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: admin
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/aether-gateway
+              readOnly: true
+            - name: grpc-tls
+              mountPath: /etc/aether-gateway/grpc-tls
+              readOnly: true
+            - name: admin-auth
+              mountPath: /etc/aether-gateway/admin-auth
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: aether-gateway-controlplane-config
+        - name: grpc-tls
+          secret:
+            secretName: aether-gateway-controlplane-grpc-tls
+            optional: true
+        - name: admin-auth
+          secret:
+            secretName: aether-gateway-controlplane-admin-auth
+            optional: true
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: aether-gateway-controlplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: aether-gateway-controlplane

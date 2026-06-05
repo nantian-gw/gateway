@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aether-gateway-dashboard
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dashboard
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  progressDeadlineSeconds: 300
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: aether-gateway-dashboard
+  template:
+    metadata:
+      labels:
+        app: aether-gateway-dashboard
+        app.kubernetes.io/name: aether-gateway
+        app.kubernetes.io/part-of: aether-gateway
+        app.kubernetes.io/component: dashboard
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboard
+          image: aether-gateway-dashboard:dev
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 20
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aether-gateway-dashboard-auth
+                  key: auth-secret
+            - name: AUTH_TRUST_HOST
+              value: "true"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aether-gateway-dashboard
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dashboard
+spec:
+  selector:
+    app: aether-gateway-dashboard
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: aether-gateway-dashboard
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dashboard
+spec:
+  podSelector:
+    matchLabels:
+      app: aether-gateway-dashboard
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: aether-gateway
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aether-gateway-dashboard-auth
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dashboard
+type: Opaque
+stringData:
+  auth-secret: "replace-with-random-64-char-hex"

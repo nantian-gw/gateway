@@ -1,0 +1,19 @@
+apiVersion: v2
+name: aether-gateway
+description: Aether Gateway — Kubernetes Gateway API implementation with Go control plane and Rust/Aether data plane (experimental internal chart)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+annotations:
+  experimental: "true"
+keywords:
+  - gateway
+  - gateway-api
+  - aether
+  - rust
+  - kubernetes
+home: https://github.com/pluto-wanjianbei/aether-gateway
+sources:
+  - https://github.com/pluto-wanjianbei/aether-gateway
+maintainers:
+  - name: Aether Gateway Maintainers

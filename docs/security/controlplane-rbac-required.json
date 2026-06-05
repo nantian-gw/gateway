@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "description": "Machine-readable controlplane RBAC baseline. scripts/audit-controlplane-rbac.sh compares this file with deploy/kubernetes/base/rbac.yaml and discovered controller watches.",
+  "permissions": [
+    {
+      "apiGroup": "",
+      "resource": "configmaps",
+      "verbs": ["get", "list", "watch"],
+      "purpose": "Read Gateway frontend validation CA refs, BackendTLSPolicy CA refs and operator-provided controlplane configuration inputs.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator"]
+    },
+    {
+      "apiGroup": "",
+      "resource": "endpoints",
+      "verbs": ["delete", "get", "list", "watch"],
+      "purpose": "Read and watch legacy core Endpoints through the controller-runtime cache and remove legacy Endpoints objects when reconciling managed dataplane frontend Services to EndpointSlices.",
+      "sources": ["controlplane/internal/infrastructure/frontend_endpoint_slices.go", "controlplane/internal/infrastructure/mesh_services.go"]
+    },
+    {
+      "apiGroup": "",
+      "resource": "events",
+      "verbs": ["create", "patch", "update"],
+      "purpose": "Emit Kubernetes Events from status reconciliation for operator-visible Gateway and Route condition changes.",
+      "sources": ["controlplane/cmd/manager/app.go", "controlplane/internal/status"]
+    },
+    {
+      "apiGroup": "",
+      "resource": "namespaces",
+      "verbs": ["get", "list", "watch"],
+      "purpose": "Watch namespace label changes for allowedRoutes selector attachment and read backend reference namespaces during status evaluation.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status"]
+    },
+    {
+      "apiGroup": "",
+      "resource": "pods",
+      "verbs": ["get", "list", "watch"],
+      "purpose": "Discover dataplane Pods and mesh workload Pods for managed frontend EndpointSlice generation.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/infrastructure", "controlplane/internal/translator"]
+    },
+    {
+      "apiGroup": "",
+      "resource": "secrets",
+      "verbs": ["create", "get", "list", "patch", "update", "watch"],
+      "purpose": "Read Gateway TLS certificate Secrets and BackendTLSPolicy client certificate material; create or update admin-managed chatbot and metrics configuration Secrets.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin/chatbot", "controlplane/internal/admin/metrics"]
+    },
+    {
+      "apiGroup": "",
+      "resource": "services",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch backend Services, read Service ports for status and snapshots, and reconcile managed shared/Gateway/mesh frontend Services.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/infrastructure", "controlplane/internal/admin/service_catalog.go"]
+    },
+    {
+      "apiGroup": "apiextensions.k8s.io",
+      "resource": "customresourcedefinitions",
+      "verbs": ["get", "list", "watch"],
+      "purpose": "Detect optional Gateway API and MCS resources through the manager REST mapper and support matrix checks.",
+      "sources": ["controlplane/cmd/manager", "controlplane/internal/controller", "controlplane/internal/status"]
+    },
+    {
+      "apiGroup": "coordination.k8s.io",
+      "resource": "leases",
+      "verbs": ["create", "get", "list", "patch", "update", "watch"],
+      "purpose": "Support controller-runtime leader election and shared dataplane node status storage.",
+      "sources": ["controlplane/cmd/manager/app.go", "controlplane/internal/nodestatus/lease_repository.go", "controlplane/internal/admin/node_source.go"]
+    },
+    {
+      "apiGroup": "discovery.k8s.io",
+      "resource": "endpointslices",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch backend EndpointSlices, read endpoint health for snapshots/status, and reconcile managed dataplane frontend EndpointSlices.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/infrastructure", "controlplane/internal/translator"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "backendtlspolicies",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate BackendTLSPolicy through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "backendtlspolicies/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update BackendTLSPolicy status ancestors and validation conditions.",
+      "sources": ["controlplane/internal/gatewayapi/backend_tls_policy_v1.go", "controlplane/internal/status/reconciler_policy_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "backendlbpolicies",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate BackendLBPolicy through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "backendlbpolicies/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update BackendLBPolicy status conditions.",
+      "sources": ["controlplane/internal/status/reconciler_policy_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "gatewayclasses",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch GatewayClass ownership, translate managed Gateways and optionally mutate GatewayClass through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/infrastructure", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "gatewayclasses/status",
+      "verbs": ["get", "update"],
+      "purpose": "Publish GatewayClass accepted and supportedFeatures status.",
+      "sources": ["controlplane/internal/status/reconciler_gateway_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "gateways",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate, drive managed infrastructure and optionally mutate Gateways through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/infrastructure", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "gateways/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update Gateway listener, address, Accepted and Programmed status.",
+      "sources": ["controlplane/internal/status/reconciler_gateway_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "grpcroutes",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate GRPCRoute through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "grpcroutes/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update GRPCRoute parent status conditions.",
+      "sources": ["controlplane/internal/status/reconciler_route_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "httproutes",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate HTTPRoute through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "httproutes/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update HTTPRoute parent status conditions.",
+      "sources": ["controlplane/internal/status/reconciler_route_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "listenersets",
+      "verbs": ["get", "list", "watch"],
+      "purpose": "Watch, translate and status-evaluate ListenerSets that extend managed Gateway listeners.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "listenersets/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update ListenerSet Accepted and Programmed status conditions.",
+      "sources": ["controlplane/internal/gatewayapi/listenerset_v1.go", "controlplane/internal/status/reconciler_listener_sets.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "referencegrants",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch cross-namespace ReferenceGrants for TLS, backend and policy reference validation and optionally mutate them through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "tcproutes",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate TCPRoute through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "tcproutes/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update TCPRoute parent status conditions.",
+      "sources": ["controlplane/internal/status/reconciler_route_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "tlsroutes",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate TLSRoute through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "tlsroutes/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update TLSRoute parent status conditions.",
+      "sources": ["controlplane/internal/status/reconciler_route_status.go"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "udproutes",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate UDPRoute through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "gateway.networking.k8s.io",
+      "resource": "udproutes/status",
+      "verbs": ["get", "update"],
+      "purpose": "Update UDPRoute parent status conditions.",
+      "sources": ["controlplane/internal/status/reconciler_route_status.go"]
+    },
+    {
+      "apiGroup": "multicluster.x-k8s.io",
+      "resource": "serviceimports",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Watch, translate, status-evaluate and optionally mutate MCS ServiceImport backends through the admin resource API.",
+      "sources": ["controlplane/internal/controller", "controlplane/internal/status", "controlplane/internal/translator", "controlplane/internal/admin"]
+    },
+    {
+      "apiGroup": "networking.k8s.io",
+      "resource": "networkpolicies",
+      "verbs": ["create", "delete", "get", "list", "update", "watch"],
+      "purpose": "Reconcile dataplane NetworkPolicy for managed listener and admin ports.",
+      "sources": ["controlplane/internal/infrastructure/networkpolicies.go"]
+    }
+  ]
+}

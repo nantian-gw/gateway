@@ -1,0 +1,148 @@
+{{- if .Values.controlplane.enabled }}
+{{- $ns := include "aether-gateway.namespace" . }}
+{{- $cpName := include "aether-gateway.name" . }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $cpName }}-controlplane
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.controlplane.replicas }}
+  minReadySeconds: 5
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 5
+  strategy:
+    {{- toYaml .Values.controlplane.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "aether-gateway.controlplane.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aether-gateway.controlplane.selectorLabels" . | nindent 8 }}
+        {{- include "aether-gateway.controlplane.labels" . | nindent 8 }}
+      {{- with .Values.controlplane.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ $cpName }}-controlplane
+      terminationGracePeriodSeconds: {{ .Values.controlplane.terminationGracePeriodSeconds }}
+      {{- include "aether-gateway.podSecurityContext" . | nindent 6 }}
+      {{- if .Values.controlplane.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.controlplane.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if .Values.controlplane.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range .Values.controlplane.topologySpreadConstraints }}
+        - maxSkew: {{ .maxSkew }}
+          topologyKey: {{ .topologyKey }}
+          whenUnsatisfiable: {{ .whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "aether-gateway.controlplane.selectorLabels" $ | nindent 14 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.controlplane.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controlplane.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controlplane.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- include "aether-gateway.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: controlplane
+          image: {{ include "aether-gateway.controlplane.image" . }}
+          imagePullPolicy: {{ .Values.controlplane.image.pullPolicy }}
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            {{- with .Values.controlplane.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          args:
+            - "-config"
+            - "/etc/aether-gateway/config.yaml"
+          ports:
+            - name: grpc
+              containerPort: 18080
+            - name: admin
+              containerPort: 18081
+            - name: metrics
+              containerPort: 18082
+            - name: healthz
+              containerPort: 18083
+          startupProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: {{ .Values.controlplane.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.controlplane.probes.startup.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: admin
+            periodSeconds: {{ .Values.controlplane.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.controlplane.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.controlplane.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: admin
+            periodSeconds: {{ .Values.controlplane.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.controlplane.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.controlplane.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.controlplane.resources | nindent 12 }}
+          {{- include "aether-gateway.containerSecurityContext" . | nindent 10 }}
+          {{- if .Values.controlplane.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.controlplane.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/aether-gateway
+              readOnly: true
+            {{- if or .Values.controlplane.grpcTLS.enabled .Values.certs.generate }}
+            - name: grpc-tls
+              mountPath: /etc/aether-gateway/grpc-tls
+              readOnly: true
+            {{- end }}
+            {{- if .Values.controlplane.adminAuth.existingSecret }}
+            - name: admin-auth
+              mountPath: /etc/aether-gateway/admin-auth
+              readOnly: true
+            {{- end }}
+            {{- with .Values.controlplane.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $cpName }}-controlplane-config
+        {{- if or .Values.controlplane.grpcTLS.enabled .Values.certs.generate }}
+        - name: grpc-tls
+          secret:
+            secretName: {{ .Values.controlplane.grpcTLS.existingSecret | default (printf "%s-grpc-server-tls" $cpName) }}
+        {{- end }}
+        {{- if .Values.controlplane.adminAuth.existingSecret }}
+        - name: admin-auth
+          secret:
+            secretName: {{ .Values.controlplane.adminAuth.existingSecret }}
+        {{- end }}
+        {{- with .Values.controlplane.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

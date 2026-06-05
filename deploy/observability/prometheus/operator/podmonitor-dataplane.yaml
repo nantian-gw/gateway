@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: aether-gateway-dataplane
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - aether-gateway
+  selector:
+    matchLabels:
+      app: aether-gateway-dataplane
+  podMetricsEndpoints:
+    - port: admin
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      honorLabels: true
+      authorization:
+        type: Bearer
+        credentials:
+          name: aether-gateway-dataplane-admin-token
+          key: token

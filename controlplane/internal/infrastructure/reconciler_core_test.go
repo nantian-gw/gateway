@@ -1,0 +1,260 @@
+package infrastructure
+
+import (
+	"context"
+	"fmt"
+	"reflect"
+	"testing"
+
+	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+)
+
+func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+
+	k8sClient := newInfrastructureClientBuilder(scheme).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gateway-with-infrastructure-metadata",
+					Namespace: "gateway-conformance-infra",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "aether-gateway",
+					Infrastructure: &gatewayv1.GatewayInfrastructure{
+						Labels: map[gatewayv1.LabelKey]gatewayv1.LabelValue{
+							"example.com/team": "edge",
+						},
+						Annotations: map[gatewayv1.AnnotationKey]gatewayv1.AnnotationValue{
+							"example.com/trace": "enabled",
+						},
+					},
+					Listeners: []gatewayv1.Listener{
+						{
+							Name:     "legacy-http",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+						},
+						{
+							Name:     "http",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     8080,
+						},
+						{
+							Name:     "dns",
+							Protocol: gatewayv1.UDPProtocolType,
+							Port:     5300,
+						},
+					},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      defaultSharedServiceName,
+					Namespace: defaultDataplaneNamespace,
+				},
+				Spec: corev1.ServiceSpec{
+					Type:     corev1.ServiceTypeNodePort,
+					Selector: map[string]string{"app": "aether-gateway-dataplane"},
+					Ports: []corev1.ServicePort{
+						{
+							Name:       "tcp-80",
+							Port:       80,
+							TargetPort: intstr.FromInt(80),
+							Protocol:   corev1.ProtocolTCP,
+							NodePort:   30080,
+						},
+						{
+							Name:       defaultAdminPortName,
+							Port:       defaultAdminPort,
+							TargetPort: intstr.FromInt(defaultAdminPort),
+							Protocol:   corev1.ProtocolTCP,
+						},
+					},
+				},
+			},
+		).
+		Build()
+
+	reconciler := New(k8sClient, string(controllerName), discardLogger())
+	if err := reconciler.Reconcile(context.Background()); err != nil {
+		t.Fatalf("Reconcile returned error: %v", err)
+	}
+
+	shared, err := mustGetService(
+		context.Background(),
+		k8sClient,
+		client.ObjectKey{Namespace: defaultDataplaneNamespace, Name: defaultSharedServiceName},
+	)
+	if err != nil {
+		t.Fatalf("Get shared Service returned error: %v", err)
+	}
+
+	if shared.Spec.Type != corev1.ServiceTypeNodePort {
+		t.Fatalf("shared service type = %s, want NodePort", shared.Spec.Type)
+	}
+	if shared.Spec.Selector != nil {
+		t.Fatalf("shared service selector = %#v, want nil with managed EndpointSlices", shared.Spec.Selector)
+	}
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 30080)
+	assertServicePort(t, shared.Spec.Ports, 8080, corev1.ProtocolTCP, 32080)
+	assertServicePort(t, shared.Spec.Ports, 5300, corev1.ProtocolUDP, 31300)
+	assertMissingServicePort(t, shared.Spec.Ports, defaultAdminPort, corev1.ProtocolTCP)
+
+	dataplanePolicy := &networkingv1.NetworkPolicy{}
+	if err := k8sClient.Get(
+		context.Background(),
+		client.ObjectKey{
+			Namespace: defaultDataplaneNamespace,
+			Name:      defaultDataplaneNetworkPolicyName,
+		},
+		dataplanePolicy,
+	); err != nil {
+		t.Fatalf("Get dataplane NetworkPolicy returned error: %v", err)
+	}
+	assertNetworkPolicyPort(t, dataplanePolicy.Spec.Ingress, 80, corev1.ProtocolTCP)
+	assertNetworkPolicyPort(t, dataplanePolicy.Spec.Ingress, 8080, corev1.ProtocolTCP)
+	assertNetworkPolicyPort(t, dataplanePolicy.Spec.Ingress, 5300, corev1.ProtocolUDP)
+	assertAdminNetworkPolicyRule(t, dataplanePolicy.Spec.Ingress, defaultDataplaneNamespace)
+
+	gatewayService, err := mustGetService(
+		context.Background(),
+		k8sClient,
+		client.ObjectKey{
+			Namespace: "gateway-conformance-infra",
+			Name:      gatewayServiceName("gateway-with-infrastructure-metadata"),
+		},
+	)
+	if err != nil {
+		t.Fatalf("Get gateway Service returned error: %v", err)
+	}
+
+	if gatewayService.Labels[gatewayNameLabel] != "gateway-with-infrastructure-metadata" {
+		t.Fatalf("gateway-name label = %q", gatewayService.Labels[gatewayNameLabel])
+	}
+	if gatewayService.Labels["example.com/team"] != "edge" {
+		t.Fatalf("expected propagated label, got %#v", gatewayService.Labels)
+	}
+	if gatewayService.Annotations["example.com/trace"] != "enabled" {
+		t.Fatalf("expected propagated annotation, got %#v", gatewayService.Annotations)
+	}
+	if gatewayService.Spec.Selector != nil {
+		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", gatewayService.Spec.Selector)
+	}
+	assertServicePort(t, gatewayService.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
+	assertServicePort(t, gatewayService.Spec.Ports, 5300, corev1.ProtocolUDP, 0)
+}
+func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+
+	baseClient := newInfrastructureClientBuilder(scheme).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "public",
+					Namespace: "default",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "aether-gateway",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "http",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+					}},
+				},
+			},
+			&corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "aether-gateway-dataplane-0",
+					Namespace: defaultDataplaneNamespace,
+					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+				},
+				Status: corev1.PodStatus{
+					PodIP: "10.0.0.50",
+					Conditions: []corev1.PodCondition{{
+						Type:   corev1.PodReady,
+						Status: corev1.ConditionTrue,
+					}},
+				},
+			},
+		).
+		Build()
+
+	podLists := 0
+	reconciler := New(
+		validatingClient{
+			Client: baseClient,
+			listValidators: map[reflect.Type]func(client.ListOptions) error{
+				reflect.TypeOf(&corev1.PodList{}): func(opts client.ListOptions) error {
+					podLists++
+					if opts.Namespace != defaultDataplaneNamespace {
+						return fmt.Errorf("pod lookup namespace = %q, want %q", opts.Namespace, defaultDataplaneNamespace)
+					}
+					if opts.LabelSelector == nil || opts.LabelSelector.Empty() {
+						return fmt.Errorf("pod lookup must include dataplane selector")
+					}
+					if !opts.LabelSelector.Matches(labels.Set(defaultDataplaneSelector)) {
+						return fmt.Errorf("selector %q does not match dataplane selector", opts.LabelSelector.String())
+					}
+					return nil
+				},
+			},
+		},
+		string(controllerName),
+		discardLogger(),
+	)
+
+	if err := reconciler.Reconcile(context.Background()); err != nil {
+		t.Fatalf("Reconcile returned error: %v", err)
+	}
+	if podLists != 1 {
+		t.Fatalf("dataplane Pod lookup count = %d, want 1", podLists)
+	}
+}
+
+func TestSharedNodePortForStaysInsideDefaultNodePortRange(t *testing.T) {
+	tests := []struct {
+		name     string
+		port     int32
+		protocol corev1.Protocol
+		want     int32
+	}{
+		{name: "privileged tcp port", port: 80, protocol: corev1.ProtocolTCP, want: 30080},
+		{name: "common high tcp port", port: 8080, protocol: corev1.ProtocolTCP, want: 32080},
+		{name: "kind bridged tls backend port", port: 8443, protocol: corev1.ProtocolTCP, want: 32443},
+		{name: "conformance mixed tls port wraps into range", port: 8883, protocol: corev1.ProtocolTCP, want: 31883},
+		{name: "udp port", port: 5300, protocol: corev1.ProtocolUDP, want: 31300},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sharedNodePortFor(tt.port, tt.protocol)
+			if got != tt.want {
+				t.Fatalf("sharedNodePortFor(%d, %s) = %d, want %d", tt.port, tt.protocol, got, tt.want)
+			}
+			if got < 30000 || got > 32767 {
+				t.Fatalf("sharedNodePortFor(%d, %s) = %d, outside default NodePort range", tt.port, tt.protocol, got)
+			}
+		})
+	}
+}

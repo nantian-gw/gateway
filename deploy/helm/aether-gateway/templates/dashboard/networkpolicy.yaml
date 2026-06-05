@@ -1,0 +1,25 @@
+{{- if and .Values.dashboard.enabled .Values.networkPolicies.enabled }}
+{{- $ns := include "aether-gateway.namespace" . }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aether-gateway.name" . }}-dashboard
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.dashboard.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "aether-gateway.dashboard.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ns }}
+      ports:
+        - protocol: TCP
+          port: 3000
+{{- end }}

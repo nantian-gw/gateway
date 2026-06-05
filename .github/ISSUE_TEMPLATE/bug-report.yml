@@ -1,0 +1,130 @@
+name: Bug Report
+description: Report a bug in runtime, build, release, CI, deployment, or docs.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write in English or Chinese.
+
+        Review routing and current ownership are documented in `CODEOWNERS` and `MAINTAINERS.md`.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Select the nearest area this bug belongs to.
+      options:
+        - controlplane
+        - dataplane
+        - proto
+        - release / CI
+        - deploy/kind
+        - tests
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Validation Layer
+      description: Reproduce at the cheapest layer first when possible.
+      options:
+        - unit test
+        - local process
+        - admin API
+        - kind smoke
+        - conformance
+        - production-like environment
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the bug and impact in 1 to 3 sentences.
+      placeholder: e.g. After modifying HTTPRoute matching logic, a dataplane workspace test fails in a specific case.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps To Reproduce
+      description: Provide the shortest stable reproduction you can.
+      placeholder: |
+        1. Run ...
+        2. Apply config ...
+        3. Call endpoint ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      placeholder: Explain what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      placeholder: Explain what actually happened, including errors or abnormal output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Provide the most relevant versions and runtime context.
+      value: |
+        - OS:
+        - Go version:
+        - Rust version:
+        - Docker / Kind / kubectl version:
+        - Branch / commit:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs Or Output
+      description: Paste the minimum useful logs. Do not include secrets, tokens, or private keys.
+      render: text
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Config Or Manifests
+      description: If needed, include the smallest relevant config snippet.
+      render: yaml
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility Impact
+      description: Explain whether this bug affects upgrade, rollback, admin API consumers, or deployment defaults.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues first.
+          required: true
+        - label: I first tried lightweight reproduction paths such as unit tests, local process runs, or admin APIs.
+          required: true
+        - label: If this bug changes upgrade or rollback expectations, I will also update `docs/user/compatibility-notes.md`.
+          required: false
+        - label: I did not include secrets, tokens, private keys, or production-sensitive data.
+          required: true

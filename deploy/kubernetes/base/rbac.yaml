@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aether-gateway-controlplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aether-gateway-dataplane
+  namespace: aether-gateway
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: dataplane
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: aether-gateway-controlplane
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "list", "patch", "update", "watch"]
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["delete", "get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "get", "list", "patch", "update", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gatewayclasses", "gateways", "httproutes", "grpcroutes", "tcproutes", "udproutes", "tlsroutes", "referencegrants", "backendlbpolicies", "backendtlspolicies"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["listenersets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["gatewayclasses/status", "gateways/status", "httproutes/status", "grpcroutes/status", "tcproutes/status", "udproutes/status", "tlsroutes/status", "backendlbpolicies/status", "backendtlspolicies/status", "listenersets/status"]
+    verbs: ["get", "update"]
+  - apiGroups: ["multicluster.x-k8s.io"]
+    resources: ["serviceimports"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.aether.dev"]
+    resources: ["aiservices", "tokenpolicies", "wasmplugins"]
+    verbs: ["create", "delete", "get", "list", "update", "watch"]
+  - apiGroups: ["gateway.aether.dev"]
+    resources: ["aiservices/status", "tokenpolicies/status", "wasmplugins/status"]
+    verbs: ["get", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: aether-gateway-controlplane
+  labels:
+    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/component: controlplane
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aether-gateway-controlplane
+subjects:
+  - kind: ServiceAccount
+    name: aether-gateway-controlplane
+    namespace: aether-gateway

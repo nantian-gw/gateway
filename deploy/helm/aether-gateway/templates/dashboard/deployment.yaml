@@ -1,0 +1,98 @@
+{{- if .Values.dashboard.enabled }}
+{{- $ns := include "aether-gateway.namespace" . }}
+{{- $dbName := include "aether-gateway.name" . }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $dbName }}-dashboard
+  namespace: {{ $ns }}
+  labels:
+    {{- include "aether-gateway.dashboard.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dashboard.replicas }}
+  minReadySeconds: 5
+  progressDeadlineSeconds: 300
+  revisionHistoryLimit: 3
+  strategy:
+    {{- toYaml .Values.dashboard.strategy | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "aether-gateway.dashboard.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aether-gateway.dashboard.selectorLabels" . | nindent 8 }}
+        {{- include "aether-gateway.dashboard.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.dashboard.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.dashboard.podSecurityContext | nindent 8 }}
+      {{- if .Values.dashboard.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml .Values.dashboard.topologySpreadConstraints | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dashboard.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dashboard.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dashboard.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- include "aether-gateway.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: dashboard
+          image: {{ include "aether-gateway.dashboard.image" . }}
+          imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: {{ .Values.dashboard.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.dashboard.probes.startup.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: {{ .Values.dashboard.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.dashboard.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.dashboard.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: {{ .Values.dashboard.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.dashboard.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.dashboard.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.dashboard.resources | nindent 12 }}
+          {{- include "aether-gateway.containerSecurityContext" . | nindent 10 }}
+          {{- if .Values.dashboard.containerSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.dashboard.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          env:
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dashboard.authExistingSecret | default (printf "%s-%s" (include "aether-gateway.name" .) "dashboard-auth") }}
+                  key: auth-secret
+            - name: AUTH_TRUST_HOST
+              value: "true"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
+{{- end }}

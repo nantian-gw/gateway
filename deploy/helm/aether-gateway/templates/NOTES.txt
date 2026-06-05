@@ -1,0 +1,69 @@
+{{- $ns := include "aether-gateway.namespace" . }}
+Aether Gateway {{ .Chart.AppVersion }} has been installed.
+
+NAMESPACE: {{ $ns }}
+
+{{- if .Values.controlplane.enabled }}
+✅ Controlplane deployed ({{ .Values.controlplane.replicas }} replica(s))
+   gRPC:  aether-gateway-controlplane-grpc.{{ $ns }}.svc:18080
+   Admin: aether-gateway-controlplane-admin.{{ $ns }}.svc:18081
+   {{- if .Values.controlplane.grpcTLS.enabled }}
+   ⚠️  gRPC mTLS enabled — dataplanes must present valid client certs.
+   {{- end }}
+{{- end }}
+
+{{- if .Values.dataplane.enabled }}
+✅ Dataplane deployed ({{ .Values.dataplane.replicas }} replica(s))
+   HTTP:  port 10080 on each node
+   Admin: aether-gateway-dataplane-admin.{{ $ns }}.svc:19080
+   {{- if .Values.dataplane.xdsTLS.enabled }}
+   ⚠️  xDS mTLS enabled — controlplane connection uses TLS.
+   {{- end }}
+{{- end }}
+
+{{- if .Values.dashboard.enabled }}
+✅ Dashboard deployed
+   HTTP: aether-gateway-dashboard.{{ $ns }}.svc:3000
+{{- end }}
+
+{{- if .Values.hpa.enabled }}
+✅ Dataplane HPA enabled ({{ .Values.hpa.minReplicas }}–{{ .Values.hpa.maxReplicas }} replicas)
+{{- end }}
+
+{{- if .Values.serviceMonitor.enabled }}
+✅ ServiceMonitors enabled — metrics scraped by Prometheus operator
+{{- end }}
+
+{{/* Check for commonly missing secrets */}}
+{{- $warnings := list }}
+{{- if and .Values.controlplane.grpcTLS.enabled (not .Values.controlplane.grpcTLS.existingSecret) }}
+{{- $warnings = append $warnings "controlplane.grpcTLS.enabled=true but no existingSecret set" }}
+{{- end }}
+{{- if and .Values.dataplane.xdsTLS.enabled (not .Values.dataplane.xdsTLS.existingSecret) }}
+{{- $warnings = append $warnings "dataplane.xdsTLS.enabled=true but no existingSecret set" }}
+{{- end }}
+{{- if and .Values.controlplane.adminAuth.bearerTokenFile (not .Values.controlplane.adminAuth.existingSecret) }}
+{{- $warnings = append $warnings "controlplane.adminAuth.bearerTokenFile set but no existingSecret" }}
+{{- end }}
+{{- if and .Values.dataplane.adminAuth.bearerTokenFile (not .Values.dataplane.adminAuth.existingSecret) }}
+{{- $warnings = append $warnings "dataplane.adminAuth.bearerTokenFile set but no existingSecret" }}
+{{- end }}
+{{- if and .Values.dataplane.sessionPersistence.sharedSecret (not .Values.dataplane.sessionPersistence.existingSecret) }}
+{{- $warnings = append $warnings "dataplane.sessionPersistence.sharedSecret set but no existingSecret — internal secret will be generated" }}
+{{- end }}
+{{- if $warnings }}
+⚠️  Warnings:
+{{- range $warnings }}
+   • {{ . }}
+{{- end }}
+{{- end }}
+
+Get started:
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
+  # ... install remaining Gateway API CRDs as needed
+  kubectl apply -f my-gateway.yaml
+  kubectl apply -f my-httproute.yaml
+
+For production setup, see deploy/kubernetes/overlays/production/README.md
