@@ -8,9 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
 )
 
 func TestBuildSchemeIncludesBackendLBPolicy(t *testing.T) {

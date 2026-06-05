@@ -47,8 +47,8 @@ The current release process generates or publishes:
 
 - GitHub Release
 - GHCR images
-  - `aether-gateway-controlplane`
-  - `aether-gateway-dataplane`
+  - `nantian-controlplane`
+  - `nantian-dataplane`
 - conformance artifact
 - Reports archived to `reports/conformance/releases/<tag>/`
 - Latest reports published to the `conformance-reports` branch

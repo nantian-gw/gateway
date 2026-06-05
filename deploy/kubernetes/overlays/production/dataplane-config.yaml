@@ -1,9 +1,9 @@
 nodeId: "dp-kubernetes"
 cluster: "production"
-controlPlaneAddr: "https://aether-gateway-controlplane-grpc.aether-gateway.svc.cluster.local:18080"
+controlPlaneAddr: "https://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
 adminAddr: "0.0.0.0:19080"
 log:
-  level: "info,aether_core::connectors=off"
+  level: "info,nantian_core::connectors=off"
   format: "json"
   addSource: false
   includeTarget: false
@@ -14,7 +14,7 @@ log:
   dropWhenFull: true
 adminAuth:
   bearerToken: ""
-  bearerTokenFile: "/etc/aether-gateway/admin-auth/token"
+  bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
 accessLog:
   enabled: false
   path: "stdout"
@@ -48,14 +48,14 @@ runtimeTuning:
     acceptConcurrency: 16
 sessionPersistence:
   secretKey: ""
-  secretKeyFile: "/etc/aether-gateway/session-persistence/secret"
+  secretKeyFile: "/etc/nantian-gw/session-persistence/secret"
   # sharedSecret: "your-shared-secret-here"
 xdsTls:
   enabled: true
-  caPath: "/etc/aether-gateway/xds-tls/ca.crt"
-  certPath: "/etc/aether-gateway/xds-tls/tls.crt"
-  keyPath: "/etc/aether-gateway/xds-tls/tls.key"
-  domainName: "aether-gateway-controlplane-grpc.aether-gateway.svc.cluster.local"
+  caPath: "/etc/nantian-gw/xds-tls/ca.crt"
+  certPath: "/etc/nantian-gw/xds-tls/tls.crt"
+  keyPath: "/etc/nantian-gw/xds-tls/tls.key"
+  domainName: "nantian-controlplane-grpc.nantian-gw.svc.cluster.local"
 experimental:
   enableExperimentalGateway: false
   enableAiGateway: false

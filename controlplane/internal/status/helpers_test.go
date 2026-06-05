@@ -13,7 +13,7 @@ func TestMergeRouteParentsDoesNotMutateExistingConditions(t *testing.T) {
 			Name:        "gw",
 			SectionName: ptr[gatewayv1.SectionName]("http"),
 		},
-		ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+		ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 		Conditions: []metav1.Condition{{
 			Type:               string(gatewayv1.RouteConditionResolvedRefs),
 			Status:             metav1.ConditionFalse,
@@ -77,7 +77,7 @@ func TestMergeRouteParentsRemovesStalePartiallyInvalidCondition(t *testing.T) {
 		ParentRef: gatewayv1.ParentReference{
 			Name: "gw",
 		},
-		ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+		ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 		Conditions: []metav1.Condition{{
 			Type:               string(gatewayv1.RouteConditionPartiallyInvalid),
 			Status:             metav1.ConditionTrue,

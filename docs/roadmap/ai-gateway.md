@@ -1,6 +1,6 @@
 # AI Gateway Roadmap
 
-Incrementally build an AI Gateway on top of aether-gateway's existing Gateway API proxy infrastructure.
+Incrementally build an AI Gateway on top of nantian-gw's existing Gateway API proxy infrastructure.
 
 ---
 
@@ -223,7 +223,7 @@ dataplane/crates/
 
 controlplane/
 ├── config/crd/bases/
-│   └── gateway.aether.dev_aiservices.yaml  # AIService CRD
+│   └── gateway.nantian.dev_aiservices.yaml  # AIService CRD
 ├── internal/
 │   ├── translator/
 │   │   └── ai_service.go         # AIService CRD → IR translation
@@ -432,7 +432,7 @@ Phase 3 (Enterprise)
 
 | Decision | Choice | Reason |
 |---|---|---|
-| CRD group | `gateway.aether.dev` | Does not pollute `gateway.networking.k8s.io`, follows Gateway API extension conventions |
+| CRD group | `gateway.nantian.dev` | Does not pollute `gateway.networking.k8s.io`, follows Gateway API extension conventions |
 | Internal IR | Unified `AIRequest`/`AIResponse`/`AIStreamChunk` | All format adapters output unified IR, filter chain only processes IR |
 | Filter implementation | Rust proxy HTTP filter + pre/post processing | Reuses existing proxy filter chain, request/response body is interceptable |
 | Format adapter | Independent per-provider modules | Separation of concerns, adding a provider only requires one adapter file |

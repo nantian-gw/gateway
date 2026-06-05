@@ -18,7 +18,7 @@ The current repository includes a Next.js/React admin console and Node proxy in 
 Access:
 
 - Local process mode: `http://127.0.0.1:18081`
-- Kind mode: `kubectl -n aether-gateway port-forward svc/aether-gateway-controlplane-admin 18081:18081`
+- Kind mode: `kubectl -n nantian-gw port-forward svc/nantian-controlplane-admin 18081:18081`
 
 HTTP server runtime timeouts:
 
@@ -210,7 +210,7 @@ curl -fsS -H "Authorization: Bearer ${PGW_ADMIN_TOKEN}" http://127.0.0.1:18081/v
 Access:
 
 - Local process mode: `http://127.0.0.1:19080`
-- Kind mode: `kubectl -n aether-gateway port-forward svc/aether-gateway-dataplane-admin 19080:19080`
+- Kind mode: `kubectl -n nantian-gw port-forward svc/nantian-dataplane-admin 19080:19080`
 
 Debug scripts, the dashboard, and future SDKs should access the data plane admin port `19080` and must not mistakenly use the traffic ports `10080`, `80`, or `443`.
 

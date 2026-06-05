@@ -8,7 +8,7 @@ import (
 
 const (
 	ManagedByLabel = "app.kubernetes.io/managed-by"
-	ManagedByValue = "aether-gateway"
+	ManagedByValue = "nantian-gw"
 	ServiceRoleKey = "nantian.dev/service-role"
 
 	ServiceRoleShared  = "shared-dataplane"

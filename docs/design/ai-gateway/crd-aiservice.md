@@ -1,12 +1,12 @@
 # AIService CRD Reference
 
-- **API Group:** `gateway.aether.dev`
+- **API Group:** `gateway.nantian.dev`
 - **API Version:** `v1alpha1`
 - **Kind:** `AIService`
 - **Scope:** `Namespaced`
 - **Package:** `controlplane/internal/gatewayapiexperimental/aiservicev1alpha1/types.go`
 
-The `AIService` CRD declares an AI provider backend for the AI Gateway. It is referenced from `HTTPRoute` `backendRefs` just like a `Service`, but with `group: gateway.aether.dev` and `kind: AIService`.
+The `AIService` CRD declares an AI provider backend for the AI Gateway. It is referenced from `HTTPRoute` `backendRefs` just like a `Service`, but with `group: gateway.nantian.dev` and `kind: AIService`.
 
 ## Full YAML Example
 
@@ -139,7 +139,7 @@ type AIServiceStatus struct {
 
 Scheme registration:
 ```go
-var GroupVersion = schema.GroupVersion{Group: "gateway.aether.dev", Version: "v1alpha1"}
+var GroupVersion = schema.GroupVersion{Group: "gateway.nantian.dev", Version: "v1alpha1"}
 
 func AddToScheme(scheme *runtime.Scheme) error {
     scheme.AddKnownTypes(GroupVersion, &AIService{}, &AIServiceList{})

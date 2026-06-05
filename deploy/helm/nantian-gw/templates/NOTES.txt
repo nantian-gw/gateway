@@ -1,12 +1,12 @@
-{{- $ns := include "aether-gateway.namespace" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
 Aether Gateway {{ .Chart.AppVersion }} has been installed.
 
 NAMESPACE: {{ $ns }}
 
 {{- if .Values.controlplane.enabled }}
 ✅ Controlplane deployed ({{ .Values.controlplane.replicas }} replica(s))
-   gRPC:  aether-gateway-controlplane-grpc.{{ $ns }}.svc:18080
-   Admin: aether-gateway-controlplane-admin.{{ $ns }}.svc:18081
+   gRPC:  nantian-controlplane-grpc.{{ $ns }}.svc:18080
+   Admin: nantian-controlplane-admin.{{ $ns }}.svc:18081
    {{- if .Values.controlplane.grpcTLS.enabled }}
    ⚠️  gRPC mTLS enabled — dataplanes must present valid client certs.
    {{- end }}
@@ -15,7 +15,7 @@ NAMESPACE: {{ $ns }}
 {{- if .Values.dataplane.enabled }}
 ✅ Dataplane deployed ({{ .Values.dataplane.replicas }} replica(s))
    HTTP:  port 10080 on each node
-   Admin: aether-gateway-dataplane-admin.{{ $ns }}.svc:19080
+   Admin: nantian-dataplane-admin.{{ $ns }}.svc:19080
    {{- if .Values.dataplane.xdsTLS.enabled }}
    ⚠️  xDS mTLS enabled — controlplane connection uses TLS.
    {{- end }}
@@ -23,7 +23,7 @@ NAMESPACE: {{ $ns }}
 
 {{- if .Values.dashboard.enabled }}
 ✅ Dashboard deployed
-   HTTP: aether-gateway-dashboard.{{ $ns }}.svc:3000
+   HTTP: nantian-dashboard.{{ $ns }}.svc:3000
 {{- end }}
 
 {{- if .Values.hpa.enabled }}

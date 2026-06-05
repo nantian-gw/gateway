@@ -10,7 +10,7 @@ import (
 )
 
 func TestReconcileGatewayStaticAddressIgnoresStaleDerivedServiceAdvertisements(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	oldGateway := staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 		Type:  addressTypePtr(gatewayv1.IPAddressType),

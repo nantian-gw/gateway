@@ -4,7 +4,7 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func hostnames[T ~string](items []T) []string {

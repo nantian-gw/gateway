@@ -15,7 +15,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildMarksTCPRouteCrossNamespaceBackendWithoutGrant(t *testing.T) {
@@ -164,15 +164,15 @@ func buildTCPRouteSupplementalSnapshot(t *testing.T, objects ...runtime.Object) 
 			},
 		},
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "tcp",
 					Protocol: gatewayv1.TCPProtocolType,
@@ -188,7 +188,7 @@ func buildTCPRouteSupplementalSnapshot(t *testing.T, objects ...runtime.Object) 
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), cl)
 	if err != nil {

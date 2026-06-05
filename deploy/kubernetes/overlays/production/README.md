@@ -28,7 +28,7 @@ The current overlay does the following by default:
    - `dataplane-xds-tls.secret.example.yaml`
    - `dataplane-session-persistence.secret.example.yaml`
 3. Based on the actual environment, confirm whether resources, HPA, exposure method, and additional `NetworkPolicy` need further tightening.
-4. If retaining the dashboard, confirm that the `aether-gateway-dashboard` image has been built in your release pipeline and pinned to a trusted tag or digest; the current core release workflow only publishes controlplane / dataplane images.
+4. If retaining the dashboard, confirm that the `nantian-gw-dashboard` image has been built in your release pipeline and pinned to a trusted tag or digest; the current core release workflow only publishes controlplane / dataplane images.
 
 ## Performance and Capacity Prerequisites
 
@@ -60,9 +60,9 @@ To render a release single-file manifest using the same profile source:
 ```bash
 ./scripts/render-release-manifest.sh \
   --profile single-cluster-prod \
-  ghcr.io/example/aether-gateway-controlplane:v0.0.0 \
-  ghcr.io/example/aether-gateway-dataplane:v0.0.0 \
-  /tmp/aether-gateway-install.yaml
+  ghcr.io/example/nantian-controlplane:v0.0.0 \
+  ghcr.io/example/nantian-dataplane:v0.0.0 \
+  /tmp/nantian-gw-install.yaml
 ```
 
 Apply after confirming correctness:
@@ -102,7 +102,7 @@ GOWORK=off go run ./cmd/gateway-api-support -format names
 
 ## Operational Constraints
 
-- The overlay still retains the namespace-internal management access model from base by default; if Prometheus or operations entry points are not in the `aether-gateway` namespace, additional `NetworkPolicy` is needed.
+- The overlay still retains the namespace-internal management access model from base by default; if Prometheus or operations entry points are not in the `nantian-gw` namespace, additional `NetworkPolicy` is needed.
 - `controlplane-config.yaml` and `dataplane-config.yaml` are the true sources for the current overlay — do not modify the `configs/` directory and assume the overlay will automatically inherit changes.
 - `dataplane-admin-auth.secret.example.yaml` serves dataplane's own admin auth; ensure this Secret is created and has correct content.
 - `enableHttp3` remains disabled; HTTP/3 / QUIC is currently not in this production overlay's default scope.

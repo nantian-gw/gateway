@@ -31,21 +31,21 @@ const (
 var (
 	statusUpdateConflictsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "aether_gateway_controlplane_status_update_conflicts_total",
+			Name: "nantian_gateway_controlplane_status_update_conflicts_total",
 			Help: "Total number of controlplane status update conflicts partitioned by resource type.",
 		},
 		[]string{"resource"},
 	)
 	statusUpdateRetriesTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "aether_gateway_controlplane_status_update_retries_total",
+			Name: "nantian_gateway_controlplane_status_update_retries_total",
 			Help: "Total number of additional controlplane status update retry attempts entered after the initial attempt, partitioned by resource type.",
 		},
 		[]string{"resource"},
 	)
 	statusUpdateErrorsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "aether_gateway_controlplane_status_update_errors_total",
+			Name: "nantian_gateway_controlplane_status_update_errors_total",
 			Help: "Total number of terminal controlplane status update errors partitioned by resource type and normalized error class.",
 		},
 		[]string{"resource", "reason"},

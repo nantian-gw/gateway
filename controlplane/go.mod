@@ -1,9 +1,9 @@
-module github.com/aether-gateway/aether-gateway/controlplane
+module github.com/nantian-gw/gateway/controlplane
 
 go 1.26.3
 
 require (
-	github.com/aether-gateway/proto v0.0.0-20260603144357-4effb1b5ea35
+	github.com/nantian-gw/proto v0.0.0-20260603144357-4effb1b5ea35
 	github.com/go-logr/logr v1.4.3
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2

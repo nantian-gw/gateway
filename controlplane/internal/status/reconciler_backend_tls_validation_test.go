@@ -14,7 +14,7 @@ import (
 
 func TestReconcileRefreshesResolvedRefsWhenBackendServiceAppears(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	pathType := gatewayv1.PathMatchPathPrefix
 	portNumber := gatewayv1.PortNumber(8080)
 
@@ -28,7 +28,7 @@ func TestReconcileRefreshesResolvedRefsWhenBackendServiceAppears(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -36,7 +36,7 @@ func TestReconcileRefreshesResolvedRefsWhenBackendServiceAppears(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -123,7 +123,7 @@ func TestReconcileRefreshesResolvedRefsWhenBackendServiceAppears(t *testing.T) {
 
 func TestReconcileSetsBackendTLSPolicyStatus(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -137,7 +137,7 @@ func TestReconcileSetsBackendTLSPolicyStatus(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -145,7 +145,7 @@ func TestReconcileSetsBackendTLSPolicyStatus(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,
@@ -245,7 +245,7 @@ func TestReconcileSetsBackendTLSPolicyStatus(t *testing.T) {
 
 func TestReconcileAcceptsBackendTLSPolicyWithCustomCAConfigMap(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -258,7 +258,7 @@ func TestReconcileAcceptsBackendTLSPolicyWithCustomCAConfigMap(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -266,7 +266,7 @@ func TestReconcileAcceptsBackendTLSPolicyWithCustomCAConfigMap(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,
@@ -365,7 +365,7 @@ func TestReconcileAcceptsBackendTLSPolicyWithCustomCAConfigMap(t *testing.T) {
 
 func TestReconcileRejectsBackendTLSPolicyWithEmptyURISAN(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -431,7 +431,7 @@ func TestReconcileRejectsBackendTLSPolicyWithEmptyURISAN(t *testing.T) {
 
 func TestReconcileAcceptsBackendTLSPolicyWithURISubjectAltName(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -498,7 +498,7 @@ func TestReconcileAcceptsBackendTLSPolicyWithURISubjectAltName(t *testing.T) {
 
 func TestReconcileAcceptsBackendTLSPolicyWithAtLeastOneValidCAConfigMap(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -569,7 +569,7 @@ func TestReconcileAcceptsBackendTLSPolicyWithAtLeastOneValidCAConfigMap(t *testi
 
 func TestReconcileAcceptsBackendTLSPolicyWithAtLeastOneValidTargetRef(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -642,7 +642,7 @@ func TestReconcileAcceptsBackendTLSPolicyWithAtLeastOneValidTargetRef(t *testing
 
 func TestReconcileRejectsBackendTLSPolicyWithInvalidTLSVersionOption(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -708,7 +708,7 @@ func TestReconcileRejectsBackendTLSPolicyWithInvalidTLSVersionOption(t *testing.
 
 func TestReconcileRejectsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -788,7 +788,7 @@ func TestReconcileRejectsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.T)
 
 func TestReconcileRejectsBackendTLSPolicyWithInvalidCustomCAConfigMap(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).

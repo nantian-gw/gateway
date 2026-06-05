@@ -23,7 +23,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 )
 
 type controllerSetup interface {

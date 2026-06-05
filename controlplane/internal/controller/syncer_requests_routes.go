@@ -12,8 +12,8 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func (s *Syncer) podReconcileRequests(pod *corev1.Pod) []reconcile.Request {

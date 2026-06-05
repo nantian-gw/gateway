@@ -1,0 +1,14 @@
+{{- if .Values.dataplane.enabled }}
+{{- $ns := include "nantian-gw.namespace" . }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nantian-gw.name" . }}-dataplane-config
+  namespace: {{ $ns }}
+  labels:
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- include "nantian-gw.dataplane.configYaml" . | nindent 4 }}
+{{- end }}

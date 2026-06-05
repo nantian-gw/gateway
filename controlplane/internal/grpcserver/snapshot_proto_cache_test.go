@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	controlv1 "github.com/aether-gateway/proto/gateway/control/v1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
@@ -160,7 +160,7 @@ func benchmarkProtoSnapshot() *ir.Snapshot {
 					Config: map[string]any{
 						"set": []any{map[string]any{
 							"name":  "x-gateway",
-							"value": "aether-gateway",
+							"value": "nantian-gw",
 						}},
 					},
 				}},

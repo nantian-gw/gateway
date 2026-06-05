@@ -16,14 +16,14 @@ import (
 
 func TestReconcileSharedServiceUpdateAvoidsRedundantReread(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	gateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "public",
 			Namespace: "default",
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -47,7 +47,7 @@ func TestReconcileSharedServiceUpdateAvoidsRedundantReread(t *testing.T) {
 	baseClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -56,9 +56,9 @@ func TestReconcileSharedServiceUpdateAvoidsRedundantReread(t *testing.T) {
 			existingSharedService,
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -99,14 +99,14 @@ func TestReconcileSharedServiceUpdateAvoidsRedundantReread(t *testing.T) {
 }
 func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	gateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "public",
 			Namespace: "default",
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -135,7 +135,7 @@ func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 	baseClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -144,9 +144,9 @@ func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 			existingGatewayService,
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -183,12 +183,12 @@ func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 }
 func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -199,7 +199,7 @@ func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",
@@ -301,7 +301,7 @@ func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 }
 func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	gateway := &gatewayv1.Gateway{
@@ -310,7 +310,7 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,
@@ -349,7 +349,7 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -417,12 +417,12 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 }
 func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChanges(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -433,7 +433,7 @@ func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChang
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						Labels: map[gatewayv1.LabelKey]gatewayv1.LabelValue{
 							"example.com/team": "platform",
@@ -528,12 +528,12 @@ func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChang
 }
 func TestReconcilePropagatesGatewayInfrastructureMetadataToEndpointSlices(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -544,7 +544,7 @@ func TestReconcilePropagatesGatewayInfrastructureMetadataToEndpointSlices(t *tes
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						Labels: map[gatewayv1.LabelKey]gatewayv1.LabelValue{
 							"example.com/team": "platform",
@@ -562,9 +562,9 @@ func TestReconcilePropagatesGatewayInfrastructureMetadataToEndpointSlices(t *tes
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

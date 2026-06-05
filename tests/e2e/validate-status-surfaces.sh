@@ -2,11 +2,11 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
-GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-aether}"
-GATEWAY_NAMESPACE="${GATEWAY_NAMESPACE:-aether-gateway}"
+GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian}"
+GATEWAY_NAMESPACE="${GATEWAY_NAMESPACE:-nantian-gw}"
 GATEWAY_NAME="${GATEWAY_NAME:-edge}"
 OUTPUT_DIR="${OUTPUT_DIR:-$(mktemp -d "${ROOT_DIR}/tmp/status-surfaces.XXXXXX")}"
 KEEP_ARTIFACTS="${KEEP_ARTIFACTS:-false}"
@@ -169,13 +169,13 @@ validate_admin_consistency() {
 validate_dataplane_views() {
   log "validating dataplane listener and route views"
   jq -e '
-    any(.[]; .name == "aether-gateway/edge/http" and (.attached_routes | index("aether-gateway/echo")) and (.attached_routes | index("aether-gateway/grpc-echo")))
+    any(.[]; .name == "nantian-gw/edge/http" and (.attached_routes | index("nantian-gw/echo")) and (.attached_routes | index("nantian-gw/grpc-echo")))
   ' "${OUTPUT_DIR}/admin/dataplane/listeners.json" >/dev/null || fail "dataplane listeners view is missing edge/http attachments"
 
   jq -e '
-    (.http | any(.[]; .namespace == "aether-gateway" and .name == "echo")) and
-    (.grpc | any(.[]; .namespace == "aether-gateway" and .name == "grpc-echo")) and
-    (.stream | any(.[]; .namespace == "aether-gateway" and .name == "tcp-echo"))
+    (.http | any(.[]; .namespace == "nantian-gw" and .name == "echo")) and
+    (.grpc | any(.[]; .namespace == "nantian-gw" and .name == "grpc-echo")) and
+    (.stream | any(.[]; .namespace == "nantian-gw" and .name == "tcp-echo"))
   ' "${OUTPUT_DIR}/admin/dataplane/routes.json" >/dev/null || fail "dataplane routes view is missing expected HTTP/GRPC/stream routes"
 }
 

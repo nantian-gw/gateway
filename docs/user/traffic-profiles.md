@@ -47,7 +47,7 @@ metadata:
   name: public
   namespace: edge
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   infrastructure:
     labels:
       example.com/traffic-profile: north-south
@@ -91,11 +91,11 @@ Minimum checks:
 
 ```bash
 kubectl -n edge describe gateway public
-kubectl -n edge get svc aether-gateway-public -o wide
+kubectl -n edge get svc nantian-gw-public -o wide
 kubectl -n app describe httproute orders
 ```
 
-If `Gateway.status.addresses` does not have an external address, first check the `type`, `externalIPs`, and `LoadBalancer ingress` of the `aether-gateway-public` Service, and whether `/v1/infrastructure` shows that Service as still in `missing` or `drifted` state.
+If `Gateway.status.addresses` does not have an external address, first check the `type`, `externalIPs`, and `LoadBalancer ingress` of the `nantian-gw-public` Service, and whether `/v1/infrastructure` shows that Service as still in `missing` or `drifted` state.
 
 gRPC can reuse the same HTTP / HTTPS listener — just replace `HTTPRoute` with `GRPCRoute` and point the backend to the gRPC Service port:
 
@@ -132,7 +132,7 @@ metadata:
   name: public-l4
   namespace: edge
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   infrastructure:
     parametersRef:
       group: ""
@@ -189,10 +189,10 @@ Minimum checks:
 kubectl -n edge describe gateway public-l4
 kubectl -n db describe tcproute postgres
 kubectl -n dns describe udproute dns
-kubectl -n edge get svc aether-gateway-public-l4 -o yaml
+kubectl -n edge get svc nantian-gw-public-l4 -o yaml
 ```
 
-If the Route and Gateway both show accepted but are unreachable externally, first confirm that the external LB actually has the corresponding protocol and port enabled, then check dataplane logs, `/v1/listeners`, `/v1/routes`, and per-pod scrape results for `aether_gateway_dataplane_ready`.
+If the Route and Gateway both show accepted but are unreachable externally, first confirm that the external LB actually has the corresponding protocol and port enabled, then check dataplane logs, `/v1/listeners`, `/v1/routes`, and per-pod scrape results for `nantian_gateway_dataplane_ready`.
 
 ## East-West Service Parent Example
 

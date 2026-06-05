@@ -15,7 +15,7 @@ import (
 
 func TestReconcileAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	policy := func(name string) *gatewayv1alpha3.BackendTLSPolicy {
@@ -99,7 +99,7 @@ func TestReconcileAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 		)
 		switch tc.name {
 		case "orders-tls-a":
-			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(gatewayv1.PolicyConditionAccepted), "BackendTLSPolicy is accepted by aether-gateway")
+			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(gatewayv1.PolicyConditionAccepted), "BackendTLSPolicy is accepted by nantian-gw")
 		case "orders-tls-b":
 			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(gatewayv1.PolicyConditionAccepted), "BackendTLSPolicy conflicts with another policy targeting the same backend")
 		}
@@ -109,7 +109,7 @@ func TestReconcileAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 
 func TestReconcileAcceptsSectionScopedAndCatchAllBackendTLSPolicies(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 	https1 := gatewayv1.SectionName("https-1")
 
@@ -197,7 +197,7 @@ func TestReconcileAcceptsSectionScopedAndCatchAllBackendTLSPolicies(t *testing.T
 
 func TestReconcileConflictedBackendTLSPolicyPreservesResolvedRefsFailure(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().
@@ -310,7 +310,7 @@ func TestReconcileConflictedBackendTLSPolicyPreservesResolvedRefsFailure(t *test
 
 func TestReconcileRejectsBackendTLSPolicyWithMissingTargetService(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
 	k8sClient := fake.NewClientBuilder().

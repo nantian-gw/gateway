@@ -10,8 +10,8 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 const defaultConnectTimeout = 5 * time.Second

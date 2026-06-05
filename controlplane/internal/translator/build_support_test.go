@@ -23,21 +23,21 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/extensionfilter"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 )
 
 func TestBuildLoadsReferencedSecretsAndConfigMapsOnDemand(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 	portNumber := gatewayv1.PortNumber(8080)
 
 	baseClient := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -45,7 +45,7 @@ func TestBuildLoadsReferencedSecretsAndConfigMapsOnDemand(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -225,7 +225,7 @@ func newTranslatorClientBuilder(scheme *runtime.Scheme) *fake.ClientBuilder {
 }
 func TestBuildLoadsAttachmentNamespacesOnDemand(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	namespaceMode := gatewayv1.NamespacesFromSelector
 	portNumber := gatewayv1.PortNumber(8080)
 
@@ -238,7 +238,7 @@ func TestBuildLoadsAttachmentNamespacesOnDemand(t *testing.T) {
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -246,7 +246,7 @@ func TestBuildLoadsAttachmentNamespacesOnDemand(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -334,7 +334,7 @@ func TestBuildLoadsAttachmentNamespacesOnDemand(t *testing.T) {
 }
 func TestBuildUsesScopedGatewayListsWhenManagedGatewayClassesExist(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -354,7 +354,7 @@ func TestBuildUsesScopedGatewayListsWhenManagedGatewayClassesExist(t *testing.T)
 		}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -368,7 +368,7 @@ func TestBuildUsesScopedGatewayListsWhenManagedGatewayClassesExist(t *testing.T)
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "public", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -397,7 +397,7 @@ func TestBuildUsesScopedGatewayListsWhenManagedGatewayClassesExist(t *testing.T)
 		Client:         baseClient,
 		controllerName: string(controllerName),
 		classNames: map[string]struct{}{
-			"aether-gateway": {},
+			"nantian-gw": {},
 		},
 	})
 	if err != nil {

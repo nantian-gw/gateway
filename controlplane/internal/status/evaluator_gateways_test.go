@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -14,7 +14,7 @@ import (
 
 func TestReconcileAcceptsTLSMixedTerminationListeners(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	terminateMode := gatewayv1.TLSModeTerminate
 	passthroughMode := gatewayv1.TLSModePassthrough
 	terminateHostname := gatewayv1.Hostname("tls.example.com")
@@ -28,7 +28,7 @@ func TestReconcileAcceptsTLSMixedTerminationListeners(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -36,7 +36,7 @@ func TestReconcileAcceptsTLSMixedTerminationListeners(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gateway-tlsroute-mixed-termination", Namespace: "gateway-conformance-infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "tls-terminate",

@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aether-gateway-dashboard
-  namespace: aether-gateway
+  name: nantian-gw-dashboard
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dashboard
 spec:
   replicas: 1
@@ -14,13 +14,13 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: aether-gateway-dashboard
+      app: nantian-gw-dashboard
   template:
     metadata:
       labels:
-        app: aether-gateway-dashboard
-        app.kubernetes.io/name: aether-gateway
-        app.kubernetes.io/part-of: aether-gateway
+        app: nantian-gw-dashboard
+        app.kubernetes.io/name: nantian-gw
+        app.kubernetes.io/part-of: nantian-gw
         app.kubernetes.io/component: dashboard
     spec:
       automountServiceAccountToken: false
@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: dashboard
-          image: aether-gateway-dashboard:dev
+          image: nantian-gw-dashboard:dev
           imagePullPolicy: Always
           ports:
             - name: http
@@ -75,7 +75,7 @@ spec:
             - name: AUTH_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: aether-gateway-dashboard-auth
+                  name: nantian-gw-dashboard-auth
                   key: auth-secret
             - name: AUTH_TRUST_HOST
               value: "true"
@@ -90,15 +90,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: aether-gateway-dashboard
-  namespace: aether-gateway
+  name: nantian-gw-dashboard
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dashboard
 spec:
   selector:
-    app: aether-gateway-dashboard
+    app: nantian-gw-dashboard
   ports:
     - name: http
       port: 3000
@@ -107,23 +107,23 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: aether-gateway-dashboard
-  namespace: aether-gateway
+  name: nantian-gw-dashboard
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dashboard
 spec:
   podSelector:
     matchLabels:
-      app: aether-gateway-dashboard
+      app: nantian-gw-dashboard
   policyTypes:
     - Ingress
   ingress:
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: aether-gateway
+              kubernetes.io/metadata.name: nantian-gw
       ports:
         - protocol: TCP
           port: 3000
@@ -131,11 +131,11 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: aether-gateway-dashboard-auth
-  namespace: aether-gateway
+  name: nantian-gw-dashboard-auth
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dashboard
 type: Opaque
 stringData:

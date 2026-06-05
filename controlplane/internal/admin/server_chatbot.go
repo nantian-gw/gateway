@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/admin/chatbot"
+	"github.com/nantian-gw/gateway/controlplane/internal/admin/chatbot"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	chatbotConfigNamespace = "aether-gateway"
+	chatbotConfigNamespace = "nantian-gw"
 	chatbotConfigSecret    = "chatbot-config"
 )
 
@@ -75,7 +75,7 @@ type chatbotConfigRequest struct {
 }
 
 // handleChatbotConfigPut (PUT) writes the chatbot configuration into the
-// Kubernetes Secret "chatbot-config" in the aether-gateway namespace.
+// Kubernetes Secret "chatbot-config" in the nantian-gw namespace.
 // If the API key in the request is masked (contains "••••"), the existing
 // key is preserved.
 func (s *Server) handleChatbotConfigPut(w http.ResponseWriter, r *http.Request) {
@@ -193,7 +193,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build dynamic RAG context from the live cluster.
-	ragContext, err := chatbot.BuildRAGContext(r.Context(), s.resources.client, "gateway.networking.k8s.io/aether-gateway")
+	ragContext, err := chatbot.BuildRAGContext(r.Context(), s.resources.client, "gateway.networking.k8s.io/nantian-gw")
 	if err != nil {
 		s.logger.Warn("failed to build RAG context, continuing without it", "error", err)
 		ragContext = ""
@@ -259,7 +259,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 
 	// Validate YAML manifests.
 	for _, yamlBlock := range yamlBlocks {
-		_, err := chatbot.DryRunValidate(r.Context(), "gateway.networking.k8s.io/aether-gateway", yamlBlock)
+		_, err := chatbot.DryRunValidate(r.Context(), "gateway.networking.k8s.io/nantian-gw", yamlBlock)
 		if err == nil {
 			// Validation succeeded.
 			fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":true}\n\n")
@@ -340,7 +340,7 @@ func runAutoCorrectSSE(
 		correctedYAMLBlocks := extractYAMLBlocks(corrected.String())
 		validated := false
 		for _, yb := range correctedYAMLBlocks {
-			_, dryRunErr := chatbot.DryRunValidate(ctx, "gateway.networking.k8s.io/aether-gateway", yb)
+			_, dryRunErr := chatbot.DryRunValidate(ctx, "gateway.networking.k8s.io/nantian-gw", yb)
 			if dryRunErr == nil {
 				validated = true
 				fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":true,\"corrected\":true}\n\n")

@@ -1,14 +1,14 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: aether-gateway-controlplane
+  name: nantian-controlplane
   namespace: monitoring
   labels:
     release: kube-prometheus-stack
 spec:
   namespaceSelector:
     matchNames:
-      - aether-gateway
+      - nantian-gw
   selector:
     matchLabels:
       app.kubernetes.io/component: controlplane

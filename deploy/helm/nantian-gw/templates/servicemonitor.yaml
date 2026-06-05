@@ -1,6 +1,6 @@
 {{- if .Values.serviceMonitor.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
-{{- $name := include "aether-gateway.name" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
+{{- $name := include "nantian-gw.name" . }}
 ---
 {{- if .Values.controlplane.enabled }}
 apiVersion: monitoring.coreos.com/v1
@@ -9,7 +9,7 @@ metadata:
   name: {{ $name }}-controlplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.controlplane.labels" . | nindent 4 }}
     {{- with .Values.serviceMonitor.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -34,14 +34,14 @@ metadata:
   name: {{ $name }}-dataplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
     {{- with .Values.serviceMonitor.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   selector:
     matchLabels:
-      {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 6 }}
+      {{- include "nantian-gw.dataplane.selectorLabels" . | nindent 6 }}
   podMetricsEndpoints:
     - port: admin
       interval: {{ .Values.serviceMonitor.interval }}

@@ -47,7 +47,7 @@ jobs:
           fi
 
           owner_lc="${GITHUB_REPOSITORY_OWNER,,}"
-          control_image_name="ghcr.io/${owner_lc}/aether-gateway-controlplane"
+          control_image_name="ghcr.io/${owner_lc}/nantian-controlplane"
           control_image="${control_image_name}:${release_tag}"
 
           {

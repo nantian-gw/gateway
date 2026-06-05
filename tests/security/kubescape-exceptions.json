@@ -1,7 +1,7 @@
 {
   "controlConfigurations": [
     {
-      "name": "aether-gateway-controlplane-rbac-reviewed",
+      "name": "nantian-controlplane-rbac-reviewed",
       "description": "The controlplane must watch Secret references across namespaces and delete controller-managed resources during reconciliation.",
       "attributes": {
         "action": "alertOnly"
@@ -16,10 +16,10 @@
             "ServiceAccount"
           ],
           "namespaces": [
-            "aether-gateway"
+            "nantian-gw"
           ],
           "resourceNames": [
-            "aether-gateway-controlplane"
+            "nantian-controlplane"
           ]
         }
       ],

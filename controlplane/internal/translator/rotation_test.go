@@ -18,15 +18,15 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	gatewayClass := &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: controllerName,
 		},
@@ -34,7 +34,7 @@ func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *tes
 	gateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,
@@ -85,10 +85,10 @@ func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *tes
 
 func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotation(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	gatewayClass := &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: controllerName,
 		},
@@ -96,7 +96,7 @@ func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotati
 	gateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,
@@ -157,10 +157,10 @@ func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotati
 
 func TestBuildSnapshotFallsBackToSecondaryCertificateWhenPrimaryBecomesInvalid(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	gatewayClass := &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: controllerName,
 		},
@@ -168,7 +168,7 @@ func TestBuildSnapshotFallsBackToSecondaryCertificateWhenPrimaryBecomesInvalid(t
 	gateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,
@@ -235,7 +235,7 @@ func TestBuildSnapshotFallsBackToSecondaryCertificateWhenPrimaryBecomesInvalid(t
 
 func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	clientCA := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{Name: "gateway-client-ca", Namespace: "default"},
@@ -246,7 +246,7 @@ func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t 
 	gateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			TLS: &gatewayv1.GatewayTLSConfig{
 				Frontend: &gatewayv1.FrontendTLSConfig{
 					Default: gatewayv1.TLSConfig{
@@ -276,7 +276,7 @@ func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t 
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -312,7 +312,7 @@ func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t 
 
 func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotation(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	clientCert := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: "client-cert", Namespace: "default"},
@@ -325,7 +325,7 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 	gateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			TLS: &gatewayv1.GatewayTLSConfig{
 				Backend: &gatewayv1.GatewayBackendTLS{
 					ClientCertificateRef: &gatewayv1.SecretObjectReference{
@@ -345,7 +345,7 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -380,7 +380,7 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 
 func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testing.T) {
 	scheme := rotationTestScheme(t, true)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	ca := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{Name: "orders-ca", Namespace: "default"},
@@ -416,7 +416,7 @@ func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testin
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},

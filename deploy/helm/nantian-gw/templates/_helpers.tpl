@@ -1,14 +1,14 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "aether-gateway.name" -}}
+{{- define "nantian-gw.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Create a default fully qualified app name.
 */}}
-{{- define "aether-gateway.fullname" -}}
+{{- define "nantian-gw.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -24,21 +24,21 @@ Create a default fully qualified app name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "aether-gateway.chart" -}}
+{{- define "nantian-gw.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "aether-gateway.labels" -}}
-helm.sh/chart: {{ include "aether-gateway.chart" . }}
-{{ include "aether-gateway.selectorLabels" . }}
+{{- define "nantian-gw.labels" -}}
+helm.sh/chart: {{ include "nantian-gw.chart" . }}
+{{ include "nantian-gw.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: aether-gateway
+app.kubernetes.io/part-of: nantian-gw
 {{- with .Values.global.commonLabels }}
 {{ toYaml . }}
 {{- end }}
@@ -47,63 +47,63 @@ app.kubernetes.io/part-of: aether-gateway
 {{/*
 Selector labels
 */}}
-{{- define "aether-gateway.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "aether-gateway.name" . }}
+{{- define "nantian-gw.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "nantian-gw.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Controlplane labels
 */}}
-{{- define "aether-gateway.controlplane.labels" -}}
-{{ include "aether-gateway.labels" . }}
+{{- define "nantian-gw.controlplane.labels" -}}
+{{ include "nantian-gw.labels" . }}
 app.kubernetes.io/component: controlplane
 {{- end }}
 
 {{/*
 Controlplane selector labels
 */}}
-{{- define "aether-gateway.controlplane.selectorLabels" -}}
-{{ include "aether-gateway.selectorLabels" . }}
-app: {{ include "aether-gateway.name" . }}-controlplane
+{{- define "nantian-gw.controlplane.selectorLabels" -}}
+{{ include "nantian-gw.selectorLabels" . }}
+app: {{ include "nantian-gw.name" . }}-controlplane
 {{- end }}
 
 {{/*
 Dataplane labels
 */}}
-{{- define "aether-gateway.dataplane.labels" -}}
-{{ include "aether-gateway.labels" . }}
+{{- define "nantian-gw.dataplane.labels" -}}
+{{ include "nantian-gw.labels" . }}
 app.kubernetes.io/component: dataplane
 {{- end }}
 
 {{/*
 Dataplane selector labels
 */}}
-{{- define "aether-gateway.dataplane.selectorLabels" -}}
-{{ include "aether-gateway.selectorLabels" . }}
-app: {{ include "aether-gateway.name" . }}-dataplane
+{{- define "nantian-gw.dataplane.selectorLabels" -}}
+{{ include "nantian-gw.selectorLabels" . }}
+app: {{ include "nantian-gw.name" . }}-dataplane
 {{- end }}
 
 {{/*
 Dashboard labels
 */}}
-{{- define "aether-gateway.dashboard.labels" -}}
-{{ include "aether-gateway.labels" . }}
+{{- define "nantian-gw.dashboard.labels" -}}
+{{ include "nantian-gw.labels" . }}
 app.kubernetes.io/component: dashboard
 {{- end }}
 
 {{/*
 Dashboard selector labels
 */}}
-{{- define "aether-gateway.dashboard.selectorLabels" -}}
-{{ include "aether-gateway.selectorLabels" . }}
-app: {{ include "aether-gateway.name" . }}-dashboard
+{{- define "nantian-gw.dashboard.selectorLabels" -}}
+{{ include "nantian-gw.selectorLabels" . }}
+app: {{ include "nantian-gw.name" . }}-dashboard
 {{- end }}
 
 {{/*
 Controlplane image
 */}}
-{{- define "aether-gateway.controlplane.image" -}}
+{{- define "nantian-gw.controlplane.image" -}}
 {{- $registry := .Values.controlplane.image.registry | default .Values.global.imageRegistry -}}
 {{- $repository := .Values.controlplane.image.repository -}}
 {{- $tag := .Values.controlplane.image.tag | default .Chart.AppVersion -}}
@@ -117,7 +117,7 @@ Controlplane image
 {{/*
 Dataplane image
 */}}
-{{- define "aether-gateway.dataplane.image" -}}
+{{- define "nantian-gw.dataplane.image" -}}
 {{- $registry := .Values.dataplane.image.registry | default .Values.global.imageRegistry -}}
 {{- $repository := .Values.dataplane.image.repository -}}
 {{- $tag := .Values.dataplane.image.tag | default .Chart.AppVersion -}}
@@ -131,7 +131,7 @@ Dataplane image
 {{/*
 Dashboard image
 */}}
-{{- define "aether-gateway.dashboard.image" -}}
+{{- define "nantian-gw.dashboard.image" -}}
 {{- $registry := .Values.dashboard.image.registry | default .Values.global.imageRegistry -}}
 {{- $repository := .Values.dashboard.image.repository -}}
 {{- $tag := .Values.dashboard.image.tag | default .Chart.AppVersion -}}
@@ -145,7 +145,7 @@ Dashboard image
 {{/*
 Release namespace
 */}}
-{{- define "aether-gateway.namespace" -}}
+{{- define "nantian-gw.namespace" -}}
 {{- if .Values.namespace.create }}
 {{- .Values.namespace.name }}
 {{- else }}
@@ -156,7 +156,7 @@ Release namespace
 {{/*
 Image pull secrets
 */}}
-{{- define "aether-gateway.imagePullSecrets" -}}
+{{- define "nantian-gw.imagePullSecrets" -}}
 {{- $secrets := list -}}
 {{- range .Values.global.imagePullSecrets }}
 {{- $secrets = append $secrets (dict "name" .) }}
@@ -170,7 +170,7 @@ imagePullSecrets:
 {{/*
 Security context defaults
 */}}
-{{- define "aether-gateway.podSecurityContext" -}}
+{{- define "nantian-gw.podSecurityContext" -}}
 securityContext:
   runAsNonRoot: true
   runAsUser: 65532
@@ -183,7 +183,7 @@ securityContext:
 {{/*
 Container security context
 */}}
-{{- define "aether-gateway.containerSecurityContext" -}}
+{{- define "nantian-gw.containerSecurityContext" -}}
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
@@ -195,14 +195,14 @@ securityContext:
 {{/*
 Controlplane config as YAML
 */}}
-{{- define "aether-gateway.controlplane.configYaml" -}}
+{{- define "nantian-gw.controlplane.configYaml" -}}
 {{- toYaml .Values.controlplane.config }}
 {{- end }}
 
 {{/*
 Dataplane config as YAML
 */}}
-{{- define "aether-gateway.dataplane.configYaml" -}}
+{{- define "nantian-gw.dataplane.configYaml" -}}
 {{- $cfg := .Values.dataplane.config -}}
 {{- if $cfg.controlPlaneAddr -}}
 {{- $dpConfig := omit $cfg "controlPlaneAddr" -}}
@@ -210,7 +210,7 @@ controlPlaneAddr: {{ $cfg.controlPlaneAddr | quote }}
 {{ toYaml $dpConfig }}
 {{- else -}}
 {{- $dpConfig := omit $cfg "controlPlaneAddr" -}}
-controlPlaneAddr: "http://{{ include "aether-gateway.name" . }}-controlplane-grpc.{{ include "aether-gateway.namespace" . }}.svc.cluster.local:18080"
+controlPlaneAddr: "http://{{ include "nantian-gw.name" . }}-controlplane-grpc.{{ include "nantian-gw.namespace" . }}.svc.cluster.local:18080"
 {{ toYaml $dpConfig }}
 {{- end }}
 {{- end }}

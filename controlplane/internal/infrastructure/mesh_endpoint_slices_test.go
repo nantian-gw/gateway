@@ -35,7 +35,7 @@ func TestDesiredMeshEndpointSlicesFromDataplaneEndpointsMatchesDirectPlanning(t 
 	pods := []corev1.Pod{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aether-gateway-dataplane-0",
+				Name:      "nantian-dataplane-0",
 				Namespace: defaultDataplaneNamespace,
 			},
 			Status: corev1.PodStatus{
@@ -48,7 +48,7 @@ func TestDesiredMeshEndpointSlicesFromDataplaneEndpointsMatchesDirectPlanning(t 
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aether-gateway-dataplane-1",
+				Name:      "nantian-dataplane-1",
 				Namespace: defaultDataplaneNamespace,
 			},
 			Status: corev1.PodStatus{
@@ -61,7 +61,7 @@ func TestDesiredMeshEndpointSlicesFromDataplaneEndpointsMatchesDirectPlanning(t 
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aether-gateway-dataplane-2",
+				Name:      "nantian-dataplane-2",
 				Namespace: defaultDataplaneNamespace,
 			},
 			Status: corev1.PodStatus{

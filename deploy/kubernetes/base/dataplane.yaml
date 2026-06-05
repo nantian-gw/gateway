@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aether-gateway-dataplane
-  namespace: aether-gateway
+  name: nantian-dataplane
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dataplane
 spec:
   replicas: 2
@@ -19,16 +19,16 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: aether-gateway-dataplane
+      app: nantian-dataplane
   template:
     metadata:
       labels:
-        app: aether-gateway-dataplane
-        app.kubernetes.io/name: aether-gateway
-        app.kubernetes.io/part-of: aether-gateway
+        app: nantian-dataplane
+        app.kubernetes.io/name: nantian-gw
+        app.kubernetes.io/part-of: nantian-gw
         app.kubernetes.io/component: dataplane
     spec:
-      serviceAccountName: aether-gateway-dataplane
+      serviceAccountName: nantian-dataplane
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       securityContext:
@@ -47,10 +47,10 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: aether-gateway-dataplane
+              app: nantian-dataplane
       containers:
         - name: dataplane
-          image: aether-gateway-dataplane:dev
+          image: nantian-dataplane:dev
           imagePullPolicy: Always
           env:
             - name: PGW_NODE_ID
@@ -59,7 +59,7 @@ spec:
                   fieldPath: metadata.name
           args:
             - "--config"
-            - "/etc/aether-gateway/config.yaml"
+            - "/etc/nantian-gw/config.yaml"
           ports:
             - name: http
               containerPort: 10080
@@ -101,27 +101,27 @@ spec:
               add: ["NET_BIND_SERVICE"]
           volumeMounts:
             - name: config
-              mountPath: /etc/aether-gateway
+              mountPath: /etc/nantian-gw
               readOnly: true
             - name: xds-tls
-              mountPath: /etc/aether-gateway/xds-tls
+              mountPath: /etc/nantian-gw/xds-tls
               readOnly: true
             - name: admin-auth
-              mountPath: /etc/aether-gateway/admin-auth
+              mountPath: /etc/nantian-gw/admin-auth
               readOnly: true
             - name: tmp
               mountPath: /tmp
       volumes:
         - name: config
           configMap:
-            name: aether-gateway-dataplane-config
+            name: nantian-dataplane-config
         - name: xds-tls
           secret:
-            secretName: aether-gateway-dataplane-xds-tls
+            secretName: nantian-dataplane-xds-tls
             optional: true
         - name: admin-auth
           secret:
-            secretName: aether-gateway-dataplane-admin-auth
+            secretName: nantian-dataplane-admin-auth
             optional: true
         - name: tmp
           emptyDir:
@@ -130,14 +130,14 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: aether-gateway-dataplane
-  namespace: aether-gateway
+  name: nantian-dataplane
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dataplane
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: aether-gateway-dataplane
+      app: nantian-dataplane

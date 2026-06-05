@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
 )
 
 func TestServerOptionsFromConfigIncludesRuntimeConstraintsWithoutTLS(t *testing.T) {

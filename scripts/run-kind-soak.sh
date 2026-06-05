@@ -333,7 +333,7 @@ def parse_metric_text(text: str):
             continue
         metric = series.split("{", 1)[0]
         scalars[metric] += value
-        if metric == "aether_gateway_dataplane_xds_apply_stage_duration_ms_bucket" and 'stage="ack_wait"' in series:
+        if metric == "nantian_gateway_dataplane_xds_apply_stage_duration_ms_bucket" and 'stage="ack_wait"' in series:
             match = re.search(r'le="([^"]+)"', series)
             if match:
                 buckets[match.group(1)] += value
@@ -376,9 +376,9 @@ for path in metric_files():
 
 first = metrics[0]["scalars"] if metrics else {}
 last = metrics[-1]["scalars"] if metrics else {}
-stream_delta = last.get("aether_gateway_dataplane_xds_stream_failures_total", 0) - first.get("aether_gateway_dataplane_xds_stream_failures_total", 0)
-connect_delta = last.get("aether_gateway_dataplane_xds_connect_failures_total", 0) - first.get("aether_gateway_dataplane_xds_connect_failures_total", 0)
-nack_delta = last.get("aether_gateway_dataplane_xds_snapshots_nacked_total", 0) - first.get("aether_gateway_dataplane_xds_snapshots_nacked_total", 0)
+stream_delta = last.get("nantian_gateway_dataplane_xds_stream_failures_total", 0) - first.get("nantian_gateway_dataplane_xds_stream_failures_total", 0)
+connect_delta = last.get("nantian_gateway_dataplane_xds_connect_failures_total", 0) - first.get("nantian_gateway_dataplane_xds_connect_failures_total", 0)
+nack_delta = last.get("nantian_gateway_dataplane_xds_snapshots_nacked_total", 0) - first.get("nantian_gateway_dataplane_xds_snapshots_nacked_total", 0)
 ack_p99 = histogram_quantile(metrics[-1]["buckets"], 0.99) if metrics else None
 
 ready_values = []

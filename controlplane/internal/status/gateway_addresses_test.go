@@ -14,8 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 )
 
 func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -77,7 +77,7 @@ func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing
 }
 
 func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -126,7 +126,7 @@ func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
 }
 
 func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -158,7 +158,7 @@ func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T
 }
 
 func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
 
@@ -211,7 +211,7 @@ func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 }
 
 func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
 
@@ -261,7 +261,7 @@ func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *te
 }
 
 func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -295,7 +295,7 @@ func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testi
 }
 
 func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
 
@@ -339,7 +339,7 @@ func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *
 }
 
 func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
 
@@ -383,7 +383,7 @@ func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *
 }
 
 func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -426,7 +426,7 @@ func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *tes
 }
 
 func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	service.Spec.Type = corev1.ServiceTypeLoadBalancer
 	service.Status = corev1.ServiceStatus{
@@ -473,7 +473,7 @@ func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testi
 }
 
 func TestReconcileGatewayStaticAddressesAcceptGatewayServiceExternalIP(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	service.Spec.Type = corev1.ServiceTypeNodePort
 	service.Spec.ExternalIPs = []string{"10.10.10.25"}
@@ -560,7 +560,7 @@ func TestBuildStatusAddressesCanonicalizesPublishedValues(t *testing.T) {
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedService(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -597,7 +597,7 @@ func TestReconcileGatewayStatusWaitsForDerivedService(t *testing.T) {
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -644,7 +644,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *test
 }
 
 func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -700,7 +700,7 @@ func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMeta
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -717,7 +717,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *tes
 					Name:      infrastructure.GatewayServiceName("gateway-static-addresses"),
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
-						"app.kubernetes.io/managed-by":           "aether-gateway",
+						"app.kubernetes.io/managed-by":           "nantian-gw",
 						"nantian.dev/service-role":                    "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
 						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
@@ -756,7 +756,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *tes
 }
 
 func TestReconcileGatewayStatusWaitsForGatewayClassParametersReferenceConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	classNamespace := gatewayv1.Namespace("infra-system")
 
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
@@ -787,7 +787,7 @@ func TestReconcileGatewayStatusWaitsForGatewayClassParametersReferenceConvergenc
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -823,7 +823,7 @@ func TestReconcileGatewayStatusWaitsForGatewayClassParametersReferenceConvergenc
 }
 
 func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -877,7 +877,7 @@ func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataC
 }
 
 func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -932,7 +932,7 @@ func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerive
 }
 
 func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -983,7 +983,7 @@ func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerived
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceCreation(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -1016,7 +1016,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceCreation(t *t
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -1054,7 +1054,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -1075,7 +1075,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 						discoveryv1.LabelManagedBy:               managedresources.ManagedByValue,
 						discoveryv1.LabelServiceName:             infrastructure.GatewayServiceName("gateway-static-addresses"),
 						managedresources.ServiceRoleKey:          managedresources.EndpointSliceRoleGatewayFrontend,
-						"app.kubernetes.io/managed-by":           "aether-gateway",
+						"app.kubernetes.io/managed-by":           "nantian-gw",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
 						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
 					},
@@ -1102,7 +1102,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 }
 
 func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -1138,7 +1138,7 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 
 func staticAddressGatewayClass(controllerName gatewayv1.GatewayController) *gatewayv1.GatewayClass {
 	return &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: controllerName,
 		},
@@ -1154,7 +1154,7 @@ func staticAddressGateway(addresses []gatewayv1.GatewaySpecAddress) *gatewayv1.G
 			UID:        staticAddressGatewayUID,
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Addresses:        addresses,
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
@@ -1174,7 +1174,7 @@ func gatewayInfrastructureService(namespace, gatewayName string) *corev1.Service
 			Namespace: namespace,
 			UID:       staticAddressServiceUID,
 			Labels: map[string]string{
-				"app.kubernetes.io/managed-by":           "aether-gateway",
+				"app.kubernetes.io/managed-by":           "nantian-gw",
 				"nantian.dev/service-role":                    "gateway-metadata",
 				"gateway.networking.k8s.io/gateway-name": gatewayName,
 				"nantian.dev/gateway-namespace":               namespace,
@@ -1185,7 +1185,7 @@ func gatewayInfrastructureService(namespace, gatewayName string) *corev1.Service
 				"nantian.dev/owner-name":        gatewayName,
 				"nantian.dev/owner-uid":         string(staticAddressGatewayUID),
 				"nantian.dev/owner-generation":  "1",
-				"nantian.dev/gatewayclass-name": "aether-gateway",
+				"nantian.dev/gatewayclass-name": "nantian-gw",
 			},
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion:         gatewayv1.GroupVersion.String(),

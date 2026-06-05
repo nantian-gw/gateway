@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
 )
 
 func serverOptionsFromConfig(

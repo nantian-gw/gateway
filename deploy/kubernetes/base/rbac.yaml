@@ -1,31 +1,31 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: aether-gateway-controlplane
-  namespace: aether-gateway
+  name: nantian-controlplane
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: controlplane
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: aether-gateway-dataplane
-  namespace: aether-gateway
+  name: nantian-dataplane
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dataplane
 automountServiceAccountToken: false
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: aether-gateway-controlplane
+  name: nantian-controlplane
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: controlplane
 rules:
   - apiGroups: [""]
@@ -70,26 +70,26 @@ rules:
   - apiGroups: ["multicluster.x-k8s.io"]
     resources: ["serviceimports"]
     verbs: ["create", "delete", "get", "list", "update", "watch"]
-  - apiGroups: ["gateway.aether.dev"]
+  - apiGroups: ["gateway.nantian.dev"]
     resources: ["aiservices", "tokenpolicies", "wasmplugins"]
     verbs: ["create", "delete", "get", "list", "update", "watch"]
-  - apiGroups: ["gateway.aether.dev"]
+  - apiGroups: ["gateway.nantian.dev"]
     resources: ["aiservices/status", "tokenpolicies/status", "wasmplugins/status"]
     verbs: ["get", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: aether-gateway-controlplane
+  name: nantian-controlplane
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: controlplane
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: aether-gateway-controlplane
+  name: nantian-controlplane
 subjects:
   - kind: ServiceAccount
-    name: aether-gateway-controlplane
-    namespace: aether-gateway
+    name: nantian-controlplane
+    namespace: nantian-gw

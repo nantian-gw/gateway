@@ -10,14 +10,14 @@ If you prefer to start from the Kubernetes manifests in the repository rather th
 - Retain `PodDisruptionBudget`, rolling upgrade strategy, and `readinessProbe`.
 - Set a non-zero `runtimeTuning.gracefulDrainPeriodMs` for the data plane, and ensure this value is less than the Pod's `terminationGracePeriodSeconds`; the repo production overlay defaults to `10000ms / 30s`.
 - Expose control plane admin/metrics and data plane admin only via in-cluster `ClusterIP`.
-- Use `aether-gateway-controlplane-metrics` and `aether-gateway-dataplane-metrics` for metrics scraping.
+- Use `nantian-controlplane-metrics` and `nantian-dataplane-metrics` for metrics scraping.
 - Retain control plane permissions for `get/list/watch/create/update/patch` on `coordination.k8s.io/leases`; high-availability aggregation in `/v1/nodes` depends on shared Lease state.
 - Configure Bearer Token for control plane admin and data plane admin.
 - Configure TLS for control plane gRPC; when deploying across nodes or networks, it is recommended to directly enable mTLS.
 - Configure CA for data plane `xdsTls`; when enabling mTLS, simultaneously configure client certificates.
 - If using `HTTPRoute.sessionPersistence`, `GRPCRoute.sessionPersistence`, or `BackendLBPolicy.sessionPersistence`, configure a stable `sessionPersistence.secretKey` or `secretKeyFile` for the data plane.
 - Keep `NetworkPolicy` enabled, only allowing the actually needed namespaces and ports.
-- The repository default base manifests currently only allow the `aether-gateway` namespace to access control plane `admin` / `metrics`, and only expose the control plane `healthProbe` port to probes; if Prometheus or an operations entry point is not in that namespace, add corresponding additional `NetworkPolicy` entries.
+- The repository default base manifests currently only allow the `nantian-gw` namespace to access control plane `admin` / `metrics`, and only expose the control plane `healthProbe` port to probes; if Prometheus or an operations entry point is not in that namespace, add corresponding additional `NetworkPolicy` entries.
 - Prometheus should only scrape the dedicated metrics Service; do not reuse the admin interface.
 - If the control plane needs to publish a global ingress address directly, change `statusAddress` to a real reachable external IP or domain name; if a Gateway requires multiple programmable addresses, use `statusAddresses` to explicitly list all addresses. Do not use `127.0.0.1` in cluster deployments — the loopback address in local sample configurations is only suitable for local process debugging.
 - If a Gateway explicitly sets `spec.addresses`, ensure it represents the same set of programmable addresses as `statusAddress` or `statusAddresses`; otherwise `Programmed=False`, `Reason=AddressNotUsable` may appear. For explicit IP addresses, the control plane-maintained Gateway Service will synchronously set `externalIPs`, and for `LoadBalancer` type, will additionally set the first `loadBalancerIP`.

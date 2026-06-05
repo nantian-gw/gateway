@@ -1,16 +1,16 @@
 global:
   commonLabels:
-    conponent: aether-gateway
+    conponent: nantian-gw
   imagePullSecrets:
     - sycp-sre-pull-secret
 
 namespace:
   create: false
-  name: "aether-gateway"
+  name: "nantian-gw"
 
 gatewayClass:
   enabled: true
-  controllerName: "gateway.networking.k8s.io/aether-gateway"
+  controllerName: "gateway.networking.k8s.io/nantian-gw"
 
 certs:
   generate: true
@@ -21,7 +21,7 @@ controlplane:
 
   image:
     registry: "harbor.qihoo.net"
-    repository: "sycp-sre/aether-controller"
+    repository: "sycp-sre/nantian-controller"
     tag: "latest"
     pullPolicy: Always
 
@@ -48,8 +48,8 @@ controlplane:
   config:
     grpcTLS:
       enabled: true
-      certPath: "/etc/aether-gateway/grpc-tls/tls.crt"
-      keyPath: "/etc/aether-gateway/grpc-tls/tls.key"
+      certPath: "/etc/nantian-gw/grpc-tls/tls.crt"
+      keyPath: "/etc/nantian-gw/grpc-tls/tls.key"
 
 dataplane:
   enabled: true
@@ -57,7 +57,7 @@ dataplane:
 
   image:
     registry: "harbor.qihoo.net"
-    repository: "sycp-sre/aether-dataplane"
+    repository: "sycp-sre/nantian-dataplane"
     tag: "latest"
     pullPolicy: Always
 
@@ -83,7 +83,7 @@ dataplane:
 
   xdsTLS:
     enabled: true
-    domainName: "aether-gateway-controlplane-grpc.aether-gateway.svc.cluster.local"
+    domainName: "nantian-controlplane-grpc.nantian-gw.svc.cluster.local"
 
   sessionPersistence:
     sharedSecret: "lahdo/BRzV7C+P8fqUD0OmABxhMbpBYqOcL4ciZdc00="
@@ -92,10 +92,10 @@ dataplane:
   config:
     nodeId: "dp-kubernetes"
     cluster: "production"
-    controlPlaneAddr: "https://aether-gateway-controlplane-grpc.aether-gateway.svc.cluster.local:18080"
+    controlPlaneAddr: "https://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
     adminAddr: "0.0.0.0:19080"
     log:
-      level: "info,aether_core::connectors=off"
+      level: "info,nantian_core::connectors=off"
       format: "json"
       nonBlocking: true
       nonBlockingBufferedLines: 65536
@@ -105,7 +105,7 @@ dataplane:
       bearerTokenFile: ""
     accessLog:
       enabled: true
-      path: "/var/log/aether-gateway/access.log"
+      path: "/var/log/nantian-gw/access.log"
       mode: "text"
       format: "%TIMESTAMP% %EVENT% %PROTOCOL% %LISTENER% %CLIENT_IP% %HOST% %METHOD% %PATH% %REQUEST_ID% %ROUTE_NAMESPACE% %ROUTE_NAME% %BACKEND% %STATUS% %LATENCY_MS% %BYTES_RECEIVED% %BYTES_SENT% %SNAPSHOT_VERSION% %RETRY_ATTEMPTS% %RESPONSE_FLAGS%"
       mode: "json"
@@ -136,20 +136,20 @@ dataplane:
         acceptConcurrency: 16
     xdsTls:
       enabled: true
-      caPath: "/etc/aether-gateway/xds-tls/ca.crt"
-      certPath: "/etc/aether-gateway/xds-tls/tls.crt"
-      keyPath: "/etc/aether-gateway/xds-tls/tls.key"
-      domainName: "aether-gateway-controlplane-grpc.aether-gateway.svc.cluster.local"
+      caPath: "/etc/nantian-gw/xds-tls/ca.crt"
+      certPath: "/etc/nantian-gw/xds-tls/tls.crt"
+      keyPath: "/etc/nantian-gw/xds-tls/tls.key"
+      domainName: "nantian-controlplane-grpc.nantian-gw.svc.cluster.local"
     sessionPersistence:
       secretKey: ""
-      secretKeyFile: "/etc/aether-gateway/session-persistence/session-persistence"
+      secretKeyFile: "/etc/nantian-gw/session-persistence/session-persistence"
 
 dashboard:
   enabled: true
   replicas: 1
   image:
     registry: "harbor.qihoo.net"
-    repository: "sycp-sre/aether-dashboard"
+    repository: "sycp-sre/nantian-dashboard"
     tag: "latest"
     pullPolicy: Always
 

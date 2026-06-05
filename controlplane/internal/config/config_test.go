@@ -24,7 +24,7 @@ func TestLoadAppliesProductionDefaults(t *testing.T) {
 	if cfg.HealthProbeAddr != ":18083" {
 		t.Fatalf("unexpected health probe addr: %s", cfg.HealthProbeAddr)
 	}
-	if cfg.LeaderElection.ID != "aether-gateway-controlplane-leader" {
+	if cfg.LeaderElection.ID != "nantian-controlplane-leader" {
 		t.Fatalf("unexpected leader election id: %s", cfg.LeaderElection.ID)
 	}
 	if cfg.LeaderElectionLeaseDuration() != 15*time.Second {

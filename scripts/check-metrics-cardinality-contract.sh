@@ -150,12 +150,12 @@ def variable_query(name):
 bad_variable_sources = [
     name
     for name in ["namespace", "pod_dp"]
-    if "aether_gateway_dataplane_ready" not in variable_query(name)
-    or "aether_gateway_dataplane_container_cpu_cores" in variable_query(name)
+    if "nantian_gateway_dataplane_ready" not in variable_query(name)
+    or "nantian_gateway_dataplane_container_cpu_cores" in variable_query(name)
 ]
 if bad_variable_sources:
     raise SystemExit(
-        f"{path} Grafana namespace and dataplane pod variables must use aether_gateway_dataplane_ready; "
+        f"{path} Grafana namespace and dataplane pod variables must use nantian_gateway_dataplane_ready; "
         "do not source them from optional container resource recording rules"
     )
 
@@ -201,7 +201,7 @@ request_latency_protocol_selector = (
 )
 
 hardcoded_namespace_exprs = [
-    expr for expr in exprs if 'namespace="aether-gateway"' in expr
+    expr for expr in exprs if 'namespace="nantian-gw"' in expr
 ]
 if hardcoded_namespace_exprs:
     raise SystemExit(
@@ -210,11 +210,11 @@ if hardcoded_namespace_exprs:
     )
 
 precomputed_ratio_gauges = [
-    "aether_gateway_dataplane_traffic_retry_rate",
-    "aether_gateway_dataplane_traffic_failover_success_rate",
-    "aether_gateway_dataplane_traffic_upstream_pool_hit_ratio",
-    "aether_gateway_dataplane_traffic_upstream_connect_latency_ms_average",
-    "aether_gateway_dataplane_container_cpu_throttle_ratio",
+    "nantian_gateway_dataplane_traffic_retry_rate",
+    "nantian_gateway_dataplane_traffic_failover_success_rate",
+    "nantian_gateway_dataplane_traffic_upstream_pool_hit_ratio",
+    "nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_average",
+    "nantian_gateway_dataplane_container_cpu_throttle_ratio",
 ]
 bad_ratio_exprs = [
     expr
@@ -228,14 +228,14 @@ if bad_ratio_exprs:
     )
 
 replicated_inventory_gauges = [
-    "aether_gateway_dataplane_listener_count",
-    "aether_gateway_dataplane_http_route_count",
-    "aether_gateway_dataplane_grpc_route_count",
-    "aether_gateway_dataplane_stream_route_count",
-    "aether_gateway_dataplane_backend_count",
-    "aether_gateway_dataplane_secret_count",
-    "aether_gateway_dataplane_session_persistence_route_rule_count",
-    "aether_gateway_dataplane_session_persistence_backend_policy_count",
+    "nantian_gateway_dataplane_listener_count",
+    "nantian_gateway_dataplane_http_route_count",
+    "nantian_gateway_dataplane_grpc_route_count",
+    "nantian_gateway_dataplane_stream_route_count",
+    "nantian_gateway_dataplane_backend_count",
+    "nantian_gateway_dataplane_secret_count",
+    "nantian_gateway_dataplane_session_persistence_route_rule_count",
+    "nantian_gateway_dataplane_session_persistence_backend_policy_count",
 ]
 bad_inventory_sum_exprs = [
     expr
@@ -252,7 +252,7 @@ bad_listener_state_sum_exprs = [
     expr
     for expr in exprs
     if re.search(
-        r"\bsum(?:\s+(?:by|without)\s*\([^)]*\))?\s*\(\s*aether_gateway_dataplane_listener_.*_count\b",
+        r"\bsum(?:\s+(?:by|without)\s*\([^)]*\))?\s*\(\s*nantian_gateway_dataplane_listener_.*_count\b",
         expr,
     )
 ]
@@ -263,9 +263,9 @@ if bad_listener_state_sum_exprs:
     )
 
 runtime_current_failure_gauges = [
-    "aether_gateway_dataplane_runtime_http_current_failure_count",
-    "aether_gateway_dataplane_runtime_stream_current_failure_count",
-    "aether_gateway_dataplane_runtime_tls_current_failure_count",
+    "nantian_gateway_dataplane_runtime_http_current_failure_count",
+    "nantian_gateway_dataplane_runtime_stream_current_failure_count",
+    "nantian_gateway_dataplane_runtime_tls_current_failure_count",
 ]
 bad_runtime_current_failure_sum_exprs = [
     expr
@@ -282,12 +282,12 @@ bad_http_ratio_denominator_exprs = [
     expr
     for expr in exprs
     if "/" in expr
-    and "aether_gateway_dataplane_traffic_events_total" in expr
+    and "nantian_gateway_dataplane_traffic_events_total" in expr
     and any(
         metric in expr
         for metric in [
-            "aether_gateway_dataplane_traffic_status_5xx_total",
-            "aether_gateway_dataplane_traffic_retried_events_total",
+            "nantian_gateway_dataplane_traffic_status_5xx_total",
+            "nantian_gateway_dataplane_traffic_retried_events_total",
         ]
     )
 ]
@@ -301,20 +301,20 @@ bad_http_request_panel_event_exprs = [
     title
     for title, description, target_exprs in panel_exprs
     if "http request" in f"{title} {description}".lower()
-    and any("aether_gateway_dataplane_traffic_events_total" in expr for expr in target_exprs)
+    and any("nantian_gateway_dataplane_traffic_events_total" in expr for expr in target_exprs)
 ]
 if bad_http_request_panel_event_exprs:
     raise SystemExit(
         f"{path} HTTP request panels must use request event counters; "
-        "use aether_gateway_dataplane_traffic_request_events_total so TCP/UDP traffic cannot inflate HTTP request trends"
+        "use nantian_gateway_dataplane_traffic_request_events_total so TCP/UDP traffic cannot inflate HTTP request trends"
     )
 
 protection_total_scope_metrics = [
-    "aether_gateway_dataplane_http_overload_rejected_total",
-    "aether_gateway_dataplane_tcp_overload_rejected_total",
-    "aether_gateway_dataplane_udp_overload_rejected_total",
-    "aether_gateway_dataplane_http_circuit_breaker_rejected_total",
-    "aether_gateway_dataplane_http_rate_limit_rejected_total",
+    "nantian_gateway_dataplane_http_overload_rejected_total",
+    "nantian_gateway_dataplane_tcp_overload_rejected_total",
+    "nantian_gateway_dataplane_udp_overload_rejected_total",
+    "nantian_gateway_dataplane_http_circuit_breaker_rejected_total",
+    "nantian_gateway_dataplane_http_rate_limit_rejected_total",
 ]
 bad_protection_total_scope_exprs = [
     expr
@@ -331,7 +331,7 @@ if bad_protection_total_scope_exprs:
 bad_request_latency_exprs = [
     expr
     for expr in exprs
-    if "aether_gateway_dataplane_traffic_request_latency_ms_bucket" in expr
+    if "nantian_gateway_dataplane_traffic_request_latency_ms_bucket" in expr
     and request_latency_protocol_selector not in expr
 ]
 if bad_request_latency_exprs:
@@ -345,7 +345,7 @@ bad_xds_freshness_exprs = [
     expr
     for expr in exprs
     if "time()" in expr
-    and "max(aether_gateway_dataplane_xds_last_apply_timestamp_seconds" in expr.replace(" ", "")
+    and "max(nantian_gateway_dataplane_xds_last_apply_timestamp_seconds" in expr.replace(" ", "")
 ]
 if bad_xds_freshness_exprs:
     raise SystemExit(
@@ -357,8 +357,8 @@ bad_xds_freshness_zero_exprs = [
     expr
     for expr in exprs
     if "time()" in expr
-    and "min(aether_gateway_dataplane_xds_last_apply_timestamp_seconds" in expr.replace(" ", "")
-    and "aether_gateway_dataplane_xds_last_apply_timestamp_seconds" in expr
+    and "min(nantian_gateway_dataplane_xds_last_apply_timestamp_seconds" in expr.replace(" ", "")
+    and "nantian_gateway_dataplane_xds_last_apply_timestamp_seconds" in expr
     and ">0" not in expr.replace(" ", "")
 ]
 if bad_xds_freshness_zero_exprs:
@@ -368,59 +368,59 @@ if bad_xds_freshness_zero_exprs:
     )
 
 unsupported_metric_names = {
-    "aether_requests_total": "aether_gateway_dataplane_traffic_request_events_total",
-    "aether_latency_p50_ms": "histogram_quantile() over aether_gateway_dataplane_traffic_request_latency_ms_bucket",
-    "aether_latency_p99_ms": "histogram_quantile() over aether_gateway_dataplane_traffic_request_latency_ms_bucket",
-    "aether_errors_total": "aether_gateway_dataplane_traffic_status_5xx_total or aether_gateway_dataplane_traffic_response_flags_total",
-    "aether_upstream_requests_total": "aether_gateway_dataplane_traffic_upstream_pool_hits_total plus aether_gateway_dataplane_traffic_upstream_pool_misses_total",
-    "aether_upstream_connection_pool_size": "aether_gateway_dataplane_traffic_upstream_pool_hits_total and aether_gateway_dataplane_traffic_upstream_pool_misses_total",
-    "aether_upstream_connections_active": "aether_gateway_dataplane_http_global_inflight_current or transport-specific inflight gauges",
-    "aether_memory_rss_bytes": "process_resident_memory_bytes",
-    "aether_task_queue_depth": "aether_gateway_dataplane_access_log_writer_queue_depth or transport-specific queue gauges",
-    "aether_tasks_active": "aether_gateway_dataplane_http_global_inflight_current and runtime plane gauges",
-    "aether_gateway_controlplane_gateway_convergence_stage_total": "aether_gateway_controlplane_gateway_convergence_stage_current",
+    "nantian_requests_total": "nantian_gateway_dataplane_traffic_request_events_total",
+    "nantian_latency_p50_ms": "histogram_quantile() over nantian_gateway_dataplane_traffic_request_latency_ms_bucket",
+    "nantian_latency_p99_ms": "histogram_quantile() over nantian_gateway_dataplane_traffic_request_latency_ms_bucket",
+    "nantian_errors_total": "nantian_gateway_dataplane_traffic_status_5xx_total or nantian_gateway_dataplane_traffic_response_flags_total",
+    "nantian_upstream_requests_total": "nantian_gateway_dataplane_traffic_upstream_pool_hits_total plus nantian_gateway_dataplane_traffic_upstream_pool_misses_total",
+    "nantian_upstream_connection_pool_size": "nantian_gateway_dataplane_traffic_upstream_pool_hits_total and nantian_gateway_dataplane_traffic_upstream_pool_misses_total",
+    "nantian_upstream_connections_active": "nantian_gateway_dataplane_http_global_inflight_current or transport-specific inflight gauges",
+    "nantian_memory_rss_bytes": "process_resident_memory_bytes",
+    "nantian_task_queue_depth": "nantian_gateway_dataplane_access_log_writer_queue_depth or transport-specific queue gauges",
+    "nantian_tasks_active": "nantian_gateway_dataplane_http_global_inflight_current and runtime plane gauges",
+    "nantian_gateway_controlplane_gateway_convergence_stage_total": "nantian_gateway_controlplane_gateway_convergence_stage_current",
 }
 stale_metric_names = sorted(name for name in unsupported_metric_names if name in text)
 if stale_metric_names:
     mappings = ", ".join(
         f"{name} -> {unsupported_metric_names[name]}" for name in stale_metric_names
     )
-    if "aether_gateway_controlplane_gateway_convergence_stage_total" in stale_metric_names:
+    if "nantian_gateway_controlplane_gateway_convergence_stage_total" in stale_metric_names:
         raise SystemExit(
             f"{path} must use gateway_convergence_stage_current for current Gateway convergence gauges: {mappings}"
         )
     raise SystemExit(f"{path} contains stale or unsupported metric names: {mappings}")
 
 required_metrics = [
-    "aether_gateway_dataplane_ready",
-    "aether_gateway_dataplane_traffic_events_total",
-    "aether_gateway_dataplane_traffic_request_events_total",
-    "aether_gateway_dataplane_traffic_status_5xx_total",
-    "aether_gateway_dataplane_traffic_response_flags_total",
-    "aether_gateway_dataplane_traffic_request_latency_ms_bucket",
-    "aether_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket",
-    "aether_gateway_dataplane_admin_requests_total",
-    "aether_gateway_dataplane_admin_request_duration_seconds_bucket",
-    "aether_gateway_controlplane_xds_publish_ack_lag_seconds",
-    "aether_gateway_dataplane_xds_connect_failures_total",
-    "aether_gateway_dataplane_runtime_tls_current_rejected",
-    "aether_gateway_dataplane_runtime_tls_current_failure_count",
-    "aether_gateway_dataplane_runtime_tls_listener_reload_failures_total",
-    "aether_gateway_dataplane_listener_attention_tls_count",
-    "aether_gateway_controlplane_xds_status_report_rejections_total",
-    "aether_gateway_controlplane_gateway_convergence_stage_current",
-    "aether_gateway_controlplane_gateway_convergence_generation_lag",
-    "aether_gateway_controlplane_gateway_programmed_pending_total",
+    "nantian_gateway_dataplane_ready",
+    "nantian_gateway_dataplane_traffic_events_total",
+    "nantian_gateway_dataplane_traffic_request_events_total",
+    "nantian_gateway_dataplane_traffic_status_5xx_total",
+    "nantian_gateway_dataplane_traffic_response_flags_total",
+    "nantian_gateway_dataplane_traffic_request_latency_ms_bucket",
+    "nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket",
+    "nantian_gateway_dataplane_admin_requests_total",
+    "nantian_gateway_dataplane_admin_request_duration_seconds_bucket",
+    "nantian_gateway_controlplane_xds_publish_ack_lag_seconds",
+    "nantian_gateway_dataplane_xds_connect_failures_total",
+    "nantian_gateway_dataplane_runtime_tls_current_rejected",
+    "nantian_gateway_dataplane_runtime_tls_current_failure_count",
+    "nantian_gateway_dataplane_runtime_tls_listener_reload_failures_total",
+    "nantian_gateway_dataplane_listener_attention_tls_count",
+    "nantian_gateway_controlplane_xds_status_report_rejections_total",
+    "nantian_gateway_controlplane_gateway_convergence_stage_current",
+    "nantian_gateway_controlplane_gateway_convergence_generation_lag",
+    "nantian_gateway_controlplane_gateway_programmed_pending_total",
     "process_cpu_seconds_total",
     "process_resident_memory_bytes",
     "process_open_fds",
     "process_threads",
-    "aether_gateway_dataplane_container_cpu_cores",
-    "aether_gateway_dataplane_container_cpu_request_cores",
-    "aether_gateway_dataplane_container_cpu_throttle_ratio",
-    "aether_gateway_dataplane_container_memory_working_set_bytes",
-    "aether_gateway_dataplane_container_memory_limit_bytes",
-    "aether_gateway_dataplane_container_memory_request_bytes",
+    "nantian_gateway_dataplane_container_cpu_cores",
+    "nantian_gateway_dataplane_container_cpu_request_cores",
+    "nantian_gateway_dataplane_container_cpu_throttle_ratio",
+    "nantian_gateway_dataplane_container_memory_working_set_bytes",
+    "nantian_gateway_dataplane_container_memory_limit_bytes",
+    "nantian_gateway_dataplane_container_memory_request_bytes",
 ]
 missing_metrics = [metric for metric in required_metrics if metric not in text]
 if missing_metrics:
@@ -439,12 +439,12 @@ path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
 
 required_records = [
-    "aether_gateway_dataplane_container_cpu_cores",
-    "aether_gateway_dataplane_container_cpu_request_cores",
-    "aether_gateway_dataplane_container_cpu_throttle_ratio",
-    "aether_gateway_dataplane_container_memory_working_set_bytes",
-    "aether_gateway_dataplane_container_memory_limit_bytes",
-    "aether_gateway_dataplane_container_memory_request_bytes",
+    "nantian_gateway_dataplane_container_cpu_cores",
+    "nantian_gateway_dataplane_container_cpu_request_cores",
+    "nantian_gateway_dataplane_container_cpu_throttle_ratio",
+    "nantian_gateway_dataplane_container_memory_working_set_bytes",
+    "nantian_gateway_dataplane_container_memory_limit_bytes",
+    "nantian_gateway_dataplane_container_memory_request_bytes",
 ]
 missing_records = [
     record for record in required_records if f"record: {record}" not in text
@@ -538,7 +538,7 @@ native_controlplane_scrape_path="${repo_root}/deploy/observability/prometheus/na
 operator_controlplane_podmonitor_path="${repo_root}/deploy/observability/prometheus/operator/podmonitor-controlplane.yaml"
 operator_controlplane_servicemonitor_path="${repo_root}/deploy/observability/prometheus/operator/servicemonitor-controlplane.yaml"
 operator_prometheus_scrape_networkpolicy_path="${repo_root}/deploy/observability/prometheus/operator/networkpolicy-prometheus-scrape.yaml"
-grafana_json_path="${repo_root}/deploy/observability/grafana/aether-gateway-observability-dashboard.json"
+grafana_json_path="${repo_root}/deploy/observability/grafana/nantian-gw-observability-dashboard.json"
 
 aeg_require_file "${contract_path}"
 aeg_require_file "${versioning_path}"
@@ -590,31 +590,31 @@ for signal in \
 done
 
 for metric in \
-  'aether_gateway_dataplane_traffic_events_total' \
-  'aether_gateway_dataplane_traffic_request_events_total' \
-  'aether_gateway_dataplane_traffic_status_5xx_total' \
-  'aether_gateway_dataplane_traffic_response_flags_total' \
-  'aether_gateway_dataplane_traffic_request_latency_ms_bucket' \
-  'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket' \
-  'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_average' \
-  'aether_gateway_dataplane_admin_requests_total' \
-  'aether_gateway_dataplane_admin_request_duration_seconds_bucket' \
-  'aether_gateway_controlplane_xds_publish_ack_lag_seconds' \
-  'aether_gateway_controlplane_xds_status_report_rejections_total' \
-  'aether_gateway_controlplane_gateway_convergence_stage_current' \
-  'aether_gateway_controlplane_gateway_convergence_generation_lag' \
-  'aether_gateway_controlplane_gateway_programmed_pending_total' \
+  'nantian_gateway_dataplane_traffic_events_total' \
+  'nantian_gateway_dataplane_traffic_request_events_total' \
+  'nantian_gateway_dataplane_traffic_status_5xx_total' \
+  'nantian_gateway_dataplane_traffic_response_flags_total' \
+  'nantian_gateway_dataplane_traffic_request_latency_ms_bucket' \
+  'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket' \
+  'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_average' \
+  'nantian_gateway_dataplane_admin_requests_total' \
+  'nantian_gateway_dataplane_admin_request_duration_seconds_bucket' \
+  'nantian_gateway_controlplane_xds_publish_ack_lag_seconds' \
+  'nantian_gateway_controlplane_xds_status_report_rejections_total' \
+  'nantian_gateway_controlplane_gateway_convergence_stage_current' \
+  'nantian_gateway_controlplane_gateway_convergence_generation_lag' \
+  'nantian_gateway_controlplane_gateway_programmed_pending_total' \
   'process_cpu_seconds_total' \
   'process_resident_memory_bytes' \
   'process_open_fds' \
   'process_threads' \
-  'aether_gateway_dataplane_container_cpu_cores' \
-  'aether_gateway_dataplane_container_cpu_request_cores' \
-  'aether_gateway_dataplane_container_cpu_throttle_ratio' \
-  'aether_gateway_dataplane_container_memory_working_set_bytes' \
-  'aether_gateway_dataplane_container_memory_limit_bytes' \
-  'aether_gateway_dataplane_container_memory_request_bytes' \
-  'aether_gateway_dataplane_ready_replicas'; do
+  'nantian_gateway_dataplane_container_cpu_cores' \
+  'nantian_gateway_dataplane_container_cpu_request_cores' \
+  'nantian_gateway_dataplane_container_cpu_throttle_ratio' \
+  'nantian_gateway_dataplane_container_memory_working_set_bytes' \
+  'nantian_gateway_dataplane_container_memory_limit_bytes' \
+  'nantian_gateway_dataplane_container_memory_request_bytes' \
+  'nantian_gateway_dataplane_ready_replicas'; do
   require_pattern "${contract_path}" "${metric}" "metric mapping for ${metric}"
 done
 
@@ -627,8 +627,8 @@ require_pattern "${prometheus_readme_path}" 'networkpolicy-prometheus-scrape\.ya
 require_pattern "${prometheus_readme_path}" 'rule_files' "Prometheus README native rule_files wiring"
 require_pattern "${prometheus_readme_path}" 'cAdvisor' "Prometheus README cAdvisor prerequisite"
 require_pattern "${prometheus_readme_path}" 'kube-state-metrics' "Prometheus README kube-state-metrics prerequisite"
-require_pattern "${prometheus_readme_path}" 'aether_gateway_dataplane_admin_requests_total' "Prometheus README dataplane admin request query"
-require_pattern "${prometheus_readme_path}" 'aether_gateway_dataplane_admin_request_duration_seconds_bucket' "Prometheus README dataplane admin duration query"
+require_pattern "${prometheus_readme_path}" 'nantian_gateway_dataplane_admin_requests_total' "Prometheus README dataplane admin request query"
+require_pattern "${prometheus_readme_path}" 'nantian_gateway_dataplane_admin_request_duration_seconds_bucket' "Prometheus README dataplane admin duration query"
 validate_prometheus_rule "${prometheus_rule_path}"
 validate_prometheus_rule "${native_prometheus_rule_path}"
 validate_prometheus_rule_alignment "${prometheus_rule_path}" "${native_prometheus_rule_path}"

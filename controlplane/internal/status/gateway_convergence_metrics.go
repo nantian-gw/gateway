@@ -11,7 +11,7 @@ import (
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
 )
 
 const (
@@ -36,7 +36,7 @@ const (
 var (
 	gatewayConvergenceGenerationLag = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "aether_gateway_controlplane_gateway_convergence_generation_lag",
+			Name:    "nantian_gateway_controlplane_gateway_convergence_generation_lag",
 			Help:    "Observed Gateway generation lag before status reconciliation, partitioned by convergence stage.",
 			Buckets: []float64{1, 2, 3, 5, 8, 13},
 		},
@@ -44,21 +44,21 @@ var (
 	)
 	gatewayProgrammedPendingTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "aether_gateway_controlplane_gateway_programmed_pending_total",
+			Name: "nantian_gateway_controlplane_gateway_programmed_pending_total",
 			Help: "Total number of Gateway status reconciles that observed a non-True Programmed condition before updating status, partitioned by the current reason.",
 		},
 		[]string{"reason"},
 	)
 	gatewayConvergenceStageTotal = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "aether_gateway_controlplane_gateway_convergence_stage_total",
-			Help: "Deprecated compatibility alias for aether_gateway_controlplane_gateway_convergence_stage_current.",
+			Name: "nantian_gateway_controlplane_gateway_convergence_stage_total",
+			Help: "Deprecated compatibility alias for nantian_gateway_controlplane_gateway_convergence_stage_current.",
 		},
 		[]string{"stage"},
 	)
 	gatewayConvergenceStageCurrent = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "aether_gateway_controlplane_gateway_convergence_stage_current",
+			Name: "nantian_gateway_controlplane_gateway_convergence_stage_current",
 			Help: "Current number of managed Gateways that have reached each convergence stage in the latest status evaluation snapshot.",
 		},
 		[]string{"stage"},

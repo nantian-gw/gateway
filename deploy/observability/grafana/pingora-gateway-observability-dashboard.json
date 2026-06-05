@@ -1,5 +1,5 @@
 {
-  "uid": "aether-gateway-obsv",
+  "uid": "nantian-gw-obsv",
   "title": "Aether Gateway",
   "schemaVersion": 39,
   "tags": [
@@ -7,7 +7,7 @@
     "dataplane",
     "grafana",
     "observability",
-    "aether-gateway",
+    "nantian-gw",
     "prometheus"
   ],
   "time": {
@@ -34,24 +34,24 @@
         "type": "query",
         "label": "Namespace",
         "query": {
-          "query": "label_values(aether_gateway_dataplane_ready, namespace)",
+          "query": "label_values(nantian_gateway_dataplane_ready, namespace)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
         "multi": false,
         "includeAll": false,
         "current": {
-          "text": "aether-gateway",
-          "value": "aether-gateway"
+          "text": "nantian-gw",
+          "value": "nantian-gw"
         },
-        "definition": "label_values(aether_gateway_dataplane_ready, namespace)"
+        "definition": "label_values(nantian_gateway_dataplane_ready, namespace)"
       },
       {
         "name": "pod_dp",
         "type": "query",
         "label": "Dataplane Pod",
         "query": {
-          "query": "label_values(aether_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)",
+          "query": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -61,14 +61,14 @@
           "text": "All",
           "value": "$__all"
         },
-        "definition": "label_values(aether_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)"
+        "definition": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)"
       },
       {
         "name": "job_controlplane",
         "type": "query",
         "label": "Control Plane Job",
         "query": {
-          "query": "label_values(aether_gateway_controlplane_admin_requests_total, job)",
+          "query": "label_values(nantian_gateway_controlplane_admin_requests_total, job)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -84,7 +84,7 @@
         "type": "query",
         "label": "CP Instance",
         "query": {
-          "query": "label_values(aether_gateway_controlplane_admin_requests_total{job=~\"$job_controlplane\"}, instance)",
+          "query": "label_values(nantian_gateway_controlplane_admin_requests_total{job=~\"$job_controlplane\"}, instance)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -100,7 +100,7 @@
         "type": "query",
         "label": "Data Plane Job",
         "query": {
-          "query": "label_values(aether_gateway_dataplane_admin_requests_total, job)",
+          "query": "label_values(nantian_gateway_dataplane_admin_requests_total, job)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -116,7 +116,7 @@
         "type": "query",
         "label": "DP Instance",
         "query": {
-          "query": "label_values(aether_gateway_dataplane_admin_requests_total{job=~\"$job_dataplane\"}, instance)",
+          "query": "label_values(nantian_gateway_dataplane_admin_requests_total{job=~\"$job_dataplane\"}, instance)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -190,7 +190,7 @@
       },
       "targets": [
         {
-          "expr": "sum(count(aether_gateway_dataplane_ready))",
+          "expr": "sum(count(nantian_gateway_dataplane_ready))",
           "refId": "A"
         }
       ],
@@ -225,7 +225,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_request_events_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m]))",
           "refId": "A"
         }
       ],
@@ -260,7 +260,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_response_flags_total{flag=\"none\"}[5m]) / sum(rate(aether_gateway_dataplane_traffic_request_events_total[5m])) * 100)",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_response_flags_total{flag=\"none\"}[5m]) / sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m])) * 100)",
           "refId": "A"
         }
       ],
@@ -295,7 +295,7 @@
       },
       "targets": [
         {
-          "expr": "sum(histogram_quantile(0.99, sum(rate(aether_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le)))",
+          "expr": "sum(histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le)))",
           "refId": "A"
         }
       ],
@@ -330,7 +330,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_status_5xx_total[5m]) / sum(rate(aether_gateway_dataplane_traffic_request_events_total[5m])) * 100)",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[5m]) / sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m])) * 100)",
           "refId": "A"
         }
       ],
@@ -365,7 +365,7 @@
       },
       "targets": [
         {
-          "expr": "sum(histogram_quantile(0.95, rate(aether_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m])))",
+          "expr": "sum(histogram_quantile(0.95, rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m])))",
           "refId": "A"
         }
       ],
@@ -400,7 +400,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"}[5m]))",
+          "expr": "sum(nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -435,7 +435,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"})",
+          "expr": "sum(nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"})",
           "refId": "A"
         }
       ],
@@ -475,17 +475,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_request_events_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m]))",
           "legendFormat": "requests",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_status_5xx_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[5m]))",
           "legendFormat": "5xx",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_events_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_events_total[5m]))",
           "legendFormat": "total events",
           "refId": "D"
         }
@@ -513,22 +513,22 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_status_2xx_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_2xx_total[5m]))",
           "legendFormat": "2xx",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_status_3xx_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_3xx_total[5m]))",
           "legendFormat": "3xx",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_status_4xx_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_4xx_total[5m]))",
           "legendFormat": "4xx",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_status_5xx_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[5m]))",
           "legendFormat": "5xx",
           "refId": "D"
         }
@@ -556,17 +556,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(aether_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.90, sum(rate(aether_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
           "legendFormat": "p90",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(aether_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -594,12 +594,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_bytes_received_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_bytes_received_total[5m])",
           "legendFormat": "received",
           "refId": "A"
         },
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_bytes_sent_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_bytes_sent_total[5m])",
           "legendFormat": "sent",
           "refId": "B"
         }
@@ -627,7 +627,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_traffic_response_flags_total[5m])) by (flag)",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_response_flags_total[5m])) by (flag)",
           "legendFormat": "{{flag}}",
           "refId": "A"
         }
@@ -655,12 +655,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_upstream_pool_hits_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_pool_hits_total[5m])",
           "legendFormat": "hits",
           "refId": "A"
         },
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_upstream_pool_misses_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_pool_misses_total[5m])",
           "legendFormat": "misses",
           "refId": "B"
         }
@@ -688,12 +688,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_retried_events_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_retried_events_total[5m])",
           "legendFormat": "retried",
           "refId": "A"
         },
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_retried_success_events_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_retried_success_events_total[5m])",
           "legendFormat": "success",
           "refId": "B"
         }
@@ -721,12 +721,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_upstream_peer_build_failures_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_peer_build_failures_total[5m])",
           "legendFormat": "peer build",
           "refId": "A"
         },
         {
-          "expr": "rate(aether_gateway_dataplane_traffic_upstream_tls_handshake_failures_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_tls_handshake_failures_total[5m])",
           "legendFormat": "TLS handshake",
           "refId": "B"
         }
@@ -775,7 +775,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_traffic_upstream_pool_hit_ratio)",
+          "expr": "sum(nantian_gateway_dataplane_traffic_upstream_pool_hit_ratio)",
           "refId": "A"
         }
       ],
@@ -801,17 +801,17 @@
       "id": 32,
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_traffic_upstream_connect_latency_ms_average)",
+          "expr": "sum(nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_average)",
           "legendFormat": "avg",
           "refId": "A"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_traffic_upstream_connect_latency_ms_max)",
+          "expr": "sum(nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_max)",
           "legendFormat": "max",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(aether_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket[5m])) by (le))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -854,7 +854,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_traffic_failover_success_rate)",
+          "expr": "sum(nantian_gateway_dataplane_traffic_failover_success_rate)",
           "refId": "A"
         }
       ],
@@ -889,7 +889,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_endpoint_runtime_tracked_current)",
+          "expr": "sum(nantian_gateway_dataplane_endpoint_runtime_tracked_current)",
           "refId": "A"
         }
       ],
@@ -916,12 +916,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_dataplane_xds_snapshots_applied_total",
+          "expr": "nantian_gateway_dataplane_xds_snapshots_applied_total",
           "legendFormat": "accepted",
           "refId": "A"
         },
         {
-          "expr": "aether_gateway_dataplane_current_snapshot_rejected",
+          "expr": "nantian_gateway_dataplane_current_snapshot_rejected",
           "legendFormat": "rejected",
           "refId": "B"
         }
@@ -949,27 +949,27 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_dataplane_runtime_http_listener_reload_failures_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_runtime_http_listener_reload_failures_total[5m]))",
           "legendFormat": "HTTP",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_runtime_stream_listener_reload_failures_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_runtime_stream_listener_reload_failures_total[5m]))",
           "legendFormat": "Stream",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_runtime_tls_listener_reload_failures_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_dataplane_runtime_tls_listener_reload_failures_total[5m]))",
           "legendFormat": "TLS",
           "refId": "C"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_runtime_tls_current_rejected)",
+          "expr": "sum(nantian_gateway_dataplane_runtime_tls_current_rejected)",
           "legendFormat": "TLS rejected",
           "refId": "D"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_runtime_tls_current_failure_count)",
+          "expr": "sum(nantian_gateway_dataplane_runtime_tls_current_failure_count)",
           "legendFormat": "TLS failures",
           "refId": "E"
         }
@@ -997,12 +997,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(aether_gateway_dataplane_http_circuit_breaker_rejected_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_http_circuit_breaker_rejected_total[5m])",
           "legendFormat": "rejected",
           "refId": "A"
         },
         {
-          "expr": "rate(aether_gateway_dataplane_http_circuit_breaker_rejected_backend_total[5m])",
+          "expr": "rate(nantian_gateway_dataplane_http_circuit_breaker_rejected_backend_total[5m])",
           "legendFormat": "per backend",
           "refId": "B"
         }
@@ -1030,7 +1030,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum by (pod) (rate(aether_gateway_dataplane_http_overload_rejected_total[5m]))",
+          "expr": "sum by (pod) (rate(nantian_gateway_dataplane_http_overload_rejected_total[5m]))",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -1058,7 +1058,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum by (pod) (rate(aether_gateway_dataplane_http_rate_limit_rejected_total[5m]))",
+          "expr": "sum by (pod) (rate(nantian_gateway_dataplane_http_rate_limit_rejected_total[5m]))",
           "legendFormat": "{{pod}}",
           "refId": "A"
         }
@@ -1086,12 +1086,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_http_rate_limit_global_available_tokens)",
+          "expr": "sum(nantian_gateway_dataplane_http_rate_limit_global_available_tokens)",
           "legendFormat": "global tokens",
           "refId": "A"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_http_rate_limit_global_burst)",
+          "expr": "sum(nantian_gateway_dataplane_http_rate_limit_global_burst)",
           "legendFormat": "burst cap",
           "refId": "B"
         }
@@ -1119,22 +1119,22 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_listener_attention_required_count)",
+          "expr": "sum(nantian_gateway_dataplane_listener_attention_required_count)",
           "legendFormat": "attention",
           "refId": "A"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_listener_has_ever_failed_count)",
+          "expr": "sum(nantian_gateway_dataplane_listener_has_ever_failed_count)",
           "legendFormat": "ever failed",
           "refId": "B"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_listener_recovered_from_failure_count)",
+          "expr": "sum(nantian_gateway_dataplane_listener_recovered_from_failure_count)",
           "legendFormat": "recovered",
           "refId": "C"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_listener_attention_tls_count)",
+          "expr": "sum(nantian_gateway_dataplane_listener_attention_tls_count)",
           "legendFormat": "TLS attention",
           "refId": "D"
         }
@@ -1162,12 +1162,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_dataplane_endpoint_active_unhealthy_current",
+          "expr": "nantian_gateway_dataplane_endpoint_active_unhealthy_current",
           "legendFormat": "unhealthy",
           "refId": "A"
         },
         {
-          "expr": "aether_gateway_dataplane_endpoint_passive_ejected_current",
+          "expr": "nantian_gateway_dataplane_endpoint_passive_ejected_current",
           "legendFormat": "ejected",
           "refId": "B"
         }
@@ -1208,12 +1208,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_dataplane_container_cpu_cores{namespace=~\"$namespace\"} or rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"}[5m])",
+          "expr": "nantian_gateway_dataplane_container_cpu_cores{namespace=~\"$namespace\"} or rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m])",
           "legendFormat": "cores",
           "refId": "A"
         },
         {
-          "expr": "aether_gateway_dataplane_container_cpu_request_cores{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\",resource=\"cpu\"})",
+          "expr": "nantian_gateway_dataplane_container_cpu_request_cores{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"cpu\"})",
           "legendFormat": "request",
           "refId": "B"
         }
@@ -1241,7 +1241,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"}[5m])",
+          "expr": "nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m])",
           "legendFormat": "throttle",
           "refId": "A"
         }
@@ -1269,17 +1269,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum by (pod) (aether_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\"})",
+          "expr": "sum by (pod) (nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"})",
           "legendFormat": "{{pod}}",
           "refId": "A"
         },
         {
-          "expr": "max by (pod) (aether_gateway_dataplane_container_memory_limit_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\",resource=\"memory\"}))",
+          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_limit_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"memory\"}))",
           "legendFormat": "limit",
           "refId": "B"
         },
         {
-          "expr": "max by (pod) (aether_gateway_dataplane_container_memory_request_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"aether-gateway-dataplane-.*\",resource=\"memory\"}))",
+          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_request_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"memory\"}))",
           "legendFormat": "request",
           "refId": "C"
         }
@@ -1307,17 +1307,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_tcp_global_connections_current)",
+          "expr": "sum(nantian_gateway_dataplane_tcp_global_connections_current)",
           "legendFormat": "TCP",
           "refId": "A"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_udp_global_datagrams_current)",
+          "expr": "sum(nantian_gateway_dataplane_udp_global_datagrams_current)",
           "legendFormat": "UDP",
           "refId": "B"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_http_global_inflight_current)",
+          "expr": "sum(nantian_gateway_dataplane_http_global_inflight_current)",
           "legendFormat": "HTTP inflight",
           "refId": "C"
         }
@@ -1345,12 +1345,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_dataplane_udp_sessions_active_current",
+          "expr": "nantian_gateway_dataplane_udp_sessions_active_current",
           "legendFormat": "active",
           "refId": "A"
         },
         {
-          "expr": "aether_gateway_dataplane_udp_session_queue_depth_current",
+          "expr": "nantian_gateway_dataplane_udp_session_queue_depth_current",
           "legendFormat": "queue depth",
           "refId": "B"
         }
@@ -1391,17 +1391,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_snapshot_builds_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_snapshot_builds_total[5m]))",
           "legendFormat": "builds",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_snapshot_build_failures_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_snapshot_build_failures_total[5m]))",
           "legendFormat": "failures",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(aether_gateway_snapshot_published_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_snapshot_published_total[5m]))",
           "legendFormat": "published",
           "refId": "C"
         }
@@ -1429,12 +1429,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(aether_gateway_snapshot_build_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, rate(nantian_gateway_snapshot_build_duration_seconds_bucket[5m]))",
           "legendFormat": "p99",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.50, rate(aether_gateway_snapshot_build_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.50, rate(nantian_gateway_snapshot_build_duration_seconds_bucket[5m]))",
           "legendFormat": "p50",
           "refId": "B"
         }
@@ -1462,12 +1462,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_snapshot_last_build_success",
+          "expr": "nantian_gateway_snapshot_last_build_success",
           "legendFormat": "build OK",
           "refId": "A"
         },
         {
-          "expr": "rate(aether_gateway_controlplane_xds_stream_terminations_total[5m])",
+          "expr": "rate(nantian_gateway_controlplane_xds_stream_terminations_total[5m])",
           "legendFormat": "{{reason}}",
           "refId": "B"
         }
@@ -1495,12 +1495,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(aether_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m]))",
           "legendFormat": "ACK p99",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(aether_gateway_controlplane_xds_publish_nack_lag_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, rate(nantian_gateway_controlplane_xds_publish_nack_lag_seconds_bucket[5m]))",
           "legendFormat": "NACK p99",
           "refId": "B"
         }
@@ -1528,17 +1528,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_controlplane_xds_snapshot_send_timeouts_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_xds_snapshot_send_timeouts_total[5m]))",
           "legendFormat": "send timeout",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_controlplane_xds_snapshot_ack_timeouts_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_xds_snapshot_ack_timeouts_total[5m]))",
           "legendFormat": "ack timeout",
           "refId": "B"
         },
         {
-          "expr": "sum by (reason) (rate(aether_gateway_controlplane_xds_status_report_rejections_total[5m]))",
+          "expr": "sum by (reason) (rate(nantian_gateway_controlplane_xds_status_report_rejections_total[5m]))",
           "legendFormat": "{{reason}}",
           "refId": "C"
         }
@@ -1566,22 +1566,22 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_controlplane_node_status_persist_immediate_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_node_status_persist_immediate_total[5m]))",
           "legendFormat": "immediate",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_controlplane_node_status_persist_debounced_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_node_status_persist_debounced_total[5m]))",
           "legendFormat": "debounced",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(aether_gateway_controlplane_node_status_persist_dropped_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_node_status_persist_dropped_total[5m]))",
           "legendFormat": "dropped",
           "refId": "C"
         },
         {
-          "expr": "sum(aether_gateway_controlplane_node_status_persist_queue_depth)",
+          "expr": "sum(nantian_gateway_controlplane_node_status_persist_queue_depth)",
           "legendFormat": "queue depth",
           "refId": "D"
         }
@@ -1609,17 +1609,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_controlplane_reconciler_runner_runs_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_runs_total[5m]))",
           "legendFormat": "runs",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_controlplane_reconciler_runner_failures_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_failures_total[5m]))",
           "legendFormat": "failures",
           "refId": "B"
         },
         {
-          "expr": "max(aether_gateway_controlplane_reconciler_runner_last_run_success)",
+          "expr": "max(nantian_gateway_controlplane_reconciler_runner_last_run_success)",
           "legendFormat": "last run OK",
           "refId": "C"
         }
@@ -1647,22 +1647,22 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_controlplane_reconciler_runner_triggers_enqueued_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_triggers_enqueued_total[5m]))",
           "legendFormat": "enqueued",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_controlplane_reconciler_runner_triggers_settled_total[5m]))",
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_triggers_settled_total[5m]))",
           "legendFormat": "settled",
           "refId": "B"
         },
         {
-          "expr": "sum(aether_gateway_controlplane_reconciler_runner_queue_depth)",
+          "expr": "sum(nantian_gateway_controlplane_reconciler_runner_queue_depth)",
           "legendFormat": "queue depth",
           "refId": "C"
         },
         {
-          "expr": "sum(aether_gateway_controlplane_reconciler_runner_retry_pending)",
+          "expr": "sum(nantian_gateway_controlplane_reconciler_runner_retry_pending)",
           "legendFormat": "retry pending",
           "refId": "D"
         }
@@ -1690,12 +1690,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(rate(aether_gateway_controlplane_admin_requests_total[5m])) by (route)",
+          "expr": "sum(rate(nantian_gateway_controlplane_admin_requests_total[5m])) by (route)",
           "legendFormat": "CP {{route}}",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(aether_gateway_dataplane_admin_requests_total[5m])) by (route)",
+          "expr": "sum(rate(nantian_gateway_dataplane_admin_requests_total[5m])) by (route)",
           "legendFormat": "DP {{route}}",
           "refId": "B"
         }
@@ -1723,12 +1723,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(aether_gateway_controlplane_admin_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_controlplane_admin_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "CP p99",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(aether_gateway_dataplane_admin_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_admin_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "DP p99",
           "refId": "B"
         }
@@ -1756,7 +1756,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(aether_gateway_dataplane_admin_request_duration_seconds_bucket[5m])) by (le, route))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_admin_request_duration_seconds_bucket[5m])) by (le, route))",
           "legendFormat": "{{route}} p99",
           "refId": "A"
         }
@@ -1827,17 +1827,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_controlplane_gateway_convergence_stage_current",
+          "expr": "nantian_gateway_controlplane_gateway_convergence_stage_current",
           "legendFormat": "{{gateway}} {{stage}}",
           "refId": "A"
         },
         {
-          "expr": "aether_gateway_controlplane_gateway_convergence_generation_lag",
+          "expr": "nantian_gateway_controlplane_gateway_convergence_generation_lag",
           "legendFormat": "{{gateway}} lag",
           "refId": "B"
         },
         {
-          "expr": "aether_gateway_controlplane_gateway_programmed_pending_total",
+          "expr": "nantian_gateway_controlplane_gateway_programmed_pending_total",
           "legendFormat": "{{gateway}} pending",
           "refId": "C"
         }
@@ -1878,32 +1878,32 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_listener_count)",
+          "expr": "sum(nantian_gateway_dataplane_listener_count)",
           "legendFormat": "listeners",
           "refId": "A"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_http_route_count)",
+          "expr": "sum(nantian_gateway_dataplane_http_route_count)",
           "legendFormat": "HTTP routes",
           "refId": "B"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_grpc_route_count)",
+          "expr": "sum(nantian_gateway_dataplane_grpc_route_count)",
           "legendFormat": "gRPC routes",
           "refId": "C"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_stream_route_count)",
+          "expr": "sum(nantian_gateway_dataplane_stream_route_count)",
           "legendFormat": "stream routes",
           "refId": "D"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_backend_count)",
+          "expr": "sum(nantian_gateway_dataplane_backend_count)",
           "legendFormat": "backends",
           "refId": "E"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_secret_count)",
+          "expr": "sum(nantian_gateway_dataplane_secret_count)",
           "legendFormat": "secrets",
           "refId": "F"
         }
@@ -1931,12 +1931,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "aether_gateway_dataplane_xds_connect_failures_total",
+          "expr": "nantian_gateway_dataplane_xds_connect_failures_total",
           "legendFormat": "connect failures",
           "refId": "A"
         },
         {
-          "expr": "aether_gateway_dataplane_xds_stream_failures_total",
+          "expr": "nantian_gateway_dataplane_xds_stream_failures_total",
           "legendFormat": "stream failures",
           "refId": "B"
         }
@@ -1964,17 +1964,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_session_persistence_active)",
+          "expr": "sum(nantian_gateway_dataplane_session_persistence_active)",
           "legendFormat": "active",
           "refId": "A"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_session_persistence_route_rule_count)",
+          "expr": "sum(nantian_gateway_dataplane_session_persistence_route_rule_count)",
           "legendFormat": "route rules",
           "refId": "B"
         },
         {
-          "expr": "sum(aether_gateway_dataplane_session_persistence_backend_policy_count)",
+          "expr": "sum(nantian_gateway_dataplane_session_persistence_backend_policy_count)",
           "legendFormat": "backend policies",
           "refId": "C"
         }
@@ -2010,7 +2010,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_http3_available)",
+          "expr": "sum(nantian_gateway_dataplane_http3_available)",
           "refId": "A"
         }
       ],
@@ -2045,7 +2045,7 @@
       },
       "targets": [
         {
-          "expr": "sum(aether_gateway_dataplane_http3_enabled)",
+          "expr": "sum(nantian_gateway_dataplane_http3_enabled)",
           "refId": "A"
         }
       ],

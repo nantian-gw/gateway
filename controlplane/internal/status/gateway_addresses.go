@@ -28,7 +28,7 @@ func evaluateGatewayAddresses(
 			Type:               string(gatewayv1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
 			Reason:             string(gatewayv1.GatewayReasonAccepted),
-			Message:            "Gateway is accepted by aether-gateway",
+			Message:            "Gateway is accepted by nantian-gw",
 			ObservedGeneration: generation,
 		},
 		programmedCondition: conditionSpec{
@@ -69,7 +69,7 @@ func evaluateGatewayAddresses(
 				evaluation.programmedCondition.Status = metav1.ConditionFalse
 				evaluation.programmedCondition.Reason = string(gatewayv1.GatewayReasonAddressNotAssigned)
 				evaluation.programmedCondition.Message = fmt.Sprintf(
-					"Gateway address of type %q could not be assigned by aether-gateway",
+					"Gateway address of type %q could not be assigned by nantian-gw",
 					addressType,
 				)
 				continue
@@ -103,7 +103,7 @@ func evaluateGatewayAddresses(
 			evaluation.programmedCondition.Status = metav1.ConditionFalse
 			evaluation.programmedCondition.Reason = string(gatewayv1.GatewayReasonAddressNotUsable)
 			evaluation.programmedCondition.Message = fmt.Sprintf(
-				"Gateway address %q cannot be programmed by aether-gateway",
+				"Gateway address %q cannot be programmed by nantian-gw",
 				address.Value,
 			)
 			continue

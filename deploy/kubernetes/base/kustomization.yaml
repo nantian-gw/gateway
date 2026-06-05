@@ -16,11 +16,11 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - name: aether-gateway-controlplane-config
-    namespace: aether-gateway
+  - name: nantian-controlplane-config
+    namespace: nantian-gw
     files:
       - config.yaml=controlplane-config.yaml
-  - name: aether-gateway-dataplane-config
-    namespace: aether-gateway
+  - name: nantian-dataplane-config
+    namespace: nantian-gw
     files:
       - config.yaml=dataplane-config.yaml

@@ -25,7 +25,7 @@ If a release involves any of the following, a corresponding version section shou
 
 ### API / Config / Runtime Impact
 
-- dataplane has switched back to the upstream `aether 0.8.0` OpenSSL runtime, no longer depending on the local Rust proxy fork under `dataplane/third_party/`.
+- dataplane has switched back to the upstream `pingora 0.8.0` OpenSSL runtime, no longer depending on the local Rust proxy fork under `dataplane/third_party/`.
 - `BackendTLSPolicy` continues to support system CA, custom `ConfigMap/ca.crt` CA bundle, `validation.hostname`, and one or more `Hostname` / `URI` `subjectAltNames`; when `subjectAltNames` is explicitly configured, `validation.hostname` continues to be used only as upstream SNI, and certificate identity is validated post-handshake against the configured SAN set. The two repo-specific options `gateway.nantian.dev/backend-tls-min-version` / `gateway.nantian.dev/backend-tls-max-version` remain unsupported, and the control plane will explicitly reject them.
 - HTTP/1.1 chunked request trailers on the upstream-only Rust proxy path are no longer forwarded to the upstream backend. The relevant `TE: trailers` / `Trailer` headers are still forwarded with the request headers, but the trailer fields themselves are discarded after downstream parsing. This is a known compatibility convergence after removing the vendored Rust proxy patch.
 

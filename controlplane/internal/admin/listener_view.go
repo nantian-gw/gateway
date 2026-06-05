@@ -3,7 +3,7 @@ package admin
 import (
 	"strings"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 const listenerDisplayAddressesMetadataKey = "nantian.dev/display-addresses"

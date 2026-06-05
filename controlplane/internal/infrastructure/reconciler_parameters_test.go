@@ -13,7 +13,7 @@ import (
 
 func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	configMapKind := gatewayv1.Kind("ConfigMap")
 	configMapNamespace := gatewayv1.Namespace(defaultDataplaneNamespace)
 
@@ -38,7 +38,7 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -55,7 +55,7 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -72,9 +72,9 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -108,8 +108,8 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}
 
-	if counts["gatewayclass:/aether-gateway"] != 1 {
-		t.Fatalf("GatewayClass get count = %d, want 1", counts["gatewayclass:/aether-gateway"])
+	if counts["gatewayclass:/nantian-gw"] != 1 {
+		t.Fatalf("GatewayClass get count = %d, want 1", counts["gatewayclass:/nantian-gw"])
 	}
 	if counts["configmap:"+defaultDataplaneNamespace+"/gatewayclass-params"] != 1 {
 		t.Fatalf(
@@ -126,7 +126,7 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 }
 func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	configMapKind := gatewayv1.Kind("ConfigMap")
 	configMapNamespace := gatewayv1.Namespace(defaultDataplaneNamespace)
 
@@ -142,7 +142,7 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -159,7 +159,7 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -173,7 +173,7 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -183,9 +183,9 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -219,8 +219,8 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}
 
-	if counts["gatewayclass:/aether-gateway"] != 1 {
-		t.Fatalf("shared GatewayClass get count = %d, want 1", counts["gatewayclass:/aether-gateway"])
+	if counts["gatewayclass:/nantian-gw"] != 1 {
+		t.Fatalf("shared GatewayClass get count = %d, want 1", counts["gatewayclass:/nantian-gw"])
 	}
 	if counts["configmap:"+defaultDataplaneNamespace+"/gatewayclass-params"] != 1 {
 		t.Fatalf(
@@ -231,12 +231,12 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 }
 func TestReconcileAppliesGatewayInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -279,7 +279,7 @@ allocateLoadBalancerNodePorts: false
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -364,14 +364,14 @@ allocateLoadBalancerNodePorts: false
 }
 func TestReconcileProgramsGatewayStaticIPAddressesOntoService(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	ipAddressType := gatewayv1.IPAddressType
 	hostnameAddressType := gatewayv1.HostnameAddressType
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -391,7 +391,7 @@ func TestReconcileProgramsGatewayStaticIPAddressesOntoService(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Addresses: []gatewayv1.GatewaySpecAddress{
 						{Type: &ipAddressType, Value: "203.0.113.20"},
 						{Type: &ipAddressType, Value: "203.0.113.10"},
@@ -440,13 +440,13 @@ func TestReconcileProgramsGatewayStaticIPAddressesOntoService(t *testing.T) {
 }
 func TestReconcileSkipsLoopbackGatewayStaticIPProjectionOntoService(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	ipAddressType := gatewayv1.IPAddressType
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -466,7 +466,7 @@ func TestReconcileSkipsLoopbackGatewayStaticIPProjectionOntoService(t *testing.T
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Addresses: []gatewayv1.GatewaySpecAddress{
 						{Type: &ipAddressType, Value: "127.0.0.1"},
 					},
@@ -514,12 +514,12 @@ func TestReconcileSkipsLoopbackGatewayStaticIPProjectionOntoService(t *testing.T
 }
 func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -539,7 +539,7 @@ func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T)
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -604,7 +604,7 @@ func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T)
 }
 func TestReconcileMergesGatewayClassInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	classNamespace := gatewayv1.Namespace("infra-system")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
@@ -635,7 +635,7 @@ allocateLoadBalancerNodePorts: false
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -652,7 +652,7 @@ allocateLoadBalancerNodePorts: false
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -711,7 +711,7 @@ allocateLoadBalancerNodePorts: false
 }
 func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	internalTrafficPolicy := corev1.ServiceInternalTrafficPolicyLocal
 	loadBalancerClass := "internal.example.com/vip"
 	allocateNodePorts := false
@@ -719,7 +719,7 @@ func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -730,7 +730,7 @@ func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -745,7 +745,7 @@ func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.
 				},
 				Spec: corev1.ServiceSpec{
 					Type:                          corev1.ServiceTypeLoadBalancer,
-					Selector:                      map[string]string{"app": "aether-gateway-dataplane"},
+					Selector:                      map[string]string{"app": "nantian-dataplane"},
 					ExternalTrafficPolicy:         corev1.ServiceExternalTrafficPolicyLocal,
 					InternalTrafficPolicy:         &internalTrafficPolicy,
 					SessionAffinity:               corev1.ServiceAffinityClientIP,

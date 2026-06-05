@@ -1,6 +1,6 @@
 package admin
 
-import "github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+import "github.com/nantian-gw/gateway/controlplane/internal/ir"
 
 func visibleNodes(snapshot *ir.Snapshot, nodes []ir.NodeStatus) []ir.NodeStatus {
 	if len(nodes) == 0 {

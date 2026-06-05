@@ -5,8 +5,8 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 )
 
 func gatewayAdvertisedAddresses(state *clusterState, gateway gatewayv1.Gateway) []string {

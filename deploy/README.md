@@ -76,9 +76,9 @@ Responsibilities in `deploy/kubernetes/overlays/`:
 
 Fixed resources follow this set of rules:
 
-- Workload: `aether-gateway-<component>`
-- Fixed internal Service: `aether-gateway-<component>-<role>`
-- ConfigMap / Secret: `aether-gateway-<component>-<purpose>`
+- Workload: `nantian-gw-<component>`
+- Fixed internal Service: `nantian-gw-<component>-<role>`
+- ConfigMap / Secret: `nantian-gw-<component>-<purpose>`
 
 Current fixed components are:
 
@@ -94,8 +94,8 @@ Fixed Service roles currently include:
 
 The only fixed Service renamed in this refactor is the controlplane gRPC Service:
 
-- Old name: `aether-gateway-controlplane`
-- New name: `aether-gateway-controlplane-grpc`
+- Old name: `nantian-controlplane`
+- New name: `nantian-controlplane-grpc`
 
 This aligns with the naming style of `-admin` and `-metrics`, so you no longer have to guess whether it's the workload itself when reading directories or troubleshooting.
 
@@ -106,17 +106,17 @@ If you use `kubectl get all --show-labels` or filter by labels in the cluster, i
 
 | Service | Port | Purpose | Who Accesses It |
 | --- | --- | --- | --- |
-| `aether-gateway-controlplane-grpc` | `18080` | controlplane gRPC / xDS publish entry | dataplane |
-| `aether-gateway-controlplane-admin` | `18081` | controlplane admin API | Ops entry, `kubectl port-forward`, controlled proxies |
-| `aether-gateway-controlplane-metrics` | `18082` | controlplane metrics scrape entry | Prometheus or other scrapers |
-| `aether-gateway-dataplane-admin` | `19080` | dataplane admin API | Ops entry, `kubectl port-forward`, controlled proxies |
-| `aether-gateway-dataplane-metrics` | `19080` | dataplane metrics scrape entry, currently reuses admin server port | Prometheus or other scrapers |
-| `aether-gateway-dashboard` | `8080` | Web admin console, Node server serves SPA and same-origin proxies admin API | Ops entry, `kubectl port-forward`, controlled proxies |
+| `nantian-controlplane-grpc` | `18080` | controlplane gRPC / xDS publish entry | dataplane |
+| `nantian-controlplane-admin` | `18081` | controlplane admin API | Ops entry, `kubectl port-forward`, controlled proxies |
+| `nantian-controlplane-metrics` | `18082` | controlplane metrics scrape entry | Prometheus or other scrapers |
+| `nantian-dataplane-admin` | `19080` | dataplane admin API | Ops entry, `kubectl port-forward`, controlled proxies |
+| `nantian-dataplane-metrics` | `19080` | dataplane metrics scrape entry, currently reuses admin server port | Prometheus or other scrapers |
+| `nantian-gw-dashboard` | `8080` | Web admin console, Node server serves SPA and same-origin proxies admin API | Ops entry, `kubectl port-forward`, controlled proxies |
 
 Notes:
 
-- `aether-gateway-dataplane-metrics` and `aether-gateway-dataplane-admin` both currently point to the dataplane `admin` port; the difference lies in purpose and scrape entry point, not in backend port numbers.
-- `aether-gateway-dashboard` does not directly access the Kubernetes API; it only proxies controlplane / dataplane admin Services through the container-internal Node server.
+- `nantian-dataplane-metrics` and `nantian-dataplane-admin` both currently point to the dataplane `admin` port; the difference lies in purpose and scrape entry point, not in backend port numbers.
+- `nantian-gw-dashboard` does not directly access the Kubernetes API; it only proxies controlplane / dataplane admin Services through the container-internal Node server.
 - These Services are all part of the fixed static manifest and are suitable for writing into operations documentation, scripts, and monitoring configurations.
 - These fixed Services are all part of the base static manifest, currently defined in `deploy/kubernetes/base/services-networkpolicy.yaml`, not dynamically generated runtime objects.
 
@@ -140,13 +140,13 @@ The two most important dynamic Services currently are:
 
 | Service | Source | Default Type | Purpose | Carries Business Traffic? |
 | --- | --- | --- | --- | --- |
-| `aether-gateway-dataplane` | shared dataplane Service | `NodePort` | Aggregates all current Gateway listener ports, providing a unified frontend entry for the dataplane | Yes |
-| `aether-gateway-<gatewayName>` | per-Gateway Service | `ClusterIP` | Dedicated frontend Service for a single Gateway, individually exposable per Gateway infrastructure parameters | Yes |
+| `nantian-dataplane` | shared dataplane Service | `NodePort` | Aggregates all current Gateway listener ports, providing a unified frontend entry for the dataplane | Yes |
+| `nantian-gw-<gatewayName>` | per-Gateway Service | `ClusterIP` | Dedicated frontend Service for a single Gateway, individually exposable per Gateway infrastructure parameters | Yes |
 
 Notes:
 
-- `aether-gateway-dataplane` is the shared frontend entry; current Kind smoke defaults to using it.
-- `aether-gateway-<gatewayName>` is a dedicated Service derived from the Gateway name; for example, if the `Gateway` is named `edge`, the corresponding Service is typically `aether-gateway-edge`.
+- `nantian-dataplane` is the shared frontend entry; current Kind smoke defaults to using it.
+- `nantian-gw-<gatewayName>` is a dedicated Service derived from the Gateway name; for example, if the `Gateway` is named `edge`, the corresponding Service is typically `nantian-gw-edge`.
 - per-Gateway Services default to `ClusterIP`, but can be lowered to `NodePort` or `LoadBalancer` via `Gateway.spec.infrastructure.parametersRef`, making them the more natural north-south exposure point in long-term environments.
 - These objects are maintained by the control plane reconcile loop and are not static install assets from `deploy/kubernetes/base/`.
 
@@ -179,8 +179,8 @@ The most easily confused aspect of the current repository is that the entries se
 
 | Scenario | Default Entry | Notes |
 | --- | --- | --- |
-| Kind / smoke | `aether-gateway-dataplane` | Shared dataplane Service uses `NodePort`; Kind overlay maps HTTP `18080`, HTTPS/TLS `18443`, UDP `5300` / `5301`, TCPRoute `19000` / `19001` by default |
-| Long-term / production | `aether-gateway-<gatewayName>` | Better to expose per Gateway individually, then control `ClusterIP` / `NodePort` / `LoadBalancer` via `parametersRef` |
+| Kind / smoke | `nantian-dataplane` | Shared dataplane Service uses `NodePort`; Kind overlay maps HTTP `18080`, HTTPS/TLS `18443`, UDP `5300` / `5301`, TCPRoute `19000` / `19001` by default |
+| Long-term / production | `nantian-gw-<gatewayName>` | Better to expose per Gateway individually, then control `ClusterIP` / `NodePort` / `LoadBalancer` via `parametersRef` |
 
 So if you see locally:
 
@@ -191,7 +191,7 @@ That's typically hitting the shared dataplane Service.
 
 If you're troubleshooting "why doesn't a certain Gateway have an external address" in production, the priority checks should be:
 
-- The Gateway's corresponding `aether-gateway-<gatewayName>` Service
+- The Gateway's corresponding `nantian-gw-<gatewayName>` Service
 - Its `type`, `externalIPs`, `LoadBalancer ingress`
 - Whether `Gateway.status.addresses` has converged with that Service
 
@@ -206,10 +206,10 @@ If you're troubleshooting "why doesn't a certain Gateway have an external addres
   `kubectl apply -k deploy/kubernetes/overlays/production`
 - Release single-file install manifest:
   Rendered from the Kustomize entry point corresponding to the install profile via `scripts/render-release-manifest.sh --profile <profile>` as `install.yaml`. The current profile matrix is in `docs/user/install-profiles.md`
-  The current render script only replaces controlplane / dataplane images; dashboard resources come from base manifests. In production environments where the dashboard is needed, patch the `aether-gateway-dashboard` image to a published, digest-pinned image in your own overlay or release pipeline.
+  The current render script only replaces controlplane / dataplane images; dashboard resources come from base manifests. In production environments where the dashboard is needed, patch the `nantian-gw-dashboard` image to a published, digest-pinned image in your own overlay or release pipeline.
 - HPA:
   Use `deploy/kubernetes/addons/dataplane-hpa/hpa.yaml`, or have it automatically included via the production overlay
 - Grafana observability dashboard:
-  Use `deploy/observability/grafana/aether-gateway-observability-dashboard.json`
+  Use `deploy/observability/grafana/nantian-gw-observability-dashboard.json`
 
 If you are choosing a business traffic entry point rather than an install entry point, see `docs/user/traffic-profiles.md`. That document provides north-south HTTP/gRPC, north-south TCP/UDP, and east-west service parent examples separately.

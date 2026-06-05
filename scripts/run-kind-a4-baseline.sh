@@ -13,9 +13,9 @@ source "${ROOT_DIR}/scripts/lib/kind-image-sync.sh"
 RUN_ID="${RUN_ID:-$(date +%Y-%m-%d-%H%M%S)-$(git -C "${ROOT_DIR}" rev-parse --short HEAD)-kind-a4}"
 OUTPUT_DIR="${OUTPUT_DIR:-${ROOT_DIR}/reports/performance/runs/${RUN_ID}}"
 SLO_OUTPUT="${OUTPUT_DIR}/slo-gate.json"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-KUBE_NAMESPACE="${KUBE_NAMESPACE:-aether-gateway}"
+KUBE_NAMESPACE="${KUBE_NAMESPACE:-nantian-gw}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
@@ -97,11 +97,11 @@ MAX_P99_MS="${MAX_P99_MS:-}"
 MAX_LATENCY_MS="${MAX_LATENCY_MS:-30000}"
 SLO_GATE_RISK_ACCEPTED="${SLO_GATE_RISK_ACCEPTED:-false}"
 A4_UDP_BLACKHOLE_SOURCE_IMAGE="${A4_UDP_BLACKHOLE_SOURCE_IMAGE:-m.daocloud.io/docker.io/library/python:3.12-slim-bookworm}"
-A4_UDP_BLACKHOLE_IMAGE="${A4_UDP_BLACKHOLE_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-validation/udp-blackhole:3.12-slim-bookworm}"
-A4_UDP_BLACKHOLE_PUSH_IMAGE="${A4_UDP_BLACKHOLE_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-validation/udp-blackhole:3.12-slim-bookworm}"
+A4_UDP_BLACKHOLE_IMAGE="${A4_UDP_BLACKHOLE_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-gw-validation/udp-blackhole:3.12-slim-bookworm}"
+A4_UDP_BLACKHOLE_PUSH_IMAGE="${A4_UDP_BLACKHOLE_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/nantian-gw-validation/udp-blackhole:3.12-slim-bookworm}"
 A4_FAULT_SOURCE_IMAGE="${A4_FAULT_SOURCE_IMAGE:-m.daocloud.io/docker.io/library/python:3.12-slim-bookworm}"
-A4_FAULT_IMAGE="${A4_FAULT_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-validation/a4-http-fault:3.12-slim-bookworm}"
-A4_FAULT_PUSH_IMAGE="${A4_FAULT_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-validation/a4-http-fault:3.12-slim-bookworm}"
+A4_FAULT_IMAGE="${A4_FAULT_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-gw-validation/a4-http-fault:3.12-slim-bookworm}"
+A4_FAULT_PUSH_IMAGE="${A4_FAULT_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/nantian-gw-validation/a4-http-fault:3.12-slim-bookworm}"
 A4_BACKEND_ERROR_HOST="${A4_BACKEND_ERROR_HOST:-a4-backend-error.example.com}"
 A4_BACKEND_SLOW_READ_HOST="${A4_BACKEND_SLOW_READ_HOST:-a4-backend-slow-read.example.com}"
 A4_BACKEND_SLOW_WRITE_HOST="${A4_BACKEND_SLOW_WRITE_HOST:-a4-backend-slow-write.example.com}"
@@ -179,7 +179,7 @@ cleanup() {
     remove_a4_reload_listener >/dev/null 2>&1 || true
     kubectl --context "${KUBE_CONTEXT}" -n "${KUBE_NAMESPACE}" annotate \
       httproute.gateway.networking.k8s.io/echo \
-      a4.aether.dev/reload-route- >/dev/null 2>&1 || true
+      a4.nantian.dev/reload-route- >/dev/null 2>&1 || true
     kubectl --context "${KUBE_CONTEXT}" -n "${KUBE_NAMESPACE}" delete \
       backendlbpolicies.gateway.networking.k8s.io/a4-reload-backend-policy \
       gateway.gateway.networking.k8s.io/"${A4_RELOAD_TLS_GATEWAY_NAME}" \
@@ -369,7 +369,7 @@ wait_for_shared_udp_listener_nodeport() {
 
   expected_node_port="$(shared_node_port_for "${listener_port}" UDP)"
   while (( SECONDS < deadline )); do
-    if k -n "${KUBE_NAMESPACE}" get service aether-gateway-dataplane -o json \
+    if k -n "${KUBE_NAMESPACE}" get service nantian-dataplane -o json \
       | jq -e \
         --argjson listener_port "${listener_port}" \
         --argjson expected_node_port "${expected_node_port}" '
@@ -471,7 +471,7 @@ metadata:
   name: edge-a4-udp-timeout
   namespace: ${KUBE_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: udp-timeout
       protocol: UDP
@@ -1044,7 +1044,7 @@ metadata:
   name: ${A4_RELOAD_TLS_GATEWAY_NAME}
   namespace: ${KUBE_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: https
       protocol: HTTPS
@@ -1155,7 +1155,7 @@ apply_reload_mutation() {
     route-only)
       k -n "${KUBE_NAMESPACE}" annotate \
         httproute.gateway.networking.k8s.io/echo \
-        "a4.aether.dev/reload-route=$(date +%s%N)" \
+        "a4.nantian.dev/reload-route=$(date +%s%N)" \
         --overwrite >/dev/null
       ;;
     backend-only)
@@ -1243,7 +1243,7 @@ run_http_profile() {
     --request-timeout "${HTTP_REQUEST_TIMEOUT}" \
     --connection-mode "${HTTP_CONNECTION_MODE}" \
     --expect-status 200 \
-    --expect-body-substring "aether-gateway-ok" \
+    --expect-body-substring "nantian-gw-ok" \
     --output "${output}" >/dev/null
   ended_ms="$(date +%s%3N)"
   elapsed_ms="$((ended_ms - started_ms))"
@@ -1311,7 +1311,7 @@ run_tcp_profile() {
     --host-header "${HTTP_HOST}" \
     --connect-timeout 3 \
     --request-timeout "${HTTP_REQUEST_TIMEOUT}" \
-    --expect-substring "aether-gateway-ok" \
+    --expect-substring "nantian-gw-ok" \
     --scenario "${label}" \
     --output "${output}" >/dev/null
   ended_ms="$(date +%s%3N)"
@@ -1681,7 +1681,7 @@ run_http_reload_profile() {
     --request-timeout "${HTTP_REQUEST_TIMEOUT}" \
     --connection-mode "${HTTP_CONNECTION_MODE}" \
     --expect-status 200 \
-    --expect-body-substring "aether-gateway-ok" \
+    --expect-body-substring "nantian-gw-ok" \
     --output "${output}" >/dev/null &
   client_pid="$!"
   sleep "${RELOAD_MUTATION_DELAY_SECONDS}"
@@ -1750,7 +1750,7 @@ run_tcp_reload_profile() {
     --host-header "${HTTP_HOST}" \
     --connect-timeout 3 \
     --request-timeout "${HTTP_REQUEST_TIMEOUT}" \
-    --expect-substring "aether-gateway-ok" \
+    --expect-substring "nantian-gw-ok" \
     --scenario "reload-under-load" \
     --output "${output}" >/dev/null &
   client_pid="$!"
@@ -1834,9 +1834,9 @@ run_specialized_e2e() {
 
 capture_component_logs() {
   mkdir -p "${OUTPUT_DIR}/logs"
-  kubectl --context kind-aether-gateway -n aether-gateway logs deploy/aether-gateway-controlplane --tail=200 \
+  kubectl --context kind-nantian-gw -n nantian-gw logs deploy/nantian-controlplane --tail=200 \
     >"${OUTPUT_DIR}/logs/controlplane.log"
-  kubectl --context kind-aether-gateway -n aether-gateway logs deploy/aether-gateway-dataplane --tail=200 \
+  kubectl --context kind-nantian-gw -n nantian-gw logs deploy/nantian-dataplane --tail=200 \
     >"${OUTPUT_DIR}/logs/dataplane.log"
 }
 
@@ -1966,7 +1966,7 @@ write_summary() {
 
 - Run ID: \`${RUN_ID}\`
 - Git commit: \`$(git -C "${ROOT_DIR}" rev-parse --short HEAD)\`
-- Environment: local kind, host port \`${GATEWAY_HOST_PORT}\`, controlplane replicas \`$(kubectl --context kind-aether-gateway -n aether-gateway get deploy aether-gateway-controlplane -o jsonpath='{.status.readyReplicas}')\`, dataplane replicas \`$(kubectl --context kind-aether-gateway -n aether-gateway get deploy aether-gateway-dataplane -o jsonpath='{.status.readyReplicas}')\`
+- Environment: local kind, host port \`${GATEWAY_HOST_PORT}\`, controlplane replicas \`$(kubectl --context kind-nantian-gw -n nantian-gw get deploy nantian-controlplane -o jsonpath='{.status.readyReplicas}')\`, dataplane replicas \`$(kubectl --context kind-nantian-gw -n nantian-gw get deploy nantian-dataplane -o jsonpath='{.status.readyReplicas}')\`
 - SLO gate: \`${slo_status}\`
 
 ## HTTP Profiles

@@ -13,14 +13,14 @@ import (
 
 func TestLoadManagedGatewaysUsesScopedGatewayIndexes(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := withInfrastructureGatewayIndexes(
 		fake.NewClientBuilder().
 			WithScheme(scheme).
 			WithObjects(
 				&gatewayv1.GatewayClass{
-					ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+					ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 					Spec: gatewayv1.GatewayClassSpec{
 						ControllerName: controllerName,
 					},
@@ -34,7 +34,7 @@ func TestLoadManagedGatewaysUsesScopedGatewayIndexes(t *testing.T) {
 				&gatewayv1.Gateway{
 					ObjectMeta: metav1.ObjectMeta{Name: "public", Namespace: "default"},
 					Spec: gatewayv1.GatewaySpec{
-						GatewayClassName: "aether-gateway",
+						GatewayClassName: "nantian-gw",
 					},
 				},
 				&gatewayv1.Gateway{
@@ -56,7 +56,7 @@ func TestLoadManagedGatewaysUsesScopedGatewayIndexes(t *testing.T) {
 				),
 				reflect.TypeOf(&gatewayv1.GatewayList{}): requireMatchingField(
 					gatewayGatewayClassNameIndex,
-					"aether-gateway",
+					"nantian-gw",
 				),
 			},
 		},

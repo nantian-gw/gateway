@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func (s *Server) handleLiveness(w http.ResponseWriter, _ *http.Request) {

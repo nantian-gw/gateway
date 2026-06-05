@@ -4,8 +4,8 @@ This document describes the current repository's dependency on the Rust proxy an
 
 ## Current Status
 
-- The dataplane no longer vendors `aether-core` / `aether-proxy` source code.
-- `dataplane/Cargo.toml` currently depends directly on upstream `aether 0.8.0` with the `openssl` feature enabled.
+- The dataplane no longer vendors `nantian-core` / `nantian-proxy` source code.
+- `dataplane/Cargo.toml` currently depends directly on upstream `pingora 0.8.0` with the `openssl` feature enabled.
 - `dataplane/third_party/` should now remain absent; if this directory reappears, it should be treated as a repository constraint violation.
 
 In other words, the repository has exited the "locally maintained Rust proxy fork" model and returned to the normal upstream crate dependency management path.
@@ -14,8 +14,8 @@ In other words, the repository has exited the "locally maintained Rust proxy for
 
 The repository previously vendored two Rust proxy crates:
 
-- `dataplane/third_party/aether-core`
-- `dataplane/third_party/aether-proxy`
+- `dataplane/third_party/nantian-core`
+- `dataplane/third_party/nantian-proxy`
 
 These copies were used to carry the following local patch surfaces:
 
@@ -61,7 +61,7 @@ The following script can be used to confirm the repository remains in upstream-o
 
 This script currently checks:
 
-- `dataplane/Cargo.toml` does not patch `aether-core` / `aether-proxy` to local paths
+- `dataplane/Cargo.toml` does not patch `nantian-core` / `nantian-proxy` to local paths
 - `dataplane/third_party/` does not exist
 - Rust proxy versions in workspace and lockfile are consistent
 

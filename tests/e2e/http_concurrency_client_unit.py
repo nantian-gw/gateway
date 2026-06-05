@@ -50,7 +50,7 @@ class CountingHttpServer:
                 self.requests += 1
                 connection_close = b"connection: close" in header.lower()
                 connection_header = b"close" if connection_close else b"keep-alive"
-                body = b"aether-gateway-ok"
+                body = b"nantian-gw-ok"
                 writer.write(
                     b"HTTP/1.1 200 OK\r\n"
                     + b"Content-Length: "
@@ -83,7 +83,7 @@ def client_args(port, connection_mode):
         connect_timeout=1.0,
         request_timeout=1.0,
         expect_status=[200],
-        expect_body_substring="aether-gateway-ok",
+        expect_body_substring="nantian-gw-ok",
         output=None,
         connection_mode=connection_mode,
     )

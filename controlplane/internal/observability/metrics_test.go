@@ -41,7 +41,7 @@ func TestHandlerIncludesControllerRuntimeRegistryMetrics(t *testing.T) {
 	}
 
 	body := recorder.Body.String()
-	if !strings.Contains(body, "aether_gateway_snapshot_builds_total") {
+	if !strings.Contains(body, "nantian_gateway_snapshot_builds_total") {
 		t.Fatalf("expected custom snapshot metrics in response, body=%q", body)
 	}
 	if !strings.Contains(body, metricName) {
@@ -118,9 +118,9 @@ func TestHandlerExposesCustomMetricValuesAndPrometheusContentType(t *testing.T) 
 
 	body := recorder.Body.String()
 	for _, sample := range []string{
-		"\naether_gateway_snapshot_builds_total 1",
-		"\naether_gateway_snapshot_last_build_success 1",
-		"\naether_gateway_controlplane_admin_requests_total{method=\"GET\",route=\"summary\",status_class=\"2xx\"} 2",
+		"\nnantian_gateway_snapshot_builds_total 1",
+		"\nnantian_gateway_snapshot_last_build_success 1",
+		"\nnantian_gateway_controlplane_admin_requests_total{method=\"GET\",route=\"summary\",status_class=\"2xx\"} 2",
 	} {
 		if !strings.Contains(body, sample) {
 			t.Fatalf("expected metric sample %q in response body", sample)

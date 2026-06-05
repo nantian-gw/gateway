@@ -17,7 +17,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 )
 
 func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
@@ -64,7 +64,7 @@ func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -136,7 +136,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -203,7 +203,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyConsistentHash(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {

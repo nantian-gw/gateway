@@ -12,19 +12,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
 )
 
 func TestReconcileGatewayClassObjectSetsAcceptedConditionDetails(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&gatewayv1.GatewayClass{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 7},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 7},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -33,12 +33,12 @@ func TestReconcileGatewayClassObjectSetsAcceptedConditionDetails(t *testing.T) {
 		Build()
 
 	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
-	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "aether-gateway"); err != nil {
+	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "nantian-gw"); err != nil {
 		t.Fatalf("ReconcileGatewayClassObject returned error: %v", err)
 	}
 
 	var gatewayClass gatewayv1.GatewayClass
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "aether-gateway"}, &gatewayClass); err != nil {
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass); err != nil {
 		t.Fatalf("Get GatewayClass returned error: %v", err)
 	}
 	assertCondition(t, gatewayClass.Status.Conditions, string(gatewayv1.GatewayClassConditionStatusAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayClassReasonAccepted), 7)
@@ -47,7 +47,7 @@ func TestReconcileGatewayClassObjectSetsAcceptedConditionDetails(t *testing.T) {
 		if condition.Type != string(gatewayv1.GatewayClassConditionStatusAccepted) {
 			continue
 		}
-		if condition.Message != "GatewayClass is accepted by aether-gateway" {
+		if condition.Message != "GatewayClass is accepted by nantian-gw" {
 			t.Fatalf("accepted message = %q", condition.Message)
 		}
 		return
@@ -58,14 +58,14 @@ func TestReconcileGatewayClassObjectSetsAcceptedConditionDetails(t *testing.T) {
 
 func TestReconcileGatewayClassObjectPublishesSupportedVersionAndFeatures(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&gatewayv1.GatewayClass{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 3},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 3},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -76,12 +76,12 @@ func TestReconcileGatewayClassObjectPublishesSupportedVersionAndFeatures(t *test
 		Build()
 
 	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
-	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "aether-gateway"); err != nil {
+	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "nantian-gw"); err != nil {
 		t.Fatalf("ReconcileGatewayClassObject returned error: %v", err)
 	}
 
 	var gatewayClass gatewayv1.GatewayClass
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "aether-gateway"}, &gatewayClass); err != nil {
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass); err != nil {
 		t.Fatalf("Get GatewayClass returned error: %v", err)
 	}
 
@@ -100,14 +100,14 @@ func TestReconcileGatewayClassObjectPublishesSupportedVersionAndFeatures(t *test
 
 func TestReconcileGatewayClassObjectRejectsMissingBundleVersionAnnotations(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&gatewayv1.GatewayClass{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 4},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 4},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -117,12 +117,12 @@ func TestReconcileGatewayClassObjectRejectsMissingBundleVersionAnnotations(t *te
 		Build()
 
 	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
-	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "aether-gateway"); err != nil {
+	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "nantian-gw"); err != nil {
 		t.Fatalf("ReconcileGatewayClassObject returned error: %v", err)
 	}
 
 	var gatewayClass gatewayv1.GatewayClass
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "aether-gateway"}, &gatewayClass); err != nil {
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass); err != nil {
 		t.Fatalf("Get GatewayClass returned error: %v", err)
 	}
 
@@ -138,14 +138,14 @@ func TestReconcileGatewayClassObjectRejectsMissingBundleVersionAnnotations(t *te
 
 func TestReconcileGatewayClassObjectRejectsOlderGatewayAPIBundleVersions(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&gatewayv1.GatewayClass{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 5},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 5},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -155,12 +155,12 @@ func TestReconcileGatewayClassObjectRejectsOlderGatewayAPIBundleVersions(t *test
 		Build()
 
 	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
-	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "aether-gateway"); err != nil {
+	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "nantian-gw"); err != nil {
 		t.Fatalf("ReconcileGatewayClassObject returned error: %v", err)
 	}
 
 	var gatewayClass gatewayv1.GatewayClass
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "aether-gateway"}, &gatewayClass); err != nil {
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass); err != nil {
 		t.Fatalf("Get GatewayClass returned error: %v", err)
 	}
 
@@ -196,7 +196,7 @@ func TestReconcileGatewayClassObjectSkipsUnmanagedGatewayClass(t *testing.T) {
 		).
 		Build()
 
-	reconciler := New(k8sClient, "gateway.networking.k8s.io/aether-gateway", "127.0.0.1", discardLogger())
+	reconciler := New(k8sClient, "gateway.networking.k8s.io/nantian-gw", "127.0.0.1", discardLogger())
 	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "foreign"); err != nil {
 		t.Fatalf("ReconcileGatewayClassObject returned error: %v", err)
 	}
@@ -212,14 +212,14 @@ func TestReconcileGatewayClassObjectSkipsUnmanagedGatewayClass(t *testing.T) {
 
 func TestReconcileSkipsUnmanagedGatewayClassDuringFullReconcile(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithStatusSubresource(&gatewayv1.GatewayClass{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 2},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 2},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -239,7 +239,7 @@ func TestReconcileSkipsUnmanagedGatewayClassDuringFullReconcile(t *testing.T) {
 	}
 
 	var managed gatewayv1.GatewayClass
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "aether-gateway"}, &managed); err != nil {
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &managed); err != nil {
 		t.Fatalf("Get managed GatewayClass returned error: %v", err)
 	}
 	assertCondition(t, managed.Status.Conditions, string(gatewayv1.GatewayClassConditionStatusAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayClassReasonAccepted), 2)
@@ -255,7 +255,7 @@ func TestReconcileSkipsUnmanagedGatewayClassDuringFullReconcile(t *testing.T) {
 
 func TestReconcileManagesMultipleGatewayClassesForSameController(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -333,7 +333,7 @@ func TestReconcileManagesMultipleGatewayClassesForSameController(t *testing.T) {
 
 func TestReconcileLoadsGatewayAPICRDsOncePerFullReconcile(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).

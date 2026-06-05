@@ -12,13 +12,13 @@ import (
 
 func TestListGatewayClassesForControllerRequiresFieldIndex(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	cl := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -47,13 +47,13 @@ func TestListGatewaysForGatewayClassRequiresFieldIndex(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 				},
 			},
 		).
 		Build()
 
-	_, err := listGatewaysForGatewayClass(context.Background(), cl, "aether-gateway")
+	_, err := listGatewaysForGatewayClass(context.Background(), cl, "nantian-gw")
 	if err == nil {
 		t.Fatal("expected missing field index error, got nil")
 	}

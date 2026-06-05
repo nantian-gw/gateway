@@ -13,7 +13,7 @@ import (
 
 func TestReconcileSetsHTTPRouteStatusForServiceParent(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).

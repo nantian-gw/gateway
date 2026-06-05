@@ -13,7 +13,7 @@ If your goal is deployment, evaluation, or troubleshooting, please read the [Use
 6. [Backlog Navigation](../backlog/README.md): Select the next work item by control plane, data plane, release, and security.
 7. [Test Plan](../test/plan.md): Select the minimal yet sufficient test path based on the repository's verification ladder.
 8. [Third-Party Dependencies](third-party.md): Understand the current upstream-only dependency status, historical vendored Rust proxy background, and repository guardrails.
-9. [Rust Proxy Upstream Migration](aether-upstream-migration.md): Review which capabilities were retained and which behaviors were converged after exiting the local Rust proxy fork.
+9. [Rust Proxy Upstream Migration](pingora-upstream-migration.md): Review which capabilities were retained and which behaviors were converged after exiting the local Rust proxy fork.
 10. [Script Contract](scripts.md): Confirm the arguments, artifacts, and exit code semantics of `make` and `scripts/*`.
 11. [Development Workflow](../development.md): Follow the recommended process for making changes, verification, and integration testing.
 12. [Source Layout and Large File Splitting](source-file-layout.md): Review the splitting results, responsibility boundaries, and remaining exceptions for source files exceeding 800 lines.

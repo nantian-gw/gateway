@@ -64,7 +64,7 @@ assert_contains "${TMP_DIR}/metrics-plan.log" \
 
 PLAN_ONLY=true INCLUDE_KIND=false "${TARGET_SCRIPT}" \
   docs/contracts/metrics-cardinality.md \
-  deploy/observability/grafana/aether-gateway-observability-dashboard.json \
+  deploy/observability/grafana/nantian-gw-observability-dashboard.json \
   >"${TMP_DIR}/metrics-contract-plan.log"
 
 assert_contains "${TMP_DIR}/metrics-contract-plan.log" \
@@ -91,7 +91,7 @@ PLAN_ONLY=true INCLUDE_KIND=false "${TARGET_SCRIPT}" \
   scripts/script-inventory.yaml \
   scripts/lib/common.sh \
   docs/developer/scripts.md \
-  .agents/skills/aether-repo-scripts/references/script-catalog.md \
+  .agents/skills/nantian-repo-scripts/references/script-catalog.md \
   >"${TMP_DIR}/script-inventory-plan.log"
 
 assert_contains "${TMP_DIR}/script-inventory-plan.log" \

@@ -3,7 +3,7 @@ cluster: "default"
 controlPlaneAddr: "http://127.0.0.1:18080"
 adminAddr: "127.0.0.1:19080"
 log:
-  level: "info,aether_core::connectors=off"
+  level: "info,nantian_core::connectors=off"
   format: "json"
   addSource: false
   includeTarget: false
@@ -19,7 +19,7 @@ log:
     timeoutMs: 3000
     insecure: false
     sampleRatio: 1.0
-    serviceName: "aether-gateway-dataplane"
+    serviceName: "nantian-dataplane"
     serviceNamespace: ""
 adminAuth:
   bearerToken: ""

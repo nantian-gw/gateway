@@ -2,14 +2,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
-ROUTE_NAMESPACE="${ROUTE_NAMESPACE:-aether-reference-grants-route}"
-BACKEND_NAMESPACE="${BACKEND_NAMESPACE:-aether-reference-grants-backend}"
+ROUTE_NAMESPACE="${ROUTE_NAMESPACE:-nantian-reference-grants-route}"
+BACKEND_NAMESPACE="${BACKEND_NAMESPACE:-nantian-reference-grants-backend}"
 GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-18080}"
 TEST_HOST="${TEST_HOST:-refgrant.example.com}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
@@ -197,7 +197,7 @@ metadata:
   name: refgrant-edge
   namespace: ${ROUTE_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: http
       protocol: HTTP

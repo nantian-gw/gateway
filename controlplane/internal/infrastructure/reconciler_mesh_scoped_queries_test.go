@@ -16,7 +16,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func TestReconcileMeshServicesScopesServiceAndEndpointLookups(t *testing.T) {
@@ -87,9 +87,9 @@ func TestReconcileMeshServicesScopesServiceAndEndpointLookups(t *testing.T) {
 				},
 				&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "aether-gateway-dataplane-0",
+						Name:      "nantian-dataplane-0",
 						Namespace: defaultDataplaneNamespace,
-						Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+						Labels:    map[string]string{"app": "nantian-dataplane"},
 					},
 					Status: corev1.PodStatus{
 						PodIP: "10.0.0.50",
@@ -159,7 +159,7 @@ func TestReconcileMeshServicesScopesServiceAndEndpointLookups(t *testing.T) {
 				),
 			},
 		},
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		discardLogger(),
 	)
 

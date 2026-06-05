@@ -25,12 +25,12 @@ func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -38,7 +38,7 @@ func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{
@@ -96,13 +96,13 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -110,7 +110,7 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{
@@ -180,13 +180,13 @@ func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutRefer
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -194,7 +194,7 @@ func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutRefer
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{
@@ -249,12 +249,12 @@ func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *tes
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -262,7 +262,7 @@ func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *tes
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{

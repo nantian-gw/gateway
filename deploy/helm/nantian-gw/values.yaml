@@ -1,4 +1,4 @@
-# Default values for aether-gateway.
+# Default values for nantian-gw.
 # This is a YAML-formatted file.
 
 # -- Global settings applied across all components
@@ -20,12 +20,12 @@ namespace:
   # -- Create the namespace
   create: true
   # -- Namespace name (ignored if create=false, uses release namespace)
-  name: "aether-gateway"
+  name: "nantian-gw"
 
 # -- GatewayClass resource
 gatewayClass:
   enabled: true
-  controllerName: "gateway.networking.k8s.io/aether-gateway"
+  controllerName: "gateway.networking.k8s.io/nantian-gw"
 
 # -- RBAC configuration (ServiceAccounts, ClusterRole, ClusterRoleBinding)
 rbac:
@@ -44,7 +44,7 @@ controlplane:
   # -- Container image
   image:
     registry: ""      # Overrides global.imageRegistry for this component
-    repository: "aether-gateway-controlplane"
+    repository: "nantian-controlplane"
     tag: ""           # Defaults to Chart.appVersion
     pullPolicy: Always
 
@@ -123,7 +123,7 @@ controlplane:
     adminAddr: ":18081"
     metricsAddr: ":18082"
     healthProbeAddr: ":18083"
-    controllerName: "gateway.networking.k8s.io/aether-gateway"
+    controllerName: "gateway.networking.k8s.io/nantian-gw"
     statusAddress: "127.0.0.1"
     syncPeriod: "30s"
     syncSettleDelay: "200ms"
@@ -141,7 +141,7 @@ controlplane:
       format: "json"
     leaderElection:
       enabled: true
-      id: "aether-gateway-controlplane-leader"
+      id: "nantian-controlplane-leader"
       leaseDuration: "15s"
       renewDeadline: "10s"
       retryPeriod: "2s"
@@ -217,7 +217,7 @@ dataplane:
   # -- Container image
   image:
     registry: ""
-    repository: "aether-gateway-dataplane"
+    repository: "nantian-dataplane"
     tag: ""
     pullPolicy: Always
 
@@ -294,7 +294,7 @@ dataplane:
     controlPlaneAddr: ""
     adminAddr: "0.0.0.0:19080"
     log:
-      level: "info,aether_core::connectors=off"
+      level: "info,nantian_core::connectors=off"
       format: "json"
       nonBlocking: true
       nonBlockingBufferedLines: 65536
@@ -304,7 +304,7 @@ dataplane:
       bearerTokenFile: ""
     accessLog:
       enabled: true
-      path: "/var/log/aether-gateway/access.log"
+      path: "/var/log/nantian-gw/access.log"
       format: "%CLIENT_IP% - - [%TIMESTAMP%] \"%REQUEST%\" %STATUS% %BYTES_SENT% \"%REFERER%\" \"%USER_AGENT%\" %LATENCY_MS%ms %UPSTREAM_ADDR% uct=%UPSTREAM_CONNECT_TIME_MS%ms rt=%ROUTE_NAMESPACE%/%ROUTE_NAME% rid=%REQUEST_ID% flags=%RESPONSE_FLAGS% retries=%RETRY_ATTEMPTS% sn=%SNAPSHOT_VERSION%"
       mode: "text"
       sampleRate: 1.0
@@ -391,7 +391,7 @@ dashboard:
   # -- Container image
   image:
     registry: ""
-    repository: "aether-gateway-dashboard"
+    repository: "nantian-gw-dashboard"
     tag: ""
     pullPolicy: Always
 

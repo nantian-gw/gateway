@@ -13,10 +13,10 @@ The project is organized across three sibling repositories:
 
 | Repository | Description |
 |---|---|
-| **aether-gateway/aether-gateway** (this repo) | Go control plane, proto contract, deploy configs, tests, docs |
-| **aether-gateway/dataplane** | Rust data plane (HTTP/stream proxy runtime, xDS client, AI gateway, Wasm plugins) |
-| **aether-gateway/dashboard** | Next.js/React admin console and Node proxy server |
-| **aether-gateway/website** | Project website and documentation site |
+| **nantian-gw/nantian-gw** (this repo) | Go control plane, proto contract, deploy configs, tests, docs |
+| **nantian-gw/dataplane** | Rust data plane (HTTP/stream proxy runtime, xDS client, AI gateway, Wasm plugins) |
+| **nantian-gw/dashboard** | Next.js/React admin console and Node proxy server |
+| **nantian-gw/website** | Project website and documentation site |
 
 ## Architecture
 
@@ -115,7 +115,7 @@ Governance files: `LICENSE`, `MAINTAINERS.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT
 ## Repository Layout
 
 ```
-aether-gateway/
+nantian-gw/
 ├── controlplane/   Go controller, translator, status, admin, xDS server
 ├── proto/          gRPC config discovery protocol (single source of truth)
 ├── deploy/         Kubernetes Kustomize base + overlays, observability assets

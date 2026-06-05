@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 )
 
 func TestGatewayInfrastructureStatusRequests(t *testing.T) {
@@ -32,7 +32,7 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "gateway service enqueues owning gateway",
 			object: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					managedresources.ManagedByLabel:          "aether-gateway",
+					managedresources.ManagedByLabel:          "nantian-gw",
 					managedresources.ServiceRoleKey:          "gateway-metadata",
 					"gateway.networking.k8s.io/gateway-name": "public",
 					"nantian.dev/gateway-namespace":               "default",
@@ -44,7 +44,7 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "shared service is ignored",
 			object: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					managedresources.ManagedByLabel:          "aether-gateway",
+					managedresources.ManagedByLabel:          "nantian-gw",
 					managedresources.ServiceRoleKey:          "shared-dataplane",
 					"gateway.networking.k8s.io/gateway-name": "public",
 					"nantian.dev/gateway-namespace":               "default",
@@ -55,7 +55,7 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "gateway frontend endpoint slice enqueues owning gateway",
 			object: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					discoveryv1.LabelManagedBy:               "aether-gateway",
+					discoveryv1.LabelManagedBy:               "nantian-gw",
 					managedresources.ServiceRoleKey:          "gateway-frontend-endpoints",
 					"gateway.networking.k8s.io/gateway-name": "public",
 					"nantian.dev/gateway-namespace":               "default",
@@ -67,7 +67,7 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "shared frontend endpoint slice is ignored",
 			object: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					discoveryv1.LabelManagedBy:               "aether-gateway",
+					discoveryv1.LabelManagedBy:               "nantian-gw",
 					managedresources.ServiceRoleKey:          "shared-frontend-endpoints",
 					"gateway.networking.k8s.io/gateway-name": "public",
 					"nantian.dev/gateway-namespace":               "default",
@@ -78,7 +78,7 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "missing gateway labels are ignored",
 			object: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					discoveryv1.LabelManagedBy:      "aether-gateway",
+					discoveryv1.LabelManagedBy:      "nantian-gw",
 					managedresources.ServiceRoleKey: "gateway-frontend-endpoints",
 				}},
 			},
@@ -104,7 +104,7 @@ func TestGatewayFrontendEndpointSliceMetadataChanged(t *testing.T) {
 			Name:      "gw-ipv4",
 			Namespace: "default",
 			Labels: map[string]string{
-				discoveryv1.LabelManagedBy:               "aether-gateway",
+				discoveryv1.LabelManagedBy:               "nantian-gw",
 				managedresources.ServiceRoleKey:          managedresources.EndpointSliceRoleGatewayFrontend,
 				"gateway.networking.k8s.io/gateway-name": "public",
 				"nantian.dev/gateway-namespace":               "default",
@@ -187,7 +187,7 @@ func TestGatewayInfrastructureServiceChanged(t *testing.T) {
 			Name:      "public-gateway",
 			Namespace: "default",
 			Labels: map[string]string{
-				managedresources.ManagedByLabel:          "aether-gateway",
+				managedresources.ManagedByLabel:          "nantian-gw",
 				managedresources.ServiceRoleKey:          managedresources.ServiceRoleGateway,
 				"gateway.networking.k8s.io/gateway-name": "public",
 				"nantian.dev/gateway-namespace":               "default",

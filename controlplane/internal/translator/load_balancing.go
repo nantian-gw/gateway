@@ -3,9 +3,9 @@ package translator
 import (
 	"strings"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/backendlb"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/backendlb"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func backendLoadBalancing(source *backendlbv1alpha2.LoadBalancingPolicy) *ir.LoadBalancingPolicy {

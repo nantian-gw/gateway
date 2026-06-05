@@ -1,6 +1,6 @@
 # Wasm Plugin Developer Guide
 
-This guide walks through building, testing, and deploying WebAssembly plugins for aether-gateway.
+This guide walks through building, testing, and deploying WebAssembly plugins for nantian-gw.
 
 ## Prerequisites
 
@@ -77,14 +77,14 @@ pub extern "C" fn on_request() -> i32 {
             );
         }
         // Call host::log (level=0 for debug)
-        unsafe { aether_log(0, ptr, msg.len() as i32 - 1) };
+        unsafe { nantian_log(0, ptr, msg.len() as i32 - 1) };
     }
     0 // Continue the request
 }
 
 // Host function declarations
 extern "C" {
-    fn aether_log(level: i32, msg_ptr: i32, msg_len: i32);
+    fn nantian_log(level: i32, msg_ptr: i32, msg_len: i32);
 }
 ```
 
@@ -124,9 +124,9 @@ pub extern "C" fn dealloc(ptr: i32, len: i32) {}
 
 ### Available Host Functions
 
-Imported from the `aether` module:
+Imported from the `nantian` module:
 
-#### `aether_log(level: i32, msg_ptr: i32, msg_len: i32)`
+#### `nantian_log(level: i32, msg_ptr: i32, msg_len: i32)`
 
 Log a message to the data plane log.
 - `level`: 0 = debug, 1 = info, 2 = warn, 3+ = error
@@ -134,7 +134,7 @@ Log a message to the data plane log.
 
 ```rust
 extern "C" {
-    fn aether_log(level: i32, msg_ptr: i32, msg_len: i32);
+    fn nantian_log(level: i32, msg_ptr: i32, msg_len: i32);
 }
 
 fn log_warn(msg: &str) {
@@ -147,19 +147,19 @@ fn log_warn(msg: &str) {
                 BUFFER.as_mut_ptr().offset(ptr as isize),
                 bytes.len(),
             );
-            aether_log(2, ptr, bytes.len() as i32);
+            nantian_log(2, ptr, bytes.len() as i32);
         }
     }
 }
 ```
 
-#### `aether_get_header(name_ptr: i32, name_len: i32) -> i64`
+#### `nantian_get_header(name_ptr: i32, name_len: i32) -> i64`
 
 Read a request header. Returns `(ptr << 32) | len` packed into an i64, or 0 if not found.
 
 ```rust
 extern "C" {
-    fn aether_get_header(name_ptr: i32, name_len: i32) -> i64;
+    fn nantian_get_header(name_ptr: i32, name_len: i32) -> i64;
 }
 
 fn get_header(name: &str) -> Option<String> {
@@ -172,7 +172,7 @@ fn get_header(name: &str) -> Option<String> {
             BUFFER.as_mut_ptr().offset(ptr as isize),
             name_bytes.len(),
         );
-        let packed = aether_get_header(ptr, name_bytes.len() as i32);
+        let packed = nantian_get_header(ptr, name_bytes.len() as i32);
         if packed == 0 { return None; }
         let val_ptr = (packed >> 32) as i32;
         let val_len = (packed & 0xFFFFFFFF) as usize;
@@ -185,13 +185,13 @@ fn get_header(name: &str) -> Option<String> {
 }
 ```
 
-#### `aether_set_header(name_ptr: i32, name_len: i32, val_ptr: i32, val_len: i32)`
+#### `nantian_set_header(name_ptr: i32, name_len: i32, val_ptr: i32, val_len: i32)`
 
 Set a response header. Applied after the plugin returns `Continue`.
 
 ```rust
 extern "C" {
-    fn aether_set_header(
+    fn nantian_set_header(
         name_ptr: i32, name_len: i32,
         val_ptr: i32, val_len: i32
     );
@@ -222,8 +222,8 @@ pub extern "C" fn alloc(len: i32) -> i32 {
 pub extern "C" fn dealloc(_ptr: i32, _len: i32) {}
 
 extern "C" {
-    fn aether_log(level: i32, msg_ptr: i32, msg_len: i32);
-    fn aether_get_header(name_ptr: i32, name_len: i32) -> i64;
+    fn nantian_log(level: i32, msg_ptr: i32, msg_len: i32);
+    fn nantian_get_header(name_ptr: i32, name_len: i32) -> i64;
 }
 
 #[no_mangle]
@@ -241,7 +241,7 @@ pub extern "C" fn on_request() -> i32 {
     }
 
     let packed = unsafe {
-        aether_get_header(ptr, header_name.len() as i32 - 1)
+        nantian_get_header(ptr, header_name.len() as i32 - 1)
     };
 
     if packed == 0 {
@@ -259,7 +259,7 @@ pub extern "C" fn on_request() -> i32 {
 #[no_mangle]
 pub extern "C" fn on_response() -> i32 {
     let name = b"x-powered-by\0";
-    let value = b"aether-gateway\0";
+    let value = b"nantian-gw\0";
 
     let n_ptr = alloc(name.len() as i32);
     let v_ptr = alloc(value.len() as i32);
@@ -277,7 +277,7 @@ pub extern "C" fn on_response() -> i32 {
             BUFFER.as_mut_ptr().offset(v_ptr as isize),
             value.len(),
         );
-        aether_set_header(
+        nantian_set_header(
             n_ptr, name.len() as i32 - 1,
             v_ptr, value.len() as i32 - 1
         );
@@ -294,11 +294,11 @@ Plugins receive their config as JSON. Access it through the `PluginContext` (fut
 ```rust
 // Conceptual: config-driven behavior
 // In practice, config is passed via PluginContext.config (serde_json::Value)
-// and will be accessible through a aether::get_config host function.
+// and will be accessible through a nantian::get_config host function.
 
 #[no_mangle]
 pub extern "C" fn on_request() -> i32 {
-    // Future: let max_rps: i32 = aether_get_config_int("max_rps");
+    // Future: let max_rps: i32 = nantian_get_config_int("max_rps");
     // Future: check rate counter, reject if exceeded
     0
 }
@@ -476,13 +476,13 @@ For larger memory needs, increase `BUFFER` size and set `max_memory_bytes` in `W
 
 ### Debugging
 
-Use `aether_log` for printf-style debugging:
+Use `nantian_log` for printf-style debugging:
 
 ```rust
 fn debug_state() {
     let msg = format!("Processing request, state: {:?}", state);
     // Write msg to BUFFER, then:
-    unsafe { aether_log(0, ptr, msg.len() as i32) };
+    unsafe { nantian_log(0, ptr, msg.len() as i32) };
 }
 ```
 

@@ -16,7 +16,7 @@ import (
 	conformancesuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
 )
 
 const (

@@ -29,7 +29,7 @@ Baseline notes:
   - controlplane metrics still rely on network boundaries rather than Bearer Token
   - Long-term xDS TLS / mTLS rotation, expiry, and fault injection have not yet formed stronger cluster-level automation
   - Request parsing boundaries already have dedicated regression tests, but systematic fuzzing, slow body / idle / flood automation is still not closed-loop
-  - upstream `aether-core 0.8.0 -> prometheus 0.13.x -> protobuf 2.x` still brings a `protobuf < 3.7.2` transitive dependency alert, but the current repository only exports Prometheus text format and does not parse external protobuf payloads
+  - upstream `nantian-core 0.8.0 -> prometheus 0.13.x -> protobuf 2.x` still brings a `protobuf < 3.7.2` transitive dependency alert, but the current repository only exports Prometheus text format and does not parse external protobuf payloads
 
 Current risk acceptance items:
 

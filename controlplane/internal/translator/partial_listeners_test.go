@@ -14,10 +14,10 @@ import (
 
 func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGateway(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	gatewayClass := &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: controllerName,
 		},
@@ -25,7 +25,7 @@ func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGat
 	stableGateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "stable-gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,
@@ -42,7 +42,7 @@ func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGat
 	removedGateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "removed-gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,

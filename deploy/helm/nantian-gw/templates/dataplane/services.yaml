@@ -1,6 +1,6 @@
 {{- if .Values.dataplane.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
-{{- $dpName := include "aether-gateway.name" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
+{{- $dpName := include "nantian-gw.name" . }}
 ---
 apiVersion: v1
 kind: Service
@@ -8,11 +8,11 @@ metadata:
   name: {{ $dpName }}-dataplane-admin
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
     gateway.nantian.dev/service-role: admin
 spec:
   selector:
-    {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.selectorLabels" . | nindent 4 }}
   ports:
     - name: admin
       port: 19080
@@ -24,11 +24,11 @@ metadata:
   name: {{ $dpName }}-dataplane-metrics
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
     gateway.nantian.dev/service-role: metrics
 spec:
   selector:
-    {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.selectorLabels" . | nindent 4 }}
   ports:
     - name: metrics
       port: 19080

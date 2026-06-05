@@ -1,6 +1,6 @@
 {{- if .Values.controlplane.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
-{{- $cpName := include "aether-gateway.name" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
+{{- $cpName := include "nantian-gw.name" . }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -8,7 +8,7 @@ metadata:
   name: {{ $cpName }}-controlplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.controlplane.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.controlplane.replicas }}
   minReadySeconds: 5
@@ -18,12 +18,12 @@ spec:
     {{- toYaml .Values.controlplane.strategy | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "aether-gateway.controlplane.selectorLabels" . | nindent 6 }}
+      {{- include "nantian-gw.controlplane.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "aether-gateway.controlplane.selectorLabels" . | nindent 8 }}
-        {{- include "aether-gateway.controlplane.labels" . | nindent 8 }}
+        {{- include "nantian-gw.controlplane.selectorLabels" . | nindent 8 }}
+        {{- include "nantian-gw.controlplane.labels" . | nindent 8 }}
       {{- with .Values.controlplane.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
@@ -31,7 +31,7 @@ spec:
     spec:
       serviceAccountName: {{ $cpName }}-controlplane
       terminationGracePeriodSeconds: {{ .Values.controlplane.terminationGracePeriodSeconds }}
-      {{- include "aether-gateway.podSecurityContext" . | nindent 6 }}
+      {{- include "nantian-gw.podSecurityContext" . | nindent 6 }}
       {{- if .Values.controlplane.podSecurityContext }}
       securityContext:
         {{- toYaml .Values.controlplane.podSecurityContext | nindent 8 }}
@@ -44,7 +44,7 @@ spec:
           whenUnsatisfiable: {{ .whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              {{- include "aether-gateway.controlplane.selectorLabels" $ | nindent 14 }}
+              {{- include "nantian-gw.controlplane.selectorLabels" $ | nindent 14 }}
         {{- end }}
       {{- end }}
       {{- with .Values.controlplane.nodeSelector }}
@@ -59,10 +59,10 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- include "aether-gateway.imagePullSecrets" . | nindent 6 }}
+      {{- include "nantian-gw.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: controlplane
-          image: {{ include "aether-gateway.controlplane.image" . }}
+          image: {{ include "nantian-gw.controlplane.image" . }}
           imagePullPolicy: {{ .Values.controlplane.image.pullPolicy }}
           env:
             - name: POD_NAMESPACE
@@ -74,7 +74,7 @@ spec:
             {{- end }}
           args:
             - "-config"
-            - "/etc/aether-gateway/config.yaml"
+            - "/etc/nantian-gw/config.yaml"
           ports:
             - name: grpc
               containerPort: 18080
@@ -106,23 +106,23 @@ spec:
             failureThreshold: {{ .Values.controlplane.probes.readiness.failureThreshold }}
           resources:
             {{- toYaml .Values.controlplane.resources | nindent 12 }}
-          {{- include "aether-gateway.containerSecurityContext" . | nindent 10 }}
+          {{- include "nantian-gw.containerSecurityContext" . | nindent 10 }}
           {{- if .Values.controlplane.containerSecurityContext }}
           securityContext:
             {{- toYaml .Values.controlplane.containerSecurityContext | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /etc/aether-gateway
+              mountPath: /etc/nantian-gw
               readOnly: true
             {{- if or .Values.controlplane.grpcTLS.enabled .Values.certs.generate }}
             - name: grpc-tls
-              mountPath: /etc/aether-gateway/grpc-tls
+              mountPath: /etc/nantian-gw/grpc-tls
               readOnly: true
             {{- end }}
             {{- if .Values.controlplane.adminAuth.existingSecret }}
             - name: admin-auth
-              mountPath: /etc/aether-gateway/admin-auth
+              mountPath: /etc/nantian-gw/admin-auth
               readOnly: true
             {{- end }}
             {{- with .Values.controlplane.extraVolumeMounts }}

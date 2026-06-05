@@ -2,19 +2,19 @@
 
 This directory contains example Prometheus scrape assets for:
 
-- the controlplane metrics endpoint exposed by `aether-gateway-controlplane-metrics`
-- the dataplane metrics endpoint exposed by `aether-gateway-dataplane-metrics`
+- the controlplane metrics endpoint exposed by `nantian-controlplane-metrics`
+- the dataplane metrics endpoint exposed by `nantian-dataplane-metrics`
 
-Use these files when you want Prometheus to scrape each dataplane pod separately so queries like `sum(aether_gateway_dataplane_ready)` reflect ready replica counts instead of the view from a single Service request.
+Use these files when you want Prometheus to scrape each dataplane pod separately so queries like `sum(nantian_gateway_dataplane_ready)` reflect ready replica counts instead of the view from a single Service request.
 
 Metric names, label cardinality classes, and golden-signal expectations are documented in [`docs/contracts/metrics-cardinality.md`](../../../docs/contracts/metrics-cardinality.md). Update that contract before adding default scrape metrics, recording rules, or Grafana queries that introduce new labels.
 
 ## Why This Exists
 
-`aether_gateway_dataplane_ready` is a per-pod gauge, not a replica counter.
+`nantian_gateway_dataplane_ready` is a per-pod gauge, not a replica counter.
 
 - Metric definition: `1 if the dataplane has applied at least one snapshot, 0 otherwise.`
-- A single request to `aether-gateway-dataplane-metrics` only hits one backend pod.
+- A single request to `nantian-dataplane-metrics` only hits one backend pod.
 - Replica-level views require Prometheus to scrape every endpoint or pod independently and then aggregate with PromQL.
 
 Do not use a single static target such as:
@@ -22,7 +22,7 @@ Do not use a single static target such as:
 ```yaml
 static_configs:
   - targets:
-      - aether-gateway-dataplane-metrics.aether-gateway.svc:19080
+      - nantian-dataplane-metrics.nantian-gw.svc:19080
 ```
 
 That configuration only gives you a single-pod view.
@@ -81,17 +81,17 @@ The Operator objects also assume:
 - Operator namespace: `monitoring`
 - Prometheus release label: `kube-prometheus-stack`
 
-If your cluster enforces Kubernetes `NetworkPolicy`, also apply `operator/networkpolicy-prometheus-scrape.yaml` or an equivalent policy. The base Aether Gateway manifests only allow the `aether-gateway` namespace to reach controlplane `18082/TCP` and dataplane `19080/TCP`; a Prometheus pod running in `monitoring` will otherwise discover targets but fail to scrape them.
+If your cluster enforces Kubernetes `NetworkPolicy`, also apply `operator/networkpolicy-prometheus-scrape.yaml` or an equivalent policy. The base Aether Gateway manifests only allow the `nantian-gw` namespace to reach controlplane `18082/TCP` and dataplane `19080/TCP`; a Prometheus pod running in `monitoring` will otherwise discover targets but fail to scrape them.
 
 The native rules file and the Operator `PrometheusRule` create dataplane
 container resource recording rules:
 
-- `aether_gateway_dataplane_container_cpu_cores`
-- `aether_gateway_dataplane_container_cpu_request_cores`
-- `aether_gateway_dataplane_container_cpu_throttle_ratio`
-- `aether_gateway_dataplane_container_memory_working_set_bytes`
-- `aether_gateway_dataplane_container_memory_limit_bytes`
-- `aether_gateway_dataplane_container_memory_request_bytes`
+- `nantian_gateway_dataplane_container_cpu_cores`
+- `nantian_gateway_dataplane_container_cpu_request_cores`
+- `nantian_gateway_dataplane_container_cpu_throttle_ratio`
+- `nantian_gateway_dataplane_container_memory_working_set_bytes`
+- `nantian_gateway_dataplane_container_memory_limit_bytes`
+- `nantian_gateway_dataplane_container_memory_request_bytes`
 
 These rules intentionally use cAdvisor and kube-state-metrics rather than the
 dataplane admin endpoint. The dataplane `/metrics` process metrics remain a
@@ -123,51 +123,51 @@ For first-pass validation, prefer filtering by namespace and checking pod labels
 Use these queries after rollout:
 
 ```promql
-aether_gateway_snapshot_builds_total{namespace="aether-gateway"}
+nantian_gateway_snapshot_builds_total{namespace="nantian-gw"}
 ```
 
 ```promql
-histogram_quantile(0.95, sum by (le) (rate(aether_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{namespace="aether-gateway"}[5m])))
+histogram_quantile(0.95, sum by (le) (rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{namespace="nantian-gw"}[5m])))
 ```
 
 ```promql
-aether_gateway_dataplane_ready{namespace="aether-gateway"}
+nantian_gateway_dataplane_ready{namespace="nantian-gw"}
 ```
 
 ```promql
-count(aether_gateway_dataplane_ready{namespace="aether-gateway"})
+count(nantian_gateway_dataplane_ready{namespace="nantian-gw"})
 ```
 
 ```promql
-sum(aether_gateway_dataplane_ready{namespace="aether-gateway"})
+sum(nantian_gateway_dataplane_ready{namespace="nantian-gw"})
 ```
 
 ```promql
-aether_gateway_dataplane_ready_replicas{namespace="aether-gateway"}
+nantian_gateway_dataplane_ready_replicas{namespace="nantian-gw"}
 ```
 
 ```promql
-aether_gateway_dataplane_container_cpu_throttle_ratio{namespace="aether-gateway"}
+nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace="nantian-gw"}
 ```
 
 ```promql
-aether_gateway_dataplane_container_memory_working_set_bytes{namespace="aether-gateway"}
+nantian_gateway_dataplane_container_memory_working_set_bytes{namespace="nantian-gw"}
 ```
 
 ```promql
-sum by (status_class) (rate(aether_gateway_dataplane_admin_requests_total{namespace="aether-gateway"}[5m]))
+sum by (status_class) (rate(nantian_gateway_dataplane_admin_requests_total{namespace="nantian-gw"}[5m]))
 ```
 
 ```promql
-histogram_quantile(0.95, sum by (le, route) (rate(aether_gateway_dataplane_admin_request_duration_seconds_bucket{namespace="aether-gateway"}[5m])))
+histogram_quantile(0.95, sum by (le, route) (rate(nantian_gateway_dataplane_admin_request_duration_seconds_bucket{namespace="nantian-gw"}[5m])))
 ```
 
 ```promql
-kube_deployment_spec_replicas{namespace="aether-gateway",deployment="aether-gateway-dataplane"}
+kube_deployment_spec_replicas{namespace="nantian-gw",deployment="nantian-dataplane"}
 ```
 
 ```promql
-kube_deployment_status_replicas_available{namespace="aether-gateway",deployment="aether-gateway-dataplane"}
+kube_deployment_status_replicas_available{namespace="nantian-gw",deployment="nantian-dataplane"}
 ```
 
 Interpretation:
@@ -175,7 +175,7 @@ Interpretation:
 - `count = 3` and `sum = 3`: three dataplane pods are being scraped separately and all are ready.
 - `count = 1` and `sum = 1`: only one scrape target is being discovered.
 - `count = 3` and `sum = 2`: three scrape targets exist but one dataplane pod is not ready under this metric’s definition.
-- Empty controlplane panels usually mean the controlplane scrape object or native `scrape_configs` block is missing, the `job_controlplane` Grafana variable is not matching the real `job` label, or NetworkPolicy blocks Prometheus from reaching `aether-gateway-controlplane-metrics:18082`.
+- Empty controlplane panels usually mean the controlplane scrape object or native `scrape_configs` block is missing, the `job_controlplane` Grafana variable is not matching the real `job` label, or NetworkPolicy blocks Prometheus from reaching `nantian-controlplane-metrics:18082`.
 - Empty container resource recording rules usually mean kubelet cAdvisor or
   kube-state-metrics is not scraped, or your cluster uses different namespace,
   pod, or container labels. Keep the recording rules aligned with your deployed
@@ -189,9 +189,9 @@ Copy it first, replace the placeholder token, then apply the real Secret manifes
 Prometheus Operator:
 
 ```bash
-cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/aether-gateway-dataplane-admin-token.yaml
-$EDITOR /tmp/aether-gateway-dataplane-admin-token.yaml
-kubectl apply -f /tmp/aether-gateway-dataplane-admin-token.yaml
+cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/nantian-dataplane-admin-token.yaml
+$EDITOR /tmp/nantian-dataplane-admin-token.yaml
+kubectl apply -f /tmp/nantian-dataplane-admin-token.yaml
 kubectl apply -f deploy/observability/prometheus/operator/networkpolicy-prometheus-scrape.yaml
 kubectl apply -f deploy/observability/prometheus/operator/podmonitor-controlplane.yaml
 kubectl apply -f deploy/observability/prometheus/operator/podmonitor-dataplane.yaml
@@ -201,9 +201,9 @@ kubectl apply -f deploy/observability/prometheus/operator/prometheusrule-datapla
 Or, if you prefer Service-based discovery:
 
 ```bash
-cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/aether-gateway-dataplane-admin-token.yaml
-$EDITOR /tmp/aether-gateway-dataplane-admin-token.yaml
-kubectl apply -f /tmp/aether-gateway-dataplane-admin-token.yaml
+cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/nantian-dataplane-admin-token.yaml
+$EDITOR /tmp/nantian-dataplane-admin-token.yaml
+kubectl apply -f /tmp/nantian-dataplane-admin-token.yaml
 kubectl apply -f deploy/observability/prometheus/operator/networkpolicy-prometheus-scrape.yaml
 kubectl apply -f deploy/observability/prometheus/operator/servicemonitor-controlplane.yaml
 kubectl apply -f deploy/observability/prometheus/operator/servicemonitor-dataplane.yaml

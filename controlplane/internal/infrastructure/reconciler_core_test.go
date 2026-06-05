@@ -17,12 +17,12 @@ import (
 
 func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -33,7 +33,7 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 					Namespace: "gateway-conformance-infra",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						Labels: map[gatewayv1.LabelKey]gatewayv1.LabelValue{
 							"example.com/team": "edge",
@@ -68,7 +68,7 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 				},
 				Spec: corev1.ServiceSpec{
 					Type:     corev1.ServiceTypeNodePort,
-					Selector: map[string]string{"app": "aether-gateway-dataplane"},
+					Selector: map[string]string{"app": "nantian-dataplane"},
 					Ports: []corev1.ServicePort{
 						{
 							Name:       "tcp-80",
@@ -159,12 +159,12 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 }
 func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -175,7 +175,7 @@ func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -185,9 +185,9 @@ func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

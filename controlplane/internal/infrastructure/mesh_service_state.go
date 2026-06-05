@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 type meshServiceState struct {

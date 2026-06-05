@@ -7,9 +7,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/extensionfilter"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func evaluateRoute(state *clusterState, route routeInput) []routeParentEvaluation {
@@ -105,7 +105,7 @@ func evaluateParentRef(
 			} else {
 				accepted.Status = metav1.ConditionTrue
 				accepted.Reason = string(gatewayv1.RouteReasonAccepted)
-				accepted.Message = "Route is accepted by aether-gateway"
+				accepted.Message = "Route is accepted by nantian-gw"
 			}
 		}
 	}
@@ -141,7 +141,7 @@ func evaluateServiceParentRef(
 	if ok && serviceParentPortMatches(service, parentRef) {
 		accepted.Status = metav1.ConditionTrue
 		accepted.Reason = string(gatewayv1.RouteReasonAccepted)
-		accepted.Message = "Route is accepted by aether-gateway"
+		accepted.Message = "Route is accepted by nantian-gw"
 	}
 	accepted = applyRouteAcceptedError(route, accepted)
 
@@ -358,7 +358,7 @@ func evaluateListenerSetParentRef(
 			} else {
 				accepted.Status = metav1.ConditionTrue
 				accepted.Reason = string(gatewayv1.RouteReasonAccepted)
-				accepted.Message = "Route is accepted by aether-gateway"
+				accepted.Message = "Route is accepted by nantian-gw"
 			}
 		}
 	}

@@ -132,6 +132,6 @@ require_command kubectl
   printf '# Note:\n'
   printf '#   %s\n' "$(profile_note "${install_profile}")"
   kubectl kustomize "${SOURCE_DIR}" | sed \
-    -e "s|aether-gateway-controlplane:dev|$(escape_sed_replacement "${CONTROL_IMAGE}")|g" \
-    -e "s|aether-gateway-dataplane:dev|$(escape_sed_replacement "${DATAPLANE_IMAGE}")|g"
+    -e "s|nantian-controlplane:dev|$(escape_sed_replacement "${CONTROL_IMAGE}")|g" \
+    -e "s|nantian-dataplane:dev|$(escape_sed_replacement "${DATAPLANE_IMAGE}")|g"
 } >"${OUTPUT_FILE}"

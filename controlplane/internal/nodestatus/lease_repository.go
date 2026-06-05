@@ -16,15 +16,15 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 const (
-	defaultLeaseNamespace      = "aether-gateway"
+	defaultLeaseNamespace      = "nantian-gw"
 	defaultLeasePrefix         = "aeg-node"
 	defaultLeaseDuration       = 300 * time.Second
 	managedByLabelKey          = "app.kubernetes.io/managed-by"
-	managedByLabelValue        = "aether-gateway"
+	managedByLabelValue        = "nantian-gw"
 	componentLabelKey          = "nantian.dev/component"
 	componentLabelValue        = "node-status"
 	nodeIDAnnotationKey        = "nantian.dev/node-id"

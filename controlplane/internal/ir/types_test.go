@@ -290,7 +290,7 @@ func TestSnapshotDigestIgnoresStatusSummaries(t *testing.T) {
 			Namespace: "default",
 			Status: &RouteStatus{
 				Parents: []RouteParentStatus{{
-					ControllerName: "gateway.networking.k8s.io/aether-gateway",
+					ControllerName: "gateway.networking.k8s.io/nantian-gw",
 					ParentRef:      ParentRef{Name: "gw", Namespace: "default", SectionName: "http"},
 					Conditions: []ConditionStatus{{
 						Type:               "Accepted",
@@ -327,7 +327,7 @@ func TestSnapshotDigestIgnoresStatusSummaries(t *testing.T) {
 			Namespace: "default",
 			Status: &RouteStatus{
 				Parents: []RouteParentStatus{{
-					ControllerName: "gateway.networking.k8s.io/aether-gateway",
+					ControllerName: "gateway.networking.k8s.io/nantian-gw",
 					ParentRef:      ParentRef{Name: "gw", Namespace: "default", SectionName: "http"},
 					Conditions: []ConditionStatus{{
 						Type:               "Accepted",

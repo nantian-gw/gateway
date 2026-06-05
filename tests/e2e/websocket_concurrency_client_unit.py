@@ -110,7 +110,7 @@ def client_args(port):
         requests=6,
         concurrency=3,
         host_header="ws.example.com",
-        payload="aether-websocket",
+        payload="nantian-websocket",
         connect_timeout=1.0,
         request_timeout=1.0,
         hold_ms=10,

@@ -1,16 +1,16 @@
 {{- if and .Values.controlplane.enabled (gt (int .Values.controlplane.replicas) 1) }}
-{{- $ns := include "aether-gateway.namespace" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "aether-gateway.name" . }}-controlplane
+  name: {{ include "nantian-gw.name" . }}-controlplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.controlplane.labels" . | nindent 4 }}
 spec:
   minAvailable: {{ .Values.controlplane.pdb.minAvailable }}
   selector:
     matchLabels:
-      {{- include "aether-gateway.controlplane.selectorLabels" . | nindent 6 }}
+      {{- include "nantian-gw.controlplane.selectorLabels" . | nindent 6 }}
 {{- end }}

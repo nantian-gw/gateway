@@ -41,7 +41,7 @@ class TcpEchoServer:
         try:
             await reader.readuntil(b"\r\n\r\n")
             self.received_payloads += 1
-            body = b"aether-gateway-ok"
+            body = b"nantian-gw-ok"
             writer.write(
                 b"HTTP/1.1 200 OK\r\n"
                 + b"Content-Length: "
@@ -63,7 +63,7 @@ def client_args(port):
         payload=None,
         payload_file=None,
         host_header="example.com",
-        expect_substring="aether-gateway-ok",
+        expect_substring="nantian-gw-ok",
         connect_timeout=1.0,
         request_timeout=1.0,
         output=None,

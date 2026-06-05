@@ -2,20 +2,20 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-aether-gateway}"
-TEST_NAMESPACE="${TEST_NAMESPACE:-aether-http-security}"
+AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
+TEST_NAMESPACE="${TEST_NAMESPACE:-nantian-http-security}"
 TEST_HOST="${TEST_HOST:-security.example.com}"
 GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-18080}"
 ADMIN_FORWARD_PORT="${ADMIN_FORWARD_PORT:-29080}"
 KEEP_RESOURCES="${KEEP_RESOURCES:-false}"
 PYTHON_SOURCE_IMAGE="${PYTHON_SOURCE_IMAGE:-m.daocloud.io/docker.io/library/python:3.12-slim-bookworm}"
-PYTHON_IMAGE="${PYTHON_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-validation/python-ws:3.12-slim-bookworm}"
+PYTHON_IMAGE="${PYTHON_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-gw-validation/python-ws:3.12-slim-bookworm}"
 RAW_CLIENT="${ROOT_DIR}/tests/e2e/http_raw_client.py"
 OVERSIZED_HEADER_BYTES="${OVERSIZED_HEADER_BYTES:-262144}"
 SLOW_CONNECTIONS="${SLOW_CONNECTIONS:-8}"
@@ -50,12 +50,12 @@ kind_cluster_exists() {
   kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"
 }
 
-aether_stack_ready() {
-  k -n "${AETHER_NAMESPACE}" get deployment aether-gateway-controlplane aether-gateway-dataplane >/dev/null 2>&1
+nantian_stack_ready() {
+  k -n "${AETHER_NAMESPACE}" get deployment nantian-controlplane nantian-dataplane >/dev/null 2>&1
 }
 
 smoke_http_ready() {
-  curl -fsS -H 'Host: example.com' "http://127.0.0.1:${GATEWAY_HOST_PORT}/" 2>/dev/null | grep -q "aether-gateway-ok"
+  curl -fsS -H 'Host: example.com' "http://127.0.0.1:${GATEWAY_HOST_PORT}/" 2>/dev/null | grep -q "nantian-gw-ok"
 }
 
 bootstrap_kind_stack() {
@@ -78,7 +78,7 @@ ensure_kind_stack() {
     return
   fi
 
-  if ! aether_stack_ready || ! smoke_http_ready; then
+  if ! nantian_stack_ready || ! smoke_http_ready; then
     bootstrap_kind_stack
   fi
 }
@@ -166,7 +166,7 @@ pick_admin_forward_port() {
 start_admin_port_forward() {
   pick_admin_forward_port
   PORT_FORWARD_LOG="${TMP_DIR}/port-forward.log"
-  k -n "${AETHER_NAMESPACE}" port-forward service/aether-gateway-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
+  k -n "${AETHER_NAMESPACE}" port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
     >"${PORT_FORWARD_LOG}" 2>&1 &
   PORT_FORWARD_PID="$!"
 
@@ -346,9 +346,9 @@ data:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether
+  name: nantian
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -400,7 +400,7 @@ metadata:
   name: security-edge
   namespace: ${TEST_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: http
       protocol: HTTP

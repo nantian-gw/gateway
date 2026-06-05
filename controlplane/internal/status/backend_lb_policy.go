@@ -8,8 +8,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/backendlb"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/backendlb"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 )
 
 const (
@@ -121,7 +121,7 @@ func evaluateBackendLBPolicySpec(
 	eval := backendLBPolicySpecEvaluation{
 		generation:        policy.Generation,
 		claimsTargets:     policy.Spec.SessionPersistence != nil || policy.Spec.LoadBalancing != nil,
-		acceptedCondition: acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), "BackendLBPolicy is accepted by aether-gateway"),
+		acceptedCondition: acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), "BackendLBPolicy is accepted by nantian-gw"),
 		resolvedCondition: backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, "BackendLBPolicy references are resolved"),
 	}
 
@@ -229,7 +229,7 @@ func backendLBPolicyTargets(
 	}
 
 	return keys, ancestors,
-		acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), "BackendLBPolicy is accepted by aether-gateway"),
+		acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), "BackendLBPolicy is accepted by nantian-gw"),
 		backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, "BackendLBPolicy references are resolved"),
 		true
 }

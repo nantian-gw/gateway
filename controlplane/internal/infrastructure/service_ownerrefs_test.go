@@ -20,7 +20,7 @@ func TestDesiredGatewayServiceSetsGatewayOwnerReference(t *testing.T) {
 			UID:       types.UID("gateway-uid-123"),
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -54,12 +54,12 @@ func TestDesiredGatewayServiceSetsGatewayOwnerReference(t *testing.T) {
 
 func TestReconcileBackfillsGatewayServiceOwnerReference(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -71,7 +71,7 @@ func TestReconcileBackfillsGatewayServiceOwnerReference(t *testing.T) {
 					UID:       types.UID("gateway-uid-456"),
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,

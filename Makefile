@@ -45,6 +45,6 @@ clean-artifacts:
 	./scripts/clean-artifacts.sh
 
 helm-validate:
-	helm lint deploy/helm/aether-gateway/
-	helm template aether-gateway deploy/helm/aether-gateway/ > /dev/null
+	helm lint deploy/helm/nantian-gw/
+	helm template nantian-gw deploy/helm/nantian-gw/ > /dev/null
 	@echo "Helm chart validation passed"

@@ -13,12 +13,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 )
 
 func TestReconcileRejectsGatewayWithInvalidInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -29,7 +29,7 @@ func TestReconcileRejectsGatewayWithInvalidInfrastructureParametersRef(t *testin
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -46,7 +46,7 @@ func TestReconcileRejectsGatewayWithInvalidInfrastructureParametersRef(t *testin
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -99,7 +99,7 @@ func TestReconcileRejectsGatewayWithInvalidInfrastructureParametersRef(t *testin
 
 func TestReconcileRejectsGatewayWithUnsupportedInfrastructureParameterField(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -110,7 +110,7 @@ func TestReconcileRejectsGatewayWithUnsupportedInfrastructureParameterField(t *t
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -127,7 +127,7 @@ func TestReconcileRejectsGatewayWithUnsupportedInfrastructureParameterField(t *t
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -175,7 +175,7 @@ func TestReconcileRejectsGatewayWithUnsupportedInfrastructureParameterField(t *t
 
 func TestReconcileRejectsGatewayWhenGatewayClassParametersRefIsInvalid(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	classNamespace := gatewayv1.Namespace("infra-config")
 
 	k8sClient := fake.NewClientBuilder().
@@ -188,7 +188,7 @@ func TestReconcileRejectsGatewayWhenGatewayClassParametersRefIsInvalid(t *testin
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: string(classNamespace)}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -211,7 +211,7 @@ func TestReconcileRejectsGatewayWhenGatewayClassParametersRefIsInvalid(t *testin
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -249,7 +249,7 @@ func TestReconcileRejectsGatewayWhenGatewayClassParametersRefIsInvalid(t *testin
 
 func TestReconcileAggregatesGatewayAndGatewayClassInfrastructureParameterErrors(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	classNamespace := gatewayv1.Namespace("infra-config")
 
 	k8sClient := fake.NewClientBuilder().
@@ -262,7 +262,7 @@ func TestReconcileAggregatesGatewayAndGatewayClassInfrastructureParameterErrors(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: string(classNamespace)}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -294,7 +294,7 @@ func TestReconcileAggregatesGatewayAndGatewayClassInfrastructureParameterErrors(
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: &gatewayv1.LocalParametersReference{
 							Group: "",
@@ -351,11 +351,11 @@ func TestReconcileAggregatesGatewayAndGatewayClassInfrastructureParameterErrors(
 
 func TestReconcileEmitsGatewayInfrastructureParameterEventsOnlyOnChange(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	gatewayObj := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Infrastructure: &gatewayv1.GatewayInfrastructure{
 				ParametersRef: &gatewayv1.LocalParametersReference{
 					Group: "",
@@ -385,7 +385,7 @@ func TestReconcileEmitsGatewayInfrastructureParameterEventsOnlyOnChange(t *testi
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},

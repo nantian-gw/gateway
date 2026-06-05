@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
 )
 
 const (

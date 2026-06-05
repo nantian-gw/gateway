@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aether-gateway-dataplane
-  namespace: aether-gateway
+  name: nantian-dataplane
+  namespace: nantian-gw
 spec:
   template:
     spec:
@@ -16,18 +16,18 @@ spec:
               memory: 2Gi
           volumeMounts:
             - name: session-persistence
-              mountPath: /etc/aether-gateway/session-persistence
+              mountPath: /etc/nantian-gw/session-persistence
               readOnly: true
       volumes:
         - name: xds-tls
           secret:
-            secretName: aether-gateway-dataplane-xds-tls
+            secretName: nantian-dataplane-xds-tls
             optional: false
         - name: admin-auth
           secret:
-            secretName: aether-gateway-dataplane-admin-auth
+            secretName: nantian-dataplane-admin-auth
             optional: false
         - name: session-persistence
           secret:
-            secretName: aether-gateway-dataplane-session-persistence
+            secretName: nantian-dataplane-session-persistence
             optional: false

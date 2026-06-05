@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/wasmpluginv1alpha1"
 )
 
 func TestTranslateWasmPlugin(t *testing.T) {

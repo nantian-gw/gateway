@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	defaultMetricsConfigNamespace = "aether-gateway"
-	defaultMetricsConfigSecret    = "aether-gateway-metrics-config"
+	defaultMetricsConfigNamespace = "nantian-gw"
+	defaultMetricsConfigSecret    = "nantian-gw-metrics-config"
 )
 
 // MetricsConfig holds the Prometheus integration configuration loaded from a
@@ -35,7 +35,7 @@ func (c *MetricsConfig) Validate() error {
 	}
 	return nil
 }
-// "aether-gateway-metrics-config" in the specified namespace.
+// "nantian-gw-metrics-config" in the specified namespace.
 func LoadConfig(ctx context.Context, cl client.Client, namespace string) (*MetricsConfig, error) {
 	if namespace == "" {
 		namespace = defaultMetricsConfigNamespace

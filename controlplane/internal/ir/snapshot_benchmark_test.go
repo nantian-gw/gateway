@@ -327,7 +327,7 @@ func benchmarkRouteStatus(index int) *RouteStatus {
 	return &RouteStatus{
 		Parents: []RouteParentStatus{
 			{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 				ParentRef:      benchmarkRouteParents(index)[1],
 				Conditions: []ConditionStatus{
 					{Type: "ResolvedRefs", Status: "True", ObservedGeneration: int64(index + 1)},
@@ -335,7 +335,7 @@ func benchmarkRouteStatus(index int) *RouteStatus {
 				},
 			},
 			{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 				ParentRef:      benchmarkRouteParents(index)[0],
 				Conditions: []ConditionStatus{
 					{Type: "Accepted", Status: "True", ObservedGeneration: int64(index + 1)},

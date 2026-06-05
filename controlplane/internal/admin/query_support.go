@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func parseOptionalBool(raw string) (*bool, error) {

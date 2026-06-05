@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
 )
 
 func wrapMetricsHandler(next http.Handler, metrics *observability.Metrics) http.Handler {

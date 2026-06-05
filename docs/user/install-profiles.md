@@ -17,7 +17,7 @@ Current official entry points are:
 
 Helm charts and Operators are not yet current default installation entry points. If these packaging forms are added later, they must reuse the profile field semantics from this document to avoid drift from Kustomize / release manifests.
 
-Dashboard note: `scripts/render-release-manifest.sh` currently only replaces controlplane and dataplane images. If you keep the dashboard in production or long-term environments, replace the `aether-gateway-dashboard` image in your own overlay / release pipeline with a published, digest-pinned image; if you do not use the UI, you can also remove the dashboard resources in your environment overlay.
+Dashboard note: `scripts/render-release-manifest.sh` currently only replaces controlplane and dataplane images. If you keep the dashboard in production or long-term environments, replace the `nantian-gw-dashboard` image in your own overlay / release pipeline with a published, digest-pinned image; if you do not use the UI, you can also remove the dashboard resources in your environment overlay.
 
 ## Profile Overview
 
@@ -36,9 +36,9 @@ Rendering local or Kind profile:
 ```bash
 ./scripts/render-release-manifest.sh \
   --profile kind-dev \
-  ghcr.io/example/aether-gateway-controlplane:v0.0.0 \
-  ghcr.io/example/aether-gateway-dataplane:v0.0.0 \
-  /tmp/aether-gateway-install.yaml
+  ghcr.io/example/nantian-controlplane:v0.0.0 \
+  ghcr.io/example/nantian-dataplane:v0.0.0 \
+  /tmp/nantian-gw-install.yaml
 ```
 
 Rendering production profile:
@@ -46,9 +46,9 @@ Rendering production profile:
 ```bash
 ./scripts/render-release-manifest.sh \
   --profile single-cluster-prod \
-  ghcr.io/example/aether-gateway-controlplane:v0.0.0 \
-  ghcr.io/example/aether-gateway-dataplane:v0.0.0 \
-  /tmp/aether-gateway-install.yaml
+  ghcr.io/example/nantian-controlplane:v0.0.0 \
+  ghcr.io/example/nantian-dataplane:v0.0.0 \
+  /tmp/nantian-gw-install.yaml
 ```
 
 `scripts/prepare-release-assets.sh` renders `install.yaml` in the release asset as `single-cluster-prod` by default. The release asset must record image digests, so the formal release workflow passes `RELEASE_CONTROLPLANE_DIGEST` and `RELEASE_DATAPLANE_DIGEST` after image build/push. When packaging locally, you can also pass image references in `image@sha256:<digest>` format.
@@ -61,9 +61,9 @@ RELEASE_CONTROLPLANE_DIGEST=sha256:<64-hex-controlplane-digest> \
 RELEASE_DATAPLANE_DIGEST=sha256:<64-hex-dataplane-digest> \
 ./scripts/prepare-release-assets.sh \
   v0.0.0 \
-  ghcr.io/example/aether-gateway-controlplane:v0.0.0 \
-  ghcr.io/example/aether-gateway-dataplane:v0.0.0 \
-  /tmp/aether-gateway-release
+  ghcr.io/example/nantian-controlplane:v0.0.0 \
+  ghcr.io/example/nantian-dataplane:v0.0.0 \
+  /tmp/nantian-gw-release
 ```
 
 The `install.yaml` rendered from production profiles does not inline real Secrets. Before deploying, you must generate real Secrets from `deploy/kubernetes/overlays/production/*.secret.example.yaml` and replace environment-specific fields such as `statusAddresses`.
@@ -82,7 +82,7 @@ Default configuration:
 | Item | Current Value |
 | --- | --- |
 | Secrets | controlplane gRPC TLS, controlplane admin auth, dataplane xDS TLS, dataplane admin auth are all optional mounts |
-| NetworkPolicy | controlplane gRPC/admin/metrics only allow access within the `aether-gateway` namespace; healthz allows cluster-external probe sources; dataplane admin/metrics only allow access within the namespace |
+| NetworkPolicy | controlplane gRPC/admin/metrics only allow access within the `nantian-gw` namespace; healthz allows cluster-external probe sources; dataplane admin/metrics only allow access within the namespace |
 | Services | controlplane gRPC `18080`, admin `18081`, metrics `18082`; dataplane admin/metrics `19080`; dashboard HTTP `8080` |
 | Data plane traffic ports | dataplane Pod listens on HTTP `10080` and HTTPS `443` by default; actual Gateway exposure is handled by the Gateway-corresponding Service created or managed by the control plane |
 | HPA | Not enabled by default |
@@ -93,7 +93,7 @@ Default configuration:
 Minimum verification:
 
 ```bash
-kubectl kustomize deploy/kubernetes/overlays/kind >/tmp/aether-gateway-kind.yaml
+kubectl kustomize deploy/kubernetes/overlays/kind >/tmp/nantian-gw-kind.yaml
 ```
 
 Kind smoke testing should still prefer the repository scripts:
@@ -124,19 +124,19 @@ Default configuration:
 It is recommended to create a separate multi-node Kind load testing cluster:
 
 ```bash
-kind create cluster --name aether-gateway-perf --config deploy/kubernetes/overlays/kind-hostnetwork/kind-config.yaml
+kind create cluster --name nantian-gw-perf --config deploy/kubernetes/overlays/kind-hostnetwork/kind-config.yaml
 ```
 
 Before multi-node load testing, scale dataplane to match the number of workers / nodes; anti-affinity prevents multiple hostNetwork dataplane replicas on the same node:
 
 ```bash
-kubectl -n aether-gateway scale deployment/aether-gateway-dataplane --replicas=2
+kubectl -n nantian-gw scale deployment/nantian-dataplane --replicas=2
 ```
 
 Minimum verification:
 
 ```bash
-kubectl kustomize deploy/kubernetes/overlays/kind-hostnetwork >/tmp/aether-gateway-kind-hostnetwork.yaml
+kubectl kustomize deploy/kubernetes/overlays/kind-hostnetwork >/tmp/nantian-gw-kind-hostnetwork.yaml
 ```
 
 This profile is only for local or controlled load testing environments. It causes the dataplane to listen on node network ports and is not suitable as a default production installation entry point; the production long-term entry point remains `single-cluster-prod`.
@@ -152,11 +152,11 @@ Required Secrets:
 
 | Secret | Purpose | Example File |
 | --- | --- | --- |
-| `aether-gateway-controlplane-admin-auth` | controlplane admin Bearer Token | `deploy/kubernetes/overlays/production/controlplane-admin-auth.secret.example.yaml` |
-| `aether-gateway-controlplane-grpc-tls` | controlplane gRPC server certificate and dataplane client CA | `deploy/kubernetes/overlays/production/controlplane-grpc-tls.secret.example.yaml` |
-| `aether-gateway-dataplane-admin-auth` | dataplane admin Bearer Token | `deploy/kubernetes/overlays/production/dataplane-admin-auth.secret.example.yaml` |
-| `aether-gateway-dataplane-xds-tls` | dataplane client certificate and CA for connecting to controlplane xDS/gRPC | `deploy/kubernetes/overlays/production/dataplane-xds-tls.secret.example.yaml` |
-| `aether-gateway-dataplane-session-persistence` | stable session persistence secret | `deploy/kubernetes/overlays/production/dataplane-session-persistence.secret.example.yaml` |
+| `nantian-controlplane-admin-auth` | controlplane admin Bearer Token | `deploy/kubernetes/overlays/production/controlplane-admin-auth.secret.example.yaml` |
+| `nantian-controlplane-grpc-tls` | controlplane gRPC server certificate and dataplane client CA | `deploy/kubernetes/overlays/production/controlplane-grpc-tls.secret.example.yaml` |
+| `nantian-dataplane-admin-auth` | dataplane admin Bearer Token | `deploy/kubernetes/overlays/production/dataplane-admin-auth.secret.example.yaml` |
+| `nantian-dataplane-xds-tls` | dataplane client certificate and CA for connecting to controlplane xDS/gRPC | `deploy/kubernetes/overlays/production/dataplane-xds-tls.secret.example.yaml` |
+| `nantian-dataplane-session-persistence` | stable session persistence secret | `deploy/kubernetes/overlays/production/dataplane-session-persistence.secret.example.yaml` |
 
 Default configuration:
 
@@ -175,7 +175,7 @@ Default configuration:
 Minimum verification:
 
 ```bash
-kubectl kustomize deploy/kubernetes/overlays/production >/tmp/aether-gateway-production.yaml
+kubectl kustomize deploy/kubernetes/overlays/production >/tmp/nantian-gw-production.yaml
 ```
 
 Pre-apply checks:
@@ -201,17 +201,17 @@ Minimum verification:
 ```bash
 ./scripts/render-release-manifest.sh \
   --profile multi-replica-prod \
-  ghcr.io/example/aether-gateway-controlplane:v0.0.0 \
-  ghcr.io/example/aether-gateway-dataplane:v0.0.0 \
-  /tmp/aether-gateway-multi-replica.yaml
+  ghcr.io/example/nantian-controlplane:v0.0.0 \
+  ghcr.io/example/nantian-dataplane:v0.0.0 \
+  /tmp/nantian-gw-multi-replica.yaml
 ```
 
 Post-deployment checks at minimum:
 
 ```bash
-kubectl -n aether-gateway get deploy,hpa,pdb
-kubectl -n aether-gateway rollout status deploy/aether-gateway-controlplane
-kubectl -n aether-gateway rollout status deploy/aether-gateway-dataplane
+kubectl -n nantian-gw get deploy,hpa,pdb
+kubectl -n nantian-gw rollout status deploy/nantian-controlplane
+kubectl -n nantian-gw rollout status deploy/nantian-dataplane
 ```
 
 #### Replica and Capacity Calculation
@@ -239,11 +239,11 @@ Notes:
 
 When scaling the control plane, prioritize observing:
 
-- `aether_gateway_controlplane_xds_publish_ack_lag_seconds`
-- `aether_gateway_controlplane_xds_publish_nack_lag_seconds`
-- `aether_gateway_controlplane_xds_snapshot_ack_timeouts_total`
-- `aether_gateway_controlplane_node_status_persist_queue_depth`
-- `aether_gateway_controlplane_node_status_persist_pending_nodes`
+- `nantian_gateway_controlplane_xds_publish_ack_lag_seconds`
+- `nantian_gateway_controlplane_xds_publish_nack_lag_seconds`
+- `nantian_gateway_controlplane_xds_snapshot_ack_timeouts_total`
+- `nantian_gateway_controlplane_node_status_persist_queue_depth`
+- `nantian_gateway_controlplane_node_status_persist_pending_nodes`
 - `driftedNodeCount` and `currentVersionReadyCount` in `/v1/snapshot-sync`
 
 Rules of thumb:
@@ -273,7 +273,7 @@ Notes:
 
 When scaling the data plane, prioritize observing:
 
-- `aether_gateway_dataplane_ready` and ready replica aggregate view
+- `nantian_gateway_dataplane_ready` and ready replica aggregate view
 - CPU, RSS, FD, connection count
 - Request `p95` / `p99`
 - xDS connect / stream failure count
@@ -290,18 +290,18 @@ Default resources:
 
 | Item | Current Value |
 | --- | --- |
-| controlplane metrics Service | `aether-gateway-controlplane-metrics:18082` |
-| dataplane metrics Service | `aether-gateway-dataplane-metrics:19080` |
-| metrics NetworkPolicy | Default allows access only within the `aether-gateway` namespace |
+| controlplane metrics Service | `nantian-controlplane-metrics:18082` |
+| dataplane metrics Service | `nantian-dataplane-metrics:19080` |
+| metrics NetworkPolicy | Default allows access only within the `nantian-gw` namespace |
 | Prometheus Operator examples | `deploy/observability/prometheus/operator/servicemonitor-dataplane.yaml`, `podmonitor-dataplane.yaml`, `prometheusrule-dataplane.yaml` |
 | Native Prometheus examples | `deploy/observability/prometheus/native/prometheus-dataplane-scrape.yaml` |
-| Grafana observability dashboard | `deploy/observability/grafana/aether-gateway-observability-dashboard.json` |
+| Grafana observability dashboard | `deploy/observability/grafana/nantian-gw-observability-dashboard.json` |
 | controlplane PrometheusRule | `deploy/kubernetes/overlays/production/controlplane-alert-rules.prometheusrule.yaml`, not merged into production kustomization by default |
 
 Collection recommendations:
 
-- Dataplane readiness is a per-pod gauge; Prometheus must scrape each pod or endpoint independently — do not query `aether-gateway-dataplane-metrics` Service only once.
-- If Prometheus is in the `monitoring` namespace, additional NetworkPolicy is needed to allow it to access the metrics Service or Pods in the `aether-gateway` namespace.
+- Dataplane readiness is a per-pod gauge; Prometheus must scrape each pod or endpoint independently — do not query `nantian-dataplane-metrics` Service only once.
+- If Prometheus is in the `monitoring` namespace, additional NetworkPolicy is needed to allow it to access the metrics Service or Pods in the `nantian-gw` namespace.
 - If admin auth is enabled, Prometheus needs a real token Secret; do not apply `*.example.yaml` directly.
 
 Minimum verification:
@@ -313,8 +313,8 @@ Minimum verification:
 Post-deployment PromQL checks:
 
 ```promql
-count(aether_gateway_dataplane_ready{namespace="aether-gateway"})
-sum(aether_gateway_dataplane_ready{namespace="aether-gateway"})
+count(nantian_gateway_dataplane_ready{namespace="nantian-gw"})
+sum(nantian_gateway_dataplane_ready{namespace="nantian-gw"})
 ```
 
 If `count` is only `1` in a three-replica environment, it means Prometheus is only scraping a single target — the dataplane ready semantics themselves do not represent the total replica count.
@@ -343,9 +343,9 @@ RELEASE_CONTROLPLANE_DIGEST=sha256:<64-hex-controlplane-digest> \
 RELEASE_DATAPLANE_DIGEST=sha256:<64-hex-dataplane-digest> \
 ./scripts/prepare-release-assets.sh \
   v0.0.0 \
-  ghcr.io/example/aether-gateway-controlplane:v0.0.0 \
-  ghcr.io/example/aether-gateway-dataplane:v0.0.0 \
-  /tmp/aether-gateway-release
+  ghcr.io/example/nantian-controlplane:v0.0.0 \
+  ghcr.io/example/nantian-dataplane:v0.0.0 \
+  /tmp/nantian-gw-release
 ```
 
 ## Current Boundaries

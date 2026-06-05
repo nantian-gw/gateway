@@ -21,9 +21,9 @@ corev1 "k8s.io/api/core/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 const (

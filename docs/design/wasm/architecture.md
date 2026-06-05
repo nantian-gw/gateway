@@ -1,6 +1,6 @@
 # Wasm Plugin Architecture
 
-The Wasm plugin system extends aether-gateway's data plane with user-defined logic compiled to WebAssembly (WASM). Plugins run in a sandboxed WebAssembly runtime using [wasmtime](https://wasmtime.dev/), providing safe, portable, and deterministic extensions to the proxy pipeline.
+The Wasm plugin system extends nantian-gw's data plane with user-defined logic compiled to WebAssembly (WASM). Plugins run in a sandboxed WebAssembly runtime using [wasmtime](https://wasmtime.dev/), providing safe, portable, and deterministic extensions to the proxy pipeline.
 
 ## Overview
 
@@ -144,17 +144,17 @@ The WASM runtime provides defense-in-depth sandboxing:
 
 ## Host Functions API
 
-Host functions are registered under the `aether` module and provide controlled interaction with the proxy environment.
+Host functions are registered under the `nantian` module and provide controlled interaction with the proxy environment.
 
-### `aether::log(level: i32, msg_ptr: i32, msg_len: i32)`
+### `nantian::log(level: i32, msg_ptr: i32, msg_len: i32)`
 
 Log a message from the guest plugin. Level 0 = debug, 1-2 = warn, 3+ = debug.
 
-### `aether::get_header(name_ptr: i32, name_len: i32) -> i64`
+### `nantian::get_header(name_ptr: i32, name_len: i32) -> i64`
 
 Read a request header by name. Returns a packed `(ptr << 32) | len` value in guest memory, or 0 if not found.
 
-### `aether::set_header(name_ptr: i32, name_len: i32, val_ptr: i32, val_len: i32)`
+### `nantian::set_header(name_ptr: i32, name_len: i32, val_ptr: i32, val_len: i32)`
 
 Set a response header. The modified headers are applied after the plugin returns.
 

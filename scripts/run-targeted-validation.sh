@@ -171,8 +171,8 @@ classify_file() {
     scripts/lib/*.sh|\
     scripts/script-inventory.yaml|\
     docs/developer/scripts.md|\
-    .agents/skills/aether-repo-scripts/SKILL.md|\
-    .agents/skills/aether-repo-scripts/references/script-catalog.md|\
+    .agents/skills/nantian-repo-scripts/SKILL.md|\
+    .agents/skills/nantian-repo-scripts/references/script-catalog.md|\
     tests/scripts/script-inventory.sh)
       NEEDS_SCRIPT_INVENTORY_CONTRACT=true
       ;;

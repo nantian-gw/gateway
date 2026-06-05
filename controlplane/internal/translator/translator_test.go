@@ -16,8 +16,8 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/extensionfilter"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildSnapshot(t *testing.T) {
@@ -28,7 +28,7 @@ func TestBuildSnapshot(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	pathType := gatewayv1.PathMatchPathPrefix
 	hostname := gatewayv1.Hostname("example.com")
 	portNumber := gatewayv1.PortNumber(8080)
@@ -36,7 +36,7 @@ func TestBuildSnapshot(t *testing.T) {
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -44,7 +44,7 @@ func TestBuildSnapshot(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",
@@ -246,12 +246,12 @@ func TestBuildSnapshotSkipsInvalidGatewayListeners(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -259,7 +259,7 @@ func TestBuildSnapshotSkipsInvalidGatewayListeners(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",
@@ -339,13 +339,13 @@ func TestBuildSnapshotDropsHTTPRuleWithUnsupportedExternalAuthProtocol(t *testin
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -353,7 +353,7 @@ func TestBuildSnapshotDropsHTTPRuleWithUnsupportedExternalAuthProtocol(t *testin
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,

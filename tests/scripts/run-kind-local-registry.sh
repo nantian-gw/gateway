@@ -80,14 +80,14 @@ kubectl() {
   printf 'kubectl %s\n' "$*" >>"${KUBECTL_LOG}"
 
   case "$*" in
-    "--context kind-aether-gateway -n kube-system get daemonset kindnet -o jsonpath={.spec.template.spec.containers[0].resources}")
+    "--context kind-nantian-gw -n kube-system get daemonset kindnet -o jsonpath={.spec.template.spec.containers[0].resources}")
       printf '{"limits":{"cpu":"100m","memory":"50Mi"},"requests":{"cpu":"100m","memory":"50Mi"}}'
       return 0
       ;;
-    "--context kind-aether-gateway -n kube-system patch daemonset kindnet --type=json -p="*)
+    "--context kind-nantian-gw -n kube-system patch daemonset kindnet --type=json -p="*)
       return 0
       ;;
-    "--context kind-aether-gateway -n kube-system rollout status daemonset/kindnet --timeout=120s")
+    "--context kind-nantian-gw -n kube-system rollout status daemonset/kindnet --timeout=120s")
       return 0
       ;;
   esac
@@ -153,13 +153,13 @@ if ! ensure_kindnet_resources_unlimited >"${TMP_DIR}/kindnet.log" 2>&1; then
 fi
 
 assert_file_contains "${KUBECTL_LOG}" \
-  "kubectl --context kind-aether-gateway -n kube-system get daemonset kindnet -o jsonpath={.spec.template.spec.containers[0].resources}" \
+  "kubectl --context kind-nantian-gw -n kube-system get daemonset kindnet -o jsonpath={.spec.template.spec.containers[0].resources}" \
   "inspect kindnet resources"
 assert_file_contains "${KUBECTL_LOG}" \
-  "kubectl --context kind-aether-gateway -n kube-system patch daemonset kindnet --type=json -p=" \
+  "kubectl --context kind-nantian-gw -n kube-system patch daemonset kindnet --type=json -p=" \
   "patch kindnet resources"
 assert_file_contains "${KUBECTL_LOG}" \
-  "kubectl --context kind-aether-gateway -n kube-system rollout status daemonset/kindnet --timeout=120s" \
+  "kubectl --context kind-nantian-gw -n kube-system rollout status daemonset/kindnet --timeout=120s" \
   "wait for kindnet rollout"
 assert_file_contains "${TMP_DIR}/kindnet.log" \
   "removing kindnet resource requests/limits for performance tests" \

@@ -17,12 +17,12 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
 )
 
 func TestReconcileGatewayObjectAvoidsFullDependencyLists(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	staleClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -41,13 +41,13 @@ func TestReconcileGatewayObjectAvoidsFullDependencyLists(t *testing.T) {
 		WithStatusSubresource(&gatewayv1.Gateway{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -63,13 +63,13 @@ func TestReconcileGatewayObjectAvoidsFullDependencyLists(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 2},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -170,7 +170,7 @@ func TestReconcileGatewayObjectAvoidsFullDependencyLists(t *testing.T) {
 
 func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 	seenGrantNamespaces := make(map[string]int)
 
@@ -191,13 +191,13 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 		WithStatusSubresource(&gatewayv1.Gateway{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,
@@ -271,13 +271,13 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "certs"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 2},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,

@@ -1,6 +1,6 @@
 # AI Gateway Architecture
 
-The AI Gateway extends aether-gateway's HTTP proxy with multi-format AI API support, unified internal representation (IR), and embedded observability. It lets clients send requests in any supported format (OpenAI, Anthropic, Ollama) and routes them to backend LLM providers with automatic format conversion.
+The AI Gateway extends nantian-gw's HTTP proxy with multi-format AI API support, unified internal representation (IR), and embedded observability. It lets clients send requests in any supported format (OpenAI, Anthropic, Ollama) and routes them to backend LLM providers with automatic format conversion.
 
 ## Request Flow
 

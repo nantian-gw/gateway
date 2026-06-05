@@ -6,8 +6,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/aiservicev1alpha1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/aiservicev1alpha1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestTranslateAIService_Basic(t *testing.T) {

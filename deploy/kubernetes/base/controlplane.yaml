@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aether-gateway-controlplane
-  namespace: aether-gateway
+  name: nantian-controlplane
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: controlplane
 spec:
   replicas: 2
@@ -19,16 +19,16 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: aether-gateway-controlplane
+      app: nantian-controlplane
   template:
     metadata:
       labels:
-        app: aether-gateway-controlplane
-        app.kubernetes.io/name: aether-gateway
-        app.kubernetes.io/part-of: aether-gateway
+        app: nantian-controlplane
+        app.kubernetes.io/name: nantian-gw
+        app.kubernetes.io/part-of: nantian-gw
         app.kubernetes.io/component: controlplane
     spec:
-      serviceAccountName: aether-gateway-controlplane
+      serviceAccountName: nantian-controlplane
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
@@ -43,10 +43,10 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: aether-gateway-controlplane
+              app: nantian-controlplane
       containers:
         - name: controlplane
-          image: aether-gateway-controlplane:dev
+          image: nantian-controlplane:dev
           imagePullPolicy: Always
           env:
             - name: POD_NAMESPACE
@@ -55,7 +55,7 @@ spec:
                   fieldPath: metadata.namespace
           args:
             - "-config"
-            - "/etc/aether-gateway/config.yaml"
+            - "/etc/nantian-gw/config.yaml"
           ports:
             - name: grpc
               containerPort: 18080
@@ -99,38 +99,38 @@ spec:
               drop: ["ALL"]
           volumeMounts:
             - name: config
-              mountPath: /etc/aether-gateway
+              mountPath: /etc/nantian-gw
               readOnly: true
             - name: grpc-tls
-              mountPath: /etc/aether-gateway/grpc-tls
+              mountPath: /etc/nantian-gw/grpc-tls
               readOnly: true
             - name: admin-auth
-              mountPath: /etc/aether-gateway/admin-auth
+              mountPath: /etc/nantian-gw/admin-auth
               readOnly: true
       volumes:
         - name: config
           configMap:
-            name: aether-gateway-controlplane-config
+            name: nantian-controlplane-config
         - name: grpc-tls
           secret:
-            secretName: aether-gateway-controlplane-grpc-tls
+            secretName: nantian-controlplane-grpc-tls
             optional: true
         - name: admin-auth
           secret:
-            secretName: aether-gateway-controlplane-admin-auth
+            secretName: nantian-controlplane-admin-auth
             optional: true
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: aether-gateway-controlplane
-  namespace: aether-gateway
+  name: nantian-controlplane
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: controlplane
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: aether-gateway-controlplane
+      app: nantian-controlplane

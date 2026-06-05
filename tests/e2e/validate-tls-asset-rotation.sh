@@ -2,19 +2,19 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
 PYTHON_SOURCE_IMAGE="${PYTHON_SOURCE_IMAGE:-m.daocloud.io/docker.io/library/python:3.12-slim-bookworm}"
-PYTHON_IMAGE="${PYTHON_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-validation/python-tls:3.12-slim-bookworm}"
-TEST_NAMESPACE="${TEST_NAMESPACE:-aether-tls-assets}"
-CONTROLPLANE_NAMESPACE="${CONTROLPLANE_NAMESPACE:-aether-gateway}"
-DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-aether-gateway}"
-CONTROLPLANE_SELECTOR="${CONTROLPLANE_SELECTOR:-app=aether-gateway-controlplane}"
-DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=aether-gateway-dataplane}"
+PYTHON_IMAGE="${PYTHON_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-gw-validation/python-tls:3.12-slim-bookworm}"
+TEST_NAMESPACE="${TEST_NAMESPACE:-nantian-tls-assets}"
+CONTROLPLANE_NAMESPACE="${CONTROLPLANE_NAMESPACE:-nantian-gw}"
+DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-nantian-gw}"
+CONTROLPLANE_SELECTOR="${CONTROLPLANE_SELECTOR:-app=nantian-controlplane}"
+DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=nantian-dataplane}"
 HTTPS_HOST_PORT="${HTTPS_HOST_PORT:-18443}"
 TEST_HOST="${TEST_HOST:-tls-assets.example.com}"
 BACKEND_TLS_HOSTNAME="${BACKEND_TLS_HOSTNAME:-tls-backend.${TEST_NAMESPACE}.svc}"
@@ -115,12 +115,12 @@ cleanup_namespace() {
 }
 
 suspend_conflicting_smoke_gateway() {
-  if ! k -n aether-gateway get gateway edge >/dev/null 2>&1; then
+  if ! k -n nantian-gw get gateway edge >/dev/null 2>&1; then
     return
   fi
 
   log "temporarily deleting smoke gateway to avoid shared HTTPS bind conflicts"
-  k -n aether-gateway delete gateway edge --ignore-not-found >/dev/null
+  k -n nantian-gw delete gateway edge --ignore-not-found >/dev/null
   SMOKE_GATEWAY_SUSPENDED="true"
 }
 
@@ -323,9 +323,9 @@ data:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether
+  name: nantian
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: v1
 kind: Service
@@ -432,7 +432,7 @@ metadata:
   name: tls-assets-edge
   namespace: ${TEST_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   tls:
     backend:
       clientCertificateRef:

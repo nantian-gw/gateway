@@ -1,6 +1,6 @@
 {{- if .Values.dashboard.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
-{{- $dbName := include "aether-gateway.name" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
+{{- $dbName := include "nantian-gw.name" . }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -8,7 +8,7 @@ metadata:
   name: {{ $dbName }}-dashboard
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dashboard.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dashboard.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.dashboard.replicas }}
   minReadySeconds: 5
@@ -18,12 +18,12 @@ spec:
     {{- toYaml .Values.dashboard.strategy | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "aether-gateway.dashboard.selectorLabels" . | nindent 6 }}
+      {{- include "nantian-gw.dashboard.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "aether-gateway.dashboard.selectorLabels" . | nindent 8 }}
-        {{- include "aether-gateway.dashboard.labels" . | nindent 8 }}
+        {{- include "nantian-gw.dashboard.selectorLabels" . | nindent 8 }}
+        {{- include "nantian-gw.dashboard.labels" . | nindent 8 }}
     spec:
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: {{ .Values.dashboard.terminationGracePeriodSeconds }}
@@ -45,10 +45,10 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- include "aether-gateway.imagePullSecrets" . | nindent 6 }}
+      {{- include "nantian-gw.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: dashboard
-          image: {{ include "aether-gateway.dashboard.image" . }}
+          image: {{ include "nantian-gw.dashboard.image" . }}
           imagePullPolicy: {{ .Values.dashboard.image.pullPolicy }}
           ports:
             - name: http
@@ -75,7 +75,7 @@ spec:
             failureThreshold: {{ .Values.dashboard.probes.readiness.failureThreshold }}
           resources:
             {{- toYaml .Values.dashboard.resources | nindent 12 }}
-          {{- include "aether-gateway.containerSecurityContext" . | nindent 10 }}
+          {{- include "nantian-gw.containerSecurityContext" . | nindent 10 }}
           {{- if .Values.dashboard.containerSecurityContext }}
           securityContext:
             {{- toYaml .Values.dashboard.containerSecurityContext | nindent 12 }}
@@ -84,7 +84,7 @@ spec:
             - name: AUTH_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.dashboard.authExistingSecret | default (printf "%s-%s" (include "aether-gateway.name" .) "dashboard-auth") }}
+                  name: {{ .Values.dashboard.authExistingSecret | default (printf "%s-%s" (include "nantian-gw.name" .) "dashboard-auth") }}
                   key: auth-secret
             - name: AUTH_TRUST_HOST
               value: "true"

@@ -12,8 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 type infrastructureExpectation struct {

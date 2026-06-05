@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
 )
 
 func TestLoadServerTLSConfigRequiresCertificatePair(t *testing.T) {
@@ -79,7 +79,7 @@ func TestLoadServerTLSConfigReloadsCertificatePairForNewHandshakes(t *testing.T)
 		caCertPEM,
 		caKeyPEM,
 		false,
-		"aether-gateway-controlplane-rotated",
+		"nantian-controlplane-rotated",
 	)
 
 	certPath := filepath.Join(dir, "tls.crt")
@@ -97,7 +97,7 @@ func TestLoadServerTLSConfigReloadsCertificatePairForNewHandshakes(t *testing.T)
 	}
 
 	initialCN := certificateCommonName(t, tlsConfig.Certificates[0])
-	if initialCN != "aether-gateway-controlplane" {
+	if initialCN != "nantian-controlplane" {
 		t.Fatalf("unexpected initial common name: %q", initialCN)
 	}
 
@@ -110,7 +110,7 @@ func TestLoadServerTLSConfigReloadsCertificatePairForNewHandshakes(t *testing.T)
 	}
 
 	reloadedCN := certificateCommonName(t, reloaded.Certificates[0])
-	if reloadedCN != "aether-gateway-controlplane-rotated" {
+	if reloadedCN != "nantian-controlplane-rotated" {
 		t.Fatalf("unexpected reloaded common name: %q", reloadedCN)
 	}
 }
@@ -126,7 +126,7 @@ func generateCertificateAuthority(t *testing.T) ([]byte, []byte) {
 	template := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			CommonName: "aether-gateway-ca",
+			CommonName: "nantian-gw-ca",
 		},
 		NotBefore:             time.Now().Add(-time.Hour),
 		NotAfter:              time.Now().Add(24 * time.Hour),
@@ -146,9 +146,9 @@ func generateCertificateAuthority(t *testing.T) ([]byte, []byte) {
 func generateLeafCertificate(t *testing.T, caCertPEM, caKeyPEM []byte, isClient bool) ([]byte, []byte) {
 	t.Helper()
 
-	commonName := "aether-gateway-controlplane"
+	commonName := "nantian-controlplane"
 	if isClient {
-		commonName = "aether-gateway-dataplane"
+		commonName = "nantian-dataplane"
 	}
 
 	return generateLeafCertificateWithCommonName(t, caCertPEM, caKeyPEM, isClient, commonName)
@@ -178,7 +178,7 @@ func generateLeafCertificateWithCommonName(
 		Subject: pkix.Name{
 			CommonName: commonName,
 		},
-		DNSNames:       []string{"aether-gateway-controlplane.aether-gateway.svc.cluster.local", "localhost"},
+		DNSNames:       []string{"nantian-controlplane.nantian-gw.svc.cluster.local", "localhost"},
 		NotBefore:      time.Now().Add(-time.Hour),
 		NotAfter:       time.Now().Add(24 * time.Hour),
 		KeyUsage:       x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,

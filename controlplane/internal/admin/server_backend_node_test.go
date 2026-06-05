@@ -16,8 +16,8 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 func TestBackendAndNodeEndpointsSupportFilteringAndDetails(t *testing.T) {
@@ -341,7 +341,7 @@ func TestNodeEndpointsFallbackToSharedLeaseState(t *testing.T) {
 		WithObjects(&coordinationv1.Lease{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "aeg-node-test",
-				Namespace: "aether-gateway",
+				Namespace: "nantian-gw",
 				Labels: map[string]string{
 					nodeStatusManagedByLabelKey: nodeStatusManagedByLabelValue,
 					nodeStatusComponentLabelKey: nodeStatusComponentLabelValue,
@@ -366,8 +366,8 @@ func TestNodeEndpointsFallbackToSharedLeaseState(t *testing.T) {
 		ID:          "lease-view",
 		GeneratedAt: now,
 		Workloads: []ir.Workload{
-			{Namespace: "aether-gateway", Name: "dp-lease", IP: "10.0.0.10"},
-			{Namespace: "aether-gateway", Name: "ops-console", IP: "10.0.0.20"},
+			{Namespace: "nantian-gw", Name: "dp-lease", IP: "10.0.0.10"},
+			{Namespace: "nantian-gw", Name: "ops-console", IP: "10.0.0.20"},
 		},
 	})
 
@@ -411,7 +411,7 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 			&coordinationv1.Lease{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "aeg-node-stale",
-					Namespace: "aether-gateway",
+					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						nodeStatusManagedByLabelKey: nodeStatusManagedByLabelValue,
 						nodeStatusComponentLabelKey: nodeStatusComponentLabelValue,
@@ -431,7 +431,7 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 			&coordinationv1.Lease{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "aeg-node-fresh",
-					Namespace: "aether-gateway",
+					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						nodeStatusManagedByLabelKey: nodeStatusManagedByLabelValue,
 						nodeStatusComponentLabelKey: nodeStatusComponentLabelValue,
@@ -457,8 +457,8 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 		ID:          "lease-view",
 		GeneratedAt: now,
 		Workloads: []ir.Workload{
-			{Namespace: "aether-gateway", Name: "dp-stale", IP: "10.0.0.10"},
-			{Namespace: "aether-gateway", Name: "dp-fresh", IP: "10.0.0.11"},
+			{Namespace: "nantian-gw", Name: "dp-stale", IP: "10.0.0.10"},
+			{Namespace: "nantian-gw", Name: "dp-fresh", IP: "10.0.0.11"},
 		},
 	})
 

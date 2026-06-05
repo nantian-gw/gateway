@@ -11,7 +11,7 @@ RUN go mod download
 WORKDIR /src
 COPY controlplane/ ./controlplane/
 RUN cd ./controlplane \
-    && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o /out/aether-gateway-controlplane ./cmd/manager
+    && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -trimpath -o /out/nantian-controlplane ./cmd/manager
 
 FROM ${RUNTIME_IMAGE}
 
@@ -27,6 +27,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /out/aether-gateway-controlplane /usr/local/bin/aether-gateway-controlplane
+COPY --from=builder /out/nantian-controlplane /usr/local/bin/nantian-controlplane
 
-ENTRYPOINT ["/usr/local/bin/aether-gateway-controlplane"]
+ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]

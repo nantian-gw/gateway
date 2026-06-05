@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-aether-gateway}"
+AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
 SUCCESS="false"
 FAILURES=0
 

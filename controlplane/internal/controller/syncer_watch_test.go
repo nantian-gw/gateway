@@ -25,10 +25,10 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 func TestSnapshotReconcileRequestsSkipsUnreferencedSupportObjects(t *testing.T) {
@@ -85,15 +85,15 @@ func TestSnapshotReconcileRequestsQueuesReferencedSupportObjects(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				TLS: &gatewayv1.GatewayTLSConfig{
 					Frontend: &gatewayv1.FrontendTLSConfig{
 						Default: gatewayv1.TLSConfig{
@@ -225,15 +225,15 @@ func TestSnapshotReconcileRequestsIgnoreFrontendValidationConfigMapForTLSPassthr
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				TLS: &gatewayv1.GatewayTLSConfig{
 					Frontend: &gatewayv1.FrontendTLSConfig{
 						Default: gatewayv1.TLSConfig{
@@ -337,15 +337,15 @@ func TestSnapshotReconcileRequestsQueuesOnlyRelevantNamespaces(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -391,15 +391,15 @@ func TestSnapshotReconcileRequestsScopeNamespaceSelectorLookupsToChangedNamespac
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge-a", Namespace: "infra"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -415,7 +415,7 @@ func TestSnapshotReconcileRequestsScopeNamespaceSelectorLookupsToChangedNamespac
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge-b", Namespace: "infra"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -572,9 +572,9 @@ func TestSnapshotReconcileRequestsIgnoreNamespaceWithRoutesOnlyForOtherGateways(
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.GatewayClass{
@@ -586,7 +586,7 @@ func TestSnapshotReconcileRequestsIgnoreNamespaceWithRoutesOnlyForOtherGateways(
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -1001,15 +1001,15 @@ func TestSnapshotReconcileRequestsQueueReferenceGrantScopedRefresh(t *testing.T)
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "https",
 					Protocol: gatewayv1.HTTPSProtocolType,
@@ -1119,15 +1119,15 @@ func TestSnapshotReconcileRequestsReferenceGrantLookupRunsRouteQueriesConcurrent
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "https",
 					Protocol: gatewayv1.HTTPSProtocolType,
@@ -1324,15 +1324,15 @@ func TestSnapshotReconcileRequestsQueueGatewayScopedRefreshes(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "infra"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 			},
 		},
 		&gatewayv1.HTTPRoute{
@@ -1381,7 +1381,7 @@ func TestSnapshotReconcileRequestsQueueGatewayScopedRefreshes(t *testing.T) {
 	if got := syncer.snapshotReconcileRequests(
 		context.Background(),
 		&gatewayv1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "infra"}, Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 		}},
 	); !equalReconcileRequests(got, want) {
 		t.Fatalf("expected gateway update to queue scoped rebuilds %v, got %v", want, got)
@@ -1392,15 +1392,15 @@ func TestSnapshotReconcileRequestsQueueGatewayClassScopedRefreshes(t *testing.T)
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "infra"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 			},
 		},
 		&gatewayv1.HTTPRoute{
@@ -1448,7 +1448,7 @@ func TestSnapshotReconcileRequestsQueueGatewayClassScopedRefreshes(t *testing.T)
 	}
 	if got := syncer.snapshotReconcileRequests(
 		context.Background(),
-		&gatewayv1.GatewayClass{ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"}},
+		&gatewayv1.GatewayClass{ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"}},
 	); !equalReconcileRequests(got, want) {
 		t.Fatalf("expected gatewayclass update to queue scoped rebuilds %v, got %v", want, got)
 	}
@@ -1458,16 +1458,16 @@ func TestSnapshotReconcileRequestsIgnoreUnusedGatewayClass(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(
 		t,
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		},
 	)
 
 	if got := syncer.snapshotReconcileRequests(
 		context.Background(),
-		&gatewayv1.GatewayClass{ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"}},
+		&gatewayv1.GatewayClass{ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"}},
 	); len(got) != 0 {
 		t.Fatalf("expected unreferenced gatewayclass update to be ignored, got %v", got)
 	}
@@ -1795,7 +1795,7 @@ func newIndexedWatchTestSyncer(t *testing.T, objects ...client.Object) *Syncer {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	syncer := NewSyncer(
 		clientBuilder.Build(),
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		ir.NewSnapshotStore(logger),
 		testMetrics(),
 		time.Minute,

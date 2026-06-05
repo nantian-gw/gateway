@@ -14,7 +14,7 @@ import (
 
 func TestReconcileTCPRouteMarksCrossNamespaceBackendRefAsNotPermitted(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -27,7 +27,7 @@ func TestReconcileTCPRouteMarksCrossNamespaceBackendRefAsNotPermitted(t *testing
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "backend"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -35,7 +35,7 @@ func TestReconcileTCPRouteMarksCrossNamespaceBackendRefAsNotPermitted(t *testing
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "tcp",
 						Protocol: gatewayv1.TCPProtocolType,

@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-aether-gateway}"
+AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
 TEST_HOST="${TEST_HOST:-example.com}"
 GATEWAY_HOST_PORT="${GATEWAY_HOST_PORT:-18080}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
@@ -41,12 +41,12 @@ kind_cluster_exists() {
   kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"
 }
 
-aether_stack_ready() {
-  k -n "${AETHER_NAMESPACE}" get deployment aether-gateway-controlplane aether-gateway-dataplane >/dev/null 2>&1
+nantian_stack_ready() {
+  k -n "${AETHER_NAMESPACE}" get deployment nantian-controlplane nantian-dataplane >/dev/null 2>&1
 }
 
 smoke_http_ready() {
-  curl -fsS -H "Host: ${TEST_HOST}" "http://127.0.0.1:${GATEWAY_HOST_PORT}/" 2>/dev/null | grep -q "aether-gateway-ok"
+  curl -fsS -H "Host: ${TEST_HOST}" "http://127.0.0.1:${GATEWAY_HOST_PORT}/" 2>/dev/null | grep -q "nantian-gw-ok"
 }
 
 bootstrap_kind_stack() {
@@ -73,7 +73,7 @@ ensure_kind_stack() {
     return
   fi
 
-  if ! aether_stack_ready || ! smoke_http_ready; then
+  if ! nantian_stack_ready || ! smoke_http_ready; then
     if [[ "${ENSURE_KIND}" != "true" ]]; then
       log "kind stack is not ready; rerun with ENSURE_KIND=true or refresh it manually"
       exit 1
@@ -115,7 +115,7 @@ run_profile() {
     --connect-timeout "${CONNECT_TIMEOUT_SECONDS}" \
     --request-timeout "${REQUEST_TIMEOUT_SECONDS}" \
     --expect-status 200 \
-    --expect-body-substring "aether-gateway-ok" \
+    --expect-body-substring "nantian-gw-ok" \
     --output "${output_file}" >/dev/null
 
   log "${label} summary"

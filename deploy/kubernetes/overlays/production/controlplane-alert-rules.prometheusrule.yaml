@@ -1,18 +1,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: aether-gateway-controlplane-alerts
-  namespace: aether-gateway
+  name: nantian-controlplane-alerts
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
+    app.kubernetes.io/name: nantian-gw
     app.kubernetes.io/component: controlplane
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/part-of: nantian-gw
 spec:
   groups:
-    - name: aether-gateway-controlplane
+    - name: nantian-controlplane
       rules:
         - alert: AetherGatewayControlplaneXDSSnapshotAckTimeouts
-          expr: increase(aether_gateway_controlplane_xds_snapshot_ack_timeouts_total[10m]) > 0
+          expr: increase(nantian_gateway_controlplane_xds_snapshot_ack_timeouts_total[10m]) > 0
           for: 5m
           labels:
             severity: critical
@@ -26,7 +26,7 @@ spec:
           expr: |
             histogram_quantile(
               0.99,
-              sum(rate(aether_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[10m])) by (le)
+              sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[10m])) by (le)
             ) > 5
           for: 15m
           labels:
@@ -38,7 +38,7 @@ spec:
               Check /v1/snapshot-sync, dataplane readiness, xDS transport stability, and recent snapshot fanout pressure.
 
         - alert: AetherGatewayControlplaneXDSNackBurst
-          expr: increase(aether_gateway_controlplane_xds_publish_nack_lag_seconds_count[10m]) > 3
+          expr: increase(nantian_gateway_controlplane_xds_publish_nack_lag_seconds_count[10m]) > 3
           for: 10m
           labels:
             severity: warning
@@ -49,7 +49,7 @@ spec:
               Check /v1/snapshot-sync, dataplane /v1/summary, and controlplane logs for the rejected version and error detail.
 
         - alert: AetherGatewayControlplaneXDSInvalidRequestBurst
-          expr: increase(aether_gateway_controlplane_xds_stream_terminations_total{reason="invalid_request"}[10m]) > 0
+          expr: increase(nantian_gateway_controlplane_xds_stream_terminations_total{reason="invalid_request"}[10m]) > 0
           for: 5m
           labels:
             severity: warning
@@ -62,7 +62,7 @@ spec:
         - alert: AetherGatewayControlplaneXDSStatusReportRejectionBurst
           expr: |
             increase(
-              aether_gateway_controlplane_xds_status_report_rejections_total{reason=~"invalid_request|unknown_node"}[10m]
+              nantian_gateway_controlplane_xds_status_report_rejections_total{reason=~"invalid_request|unknown_node"}[10m]
             ) > 0
           for: 5m
           labels:
@@ -77,12 +77,12 @@ spec:
         - alert: AetherGatewayControlplaneAdminAPIErrorRateHigh
           expr: |
             (
-              sum(rate(aether_gateway_controlplane_admin_requests_total{status_class="5xx"}[10m]))
+              sum(rate(nantian_gateway_controlplane_admin_requests_total{status_class="5xx"}[10m]))
               /
-              clamp_min(sum(rate(aether_gateway_controlplane_admin_requests_total[10m])), 0.001)
+              clamp_min(sum(rate(nantian_gateway_controlplane_admin_requests_total[10m])), 0.001)
             ) > 0.05
             and
-            sum(rate(aether_gateway_controlplane_admin_requests_total[10m])) > 0.1
+            sum(rate(nantian_gateway_controlplane_admin_requests_total[10m])) > 0.1
           for: 15m
           labels:
             severity: warning
@@ -94,9 +94,9 @@ spec:
 
         - alert: AetherGatewayControlplaneNodeStatusPersistQueueBacklogHigh
           expr: |
-            max_over_time(aether_gateway_controlplane_node_status_persist_queue_depth[10m]) > 32
+            max_over_time(nantian_gateway_controlplane_node_status_persist_queue_depth[10m]) > 32
             or
-            max_over_time(aether_gateway_controlplane_node_status_persist_pending_nodes[10m]) > 32
+            max_over_time(nantian_gateway_controlplane_node_status_persist_pending_nodes[10m]) > 32
           for: 10m
           labels:
             severity: warning
@@ -107,7 +107,7 @@ spec:
               Check Lease write latency, API server health, and whether node churn or reconnect storms are ongoing.
 
         - alert: AetherGatewayControlplaneNodeStatusPersistDrops
-          expr: increase(aether_gateway_controlplane_node_status_persist_dropped_total[10m]) > 0
+          expr: increase(nantian_gateway_controlplane_node_status_persist_dropped_total[10m]) > 0
           for: 5m
           labels:
             severity: critical

@@ -11,8 +11,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/wasmpluginv1alpha1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func referencedConfigMapKeysForWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlugin) []client.ObjectKey {

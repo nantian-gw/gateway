@@ -11,8 +11,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 const stableFrontendCohortWarning = "no dataplane node has acknowledged the current snapshot; exposing the last stable frontend cohort"
@@ -45,9 +45,9 @@ func TestLoadFrontendEligibleDataplanePodsRejectsPeerSnapshotAckForAllFrontends(
 		WithObjects(
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-current",
+					Name:      "nantian-dataplane-current",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.51",
@@ -70,15 +70,15 @@ func TestLoadFrontendEligibleDataplanePodsRejectsPeerSnapshotAckForAllFrontends(
 
 	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodestatus.Options{})
 	now := time.Now().UTC()
-	nodes.Connect(context.Background(), "aether-gateway-dataplane-current", "kind", nil, now)
-	nodes.ObservePublished(context.Background(), "aether-gateway-dataplane-current", "peer-snapshot-version", now)
-	nodes.ObserveAck(context.Background(), "aether-gateway-dataplane-current", "kind", "peer-snapshot-version", "peer-snapshot-version", nil, now)
-	nodes.ObserveReport(context.Background(), "aether-gateway-dataplane-current", "peer-snapshot-version", true, "ready", now)
+	nodes.Connect(context.Background(), "nantian-dataplane-current", "kind", nil, now)
+	nodes.ObservePublished(context.Background(), "nantian-dataplane-current", "peer-snapshot-version", now)
+	nodes.ObserveAck(context.Background(), "nantian-dataplane-current", "kind", "peer-snapshot-version", "peer-snapshot-version", nil, now)
+	nodes.ObserveReport(context.Background(), "nantian-dataplane-current", "peer-snapshot-version", true, "ready", now)
 
 	options := DefaultOptions()
 	options.SnapshotStore = store
 	options.NodeStatus = nodes
-	reconciler := NewWithOptions(k8sClient, "gateway.networking.k8s.io/aether-gateway", options, discardLogger())
+	reconciler := NewWithOptions(k8sClient, "gateway.networking.k8s.io/nantian-gw", options, discardLogger())
 
 	sharedPods, gatewayPods, meshPods, err := reconciler.loadFrontendEligibleDataplanePods(context.Background())
 	if err != nil {
@@ -129,9 +129,9 @@ func newFrontendEligibilityTestReconciler(t *testing.T) (*Reconciler, *bytes.Buf
 		WithObjects(
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-stable",
+					Name:      "nantian-dataplane-stable",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -152,15 +152,15 @@ func newFrontendEligibilityTestReconciler(t *testing.T) (*Reconciler, *bytes.Buf
 	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodestatus.Options{})
 	now := time.Now().UTC()
 	currentVersion := store.Current().ID
-	nodes.Connect(context.Background(), "aether-gateway-dataplane-stable", "kind", nil, now)
-	nodes.ObservePublished(context.Background(), "aether-gateway-dataplane-stable", currentVersion, now)
-	nodes.ObserveAck(context.Background(), "aether-gateway-dataplane-stable", "kind", "stable-version", "stable-version", nil, now)
-	nodes.ObserveReport(context.Background(), "aether-gateway-dataplane-stable", "stable-version", true, "stable", now)
+	nodes.Connect(context.Background(), "nantian-dataplane-stable", "kind", nil, now)
+	nodes.ObservePublished(context.Background(), "nantian-dataplane-stable", currentVersion, now)
+	nodes.ObserveAck(context.Background(), "nantian-dataplane-stable", "kind", "stable-version", "stable-version", nil, now)
+	nodes.ObserveReport(context.Background(), "nantian-dataplane-stable", "stable-version", true, "stable", now)
 
 	logBuffer := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logBuffer, nil))
 	options := DefaultOptions()
 	options.SnapshotStore = store
 	options.NodeStatus = nodes
-	return NewWithOptions(k8sClient, "gateway.networking.k8s.io/aether-gateway", options, logger), logBuffer
+	return NewWithOptions(k8sClient, "gateway.networking.k8s.io/nantian-gw", options, logger), logBuffer
 }

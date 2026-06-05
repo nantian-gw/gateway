@@ -200,7 +200,7 @@ metadata:
   annotations:
     gateway.nantian.dev/access-log-enabled: "true"
     gateway.nantian.dev/access-log-mode: "json"
-    gateway.nantian.dev/access-log-path: "/var/log/aether/orders-access.jsonl"
+    gateway.nantian.dev/access-log-path: "/var/log/nantian/orders-access.jsonl"
     gateway.nantian.dev/access-log-sample-rate: "1.0"
 ```
 

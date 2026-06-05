@@ -1003,12 +1003,12 @@ def status_classes(traffic: dict[str, Any], metrics: str, profiles: list[dict[st
     if all(value >= 0 for value in values.values()):
         return values
     metric_values = {
-        "1xx": metric_value(metrics, "aether_gateway_dataplane_traffic_status_1xx_total"),
-        "2xx": metric_value(metrics, "aether_gateway_dataplane_traffic_status_2xx_total"),
-        "3xx": metric_value(metrics, "aether_gateway_dataplane_traffic_status_3xx_total"),
-        "4xx": metric_value(metrics, "aether_gateway_dataplane_traffic_status_4xx_total"),
-        "5xx": metric_value(metrics, "aether_gateway_dataplane_traffic_status_5xx_total"),
-        "other": metric_value(metrics, "aether_gateway_dataplane_traffic_status_other_total"),
+        "1xx": metric_value(metrics, "nantian_gateway_dataplane_traffic_status_1xx_total"),
+        "2xx": metric_value(metrics, "nantian_gateway_dataplane_traffic_status_2xx_total"),
+        "3xx": metric_value(metrics, "nantian_gateway_dataplane_traffic_status_3xx_total"),
+        "4xx": metric_value(metrics, "nantian_gateway_dataplane_traffic_status_4xx_total"),
+        "5xx": metric_value(metrics, "nantian_gateway_dataplane_traffic_status_5xx_total"),
+        "other": metric_value(metrics, "nantian_gateway_dataplane_traffic_status_other_total"),
     }
     if all(value is not None for value in metric_values.values()):
         return {key: int(value or 0) for key, value in metric_values.items()}
@@ -1019,7 +1019,7 @@ def collect_response_flags(traffic: dict[str, Any], metrics: str) -> dict[str, i
     flags = traffic.get("response_flags")
     if isinstance(flags, dict):
         return {str(key): as_int(value) for key, value in flags.items() if as_int(value) > 0}
-    metric_flags = metric_label_values(metrics, "aether_gateway_dataplane_traffic_response_flags_total", "flag")
+    metric_flags = metric_label_values(metrics, "nantian_gateway_dataplane_traffic_response_flags_total", "flag")
     return {key: value for key, value in metric_flags.items() if value > 0}
 
 
@@ -1052,7 +1052,7 @@ def traffic_metric_high_cardinality_labels(metrics: str) -> list[str]:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        if not line.startswith("aether_gateway_dataplane_traffic_"):
+        if not line.startswith("nantian_gateway_dataplane_traffic_"):
             continue
         found.update(label for label in metric_labels(line) if label in forbidden)
     return sorted(found)
@@ -1112,7 +1112,7 @@ def request_latency_histogram_series(traffic: dict[str, Any], metrics: str) -> i
         return len(histograms)
 
     series: set[tuple[tuple[str, str], ...]] = set()
-    family = "aether_gateway_dataplane_traffic_request_latency_ms_"
+    family = "nantian_gateway_dataplane_traffic_request_latency_ms_"
     for raw in metrics.splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or not line.startswith(family):
@@ -1173,7 +1173,7 @@ def first_metric_histogram(
 
 
 def xds_apply_stage_histograms(metrics: str) -> dict[str, Any]:
-    family = "aether_gateway_dataplane_xds_apply_stage_duration_ms"
+    family = "nantian_gateway_dataplane_xds_apply_stage_duration_ms"
     buckets_by_stage: dict[str, list[dict[str, Any]]] = {}
     sums_by_stage: dict[str, float] = {}
     counts_by_stage: dict[str, int] = {}
@@ -1230,72 +1230,72 @@ def xds_apply_stage_histograms(metrics: str) -> dict[str, Any]:
 def xds_reload_metrics(metrics: str) -> dict[str, int]:
     return {
         "connect_failures": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_xds_connect_failures_total")
+            metric_value(metrics, "nantian_gateway_dataplane_xds_connect_failures_total")
         ),
         "stream_failures": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_xds_stream_failures_total")
+            metric_value(metrics, "nantian_gateway_dataplane_xds_stream_failures_total")
         ),
         "snapshots_applied": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_xds_snapshots_applied_total")
+            metric_value(metrics, "nantian_gateway_dataplane_xds_snapshots_applied_total")
         ),
         "snapshots_nacked": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_xds_snapshots_nacked_total")
+            metric_value(metrics, "nantian_gateway_dataplane_xds_snapshots_nacked_total")
         ),
         "snapshots_skipped": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_xds_snapshots_skipped_total")
+            metric_value(metrics, "nantian_gateway_dataplane_xds_snapshots_skipped_total")
         ),
         "last_apply_timestamp_seconds": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_xds_last_apply_timestamp_seconds")
+            metric_value(metrics, "nantian_gateway_dataplane_xds_last_apply_timestamp_seconds")
         ),
     }
 
 
 def fault_isolation_metrics(metrics: str) -> dict[str, Any]:
     http_overload = metric_total(
-        metrics, "aether_gateway_dataplane_http_overload_rejected_total"
+        metrics, "nantian_gateway_dataplane_http_overload_rejected_total"
     )
     tcp_overload = metric_total(
-        metrics, "aether_gateway_dataplane_tcp_overload_rejected_total"
+        metrics, "nantian_gateway_dataplane_tcp_overload_rejected_total"
     )
     udp_overload = metric_total(
-        metrics, "aether_gateway_dataplane_udp_overload_rejected_total"
+        metrics, "nantian_gateway_dataplane_udp_overload_rejected_total"
     )
     circuit_open = metric_total(
-        metrics, "aether_gateway_dataplane_http_circuit_breaker_rejected_total"
+        metrics, "nantian_gateway_dataplane_http_circuit_breaker_rejected_total"
     )
     rate_limit_rejected = metric_total(
-        metrics, "aether_gateway_dataplane_http_rate_limit_rejected_total"
+        metrics, "nantian_gateway_dataplane_http_rate_limit_rejected_total"
     )
     retry_budget_exhausted = first_metric_total(
         metrics,
         [
-            "aether_gateway_dataplane_http_retry_budget_rejected_total",
-            "aether_gateway_dataplane_http_retry_budget_retry_rejected_total",
-            "aether_gateway_dataplane_retry_budget_rejected_total",
+            "nantian_gateway_dataplane_http_retry_budget_rejected_total",
+            "nantian_gateway_dataplane_http_retry_budget_retry_rejected_total",
+            "nantian_gateway_dataplane_retry_budget_rejected_total",
         ],
     )
     passive_ejections = first_metric_total(
         metrics,
         [
-            "aether_gateway_dataplane_endpoint_passive_ejected_current",
-            "aether_gateway_dataplane_endpoint_passive_ejections_total",
-            "aether_gateway_dataplane_http_endpoint_passive_ejected_current",
-            "aether_gateway_dataplane_http_endpoint_passive_ejections_total",
+            "nantian_gateway_dataplane_endpoint_passive_ejected_current",
+            "nantian_gateway_dataplane_endpoint_passive_ejections_total",
+            "nantian_gateway_dataplane_http_endpoint_passive_ejected_current",
+            "nantian_gateway_dataplane_http_endpoint_passive_ejections_total",
         ],
     )
     active_unhealthy = first_metric_total(
         metrics,
         [
-            "aether_gateway_dataplane_endpoint_active_unhealthy_current",
-            "aether_gateway_dataplane_endpoint_active_unhealthy_total",
-            "aether_gateway_dataplane_http_endpoint_active_unhealthy_current",
+            "nantian_gateway_dataplane_endpoint_active_unhealthy_current",
+            "nantian_gateway_dataplane_endpoint_active_unhealthy_total",
+            "nantian_gateway_dataplane_http_endpoint_active_unhealthy_current",
         ],
     )
     recovery_family, recovery_buckets, recovery_sum, recovery_count = first_metric_histogram(
         metrics,
         [
-            "aether_gateway_dataplane_endpoint_recovery_latency_ms",
-            "aether_gateway_dataplane_http_endpoint_recovery_latency_ms",
+            "nantian_gateway_dataplane_endpoint_recovery_latency_ms",
+            "nantian_gateway_dataplane_http_endpoint_recovery_latency_ms",
         ],
     )
     recovery_observations = recovery_count
@@ -1333,11 +1333,11 @@ def fault_isolation_metrics(metrics: str) -> dict[str, Any]:
         "passive_ejection_total": passive_ejections,
         "active_unhealthy_total": active_unhealthy,
         "last_good_snapshot_active": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_serving_last_good_snapshot")
+            metric_value(metrics, "nantian_gateway_dataplane_serving_last_good_snapshot")
         )
         > 0,
         "current_snapshot_rejected": as_int(
-            metric_value(metrics, "aether_gateway_dataplane_current_snapshot_rejected")
+            metric_value(metrics, "nantian_gateway_dataplane_current_snapshot_rejected")
         )
         > 0,
         "recovery_latency_ms": {
@@ -1603,45 +1603,45 @@ def udp_route_summary(profiles: list[dict[str, Any]], metrics: str) -> dict[str,
             "active_current": as_int(
                 metric_value(
                     metrics,
-                    "aether_gateway_dataplane_udp_sessions_active_current",
+                    "nantian_gateway_dataplane_udp_sessions_active_current",
                 )
             ),
             "queue_depth_current": as_int(
                 metric_value(
                     metrics,
-                    "aether_gateway_dataplane_udp_session_queue_depth_current",
+                    "nantian_gateway_dataplane_udp_session_queue_depth_current",
                 )
             ),
             "queue_overflow_dropped_total": as_int(
                 metric_value(
                     metrics,
-                    "aether_gateway_dataplane_udp_session_queue_overflow_dropped_total",
+                    "nantian_gateway_dataplane_udp_session_queue_overflow_dropped_total",
                 )
             ),
             "idle_evictions_total": as_int(
                 metric_value(
                     metrics,
-                    "aether_gateway_dataplane_udp_session_idle_evictions_total",
+                    "nantian_gateway_dataplane_udp_session_idle_evictions_total",
                 )
             ),
             "active_by_listener": metric_label_values(
                 metrics,
-                "aether_gateway_dataplane_udp_sessions_active_listener_current",
+                "nantian_gateway_dataplane_udp_sessions_active_listener_current",
                 "listener",
             ),
             "queue_depth_by_listener": metric_label_values(
                 metrics,
-                "aether_gateway_dataplane_udp_session_queue_depth_listener_current",
+                "nantian_gateway_dataplane_udp_session_queue_depth_listener_current",
                 "listener",
             ),
             "queue_overflow_dropped_by_listener": metric_label_values(
                 metrics,
-                "aether_gateway_dataplane_udp_session_queue_overflow_dropped_listener_total",
+                "nantian_gateway_dataplane_udp_session_queue_overflow_dropped_listener_total",
                 "listener",
             ),
             "idle_evictions_by_listener": metric_label_values(
                 metrics,
-                "aether_gateway_dataplane_udp_session_idle_evictions_listener_total",
+                "nantian_gateway_dataplane_udp_session_idle_evictions_listener_total",
                 "listener",
             ),
         },
@@ -2129,7 +2129,7 @@ scenario_rows = scenario_summary(profiles)
 connect_buckets = traffic.get("upstream_connect_latency_ms_buckets")
 if not isinstance(connect_buckets, list) or not connect_buckets:
     connect_buckets, metric_sum, metric_count = metric_histogram(
-        metrics, "aether_gateway_dataplane_traffic_upstream_connect_latency_ms"
+        metrics, "nantian_gateway_dataplane_traffic_upstream_connect_latency_ms"
     )
 else:
     metric_sum, metric_count = None, None
@@ -2143,31 +2143,31 @@ if connect_sum is None:
     connect_sum = metric_sum
 connect_max = as_number(traffic.get("max_upstream_connect_latency_ms"))
 if connect_max is None:
-    connect_max = metric_value(metrics, "aether_gateway_dataplane_traffic_upstream_connect_latency_ms_max")
+    connect_max = metric_value(metrics, "nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_max")
 connect_avg = connect_sum / connect_count if connect_sum is not None and connect_count > 0 else None
 
 pool_hits = as_int(
     traffic.get("total_upstream_pool_hits"),
-    as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_upstream_pool_hits_total")),
+    as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_upstream_pool_hits_total")),
 )
 pool_misses = as_int(
     traffic.get("total_upstream_pool_misses"),
-    as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_upstream_pool_misses_total")),
+    as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_upstream_pool_misses_total")),
 )
 pool_total = pool_hits + pool_misses
 pool_hit_ratio = pool_hits / pool_total if pool_total > 0 else None
 
 retried_events = as_int(
     traffic.get("total_retried_events"),
-    as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_retried_events_total")),
+    as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_retried_events_total")),
 )
 retry_attempts = as_int(
     traffic.get("total_retry_attempts"),
-    as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_retry_attempts_total")),
+    as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_retry_attempts_total")),
 )
 retried_success_events = as_int(
     traffic.get("total_retried_success_events"),
-    as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_retried_success_events_total")),
+    as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_retried_success_events_total")),
 )
 retry_after_success_rate = retried_success_events / retried_events if retried_events > 0 else None
 
@@ -2323,11 +2323,11 @@ report = {
         "pool_hit_ratio": pool_hit_ratio,
         "peer_build_failures": as_int(
             traffic.get("total_upstream_peer_build_failures"),
-            as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_upstream_peer_build_failures_total")),
+            as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_upstream_peer_build_failures_total")),
         ),
         "tls_handshake_failures": as_int(
             traffic.get("total_upstream_tls_handshake_failures"),
-            as_int(metric_value(metrics, "aether_gateway_dataplane_traffic_upstream_tls_handshake_failures_total")),
+            as_int(metric_value(metrics, "nantian_gateway_dataplane_traffic_upstream_tls_handshake_failures_total")),
         ),
         "connect_latency_ms": {
             "observations": connect_count,

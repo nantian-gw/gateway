@@ -51,10 +51,10 @@ RECREATE_CLUSTER=true ./tests/e2e/run-kind.sh
 
 The default smoke test cases create:
 
-- `GatewayClass`: `aether`
-- `Gateway`: `aether-gateway/edge`
-- `HTTPRoute`: `aether-gateway/echo`
-- Backend `Service`: `aether-gateway/echo`
+- `GatewayClass: nantian`
+- `Gateway`: `nantian-gw/edge`
+- `HTTPRoute`: `nantian-gw/echo`
+- Backend `Service`: `nantian-gw/echo`
 
 Kind maps the shared dataplane Service's NodePorts to the host by default:
 
@@ -76,7 +76,7 @@ curl -fsS -H 'Host: example.com' http://127.0.0.1:18080/
 Expected response:
 
 ```text
-aether-gateway-ok
+nantian-gw-ok
 ```
 
 TCPRoute smoke can also be verified directly from the host:
@@ -89,10 +89,10 @@ printf 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n' \
 ### 1.4 View Running Resources
 
 ```bash
-kubectl -n aether-gateway get pods
-kubectl -n aether-gateway get svc
-kubectl -n aether-gateway get gateway
-kubectl -n aether-gateway get httproute
+kubectl -n nantian-gw get pods
+kubectl -n nantian-gw get svc
+kubectl -n nantian-gw get gateway
+kubectl -n nantian-gw get httproute
 ```
 
 ## 2. Accessing Admin APIs
@@ -102,7 +102,7 @@ kubectl -n aether-gateway get httproute
 The control plane admin API is a cluster-internal `Service` by default. Access is recommended via `port-forward`:
 
 ```bash
-kubectl -n aether-gateway port-forward svc/aether-gateway-controlplane-admin 18081:18081
+kubectl -n nantian-gw port-forward svc/nantian-controlplane-admin 18081:18081
 ```
 
 Then in another terminal:
@@ -120,7 +120,7 @@ curl -fsS http://127.0.0.1:18081/v1/nodes | jq
 The data plane admin API is only exposed within the cluster via `ClusterIP` by default. Use `port-forward`:
 
 ```bash
-kubectl -n aether-gateway port-forward svc/aether-gateway-dataplane-admin 19080:19080
+kubectl -n nantian-gw port-forward svc/nantian-dataplane-admin 19080:19080
 ```
 
 Then access from another terminal:

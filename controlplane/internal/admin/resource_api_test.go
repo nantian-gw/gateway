@@ -26,9 +26,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 func newTestServerWithResourceManager(t *testing.T, resources *ResourceManager) *Server {
@@ -141,7 +141,7 @@ func resourceManagerForTestWithLogger(t *testing.T, logger *slog.Logger) *Resour
 			&gatewayv1.GatewayClass{
 				TypeMeta: metav1TypeMeta("gateway.networking.k8s.io/v1", "GatewayClass"),
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "aether-gateway",
+					Name: "nantian-gw",
 				},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: gatewayv1.GatewayController("gateway.nantian.dev/controller"),

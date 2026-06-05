@@ -74,7 +74,7 @@ The system is divided into four layers:
 The repository currently maintains three main installation forms:
 
 - `deploy/kubernetes/base`
-  - Deploys `aether-gateway-controlplane`, `aether-gateway-dataplane`, `aether-gateway-dashboard`, RBAC, GatewayClass, basic Services, and NetworkPolicy.
+  - Deploys `nantian-controlplane`, `nantian-dataplane`, `nantian-gw-dashboard`, RBAC, GatewayClass, basic Services, and NetworkPolicy.
   - controlplane, dataplane, and dashboard are independent Deployments / Services.
 - `deploy/kubernetes/overlays/kind`
   - Overlays images, ports, status addresses, and smoke entry points needed for Kind local debugging.

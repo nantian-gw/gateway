@@ -11,11 +11,11 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
-	controlv1 "github.com/aether-gateway/proto/gateway/control/v1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
 )
 
 type Server struct {

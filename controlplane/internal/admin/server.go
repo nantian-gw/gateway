@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 const (

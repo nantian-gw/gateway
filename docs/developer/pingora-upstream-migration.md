@@ -6,8 +6,8 @@ This document records the final state after the dataplane exited the local vendo
 
 The migration has completed the following actions:
 
-- Removed the `[patch.crates-io]` entries for `aether-core` / `aether-proxy` from `dataplane/Cargo.toml`
-- Switched the dataplane to the `openssl` runtime of upstream `aether 0.8.0`
+- Removed the `[patch.crates-io]` entries for `nantian-core` / `nantian-proxy` from `dataplane/Cargo.toml`
+- Switched the dataplane to the `openssl` runtime of upstream `pingora 0.8.0`
 - Deleted `dataplane/third_party/`
 - Changed configurations that depended on vendored patches to explicit rejections or documented convergence
 
@@ -33,7 +33,7 @@ The migration has completed the following actions:
 - `Expect: 100-continue` is still supported.
 - HTTP/1.1 chunked request trailers are no longer proxied to the upstream backend.
 
-This last point is not the first-party actively removing functionality, but rather that upstream `aether-core/aether-proxy 0.8.0` currently does not expose HTTP/1.1 request trailers to the upper layer, and there is no upstream-only `finish_body_with_trailers` path to continue using.
+This last point is not the first-party actively removing functionality, but rather that upstream `nantian-core/nantian-proxy 0.8.0` currently does not expose HTTP/1.1 request trailers to the upper layer, and there is no upstream-only `finish_body_with_trailers` path to continue using.
 
 ## Compatibility Conclusion
 

@@ -14,8 +14,8 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 func TestBackendTLSPolicyConfigMapIndexFallbackLogsMissingIndexOnceWithoutIndexValue(t *testing.T) {
@@ -28,7 +28,7 @@ func TestBackendTLSPolicyConfigMapIndexFallbackLogsMissingIndexOnceWithoutIndexV
 	logger := slog.New(slog.NewTextHandler(&logs, nil))
 	syncer := NewSyncer(
 		fake.NewClientBuilder().WithScheme(scheme).Build(),
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		ir.NewSnapshotStore(logger),
 		testMetrics(),
 		time.Minute,

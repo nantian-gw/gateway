@@ -1,6 +1,6 @@
 {{- if .Values.dataplane.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
-{{- $dpName := include "aether-gateway.name" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
+{{- $dpName := include "nantian-gw.name" . }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -8,7 +8,7 @@ metadata:
   name: {{ $dpName }}-dataplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.dataplane.replicas }}
   minReadySeconds: 5
@@ -18,12 +18,12 @@ spec:
     {{- toYaml .Values.dataplane.strategy | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 6 }}
+      {{- include "nantian-gw.dataplane.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 8 }}
-        {{- include "aether-gateway.dataplane.labels" . | nindent 8 }}
+        {{- include "nantian-gw.dataplane.selectorLabels" . | nindent 8 }}
+        {{- include "nantian-gw.dataplane.labels" . | nindent 8 }}
       {{- with .Values.dataplane.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
@@ -36,7 +36,7 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
-      {{- include "aether-gateway.podSecurityContext" . | nindent 6 }}
+      {{- include "nantian-gw.podSecurityContext" . | nindent 6 }}
       {{- if .Values.dataplane.podSecurityContext }}
       securityContext:
         {{- toYaml .Values.dataplane.podSecurityContext | nindent 8 }}
@@ -54,7 +54,7 @@ spec:
           whenUnsatisfiable: {{ .whenUnsatisfiable }}
           labelSelector:
             matchLabels:
-              {{- include "aether-gateway.dataplane.selectorLabels" $ | nindent 14 }}
+              {{- include "nantian-gw.dataplane.selectorLabels" $ | nindent 14 }}
         {{- end }}
       {{- end }}
       {{- with .Values.dataplane.nodeSelector }}
@@ -69,10 +69,10 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- include "aether-gateway.imagePullSecrets" . | nindent 6 }}
+      {{- include "nantian-gw.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: dataplane
-          image: {{ include "aether-gateway.dataplane.image" . }}
+          image: {{ include "nantian-gw.dataplane.image" . }}
           imagePullPolicy: {{ .Values.dataplane.image.pullPolicy }}
           env:
             - name: PGW_NODE_ID
@@ -84,7 +84,7 @@ spec:
             {{- end }}
           args:
             - "--config"
-            - "/etc/aether-gateway/config.yaml"
+            - "/etc/nantian-gw/config.yaml"
           ports:
             - name: http
               containerPort: 10080
@@ -114,7 +114,7 @@ spec:
             failureThreshold: {{ .Values.dataplane.probes.readiness.failureThreshold }}
           resources:
             {{- toYaml .Values.dataplane.resources | nindent 12 }}
-          {{- include "aether-gateway.containerSecurityContext" . | nindent 10 }}
+          {{- include "nantian-gw.containerSecurityContext" . | nindent 10 }}
           {{- if .Values.dataplane.containerSecurityContext }}
           securityContext:
             {{- toYaml .Values.dataplane.containerSecurityContext | nindent 12 }}
@@ -130,21 +130,21 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /etc/aether-gateway
+              mountPath: /etc/nantian-gw
               readOnly: true
             {{- if or .Values.dataplane.xdsTLS.enabled .Values.certs.generate }}
             - name: xds-tls
-              mountPath: /etc/aether-gateway/xds-tls
+              mountPath: /etc/nantian-gw/xds-tls
               readOnly: true
             {{- end }}
             {{- if .Values.dataplane.adminAuth.existingSecret }}
             - name: admin-auth
-              mountPath: /etc/aether-gateway/admin-auth
+              mountPath: /etc/nantian-gw/admin-auth
               readOnly: true
             {{- end }}
             {{- if or .Values.dataplane.sessionPersistence.existingSecret .Values.dataplane.sessionPersistence.sharedSecret }}
             - name: session-persistence
-              mountPath: /etc/aether-gateway/session-persistence
+              mountPath: /etc/nantian-gw/session-persistence
               readOnly: true
             {{- end }}
             - name: tmp

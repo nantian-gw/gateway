@@ -12,11 +12,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
-const defaultDataplaneNetworkPolicyName = "aether-gateway-dataplane"
+const defaultDataplaneNetworkPolicyName = "nantian-dataplane"
 
 type networkPolicyPortKey struct {
 	port     int32

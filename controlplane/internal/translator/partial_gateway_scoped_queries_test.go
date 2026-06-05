@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 
 func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -50,7 +50,7 @@ func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
 		}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -67,7 +67,7 @@ func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 				},
 			},
 			&gatewayv1.Gateway{
@@ -92,7 +92,7 @@ func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
 		scopedGatewayQueryValidatingClient{
 			Client:         baseClient,
 			controllerName: string(controllerName),
-			classNames:     map[string]struct{}{"aether-gateway": {}},
+			classNames:     map[string]struct{}{"nantian-gw": {}},
 		},
 	)
 	if err != nil {
@@ -108,7 +108,7 @@ func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
 
 func TestLoadFilteredGatewaysSkipsGatewayListWhenNoManagedGatewayClassesExist(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -163,7 +163,7 @@ func TestLoadFilteredGatewaysSkipsGatewayListWhenNoManagedGatewayClassesExist(t 
 
 func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -191,7 +191,7 @@ func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testi
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "other"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -202,7 +202,7 @@ func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testi
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -216,7 +216,7 @@ func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testi
 					Namespace: "other",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -275,13 +275,13 @@ func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testi
 
 func TestBuildGatewayListenersForSnapshotLoadsReferencedGatewayClassesDirectly(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
 		WithScheme(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -298,7 +298,7 @@ func TestBuildGatewayListenersForSnapshotLoadsReferencedGatewayClassesDirectly(t
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,

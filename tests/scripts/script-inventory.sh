@@ -77,8 +77,8 @@ aeg_require_dir "${ROOT_DIR}/scripts"
 aeg_require_command bash
 
 PATTERN_FILE="${TMP_DIR}/pattern.txt"
-printf 'aether-gateway\n' >"${PATTERN_FILE}"
-aeg_require_pattern 'aether-gateway' "${PATTERN_FILE}"
+printf 'nantian-gw\n' >"${PATTERN_FILE}"
+aeg_require_pattern 'nantian-gw' "${PATTERN_FILE}"
 
 HELPER_DIR="${TMP_DIR}/helper-dir"
 aeg_safe_mkdir "${HELPER_DIR}"

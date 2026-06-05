@@ -24,7 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--requests", type=int, default=20, help="total WebSocket probes")
     parser.add_argument("--concurrency", type=int, default=20, help="maximum concurrent probes")
     parser.add_argument("--host-header", help="override Host header; defaults to URL host")
-    parser.add_argument("--payload", default="aether-websocket", help="text payload to echo")
+    parser.add_argument("--payload", default="nantian-websocket", help="text payload to echo")
     parser.add_argument("--connect-timeout", type=float, default=3.0, help="connect timeout seconds")
     parser.add_argument("--request-timeout", type=float, default=5.0, help="per-probe timeout seconds")
     parser.add_argument("--hold-ms", type=int, default=0, help="hold upgraded connection open after echo")

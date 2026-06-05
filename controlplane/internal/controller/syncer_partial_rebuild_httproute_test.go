@@ -18,20 +18,20 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 func TestReconcileHTTPRouteScopedRequestRebuildsOnlyChangedRoute(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(8080)
 
 	baseClient := newControllerClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -39,7 +39,7 @@ func TestReconcileHTTPRouteScopedRequestRebuildsOnlyChangedRoute(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -247,7 +247,7 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshListenersForServiceParents(
 	store := ir.NewSnapshotStore(logger)
 	syncer := NewSyncer(
 		validatingClient,
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		store,
 		testMetrics(),
 		0,
@@ -325,13 +325,13 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshListenersForServiceParents(
 }
 func TestReconcileHTTPRouteScopedRequestAttachesNewRouteToExistingGatewayListener(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(8080)
 
 	baseClient := newControllerClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -339,7 +339,7 @@ func TestReconcileHTTPRouteScopedRequestAttachesNewRouteToExistingGatewayListene
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -464,13 +464,13 @@ func TestReconcileHTTPRouteScopedRequestAttachesNewRouteToExistingGatewayListene
 }
 func TestReconcileHTTPRouteScopedRequestRebuildsMissingParentGatewayListener(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(8080)
 
 	baseClient := newControllerClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -528,7 +528,7 @@ func TestReconcileHTTPRouteScopedRequestRebuildsMissingParentGatewayListener(t *
 	gateway := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -634,7 +634,7 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshWorkloadsForCrossNamespaceS
 	store := ir.NewSnapshotStore(logger)
 	syncer := NewSyncer(
 		validatingClient,
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		store,
 		testMetrics(),
 		0,

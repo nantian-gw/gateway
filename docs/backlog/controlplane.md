@@ -16,7 +16,7 @@ Acceptance:
 
 - Runner trigger distinguishes at minimum `infra`, `gateway-status`, `route-status`, `policy-status`, `full`.
 - Snapshot publish, node state changes, Gateway/Route/Policy changes only trigger the affected scope.
-- Metrics add a scope label, e.g., `aether_gateway_controlplane_reconciler_runner_duration_seconds{scope=...}`.
+- Metrics add a scope label, e.g., `nantian_gateway_controlplane_reconciler_runner_duration_seconds{scope=...}`.
 - Keep low-frequency full reconcile as a safety net.
 - Minimum validation: `cd controlplane && go test ./internal/controller ./internal/status ./internal/infrastructure -count=1`.
 

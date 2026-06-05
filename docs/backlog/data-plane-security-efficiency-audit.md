@@ -45,7 +45,7 @@
   - Recommendation: Merge into the single snapshot read optimization.
 
 - [ ] **Rust proxy retry buffer has a 64KB hard limit** — upstream Rust proxy limitation, cannot be modified.
-  - File: upstream `aether-core-0.8.0/src/protocols/http/v1/common.rs:32`
+  - File: upstream `nantian-core-0.8.0/src/protocols/http/v1/common.rs:32`
   - Recommendation: Evaluate whether to fork the Rust proxy or submit an upstream PR to add `set_retry_buffer()` API.
 
 - [x] **Connection keepalive has no limit** — no upper bound on connection reuse requests, may cause connection buildup.

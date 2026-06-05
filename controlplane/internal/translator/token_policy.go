@@ -5,8 +5,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func translateTokenPolicy(policy tokenpolicyv1alpha1.TokenPolicy) ir.TokenPolicyConfig {

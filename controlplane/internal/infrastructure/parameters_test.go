@@ -41,7 +41,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 				},
 			},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind:      gatewayv1.Kind("ConfigMap"),
@@ -63,7 +63,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 			name:    "missing configmap",
 			objects: []client.Object{},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind:      gatewayv1.Kind("ConfigMap"),
@@ -78,7 +78,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 			name:    "unsupported kind",
 			objects: []client.Object{},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind:      gatewayv1.Kind("Secret"),
@@ -100,7 +100,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 				},
 			},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind:      gatewayv1.Kind("ConfigMap"),
@@ -122,7 +122,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 				},
 			},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind:      gatewayv1.Kind("ConfigMap"),
@@ -145,7 +145,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 				},
 			},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind:      gatewayv1.Kind("ConfigMap"),
@@ -160,7 +160,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 			name:    "missing namespace",
 			objects: []client.Object{},
 			gatewayClass: &gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ParametersRef: &gatewayv1.ParametersReference{
 						Kind: gatewayv1.Kind("ConfigMap"),

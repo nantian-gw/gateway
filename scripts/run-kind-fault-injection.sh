@@ -154,7 +154,7 @@ cleanup() {
 }
 
 current_leader_holder() {
-  kubectl --context kind-aether-gateway -n aether-gateway get lease aether-gateway-controlplane-leader \
+  kubectl --context kind-nantian-gw -n nantian-gw get lease nantian-controlplane-leader \
     -o jsonpath='{.spec.holderIdentity}'
 }
 
@@ -183,7 +183,7 @@ assert_http_ready() {
 
 select_drain_node() {
   local nodes_json
-  if ! nodes_json="$(kubectl --context kind-aether-gateway get nodes -o json 2>/dev/null)"; then
+  if ! nodes_json="$(kubectl --context kind-nantian-gw get nodes -o json 2>/dev/null)"; then
     return 0
   fi
   jq -r '
@@ -201,7 +201,7 @@ select_drain_node() {
 
 schedulable_worker_node_count() {
   local nodes_json
-  if ! nodes_json="$(kubectl --context kind-aether-gateway get nodes -o json 2>/dev/null)"; then
+  if ! nodes_json="$(kubectl --context kind-nantian-gw get nodes -o json 2>/dev/null)"; then
     printf '0\n'
     return
   fi
@@ -220,7 +220,7 @@ schedulable_worker_node_count() {
 
 schedulable_worker_nodes() {
   local nodes_json
-  if ! nodes_json="$(kubectl --context kind-aether-gateway get nodes -o json 2>/dev/null)"; then
+  if ! nodes_json="$(kubectl --context kind-nantian-gw get nodes -o json 2>/dev/null)"; then
     return
   fi
   jq -r '
@@ -279,23 +279,23 @@ prepare_http_traffic_backend() {
   fi
 
   record_event "preparing HTTP backend echo with ${FAULT_HTTP_BACKEND_REPLICAS} replicas for node drain traffic"
-  kubectl --context kind-aether-gateway -n aether-gateway delete pod \
+  kubectl --context kind-nantian-gw -n nantian-gw delete pod \
     -l nantian.dev/fault-traffic-guard=true \
     --ignore-not-found \
     --wait=true >/dev/null 2>&1 || true
-  kubectl --context kind-aether-gateway -n aether-gateway patch deployment/echo \
+  kubectl --context kind-nantian-gw -n nantian-gw patch deployment/echo \
     --type=json \
     -p='[{"op":"remove","path":"/spec/template/spec/topologySpreadConstraints"}]' >/dev/null 2>&1 || true
-  kubectl --context kind-aether-gateway -n aether-gateway scale deployment/echo \
+  kubectl --context kind-nantian-gw -n nantian-gw scale deployment/echo \
     --replicas="${FAULT_HTTP_BACKEND_REPLICAS}" >/dev/null
-  kubectl --context kind-aether-gateway -n aether-gateway rollout status deployment/echo --timeout=180s >/dev/null
+  kubectl --context kind-nantian-gw -n nantian-gw rollout status deployment/echo --timeout=180s >/dev/null
   ensure_http_backend_spread_guard
   wait_for_http_backend_spread
   assert_http_ready
 }
 
 http_backend_ready_nodes() {
-  kubectl --context kind-aether-gateway -n aether-gateway get pods -l app=echo -o json | jq -r '
+  kubectl --context kind-nantian-gw -n nantian-gw get pods -l app=echo -o json | jq -r '
     [
       .items[]
       | select(.status.phase == "Running")
@@ -355,17 +355,17 @@ ensure_http_backend_spread_guard() {
   fi
 
   guard_name="$(fault_guard_name_for_node "${missing_node}")"
-  image="$(kubectl --context kind-aether-gateway -n aether-gateway get deployment/echo \
+  image="$(kubectl --context kind-nantian-gw -n nantian-gw get deployment/echo \
     -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null || true)"
   image="${image:-m.daocloud.io/docker.io/hashicorp/http-echo:1.0.0}"
 
   record_event "creating HTTP backend fault guard ${guard_name} on ${missing_node}"
-  kubectl --context kind-aether-gateway -n aether-gateway apply -f - >/dev/null <<YAML
+  kubectl --context kind-nantian-gw -n nantian-gw apply -f - >/dev/null <<YAML
 apiVersion: v1
 kind: Pod
 metadata:
   name: ${guard_name}
-  namespace: aether-gateway
+  namespace: nantian-gw
   labels:
     app: echo
     nantian.dev/fault-traffic-guard: "true"
@@ -378,7 +378,7 @@ spec:
       imagePullPolicy: IfNotPresent
       args:
         - "-listen=:8080"
-        - "-text=aether-gateway-ok"
+        - "-text=nantian-gw-ok"
       ports:
         - containerPort: 8080
 YAML
@@ -407,15 +407,15 @@ wait_for_http_backend_spread() {
 
 dataplane_desired_replicas() {
   local replicas
-  replicas="$(kubectl --context kind-aether-gateway -n aether-gateway get deploy/aether-gateway-dataplane \
+  replicas="$(kubectl --context kind-nantian-gw -n nantian-gw get deploy/nantian-dataplane \
     -o jsonpath='{.spec.replicas}' 2>/dev/null || true)"
   printf '%s\n' "${replicas:-1}"
 }
 
 dataplane_ready_non_terminating_count() {
   local deleted_pod="$1"
-  kubectl --context kind-aether-gateway -n aether-gateway get pods \
-    -l app=aether-gateway-dataplane \
+  kubectl --context kind-nantian-gw -n nantian-gw get pods \
+    -l app=nantian-dataplane \
     -o json | jq -r --arg deleted_pod "${deleted_pod}" '
       [
         .items[]
@@ -471,14 +471,14 @@ run_node_drain_scenario() {
   fi
 
   record_event "draining node ${node}"
-  if ! kubectl --context kind-aether-gateway drain "${node}" \
+  if ! kubectl --context kind-nantian-gw drain "${node}" \
     --ignore-daemonsets \
     --delete-emptydir-data \
     --force \
     --timeout="${NODE_DRAIN_TIMEOUT}" >/dev/null; then
     FAILURES=$((FAILURES + 1))
     record_event "node drain failed for ${node}"
-    kubectl --context kind-aether-gateway uncordon "${node}" >/dev/null || true
+    kubectl --context kind-nantian-gw uncordon "${node}" >/dev/null || true
     write_conclusion \
       "node-drain" \
       "fail" \
@@ -490,7 +490,7 @@ run_node_drain_scenario() {
 
   local recovered=true
   local ready=true
-  if ! kubectl --context kind-aether-gateway -n aether-gateway rollout status deploy/aether-gateway-dataplane --timeout=180s >/dev/null; then
+  if ! kubectl --context kind-nantian-gw -n nantian-gw rollout status deploy/nantian-dataplane --timeout=180s >/dev/null; then
     recovered=false
     FAILURES=$((FAILURES + 1))
     record_event "dataplane deployment did not recover after draining ${node}"
@@ -498,7 +498,7 @@ run_node_drain_scenario() {
   if ! assert_http_ready; then
     ready=false
   fi
-  kubectl --context kind-aether-gateway uncordon "${node}" >/dev/null || true
+  kubectl --context kind-nantian-gw uncordon "${node}" >/dev/null || true
 
   if [[ "${recovered}" == "true" && "${ready}" == "true" ]]; then
     record_event "node drain workload recovered on ${node}"
@@ -520,13 +520,13 @@ run_node_drain_scenario() {
 }
 
 first_gateway_resource() {
-  kubectl --context kind-aether-gateway get gateways.gateway.networking.k8s.io -A -o json | jq -r '
+  kubectl --context kind-nantian-gw get gateways.gateway.networking.k8s.io -A -o json | jq -r '
     .items[0]? | select(. != null) | [.metadata.namespace, .metadata.name] | @tsv
   '
 }
 
 first_httproute_resource() {
-  kubectl --context kind-aether-gateway get httproutes.gateway.networking.k8s.io -A -o json | jq -r '
+  kubectl --context kind-nantian-gw get httproutes.gateway.networking.k8s.io -A -o json | jq -r '
     .items[0]? | select(. != null) | [.metadata.namespace, .metadata.name] | @tsv
   '
 }
@@ -541,7 +541,7 @@ patch_watch_churn_resource() {
     --arg key "${APISERVER_WATCH_CHURN_ANNOTATION}" \
     --arg value "${RUN_ID}-${iteration}" \
     '{metadata:{annotations:{($key):$value}}}')"
-  kubectl --context kind-aether-gateway -n "${namespace}" patch "${resource}" "${name}" --type merge -p "${patch}" >/dev/null
+  kubectl --context kind-nantian-gw -n "${namespace}" patch "${resource}" "${name}" --type merge -p "${patch}" >/dev/null
 }
 
 run_apiserver_watch_disruption_scenario() {
@@ -919,7 +919,7 @@ main() {
   old_holder="$(current_leader_holder)"
   leader_pod="${old_holder%%_*}"
   record_event "deleting controlplane leader pod ${leader_pod}"
-  kubectl --context kind-aether-gateway -n aether-gateway delete pod "${leader_pod}" --wait=false >/dev/null
+  kubectl --context kind-nantian-gw -n nantian-gw delete pod "${leader_pod}" --wait=false >/dev/null
   new_holder="$(wait_for_new_leader "${old_holder}")" || {
     FAILURES=$((FAILURES + 1))
     record_event "leader did not switch within timeout"
@@ -942,14 +942,14 @@ main() {
       "events.log" \
       "logs/controlplane.log"
   fi
-  kubectl --context kind-aether-gateway -n aether-gateway rollout status deploy/aether-gateway-controlplane --timeout=180s >/dev/null
+  kubectl --context kind-nantian-gw -n nantian-gw rollout status deploy/nantian-controlplane --timeout=180s >/dev/null
   assert_http_ready || true
 
-  dataplane_pod="$(kubectl --context kind-aether-gateway -n aether-gateway get pods -l app=aether-gateway-dataplane -o jsonpath='{.items[0].metadata.name}')"
+  dataplane_pod="$(kubectl --context kind-nantian-gw -n nantian-gw get pods -l app=nantian-dataplane -o jsonpath='{.items[0].metadata.name}')"
   record_event "deleting dataplane pod ${dataplane_pod}"
-  kubectl --context kind-aether-gateway -n aether-gateway delete pod "${dataplane_pod}" --wait=false >/dev/null
+  kubectl --context kind-nantian-gw -n nantian-gw delete pod "${dataplane_pod}" --wait=false >/dev/null
   dataplane_recovered=true
-  if ! kubectl --context kind-aether-gateway -n aether-gateway rollout status deploy/aether-gateway-dataplane --timeout=180s >/dev/null; then
+  if ! kubectl --context kind-nantian-gw -n nantian-gw rollout status deploy/nantian-dataplane --timeout=180s >/dev/null; then
     dataplane_recovered=false
     FAILURES=$((FAILURES + 1))
     record_event "dataplane rollout did not report recovered after deleting ${dataplane_pod}"
@@ -989,9 +989,9 @@ main() {
   TRAFFIC_PID=""
 
   collect_admin admin-after
-  kubectl --context kind-aether-gateway -n aether-gateway logs deploy/aether-gateway-controlplane --tail=200 \
+  kubectl --context kind-nantian-gw -n nantian-gw logs deploy/nantian-controlplane --tail=200 \
     >"${OUTPUT_DIR}/logs/controlplane.log"
-  kubectl --context kind-aether-gateway -n aether-gateway logs deploy/aether-gateway-dataplane --tail=200 \
+  kubectl --context kind-nantian-gw -n nantian-gw logs deploy/nantian-dataplane --tail=200 \
     >"${OUTPUT_DIR}/logs/dataplane.log"
   summarize_evidence
   assert_release_gate_conclusions

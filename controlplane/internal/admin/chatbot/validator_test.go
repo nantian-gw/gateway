@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 // mockLLMClient implements LLMClient with canned responses used in
@@ -27,7 +27,7 @@ func (m *mockLLMClient) ChatCompletionStream(_ context.Context, _ string, _ []Me
 	return nil
 }
 
-const testControllerName = "gateway.networking.k8s.io/aether-gateway"
+const testControllerName = "gateway.networking.k8s.io/nantian-gw"
 
 func TestDryRunValidate_ValidGatewayAndHTTPRoute(t *testing.T) {
 	t.Parallel()
@@ -36,9 +36,9 @@ func TestDryRunValidate_ValidGatewayAndHTTPRoute(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -46,7 +46,7 @@ metadata:
   name: public
   namespace: default
 spec:
-  gatewayClassName: aether-gateway
+  gatewayClassName: nantian-gw
   listeners:
     - name: http
       port: 80
@@ -97,9 +97,9 @@ func TestDryRunValidate_InvalidYAMLSyntax(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind HTTPRoute
@@ -122,9 +122,9 @@ func TestDryRunValidate_InvalidYAMLMissingKind(t *testing.T) {
 	noKindYAML := `
 apiVersion: gateway.networking.k8s.io/v1
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 `
 
 	_, err := DryRunValidate(context.Background(), testControllerName, noKindYAML)
@@ -143,9 +143,9 @@ func TestDryRunValidate_SemanticallyInvalid_BadParentRef(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -180,9 +180,9 @@ func TestDryRunValidate_SemanticallyInvalid_BadBackendRef(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -190,7 +190,7 @@ metadata:
   name: public
   namespace: default
 spec:
-  gatewayClassName: aether-gateway
+  gatewayClassName: nantian-gw
   listeners:
     - name: http
       port: 80
@@ -250,9 +250,9 @@ func TestAutoCorrectGenerate_SuccessOnFirstTry(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -260,7 +260,7 @@ metadata:
   name: public
   namespace: default
 spec:
-  gatewayClassName: aether-gateway
+  gatewayClassName: nantian-gw
   listeners:
     - name: http
       port: 80
@@ -323,9 +323,9 @@ func TestAutoCorrectGenerate_RetrySucceedsAfterCorrection(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -333,7 +333,7 @@ metadata:
   name: public
   namespace: default
 spec:
-  gatewayClassName: aether-gateway
+  gatewayClassName: nantian-gw
   listeners:
     - name: http
       port: 80
@@ -425,9 +425,9 @@ func TestDryRunValidate_GRPCRoute(t *testing.T) {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether-gateway
+  name: nantian-gw
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -435,7 +435,7 @@ metadata:
   name: grpc-gw
   namespace: default
 spec:
-  gatewayClassName: aether-gateway
+  gatewayClassName: nantian-gw
   listeners:
     - name: grpc
       port: 50051

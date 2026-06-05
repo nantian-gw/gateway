@@ -1,9 +1,9 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: tokenpolicies.gateway.aether.dev
+  name: tokenpolicies.gateway.nantian.dev
 spec:
-  group: gateway.aether.dev
+  group: gateway.nantian.dev
   names:
     plural: tokenpolicies
     singular: tokenpolicy

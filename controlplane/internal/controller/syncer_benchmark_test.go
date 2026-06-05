@@ -21,9 +21,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 func BenchmarkPublishSnapshotRouteFanout(b *testing.B) {
@@ -227,7 +227,7 @@ func newNamespaceSelectorStormBenchmarkSyncer(b *testing.B, gatewayCount int) *S
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return NewSyncer(
 		cl,
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		ir.NewSnapshotStore(logger),
 		testMetrics(),
 		0,
@@ -314,7 +314,7 @@ func newSnapshotBenchmarkSyncerWithClient(b *testing.B, routeCount int, attached
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return NewSyncer(
 		cl,
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		ir.NewSnapshotStore(logger),
 		testMetrics(),
 		0,
@@ -326,9 +326,9 @@ func namespaceSelectorStormBenchmarkObjects(gatewayCount int) []client.Object {
 	fromSelector := gatewayv1.NamespacesFromSelector
 	objects := []client.Object{
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 	}
@@ -342,7 +342,7 @@ func namespaceSelectorStormBenchmarkObjects(gatewayCount int) []client.Object {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: gatewayName, Namespace: "infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -377,15 +377,15 @@ func namespaceSelectorStormBenchmarkObjects(gatewayCount int) []client.Object {
 func snapshotBenchmarkObjects(routeCount int, attached bool) []client.Object {
 	objects := []client.Object{
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -466,7 +466,7 @@ func snapshotStatusStormEvents(routeCount int) []event.UpdateEvent {
 		}
 		newRoute := oldRoute.DeepCopy()
 		newRoute.Status.RouteStatus.Parents = []gatewayv1.RouteParentStatus{{
-			ControllerName: "gateway.networking.k8s.io/aether-gateway",
+			ControllerName: "gateway.networking.k8s.io/nantian-gw",
 		}}
 		events = append(events, event.UpdateEvent{
 			ObjectOld: oldRoute,

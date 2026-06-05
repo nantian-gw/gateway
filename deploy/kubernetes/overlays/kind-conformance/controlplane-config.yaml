@@ -2,7 +2,7 @@ grpcAddr: ":18080"
 adminAddr: ":18081"
 metricsAddr: ":18082"
 healthProbeAddr: ":18083"
-controllerName: "gateway.networking.k8s.io/aether-gateway"
+controllerName: "gateway.networking.k8s.io/nantian-gw"
 statusAddress: "127.0.0.1"
 syncPeriod: 5s
 syncSettleDelay: 200ms
@@ -20,7 +20,7 @@ log:
   format: "json"
 leaderElection:
   enabled: true
-  id: "aether-gateway-controlplane-leader"
+  id: "nantian-controlplane-leader"
   leaseDuration: "15s"
   renewDeadline: "10s"
   retryPeriod: "2s"

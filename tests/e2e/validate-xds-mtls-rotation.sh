@@ -2,22 +2,22 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-KUBE_NAMESPACE="${KUBE_NAMESPACE:-aether-gateway}"
+KUBE_NAMESPACE="${KUBE_NAMESPACE:-nantian-gw}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
 KEEP_ARTIFACTS="${KEEP_ARTIFACTS:-false}"
-CONTROLPLANE_DEPLOYMENT="${CONTROLPLANE_DEPLOYMENT:-aether-gateway-controlplane}"
-DATAPLANE_DEPLOYMENT="${DATAPLANE_DEPLOYMENT:-aether-gateway-dataplane}"
-CONTROLPLANE_SELECTOR="${CONTROLPLANE_SELECTOR:-app=aether-gateway-controlplane}"
-DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=aether-gateway-dataplane}"
-CONTROLPLANE_CONFIGMAP="${CONTROLPLANE_CONFIGMAP:-aether-gateway-controlplane-config}"
-DATAPLANE_CONFIGMAP="${DATAPLANE_CONFIGMAP:-aether-gateway-dataplane-config}"
-CONTROLPLANE_TLS_SECRET="${CONTROLPLANE_TLS_SECRET:-aether-gateway-controlplane-grpc-tls}"
-DATAPLANE_TLS_SECRET="${DATAPLANE_TLS_SECRET:-aether-gateway-dataplane-xds-tls}"
-CONTROLPLANE_TLS_DIR="${CONTROLPLANE_TLS_DIR:-/etc/aether-gateway/grpc-tls}"
-DATAPLANE_TLS_DIR="${DATAPLANE_TLS_DIR:-/etc/aether-gateway/xds-tls}"
-CONTROLPLANE_GRPC_SERVICE_DNS="${CONTROLPLANE_GRPC_SERVICE_DNS:-aether-gateway-controlplane-grpc.aether-gateway.svc.cluster.local}"
+CONTROLPLANE_DEPLOYMENT="${CONTROLPLANE_DEPLOYMENT:-nantian-controlplane}"
+DATAPLANE_DEPLOYMENT="${DATAPLANE_DEPLOYMENT:-nantian-dataplane}"
+CONTROLPLANE_SELECTOR="${CONTROLPLANE_SELECTOR:-app=nantian-controlplane}"
+DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=nantian-dataplane}"
+CONTROLPLANE_CONFIGMAP="${CONTROLPLANE_CONFIGMAP:-nantian-controlplane-config}"
+DATAPLANE_CONFIGMAP="${DATAPLANE_CONFIGMAP:-nantian-dataplane-config}"
+CONTROLPLANE_TLS_SECRET="${CONTROLPLANE_TLS_SECRET:-nantian-controlplane-grpc-tls}"
+DATAPLANE_TLS_SECRET="${DATAPLANE_TLS_SECRET:-nantian-dataplane-xds-tls}"
+CONTROLPLANE_TLS_DIR="${CONTROLPLANE_TLS_DIR:-/etc/nantian-gw/grpc-tls}"
+DATAPLANE_TLS_DIR="${DATAPLANE_TLS_DIR:-/etc/nantian-gw/xds-tls}"
+CONTROLPLANE_GRPC_SERVICE_DNS="${CONTROLPLANE_GRPC_SERVICE_DNS:-nantian-controlplane-grpc.nantian-gw.svc.cluster.local}"
 CONTROLPLANE_GRPC_ADDR="${CONTROLPLANE_GRPC_ADDR:-https://${CONTROLPLANE_GRPC_SERVICE_DNS}:18080}"
 DATAPLANE_ADMIN_PORT="${DATAPLANE_ADMIN_PORT:-19080}"
 INITIAL_RECONNECT_BACKOFF_MS="${INITIAL_RECONNECT_BACKOFF_MS:-500}"
@@ -305,7 +305,7 @@ generate_ca() {
     -keyout "${OUTPUT_DIR}/${prefix}-ca.key" \
     -out "${OUTPUT_DIR}/${prefix}-ca.crt" \
     -days 2 \
-    -subj "/CN=aether-gateway-${prefix}-xds-ca" \
+    -subj "/CN=nantian-gw-${prefix}-xds-ca" \
     -addext "basicConstraints=critical,CA:TRUE" \
     -addext "keyUsage=critical,keyCertSign,cRLSign" >/dev/null 2>&1
 }
@@ -347,8 +347,8 @@ generate_cert_set() {
   local prefix="$1"
 
   generate_ca "${prefix}"
-  generate_leaf_cert "${prefix}" "server" "aether-gateway-controlplane-${prefix}" "serverAuth" "DNS:${CONTROLPLANE_GRPC_SERVICE_DNS}"
-  generate_leaf_cert "${prefix}" "client" "aether-gateway-dataplane-${prefix}" "clientAuth" ""
+  generate_leaf_cert "${prefix}" "server" "nantian-controlplane-${prefix}" "serverAuth" "DNS:${CONTROLPLANE_GRPC_SERVICE_DNS}"
+  generate_leaf_cert "${prefix}" "client" "nantian-dataplane-${prefix}" "clientAuth" ""
 }
 
 create_cert_sets() {

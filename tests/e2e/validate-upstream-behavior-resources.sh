@@ -118,9 +118,9 @@ data:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether
+  name: nantian
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: v1
 kind: Service
@@ -606,7 +606,7 @@ metadata:
   name: upstream-edge
   namespace: ${TEST_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: http
       protocol: HTTP

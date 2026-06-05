@@ -22,10 +22,10 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 func TestReconcilePublishesSnapshotFromGatewayInputs(t *testing.T) {
@@ -36,7 +36,7 @@ func TestReconcilePublishesSnapshotFromGatewayInputs(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	hostname := gatewayv1.Hostname("example.com")
 	pathType := gatewayv1.PathMatchPathPrefix
 	portNumber := gatewayv1.PortNumber(8080)
@@ -44,7 +44,7 @@ func TestReconcilePublishesSnapshotFromGatewayInputs(t *testing.T) {
 	client := newControllerClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -52,7 +52,7 @@ func TestReconcilePublishesSnapshotFromGatewayInputs(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",
@@ -195,7 +195,7 @@ func TestReconcileAllowsNilMetrics(t *testing.T) {
 	store := ir.NewSnapshotStore(logger)
 	syncer := NewSyncer(
 		newControllerClientBuilder(scheme).Build(),
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		store,
 		nil,
 		0,
@@ -218,7 +218,7 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	hostname := gatewayv1.Hostname("example.com")
 	pathType := gatewayv1.PathMatchPathPrefix
 	portNumber := gatewayv1.PortNumber(8080)
@@ -226,7 +226,7 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 	cl := newControllerClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -234,7 +234,7 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -295,8 +295,8 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 			},
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane",
-					Namespace: "aether-gateway",
+					Name:      "nantian-dataplane",
+					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						managedresources.ManagedByLabel: managedresources.ManagedByValue,
 						managedresources.ServiceRoleKey: managedresources.ServiceRoleShared,
@@ -315,13 +315,13 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shared-ep-aether-gateway-dataplane-ipv4",
-					Namespace: "aether-gateway",
+					Name:      "aeg-shared-ep-nantian-dataplane-ipv4",
+					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						managedresources.ManagedByLabel: managedresources.ManagedByValue,
 						managedresources.ServiceRoleKey: managedresources.EndpointSliceRoleSharedFrontend,
 						discoveryv1.LabelManagedBy:      managedresources.ManagedByValue,
-						discoveryv1.LabelServiceName:    "aether-gateway-dataplane",
+						discoveryv1.LabelServiceName:    "nantian-dataplane",
 					},
 				},
 				AddressType: discoveryv1.AddressTypeIPv4,
@@ -359,8 +359,8 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 	if err := cl.Get(
 		context.Background(),
 		client.ObjectKey{
-			Namespace: "aether-gateway",
-			Name:      "aeg-shared-ep-aether-gateway-dataplane-ipv4",
+			Namespace: "nantian-gw",
+			Name:      "aeg-shared-ep-nantian-dataplane-ipv4",
 		},
 		&frontendSlice,
 	); err != nil {
@@ -387,7 +387,7 @@ func TestReconcileInvalidatesCrossNamespaceBackendWhenReferenceGrantDeleted(t *t
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	pathType := gatewayv1.PathMatchPathPrefix
 	servicePort := gatewayv1.PortNumber(8080)
 
@@ -396,7 +396,7 @@ func TestReconcileInvalidatesCrossNamespaceBackendWhenReferenceGrantDeleted(t *t
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "backend"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -404,7 +404,7 @@ func TestReconcileInvalidatesCrossNamespaceBackendWhenReferenceGrantDeleted(t *t
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",
@@ -559,7 +559,7 @@ func TestReconcileQueuesSettleRun(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	cl := newControllerClientBuilder(scheme).Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -645,7 +645,7 @@ func TestReconcileServiceParentGRPCRouteScopedRequestPublishesImmediatelyWithSet
 	var observedScopes []ReconcilerRunnerScope
 	syncer := NewSyncer(
 		cl,
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		store,
 		testMetrics(),
 		time.Minute,
@@ -749,7 +749,7 @@ func TestReconcileDeletedServiceParentGRPCRouteScopedRequestPublishesImmediately
 	store := ir.NewSnapshotStore(logger)
 	syncer := NewSyncer(
 		cl,
-		translator.New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
 		store,
 		testMetrics(),
 		time.Minute,
@@ -802,7 +802,7 @@ func TestReconcileSettleRunUsesLifecycleContext(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	cl := newControllerClientBuilder(scheme).Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -853,7 +853,7 @@ func TestNewSyncerPublishesImmediatelyByDefault(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	cl := newControllerClientBuilder(scheme).Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -880,7 +880,7 @@ func TestReconcileImmediatePublishQueuesLeaderRun(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	cl := newControllerClientBuilder(scheme).Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -920,7 +920,7 @@ func TestReconcileQueuesLeaderRunAfterPublishingSnapshot(t *testing.T) {
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	cl := newControllerClientBuilder(scheme).Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -1253,7 +1253,7 @@ func newPeriodicRetryTestSyncer(t *testing.T, interval time.Duration) (*Syncer, 
 	mustAddToScheme(t, scheme, corev1.AddToScheme)
 	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	hostname := gatewayv1.Hostname("example.com")
 	pathType := gatewayv1.PathMatchPathPrefix
 	portNumber := gatewayv1.PortNumber(8080)
@@ -1261,7 +1261,7 @@ func newPeriodicRetryTestSyncer(t *testing.T, interval time.Duration) (*Syncer, 
 	baseClient := newControllerClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -1269,7 +1269,7 @@ func newPeriodicRetryTestSyncer(t *testing.T, interval time.Duration) (*Syncer, 
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",

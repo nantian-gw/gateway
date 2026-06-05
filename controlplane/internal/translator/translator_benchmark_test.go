@@ -18,7 +18,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func BenchmarkBuildSnapshotRouteFanout(b *testing.B) {
@@ -149,7 +149,7 @@ func newTranslatorBenchmarkFixture(b *testing.B, routeCount int) (*Translator, c
 		Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return New("gateway.networking.k8s.io/aether-gateway", logger), k8sClient
+	return New("gateway.networking.k8s.io/nantian-gw", logger), k8sClient
 }
 
 func newTranslatorBackendStormFixture(b *testing.B, routeCount int) *translatorBackendStormFixture {
@@ -162,7 +162,7 @@ func newTranslatorBackendStormFixture(b *testing.B, routeCount int) *translatorB
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	return &translatorBackendStormFixture{
-		translator: New("gateway.networking.k8s.io/aether-gateway", logger),
+		translator: New("gateway.networking.k8s.io/nantian-gw", logger),
 		client:     k8sClient,
 		sliceKey: client.ObjectKey{
 			Namespace: "default",
@@ -185,15 +185,15 @@ func newTranslatorAttachDetachStormFixture(b *testing.B, routeCount int) *transl
 func translatorBenchmarkObjects(routeCount int) []client.Object {
 	objects := []client.Object{
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -268,15 +268,15 @@ func translatorBenchmarkObjects(routeCount int) []client.Object {
 func translatorBackendStormObjects(routeCount int) []client.Object {
 	objects := []client.Object{
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 		&gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,

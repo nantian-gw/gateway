@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestToProtoSnapshotPreservesNamedRules(t *testing.T) {

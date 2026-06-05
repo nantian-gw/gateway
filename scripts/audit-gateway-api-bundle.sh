@@ -2,7 +2,7 @@
 set -euo pipefail
 
 EXPECTED_BUNDLE_VERSION="${EXPECTED_BUNDLE_VERSION:-v1.5.1}"
-GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-aether}"
+GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian}"
 
 log() {
   printf '[audit-gateway-api-bundle] %s\n' "$*"

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func TestInfrastructureEndpointRequiresConfiguredInspector(t *testing.T) {
@@ -34,8 +34,8 @@ func TestInfrastructureEndpointReturnsDerivedResourceReport(t *testing.T) {
 	var sharedService infrastructure.InfrastructureResource
 	for _, item := range report.Resources {
 		if item.Kind == infrastructure.InfrastructureKindService &&
-			item.Namespace == "aether-gateway" &&
-			item.Name == "aether-gateway-dataplane" {
+			item.Namespace == "nantian-gw" &&
+			item.Name == "nantian-dataplane" {
 			sharedService = item
 			break
 		}

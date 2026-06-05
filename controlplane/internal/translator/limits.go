@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 type Options struct {

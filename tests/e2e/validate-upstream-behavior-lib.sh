@@ -120,7 +120,7 @@ wait_for_dataplane_ready_pods() {
 
   for _ in $(seq 1 60); do
     if [[ "$(
-      k -n "${DATAPLANE_NAMESPACE}" get pod -l app=aether-gateway-dataplane -o json \
+      k -n "${DATAPLANE_NAMESPACE}" get pod -l app=nantian-dataplane -o json \
         | jq '[.items[] | select(any(.status.conditions[]?; .type == "Ready" and .status == "True"))] | length'
     )" -eq "${expected}" ]]; then
       return
@@ -129,7 +129,7 @@ wait_for_dataplane_ready_pods() {
   done
 
   log "dataplane ready pod count did not converge to ${expected}"
-  k -n "${DATAPLANE_NAMESPACE}" get pod -l app=aether-gateway-dataplane -o wide >&2 || true
+  k -n "${DATAPLANE_NAMESPACE}" get pod -l app=nantian-dataplane -o wide >&2 || true
   exit 1
 }
 
@@ -167,7 +167,7 @@ restore_dataplane_replicas() {
 start_admin_port_forward() {
   pick_admin_forward_port
   PORT_FORWARD_LOG="${TMP_DIR}/port-forward.log"
-  k -n "${DATAPLANE_NAMESPACE}" port-forward service/aether-gateway-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
+  k -n "${DATAPLANE_NAMESPACE}" port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
     >"${PORT_FORWARD_LOG}" 2>&1 &
   PORT_FORWARD_PID="$!"
 
@@ -776,31 +776,31 @@ validate_metrics_endpoint() {
   local summary
 
   metrics="$(metrics_text)"
-  grep -q 'aether_gateway_dataplane_traffic_retry_attempts_total' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_retry_attempts_total' <<<"${metrics}" || {
     log "metrics endpoint is missing retry attempts counter"
     exit 1
   }
-  grep -q 'aether_gateway_dataplane_traffic_retry_rate' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_retry_rate' <<<"${metrics}" || {
     log "metrics endpoint is missing retry rate gauge"
     exit 1
   }
-  grep -q 'aether_gateway_dataplane_traffic_failover_success_rate' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_failover_success_rate' <<<"${metrics}" || {
     log "metrics endpoint is missing failover success rate gauge"
     exit 1
   }
-  grep -q 'aether_gateway_dataplane_traffic_latency_ms_max' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_latency_ms_max' <<<"${metrics}" || {
     log "metrics endpoint is missing max latency gauge"
     exit 1
   }
-  grep -q 'aether_gateway_dataplane_traffic_upstream_pool_hit_ratio' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_upstream_pool_hit_ratio' <<<"${metrics}" || {
     log "metrics endpoint is missing upstream pool hit ratio gauge"
     exit 1
   }
-  grep -q 'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_average' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_average' <<<"${metrics}" || {
     log "metrics endpoint is missing upstream connect latency average gauge"
     exit 1
   }
-  grep -q 'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_max' <<<"${metrics}" || {
+  grep -q 'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_max' <<<"${metrics}" || {
     log "metrics endpoint is missing upstream connect latency max gauge"
     exit 1
   }

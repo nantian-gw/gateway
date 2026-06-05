@@ -1,29 +1,29 @@
 {{- if .Values.rbac.create }}
-{{- $ns := include "aether-gateway.namespace" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "aether-gateway.name" . }}-controlplane
+  name: {{ include "nantian-gw.name" . }}-controlplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.controlplane.labels" . | nindent 4 }}
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ include "aether-gateway.name" . }}-dataplane
+  name: {{ include "nantian-gw.name" . }}-dataplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
 automountServiceAccountToken: false
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "aether-gateway.name" . }}-controlplane
+  name: {{ include "nantian-gw.name" . }}-controlplane
   labels:
-    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.controlplane.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
     resources: ["services"]
@@ -72,25 +72,25 @@ rules:
   - apiGroups: ["multicluster.x-k8s.io"]
     resources: ["serviceimports"]
     verbs: ["create", "delete", "get", "list", "update", "watch"]
-  - apiGroups: ["gateway.aether.dev"]
+  - apiGroups: ["gateway.nantian.dev"]
     resources: ["aiservices", "tokenpolicies", "wasmplugins"]
     verbs: ["create", "delete", "get", "list", "update", "watch"]
-  - apiGroups: ["gateway.aether.dev"]
+  - apiGroups: ["gateway.nantian.dev"]
     resources: ["aiservices/status", "tokenpolicies/status", "wasmplugins/status"]
     verbs: ["get", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "aether-gateway.name" . }}-controlplane
+  name: {{ include "nantian-gw.name" . }}-controlplane
   labels:
-    {{- include "aether-gateway.controlplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.controlplane.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "aether-gateway.name" . }}-controlplane
+  name: {{ include "nantian-gw.name" . }}-controlplane
 subjects:
   - kind: ServiceAccount
-    name: {{ include "aether-gateway.name" . }}-controlplane
+    name: {{ include "nantian-gw.name" . }}-controlplane
     namespace: {{ $ns }}
 {{- end }}

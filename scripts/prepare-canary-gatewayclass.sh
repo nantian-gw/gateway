@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STABLE_GATEWAY_CLASS="${STABLE_GATEWAY_CLASS:-aether}"
-CANARY_GATEWAY_CLASS="${CANARY_GATEWAY_CLASS:-aether-canary}"
+STABLE_GATEWAY_CLASS="${STABLE_GATEWAY_CLASS:-nantian}"
+CANARY_GATEWAY_CLASS="${CANARY_GATEWAY_CLASS:-nantian-canary}"
 APPLY="${APPLY:-true}"
 
 log() {
@@ -57,7 +57,7 @@ kind: GatewayClass
 metadata:
   name: ${CANARY_GATEWAY_CLASS}
   labels:
-    app.kubernetes.io/managed-by: aether-gateway
+    app.kubernetes.io/managed-by: nantian-gw
     gateway.nantian.dev/release-channel: canary
   annotations:
     gateway.nantian.dev/canary-of: ${STABLE_GATEWAY_CLASS}

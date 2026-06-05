@@ -16,14 +16,14 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 	sessionType := gatewayv1.CookieBasedSessionPersistence
@@ -52,7 +52,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 	baseClient := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -60,7 +60,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "apps"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -228,7 +228,7 @@ func TestRefreshBackendRefMetadataLoadsReferencedBackendsOnDemand(t *testing.T) 
 	}
 
 	httpRoutes, grpcRoutes, _, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).RefreshBackendRefMetadata(context.Background(), validatingTranslatorClient{
 		Client: baseClient,
@@ -311,7 +311,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 	}
 
 	httpRoutes, _, _, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).RefreshBackendRefMetadata(context.Background(), fakeScopedReferenceGrantValidatingTranslatorClient{
 		Client: baseClient,
@@ -357,7 +357,7 @@ func TestRefreshBackendRefMetadataSkipsReferenceGrantLookupForSameNamespaceBacke
 	}
 
 	httpRoutes, _, _, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).RefreshBackendRefMetadata(context.Background(), validatingTranslatorClient{
 		Client: baseClient,

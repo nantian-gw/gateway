@@ -11,12 +11,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 )
 
 func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -29,7 +29,7 @@ func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -37,7 +37,7 @@ func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -97,13 +97,13 @@ func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 	}
 	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), 1)
 	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, 1)
-	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy is accepted by aether-gateway")
+	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy is accepted by nantian-gw")
 	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, "BackendLBPolicy references are resolved")
 }
 
 func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	policy := func(name string, created time.Time) *backendlbv1alpha2.BackendLBPolicy {
 		return &backendlbv1alpha2.BackendLBPolicy{
@@ -135,7 +135,7 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -143,7 +143,7 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -204,7 +204,7 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 		assertCondition(t, item.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, 1)
 		switch tc.name {
 		case "older":
-			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy is accepted by aether-gateway")
+			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy is accepted by nantian-gw")
 		case "newer":
 			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy conflicts with another policy targeting the same backend")
 		}
@@ -214,7 +214,7 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 
 func TestReconcileRejectsBackendLBPolicyWithMissingTargetService(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -288,7 +288,7 @@ func TestReconcileRejectsBackendLBPolicyWithInvalidConsistentHash(t *testing.T) 
 		).
 		Build()
 
-	reconciler := New(k8sClient, "gateway.networking.k8s.io/aether-gateway", "127.0.0.1", discardLogger())
+	reconciler := New(k8sClient, "gateway.networking.k8s.io/nantian-gw", "127.0.0.1", discardLogger())
 	if err := reconciler.Reconcile(context.Background()); err != nil {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}

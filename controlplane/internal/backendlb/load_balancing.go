@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 )
 
 func ValidateLoadBalancing(policy *backendlbv1alpha2.LoadBalancingPolicy) error {

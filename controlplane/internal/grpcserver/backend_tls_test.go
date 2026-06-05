@@ -3,8 +3,8 @@ package grpcserver
 import (
 	"testing"
 
-	controlv1 "github.com/aether-gateway/proto/gateway/control/v1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestToProtoBackendTLS(t *testing.T) {

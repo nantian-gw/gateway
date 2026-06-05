@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
 )
 
 const (
@@ -54,7 +54,7 @@ func (r *Reconciler) reconcileGatewayClassStatusWithSupportResolver(
 				Type:               string(gatewayv1.GatewayClassConditionStatusAccepted),
 				Status:             metav1.ConditionTrue,
 				Reason:             string(gatewayv1.GatewayClassReasonAccepted),
-				Message:            "GatewayClass is accepted by aether-gateway",
+				Message:            "GatewayClass is accepted by nantian-gw",
 				ObservedGeneration: desired.Generation,
 			},
 		)

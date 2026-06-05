@@ -8,7 +8,7 @@ GATEWAY_API_VERSION="${GATEWAY_API_VERSION:-v1.5.1}"
 BACKENDLBPOLICY_CRD_VERSION="${BACKENDLBPOLICY_CRD_VERSION:-v1.2.1}"
 CRD_CACHE_DIR="${KIND_CACHE_DIR}/gateway-api-crds/${GATEWAY_API_VERSION}"
 LAST_TAG_FILE="${KIND_CACHE_DIR}/last-image-tag"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="kind-${CLUSTER_NAME}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
@@ -86,12 +86,12 @@ wait_for_local_registry() {
 }
 
 cleanup_smoke_resources() {
-  if ! kubectl --context "${KUBE_CONTEXT}" get namespace aether-gateway >/dev/null 2>&1; then
+  if ! kubectl --context "${KUBE_CONTEXT}" get namespace nantian-gw >/dev/null 2>&1; then
     return
   fi
 
   log "cleaning previous smoke resources"
-  kubectl --context "${KUBE_CONTEXT}" -n aether-gateway delete \
+  kubectl --context "${KUBE_CONTEXT}" -n nantian-gw delete \
     service/grpc-echo \
     service/tls-backend \
     service/coredns \
@@ -304,7 +304,7 @@ EOF
     -config "${openssl_config}" \
     -extensions v3_req >/dev/null 2>&1
 
-  kubectl --context "${KUBE_CONTEXT}" -n aether-gateway create secret tls "${SMOKE_TLS_SECRET_NAME}" \
+  kubectl --context "${KUBE_CONTEXT}" -n nantian-gw create secret tls "${SMOKE_TLS_SECRET_NAME}" \
     --cert="${cert_path}" \
     --key="${key_path}" \
     --dry-run=client \
@@ -331,7 +331,7 @@ retry_probe() {
 }
 
 probe_http() {
-  curl -fsS -H 'Host: example.com' "http://127.0.0.1:${SMOKE_HTTP_PORT}/" | grep -q "aether-gateway-ok"
+  curl -fsS -H 'Host: example.com' "http://127.0.0.1:${SMOKE_HTTP_PORT}/" | grep -q "nantian-gw-ok"
 }
 
 probe_grpc() {
@@ -345,7 +345,7 @@ probe_grpc() {
 
 probe_tcp() {
   printf 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n' \
-    | nc -w 5 127.0.0.1 "${SMOKE_TCP_PORT}" | grep -q "aether-gateway-ok"
+    | nc -w 5 127.0.0.1 "${SMOKE_TCP_PORT}" | grep -q "nantian-gw-ok"
 }
 
 probe_tls() {
@@ -378,8 +378,8 @@ start_smoke_admin_port_forward() {
   fi
 
   SMOKE_ADMIN_PORT_FORWARD_LOG="${SMOKE_RUNTIME_DIR}/admin-port-forward.log"
-  kubectl --context "${KUBE_CONTEXT}" -n aether-gateway \
-    port-forward service/aether-gateway-dataplane-admin "${SMOKE_ADMIN_PORT}:19080" \
+  kubectl --context "${KUBE_CONTEXT}" -n nantian-gw \
+    port-forward service/nantian-dataplane-admin "${SMOKE_ADMIN_PORT}:19080" \
     >"${SMOKE_ADMIN_PORT_FORWARD_LOG}" 2>&1 &
   SMOKE_ADMIN_PORT_FORWARD_PID="$!"
 
@@ -409,8 +409,8 @@ probe_metrics() {
   local metrics
 
   metrics="$(curl -fsS "http://127.0.0.1:${SMOKE_ADMIN_PORT}/metrics")"
-  grep -q '^# HELP aether_gateway_dataplane_ready ' <<<"${metrics}"
-  grep -q '^aether_gateway_dataplane_ready ' <<<"${metrics}"
+  grep -q '^# HELP nantian_gateway_dataplane_ready ' <<<"${metrics}"
+  grep -q '^nantian_gateway_dataplane_ready ' <<<"${metrics}"
   awk '
     /^# HELP / {
       if (current != "" && has_sample == 0) {
@@ -505,10 +505,10 @@ else
   RESOLVED_IMAGE_TAG="$(date +%Y%m%d%H%M%S)"
 fi
 
-CONTROL_IMAGE="${CONTROL_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-controlplane:${RESOLVED_IMAGE_TAG}}"
-DATAPLANE_IMAGE="${DATAPLANE_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-dataplane:${RESOLVED_IMAGE_TAG}}"
-CONTROL_PUSH_IMAGE="${CONTROL_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-controlplane:${RESOLVED_IMAGE_TAG}}"
-DATAPLANE_PUSH_IMAGE="${DATAPLANE_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-dataplane:${RESOLVED_IMAGE_TAG}}"
+CONTROL_IMAGE="${CONTROL_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-controlplane:${RESOLVED_IMAGE_TAG}}"
+DATAPLANE_IMAGE="${DATAPLANE_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-dataplane:${RESOLVED_IMAGE_TAG}}"
+CONTROL_PUSH_IMAGE="${CONTROL_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/nantian-controlplane:${RESOLVED_IMAGE_TAG}}"
+DATAPLANE_PUSH_IMAGE="${DATAPLANE_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/nantian-dataplane:${RESOLVED_IMAGE_TAG}}"
 SMOKE_IMAGE="${SMOKE_IMAGE:-${SMOKE_IMAGE_REPO}:1.0.0}"
 SMOKE_PUSH_IMAGE="${SMOKE_PUSH_IMAGE:-${SMOKE_PUSH_IMAGE_REPO}:1.0.0}"
 SMOKE_ECHO_BASIC_IMAGE="${SMOKE_ECHO_BASIC_IMAGE:-${LOCAL_REGISTRY_HOST}/gateway-api-conformance/echo-basic:smoke}"
@@ -556,19 +556,19 @@ registry_has_tag() {
 latest_common_runtime_tag() {
   local common
 
-  common="$(registry_tags aether-gateway-controlplane)"
+  common="$(registry_tags nantian-controlplane)"
   [[ -n "${common}" ]] || return 1
-  common="$(comm -12 <(printf '%s\n' "${common}") <(registry_tags aether-gateway-dataplane))"
+  common="$(comm -12 <(printf '%s\n' "${common}") <(registry_tags nantian-dataplane))"
   [[ -n "${common}" ]] || return 1
 
   printf '%s\n' "${common}" | tail -n 1
 }
 
 refresh_runtime_image_refs() {
-  CONTROL_IMAGE="${LOCAL_REGISTRY_HOST}/aether-gateway-controlplane:${RESOLVED_IMAGE_TAG}"
-  DATAPLANE_IMAGE="${LOCAL_REGISTRY_HOST}/aether-gateway-dataplane:${RESOLVED_IMAGE_TAG}"
-  CONTROL_PUSH_IMAGE="${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-controlplane:${RESOLVED_IMAGE_TAG}"
-  DATAPLANE_PUSH_IMAGE="${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-dataplane:${RESOLVED_IMAGE_TAG}"
+  CONTROL_IMAGE="${LOCAL_REGISTRY_HOST}/nantian-controlplane:${RESOLVED_IMAGE_TAG}"
+  DATAPLANE_IMAGE="${LOCAL_REGISTRY_HOST}/nantian-dataplane:${RESOLVED_IMAGE_TAG}"
+  CONTROL_PUSH_IMAGE="${LOCAL_REGISTRY_PUSH_HOST}/nantian-controlplane:${RESOLVED_IMAGE_TAG}"
+  DATAPLANE_PUSH_IMAGE="${LOCAL_REGISTRY_PUSH_HOST}/nantian-dataplane:${RESOLVED_IMAGE_TAG}"
   SMOKE_IMAGE="${SMOKE_IMAGE_REPO}:1.0.0"
   SMOKE_PUSH_IMAGE="${SMOKE_PUSH_IMAGE_REPO}:1.0.0"
   SMOKE_ECHO_BASIC_IMAGE="${LOCAL_REGISTRY_HOST}/gateway-api-conformance/echo-basic:smoke"
@@ -585,8 +585,8 @@ resolve_runtime_image_tag() {
     return
   fi
 
-  if registry_has_tag aether-gateway-controlplane "${RESOLVED_IMAGE_TAG}" \
-    && registry_has_tag aether-gateway-dataplane "${RESOLVED_IMAGE_TAG}"; then
+  if registry_has_tag nantian-controlplane "${RESOLVED_IMAGE_TAG}" \
+    && registry_has_tag nantian-dataplane "${RESOLVED_IMAGE_TAG}"; then
     refresh_runtime_image_refs
     return
   fi
@@ -651,8 +651,8 @@ connect_registry_to_kind_network() {
 registry_storage_writable() {
   docker exec "${LOCAL_REGISTRY_NAME}" sh -c \
     'mkdir -p /var/lib/registry/docker/registry/v2/repositories &&
-     touch /var/lib/registry/.aether-gateway-write-test &&
-     rm -f /var/lib/registry/.aether-gateway-write-test' >/dev/null 2>&1
+     touch /var/lib/registry/.nantian-gw-write-test &&
+     rm -f /var/lib/registry/.nantian-gw-write-test' >/dev/null 2>&1
 }
 
 kind_registry_ip() {
@@ -934,8 +934,8 @@ render_manifest() {
 
   if [[ -d "${source_path}" ]]; then
     kubectl kustomize "${source_path}" | sed \
-      -e "s|aether-gateway-controlplane:dev|$(escape_sed_replacement "${CONTROL_IMAGE}")|g" \
-      -e "s|aether-gateway-dataplane:dev|$(escape_sed_replacement "${DATAPLANE_IMAGE}")|g" \
+      -e "s|nantian-controlplane:dev|$(escape_sed_replacement "${CONTROL_IMAGE}")|g" \
+      -e "s|nantian-dataplane:dev|$(escape_sed_replacement "${DATAPLANE_IMAGE}")|g" \
       -e "s|m.daocloud.io/docker.io/hashicorp/http-echo:1.0.0|$(escape_sed_replacement "${SMOKE_IMAGE}")|g" \
       -e "s|localhost:5001/gateway-api-conformance/echo-basic:smoke|$(escape_sed_replacement "${SMOKE_ECHO_BASIC_IMAGE}")|g" \
       -e "s|localhost:5001/gateway-api-conformance/coredns:smoke|$(escape_sed_replacement "${SMOKE_COREDNS_IMAGE}")|g" \
@@ -944,8 +944,8 @@ render_manifest() {
   fi
 
   sed \
-    -e "s|aether-gateway-controlplane:dev|$(escape_sed_replacement "${CONTROL_IMAGE}")|g" \
-    -e "s|aether-gateway-dataplane:dev|$(escape_sed_replacement "${DATAPLANE_IMAGE}")|g" \
+    -e "s|nantian-controlplane:dev|$(escape_sed_replacement "${CONTROL_IMAGE}")|g" \
+    -e "s|nantian-dataplane:dev|$(escape_sed_replacement "${DATAPLANE_IMAGE}")|g" \
     -e "s|m.daocloud.io/docker.io/hashicorp/http-echo:1.0.0|$(escape_sed_replacement "${SMOKE_IMAGE}")|g" \
     -e "s|localhost:5001/gateway-api-conformance/echo-basic:smoke|$(escape_sed_replacement "${SMOKE_ECHO_BASIC_IMAGE}")|g" \
     -e "s|localhost:5001/gateway-api-conformance/coredns:smoke|$(escape_sed_replacement "${SMOKE_COREDNS_IMAGE}")|g" \
@@ -1059,20 +1059,20 @@ kubectl --context "${KUBE_CONTEXT}" apply -f "${BASE_RENDERED}" >/dev/null
 # A plain apply updates the files on disk but does not restart the controlplane
 # or dataplane processes, so config-only changes would otherwise never take
 # effect during iterative runs.
-kubectl --context "${KUBE_CONTEXT}" rollout restart deployment/aether-gateway-controlplane -n aether-gateway >/dev/null
-kubectl --context "${KUBE_CONTEXT}" rollout restart deployment/aether-gateway-dataplane -n aether-gateway >/dev/null
-kubectl --context "${KUBE_CONTEXT}" rollout status deployment/aether-gateway-controlplane -n aether-gateway --timeout="${ROLLOUT_TIMEOUT}"
-kubectl --context "${KUBE_CONTEXT}" rollout status deployment/aether-gateway-dataplane -n aether-gateway --timeout="${ROLLOUT_TIMEOUT}"
+kubectl --context "${KUBE_CONTEXT}" rollout restart deployment/nantian-controlplane -n nantian-gw >/dev/null
+kubectl --context "${KUBE_CONTEXT}" rollout restart deployment/nantian-dataplane -n nantian-gw >/dev/null
+kubectl --context "${KUBE_CONTEXT}" rollout status deployment/nantian-controlplane -n nantian-gw --timeout="${ROLLOUT_TIMEOUT}"
+kubectl --context "${KUBE_CONTEXT}" rollout status deployment/nantian-dataplane -n nantian-gw --timeout="${ROLLOUT_TIMEOUT}"
 
 if [[ "${SKIP_SMOKE}" == "false" ]]; then
   cleanup_smoke_resources
   prepare_smoke_tls_secret
   render_manifest "${ROOT_DIR}/tests/e2e/smoke.yaml" "${SMOKE_RENDERED}"
   kubectl --context "${KUBE_CONTEXT}" apply -f "${SMOKE_RENDERED}" >/dev/null
-  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/echo -n aether-gateway --timeout="${ROLLOUT_TIMEOUT}"
-  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/grpc-echo -n aether-gateway --timeout="${ROLLOUT_TIMEOUT}"
-  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/tls-backend -n aether-gateway --timeout="${ROLLOUT_TIMEOUT}"
-  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/coredns -n aether-gateway --timeout="${ROLLOUT_TIMEOUT}"
+  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/echo -n nantian-gw --timeout="${ROLLOUT_TIMEOUT}"
+  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/grpc-echo -n nantian-gw --timeout="${ROLLOUT_TIMEOUT}"
+  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/tls-backend -n nantian-gw --timeout="${ROLLOUT_TIMEOUT}"
+  kubectl --context "${KUBE_CONTEXT}" rollout status deployment/coredns -n nantian-gw --timeout="${ROLLOUT_TIMEOUT}"
   ensure_tcp_smoke_relay
   ensure_failure_smoke_relays
   run_smoke_checks

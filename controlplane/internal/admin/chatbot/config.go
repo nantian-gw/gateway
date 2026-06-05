@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultChatbotConfigNamespace = "aether-gateway"
+	defaultChatbotConfigNamespace = "nantian-gw"
 	defaultChatbotConfigSecret    = "chatbot-config"
 
 	defaultTemperature = 0.1

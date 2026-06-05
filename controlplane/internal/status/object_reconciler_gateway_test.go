@@ -15,16 +15,16 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/managedresources"
+	"github.com/nantian-gw/gateway/controlplane/internal/managedresources"
 )
 
 func TestReconcileGatewayObjectUsesReaderStateForObservedGeneration(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	freshGateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 2},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -44,13 +44,13 @@ func TestReconcileGatewayObjectUsesReaderStateForObservedGeneration(t *testing.T
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -73,7 +73,7 @@ func TestReconcileGatewayObjectUsesReaderStateForObservedGeneration(t *testing.T
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 2},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 2},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&freshGateway,
@@ -133,11 +133,11 @@ func TestReconcileGatewayObjectUsesReaderStateForObservedGeneration(t *testing.T
 
 func TestReconcileGatewayObjectCountsDefaultedRoute(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	defaultGateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 2},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			DefaultScope:     gatewayv1.GatewayDefaultScopeAll,
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
@@ -159,7 +159,7 @@ func TestReconcileGatewayObjectCountsDefaultedRoute(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -182,7 +182,7 @@ func TestReconcileGatewayObjectCountsDefaultedRoute(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 2},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 2},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&defaultGateway,
@@ -236,11 +236,11 @@ func TestReconcileGatewayObjectCountsDefaultedRoute(t *testing.T) {
 
 func TestReconcileGatewayObjectAvoidsDuplicateGatewayReaderGets(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	freshGateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 2},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -255,7 +255,7 @@ func TestReconcileGatewayObjectAvoidsDuplicateGatewayReaderGets(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
@@ -276,7 +276,7 @@ func TestReconcileGatewayObjectAvoidsDuplicateGatewayReaderGets(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 2},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 2},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&freshGateway,
@@ -302,7 +302,7 @@ func TestReconcileGatewayObjectAvoidsDuplicateGatewayReaderGets(t *testing.T) {
 
 func TestReconcileGatewayObjectWaitsForFrontendEndpointSliceConvergence(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	freshGateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:       "gw",
@@ -311,7 +311,7 @@ func TestReconcileGatewayObjectWaitsForFrontendEndpointSliceConvergence(t *testi
 			UID:        types.UID("gateway-object-waits-for-slices"),
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -326,13 +326,13 @@ func TestReconcileGatewayObjectWaitsForFrontendEndpointSliceConvergence(t *testi
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -353,7 +353,7 @@ func TestReconcileGatewayObjectWaitsForFrontendEndpointSliceConvergence(t *testi
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 2},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 2},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&freshGateway,
@@ -398,7 +398,7 @@ func TestReconcileGatewayObjectWaitsForFrontendEndpointSliceConvergence(t *testi
 
 func TestReconcileGatewayObjectSkipsForeignGatewayClassAfterDirectGet(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	staleClient := fake.NewClientBuilder().
 		WithScheme(scheme).

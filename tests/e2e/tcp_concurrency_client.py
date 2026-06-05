@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--host-header", default="example.com", help="Host value for the default HTTP payload")
     parser.add_argument(
         "--expect-substring",
-        default="aether-gateway-ok",
+        default="nantian-gw-ok",
         help="response substring required for a successful request",
     )
     parser.add_argument("--connect-timeout", type=float, default=3.0, help="connect timeout seconds")

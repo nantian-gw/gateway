@@ -44,7 +44,7 @@ case "${url}" in
     printf 'ok\n'
     ;;
   */metrics)
-    printf 'aether_gateway_dataplane_xds_stream_failures_total 0\n'
+    printf 'nantian_gateway_dataplane_xds_stream_failures_total 0\n'
     ;;
   *)
     printf '{}\n'
@@ -71,7 +71,7 @@ case "${args}" in
   *"port-forward"*)
     /usr/bin/sleep 60
     ;;
-  *"get lease aether-gateway-controlplane-leader"*)
+  *"get lease nantian-controlplane-leader"*)
     if [[ -f "${state_dir}/leader-switched" ]]; then
       printf 'cp-b_uid'
     else
@@ -81,7 +81,7 @@ case "${args}" in
   *"delete pod cp-a"*)
     touch "${state_dir}/leader-switched"
     ;;
-  *"get pods -l app=aether-gateway-dataplane -o json")
+  *"get pods -l app=nantian-dataplane -o json")
     if [[ -f "${state_dir}/dataplane-deleted" ]]; then
       count_file="${state_dir}/dataplane-replacement-checks"
       count=0
@@ -128,13 +128,13 @@ JSON
 JSON
     fi
     ;;
-  *"get pods -l app=aether-gateway-dataplane"*)
+  *"get pods -l app=nantian-dataplane"*)
     printf 'dp-a'
     ;;
   *"delete pod dp-a"*)
     touch "${state_dir}/dataplane-deleted"
     ;;
-  *"get deploy/aether-gateway-dataplane -o jsonpath="*)
+  *"get deploy/nantian-dataplane -o jsonpath="*)
     printf '2'
     ;;
   *"rollout status"*)
@@ -145,7 +145,7 @@ JSON
   "items": [
     {
       "metadata": {
-        "name": "aether-gateway-control-plane",
+        "name": "nantian-gw-control-plane",
         "labels": {"node-role.kubernetes.io/control-plane": ""}
       },
       "status": {"conditions": [{"type": "Ready", "status": "True"}]}
@@ -220,10 +220,10 @@ JSON
   *"patch httproutes.gateway.networking.k8s.io"*)
     touch "${state_dir}/httproute-patched"
     ;;
-  *"logs deploy/aether-gateway-controlplane"*)
+  *"logs deploy/nantian-controlplane"*)
     printf 'controlplane log\n'
     ;;
-  *"logs deploy/aether-gateway-dataplane"*)
+  *"logs deploy/nantian-dataplane"*)
     printf 'dataplane log\n'
     ;;
   *)

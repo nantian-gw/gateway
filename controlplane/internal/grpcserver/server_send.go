@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	controlv1 "github.com/aether-gateway/proto/gateway/control/v1"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
 type discoveryResponseSender struct {

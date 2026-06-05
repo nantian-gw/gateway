@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-AETHER_NAMESPACE="${AETHER_NAMESPACE:-aether-gateway}"
+AETHER_NAMESPACE="${AETHER_NAMESPACE:-nantian-gw}"
 
 TMP_DIR=""
 SUCCESS="false"
@@ -70,7 +70,7 @@ apiVersion: gateway.nantian.dev/v1alpha1
 kind: AIService
 metadata:
   name: test-openai
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   provider: openai
   format: openai
@@ -92,7 +92,7 @@ k apply -f "${AISERVICE_YAML}"
 sleep 1
 
 # read
-SVC="$(k get aiservice test-openai -n aether-gateway -o json 2>&1)"
+SVC="$(k get aiservice test-openai -n nantian-gw -o json 2>&1)"
 PROVIDER="$(echo "${SVC}" | python3 -c "import sys,json; print(json.load(sys.stdin)['spec']['provider'])" 2>/dev/null || echo "")"
 if [[ "${PROVIDER}" != "openai" ]]; then
   log "FAIL: expected provider=openai, got '${PROVIDER}'"
@@ -108,7 +108,7 @@ fi
 log "  model=${MODEL} OK"
 
 # list
-COUNT="$(k get aiservice -n aether-gateway -o json 2>&1 | python3 -c "import sys,json; print(len(json.load(sys.stdin)['items']))" 2>/dev/null || echo "0")"
+COUNT="$(k get aiservice -n nantian-gw -o json 2>&1 | python3 -c "import sys,json; print(len(json.load(sys.stdin)['items']))" 2>/dev/null || echo "0")"
 if [[ "${COUNT}" -lt 1 ]]; then
   log "FAIL: expected at least 1 AIService"
   exit 1
@@ -116,9 +116,9 @@ fi
 log "  count=${COUNT} OK"
 
 # delete
-k delete aiservice test-openai -n aether-gateway
+k delete aiservice test-openai -n nantian-gw
 sleep 1
-if k get aiservice test-openai -n aether-gateway >/dev/null 2>&1; then
+if k get aiservice test-openai -n nantian-gw >/dev/null 2>&1; then
   log "FAIL: AIService not deleted"
   exit 1
 fi
@@ -133,7 +133,7 @@ apiVersion: gateway.nantian.dev/v1alpha1
 kind: AIService
 metadata:
   name: test-invalid
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   format: openai
 EOF

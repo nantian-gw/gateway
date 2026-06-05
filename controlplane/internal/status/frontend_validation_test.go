@@ -14,7 +14,7 @@ import (
 
 func TestReconcileRejectsInvalidFrontendValidationConfigMap(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	k8sClient := fake.NewClientBuilder().
@@ -23,7 +23,7 @@ func TestReconcileRejectsInvalidFrontendValidationConfigMap(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -31,7 +31,7 @@ func TestReconcileRejectsInvalidFrontendValidationConfigMap(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -93,7 +93,7 @@ func TestReconcileRejectsInvalidFrontendValidationConfigMap(t *testing.T) {
 
 func TestReconcileRejectsUnsupportedFrontendValidationCARefKind(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	k8sClient := fake.NewClientBuilder().
@@ -102,7 +102,7 @@ func TestReconcileRejectsUnsupportedFrontendValidationCARefKind(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -110,7 +110,7 @@ func TestReconcileRejectsUnsupportedFrontendValidationCARefKind(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -169,7 +169,7 @@ func TestReconcileRejectsUnsupportedFrontendValidationCARefKind(t *testing.T) {
 
 func TestReconcileKeepsAcceptedWhenFrontendValidationStillHasValidCA(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	k8sClient := fake.NewClientBuilder().
@@ -178,7 +178,7 @@ func TestReconcileKeepsAcceptedWhenFrontendValidationStillHasValidCA(t *testing.
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -186,7 +186,7 @@ func TestReconcileKeepsAcceptedWhenFrontendValidationStillHasValidCA(t *testing.
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -263,7 +263,7 @@ func TestReconcileKeepsAcceptedWhenFrontendValidationStillHasValidCA(t *testing.
 
 func TestReconcileRefreshesFrontendValidationRefsWhenReferenceGrantChanges(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	k8sClient := fake.NewClientBuilder().
@@ -273,7 +273,7 @@ func TestReconcileRefreshesFrontendValidationRefsWhenReferenceGrantChanges(t *te
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "security"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -281,7 +281,7 @@ func TestReconcileRefreshesFrontendValidationRefsWhenReferenceGrantChanges(t *te
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -413,7 +413,7 @@ func TestReconcileRefreshesFrontendValidationRefsWhenReferenceGrantChanges(t *te
 
 func TestReconcileIgnoresFrontendValidationForTLSPassthroughListener(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	passthrough := gatewayv1.TLSModePassthrough
 
 	k8sClient := fake.NewClientBuilder().
@@ -422,7 +422,7 @@ func TestReconcileIgnoresFrontendValidationForTLSPassthroughListener(t *testing.
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -430,7 +430,7 @@ func TestReconcileIgnoresFrontendValidationForTLSPassthroughListener(t *testing.
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -492,7 +492,7 @@ func TestReconcileIgnoresFrontendValidationForTLSPassthroughListener(t *testing.
 
 func TestReconcileSetsInsecureFrontendValidationModeCondition(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	k8sClient := fake.NewClientBuilder().
@@ -501,7 +501,7 @@ func TestReconcileSetsInsecureFrontendValidationModeCondition(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -509,7 +509,7 @@ func TestReconcileSetsInsecureFrontendValidationModeCondition(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{

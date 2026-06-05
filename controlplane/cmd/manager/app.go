@@ -29,21 +29,21 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/admin"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/config"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/controller"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	aiservicev1alpha1 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/aiservicev1alpha1"
-	tokenpolicyv1alpha1 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	wasmpluginv1alpha1 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/wasmpluginv1alpha1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/grpcserver"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/lifecycle"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/status"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/translator"
+	"github.com/nantian-gw/gateway/controlplane/internal/admin"
+	"github.com/nantian-gw/gateway/controlplane/internal/config"
+	"github.com/nantian-gw/gateway/controlplane/internal/controller"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	aiservicev1alpha1 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/aiservicev1alpha1"
+	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
+	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/controlplane/internal/grpcserver"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/lifecycle"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/status"
+	"github.com/nantian-gw/gateway/controlplane/internal/translator"
 )
 
 const (
@@ -296,7 +296,7 @@ func run(configPath string) error {
 	if dpCfg := cfg.DataplaneAggregationConfig(); dpCfg != nil {
 		namespace := cfg.Namespace
 		if namespace == "" {
-			namespace = "aether-gateway"
+			namespace = "nantian-gw"
 		}
 		discovery := admin.NewDataplaneAdminDiscovery(mgr.GetClient(), admin.DataplaneAdminDiscoveryConfig{
 			Namespace:   namespace,

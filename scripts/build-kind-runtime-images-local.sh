@@ -17,8 +17,8 @@ DOCKER_BUILD_NETWORK="${DOCKER_BUILD_NETWORK:-}"
 LOCAL_IMAGE_BUILD_DIR="${LOCAL_IMAGE_BUILD_DIR:-${KIND_CACHE_DIR}/local-image-build/${IMAGE_TAG}}"
 CA_CERT_BUNDLE="${CA_CERT_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
 
-CONTROL_PUSH_IMAGE="${CONTROL_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-controlplane:${IMAGE_TAG}}"
-DATAPLANE_PUSH_IMAGE="${DATAPLANE_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/aether-gateway-dataplane:${IMAGE_TAG}}"
+CONTROL_PUSH_IMAGE="${CONTROL_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/nantian-controlplane:${IMAGE_TAG}}"
+DATAPLANE_PUSH_IMAGE="${DATAPLANE_PUSH_IMAGE:-${LOCAL_REGISTRY_PUSH_HOST}/nantian-dataplane:${IMAGE_TAG}}"
 DATAPLANE_CARGO_FEATURES="${DATAPLANE_CARGO_FEATURES:-allocator-jemalloc}"
 
 log() {
@@ -47,7 +47,7 @@ copy_ca_bundle() {
 
 build_controlplane_binary() {
   local output_dir="${LOCAL_IMAGE_BUILD_DIR}/controlplane"
-  local output_path="${output_dir}/aether-gateway-controlplane"
+  local output_path="${output_dir}/nantian-controlplane"
 
   mkdir -p "${output_dir}"
   log "building controlplane binary with host Go cache"
@@ -63,9 +63,9 @@ FROM ${RUNTIME_IMAGE}
 
 WORKDIR /app
 COPY ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY aether-gateway-controlplane /usr/local/bin/aether-gateway-controlplane
+COPY nantian-controlplane /usr/local/bin/nantian-controlplane
 
-ENTRYPOINT ["/usr/local/bin/aether-gateway-controlplane"]
+ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]
 EOF
 }
 

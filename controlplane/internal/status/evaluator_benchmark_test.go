@@ -126,7 +126,7 @@ func benchmarkGatewayFleetAttachments(state *clusterState, attachedPerListener i
 func benchmarkRouteParentMergeInputs(count int) ([]gatewayv1.RouteParentStatus, []routeParentEvaluation) {
 	existing := make([]gatewayv1.RouteParentStatus, 0, count)
 	evals := make([]routeParentEvaluation, 0, count)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	for i := 0; i < count; i++ {
 		parentRef := gatewayv1.ParentReference{
@@ -160,7 +160,7 @@ func benchmarkRouteParentMergeInputs(count int) ([]gatewayv1.RouteParentStatus, 
 				Type:               string(gatewayv1.RouteConditionAccepted),
 				Status:             metav1.ConditionTrue,
 				Reason:             string(gatewayv1.RouteReasonAccepted),
-				Message:            "Route is accepted by aether-gateway",
+				Message:            "Route is accepted by nantian-gw",
 				ObservedGeneration: 2,
 			},
 			resolvedCondition: conditionSpec{
@@ -213,7 +213,7 @@ func benchmarkListenerStatusMergeInputs(count int) ([]gatewayv1.ListenerStatus, 
 				Type:               string(gatewayv1.ListenerConditionAccepted),
 				Status:             metav1.ConditionTrue,
 				Reason:             string(gatewayv1.ListenerReasonAccepted),
-				Message:            "Listener is accepted by aether-gateway",
+				Message:            "Listener is accepted by nantian-gw",
 				ObservedGeneration: 2,
 			},
 			resolvedCondition: conditionSpec{

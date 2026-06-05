@@ -11,7 +11,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/backendtls"
+	"github.com/nantian-gw/gateway/controlplane/internal/backendtls"
 )
 
 func evaluateBackendTLSPolicies(
@@ -101,7 +101,7 @@ func evaluateBackendTLSPolicySpec(
 ) backendTLSPolicySpecEvaluation {
 	eval := backendTLSPolicySpecEvaluation{
 		generation:        policy.Generation,
-		acceptedCondition: acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(gatewayv1.PolicyReasonAccepted), "BackendTLSPolicy is accepted by aether-gateway"),
+		acceptedCondition: acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(gatewayv1.PolicyReasonAccepted), "BackendTLSPolicy is accepted by nantian-gw"),
 		resolvedCondition: resolvedPolicyCondition(policy.Generation, metav1.ConditionTrue, backendTLSPolicyReasonResolvedRefs, "BackendTLSPolicy references are resolved"),
 	}
 
@@ -269,7 +269,7 @@ func backendTLSPolicyValidationSupported(
 		return invalidAcceptedPolicyCondition(policy.Generation, err.Error()), resolvedRefs, false
 	}
 
-	return acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(gatewayv1.PolicyReasonAccepted), "BackendTLSPolicy is accepted by aether-gateway"), resolvedRefs, true
+	return acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(gatewayv1.PolicyReasonAccepted), "BackendTLSPolicy is accepted by nantian-gw"), resolvedRefs, true
 }
 
 func backendTLSPolicyTargets(
@@ -379,7 +379,7 @@ func backendTLSPolicyTargets(
 			false
 	}
 
-	accepted := acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(gatewayv1.PolicyReasonAccepted), "BackendTLSPolicy is accepted by aether-gateway")
+	accepted := acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(gatewayv1.PolicyReasonAccepted), "BackendTLSPolicy is accepted by nantian-gw")
 	resolved := resolvedPolicyCondition(policy.Generation, metav1.ConditionTrue, backendTLSPolicyReasonResolvedRefs, "BackendTLSPolicy references are resolved")
 	if firstResolvedMessage != "" {
 		resolved = resolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, firstResolvedReason, firstResolvedMessage)

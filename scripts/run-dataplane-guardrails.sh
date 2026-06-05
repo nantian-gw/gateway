@@ -120,10 +120,10 @@ aeg-bench v0.1.0
 aeg-config v0.1.0
 aeg-http v0.1.0
 aeg-shared-tls v0.1.0
-aether v0.8.0
-aether-cache v0.8.0
-aether-core v0.8.0
-aether-proxy v0.8.0
+pingora v0.8.0
+pingora-cache v0.8.0
+nantian-core v0.8.0
+nantian-proxy v0.8.0
 prometheus v0.13.4
 protobuf v2.28.0
 EOF

@@ -2,14 +2,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
 OUTPUT_DIR="${OUTPUT_DIR:-$(mktemp -d "${ROOT_DIR}/tmp/metrics-surfaces.XXXXXX")}"
 KEEP_ARTIFACTS="${KEEP_ARTIFACTS:-false}"
-DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-aether-gateway}"
-DATAPLANE_DEPLOYMENT="${DATAPLANE_DEPLOYMENT:-aether-gateway-dataplane}"
-DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=aether-gateway-dataplane}"
+DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-nantian-gw}"
+DATAPLANE_DEPLOYMENT="${DATAPLANE_DEPLOYMENT:-nantian-dataplane}"
+DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=nantian-dataplane}"
 DATAPLANE_ADMIN_PORT="${DATAPLANE_ADMIN_PORT:-19080}"
 DATAPLANE_TOKEN="${DATAPLANE_TOKEN:-${PGW_ADMIN_TOKEN:-}}"
 MULTI_REPLICA_SCRAPE_REPLICAS="${MULTI_REPLICA_SCRAPE_REPLICAS:-2}"
@@ -369,217 +369,217 @@ backend_policy_count = sum(
 
 checks = [
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_ready'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_ready'),
         1 if dataplane_snapshot.get('id') else 0,
         'dataplane ready',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_listener_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_listener_count'),
         len(dataplane_snapshot.get('listeners', [])),
         'dataplane listener_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_http_route_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_http_route_count'),
         len(dataplane_snapshot.get('http_routes', [])),
         'dataplane http_route_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_grpc_route_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_grpc_route_count'),
         len(dataplane_snapshot.get('grpc_routes', [])),
         'dataplane grpc_route_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_stream_route_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_stream_route_count'),
         len(dataplane_snapshot.get('stream_routes', [])),
         'dataplane stream_route_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_backend_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_backend_count'),
         len(dataplane_snapshot.get('backends', [])),
         'dataplane backend_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_secret_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_secret_count'),
         len(dataplane_snapshot.get('secrets', [])),
         'dataplane secret_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_session_persistence_active'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_session_persistence_active'),
         1 if (route_rule_count + backend_policy_count) > 0 else 0,
         'dataplane session_persistence_active',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_session_persistence_route_rule_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_session_persistence_route_rule_count'),
         route_rule_count,
         'dataplane session_persistence_route_rule_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_session_persistence_backend_policy_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_session_persistence_backend_policy_count'),
         backend_policy_count,
         'dataplane session_persistence_backend_policy_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_events_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_events_total'),
         dataplane_traffic.get('total_events', 0),
         'dataplane traffic_events_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_request_events_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_request_events_total'),
         dataplane_traffic.get('total_request_events', 0),
         'dataplane traffic_request_events_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_bytes_received_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_bytes_received_total'),
         dataplane_traffic.get('total_bytes_received', 0),
         'dataplane traffic_bytes_received_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_bytes_sent_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_bytes_sent_total'),
         dataplane_traffic.get('total_bytes_sent', 0),
         'dataplane traffic_bytes_sent_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_latency_ms_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_latency_ms_total'),
         dataplane_traffic.get('total_latency_ms', 0),
         'dataplane traffic_latency_ms_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_latency_ms_max'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_latency_ms_max'),
         dataplane_traffic.get('max_latency_ms', 0),
         'dataplane traffic_latency_ms_max',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_retried_events_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_retried_events_total'),
         dataplane_traffic.get('total_retried_events', 0),
         'dataplane traffic_retried_events_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_retry_attempts_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_retry_attempts_total'),
         dataplane_traffic.get('total_retry_attempts', 0),
         'dataplane traffic_retry_attempts_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_retried_success_events_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_retried_success_events_total'),
         dataplane_traffic.get('total_retried_success_events', 0),
         'dataplane traffic_retried_success_events_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_pool_hits_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_pool_hits_total'),
         dataplane_traffic.get('total_upstream_pool_hits', 0),
         'dataplane traffic_upstream_pool_hits_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_pool_misses_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_pool_misses_total'),
         dataplane_traffic.get('total_upstream_pool_misses', 0),
         'dataplane traffic_upstream_pool_misses_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_peer_build_failures_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_peer_build_failures_total'),
         dataplane_traffic.get('total_upstream_peer_build_failures', 0),
         'dataplane traffic_upstream_peer_build_failures_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_total'),
         dataplane_traffic.get('total_upstream_connect_latency_ms', 0),
         'dataplane traffic_upstream_connect_latency_ms_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_max'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_max'),
         dataplane_traffic.get('max_upstream_connect_latency_ms', 0),
         'dataplane traffic_upstream_connect_latency_ms_max',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_sum'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_sum'),
         dataplane_traffic.get('total_upstream_connect_latency_ms', 0),
         'dataplane traffic_upstream_connect_latency_ms_sum',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_connect_latency_ms_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_count'),
         dataplane_traffic.get('total_upstream_connect_latency_observations', 0),
         'dataplane traffic_upstream_connect_latency_ms_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_tls_handshake_failures_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_tls_handshake_failures_total'),
         dataplane_traffic.get('total_upstream_tls_handshake_failures', 0),
         'dataplane traffic_upstream_tls_handshake_failures_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_tls_handshake_failure_latency_ms_sum'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_tls_handshake_failure_latency_ms_sum'),
         dataplane_traffic.get('total_upstream_tls_handshake_failure_latency_ms', 0),
         'dataplane traffic_upstream_tls_handshake_failure_latency_ms_sum',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_upstream_tls_handshake_failure_latency_ms_count'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_upstream_tls_handshake_failure_latency_ms_count'),
         dataplane_traffic.get('total_upstream_tls_handshake_failure_latency_observations', 0),
         'dataplane traffic_upstream_tls_handshake_failure_latency_ms_count',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_status_1xx_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_status_1xx_total'),
         dataplane_traffic.get('status_1xx', 0),
         'dataplane traffic_status_1xx_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_status_2xx_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_status_2xx_total'),
         dataplane_traffic.get('status_2xx', 0),
         'dataplane traffic_status_2xx_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_status_3xx_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_status_3xx_total'),
         dataplane_traffic.get('status_3xx', 0),
         'dataplane traffic_status_3xx_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_status_4xx_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_status_4xx_total'),
         dataplane_traffic.get('status_4xx', 0),
         'dataplane traffic_status_4xx_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_status_5xx_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_status_5xx_total'),
         dataplane_traffic.get('status_5xx', 0),
         'dataplane traffic_status_5xx_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_traffic_status_other_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_traffic_status_other_total'),
         dataplane_traffic.get('status_other', 0),
         'dataplane traffic_status_other_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_http_global_inflight_current'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_http_global_inflight_current'),
         dataplane_overload.get('httpGlobalInflightCurrent', 0),
         'dataplane http_global_inflight_current',
     ),
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_http_overload_rejected_total',
+            'nantian_gateway_dataplane_http_overload_rejected_total',
             {'scope': 'total'},
         ),
         dataplane_overload.get('httpRejectedTotal', 0),
         'dataplane http_overload_rejected_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_tcp_global_connections_current'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_tcp_global_connections_current'),
         dataplane_overload.get('tcpGlobalConnectionsCurrent', 0),
         'dataplane tcp_global_connections_current',
     ),
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_tcp_overload_rejected_total',
+            'nantian_gateway_dataplane_tcp_overload_rejected_total',
             {'scope': 'total'},
         ),
         dataplane_overload.get('tcpRejectedTotal', 0),
         'dataplane tcp_overload_rejected_total',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_udp_global_datagrams_current'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_udp_global_datagrams_current'),
         dataplane_overload.get('udpGlobalDatagramsCurrent', 0),
         'dataplane udp_global_datagrams_current',
     ),
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_udp_overload_rejected_total',
+            'nantian_gateway_dataplane_udp_overload_rejected_total',
             {'scope': 'total'},
         ),
         dataplane_overload.get('udpRejectedTotal', 0),
@@ -588,7 +588,7 @@ checks = [
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_http_circuit_breaker_backend_max_inflight_requests',
+            'nantian_gateway_dataplane_http_circuit_breaker_backend_max_inflight_requests',
         ),
         dataplane_circuit_breakers.get('backendMaxInflightRequests', 0),
         'dataplane circuit_breaker_backend_max_inflight_requests',
@@ -596,7 +596,7 @@ checks = [
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_http_circuit_breaker_rejected_total',
+            'nantian_gateway_dataplane_http_circuit_breaker_rejected_total',
             {'scope': 'total'},
         ),
         dataplane_circuit_breakers.get('rejectedTotal', 0),
@@ -605,33 +605,33 @@ checks = [
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_http_rate_limit_global_requests_per_second',
+            'nantian_gateway_dataplane_http_rate_limit_global_requests_per_second',
         ),
         dataplane_rate_limits.get('global', {}).get('requestsPerSecond', 0),
         'dataplane rate_limit_global_requests_per_second',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_http_rate_limit_global_burst'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_http_rate_limit_global_burst'),
         dataplane_rate_limits.get('global', {}).get('burst', 0),
         'dataplane rate_limit_global_burst',
     ),
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_http_rate_limit_global_available_tokens',
+            'nantian_gateway_dataplane_http_rate_limit_global_available_tokens',
         ),
         dataplane_rate_limits.get('global', {}).get('availableTokens', 0),
         'dataplane rate_limit_global_available_tokens',
     ),
     (
-        metric_int(dataplane_samples, 'aether_gateway_dataplane_http_rate_limit_allowed_total'),
+        metric_int(dataplane_samples, 'nantian_gateway_dataplane_http_rate_limit_allowed_total'),
         dataplane_rate_limits.get('allowedTotal', 0),
         'dataplane rate_limit_allowed_total',
     ),
     (
         metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_http_rate_limit_rejected_total',
+            'nantian_gateway_dataplane_http_rate_limit_rejected_total',
             {'scope': 'total'},
         ),
         dataplane_rate_limits.get('rejectedTotal', 0),
@@ -647,7 +647,7 @@ for actual, expected, label in checks:
 for flag, expected in dataplane_traffic.get('response_flags', {}).items():
     actual = metric_int(
         dataplane_samples,
-        'aether_gateway_dataplane_traffic_response_flags_total',
+        'nantian_gateway_dataplane_traffic_response_flags_total',
         {'flag': flag},
     )
     if actual != expected:
@@ -656,7 +656,7 @@ for flag, expected in dataplane_traffic.get('response_flags', {}).items():
 if 'none' not in dataplane_traffic.get('response_flags', {}):
     actual = metric_int(
         dataplane_samples,
-        'aether_gateway_dataplane_traffic_response_flags_total',
+        'nantian_gateway_dataplane_traffic_response_flags_total',
         {'flag': 'none'},
     )
     if actual != 0:
@@ -672,12 +672,12 @@ for histogram in dataplane_traffic.get('request_latency_ms_histograms', []):
     }
     actual_sum = metric_int(
         dataplane_samples,
-        'aether_gateway_dataplane_traffic_request_latency_ms_sum',
+        'nantian_gateway_dataplane_traffic_request_latency_ms_sum',
         labels,
     )
     actual_count = metric_int(
         dataplane_samples,
-        'aether_gateway_dataplane_traffic_request_latency_ms_count',
+        'nantian_gateway_dataplane_traffic_request_latency_ms_count',
         labels,
     )
     if actual_sum != histogram.get('sum', 0):
@@ -689,7 +689,7 @@ for histogram in dataplane_traffic.get('request_latency_ms_histograms', []):
         bucket_labels['le'] = bucket.get('le', '')
         actual = metric_int(
             dataplane_samples,
-            'aether_gateway_dataplane_traffic_request_latency_ms_bucket',
+            'nantian_gateway_dataplane_traffic_request_latency_ms_bucket',
             bucket_labels,
         )
         expected = bucket.get('cumulative_count', 0)
@@ -698,11 +698,11 @@ for histogram in dataplane_traffic.get('request_latency_ms_histograms', []):
 
 for metric_prefix, traffic_key in (
     (
-        'aether_gateway_dataplane_traffic_upstream_connect_latency_ms',
+        'nantian_gateway_dataplane_traffic_upstream_connect_latency_ms',
         'upstream_connect_latency_ms_buckets',
     ),
     (
-        'aether_gateway_dataplane_traffic_upstream_tls_handshake_failure_latency_ms',
+        'nantian_gateway_dataplane_traffic_upstream_tls_handshake_failure_latency_ms',
         'upstream_tls_handshake_failure_latency_ms_buckets',
     ),
 ):
@@ -739,14 +739,14 @@ for metrics_file in pod_metric_files:
     if empty_family_count(pod_metrics_text) != 0:
         errors.append(f'{metrics_file.name} contains header-only metric families')
     try:
-        ready = metric_int(pod_samples, 'aether_gateway_dataplane_ready')
+        ready = metric_int(pod_samples, 'nantian_gateway_dataplane_ready')
     except AssertionError as exc:
         errors.append(f'{metrics_file.name}: {exc}')
         ready = None
     if ready != 1:
         errors.append(f'{metrics_file.name}: dataplane ready metric is {ready}, expected 1')
     try:
-        ensure_present(pod_samples, 'aether_gateway_dataplane_node_info')
+        ensure_present(pod_samples, 'nantian_gateway_dataplane_node_info')
     except AssertionError as exc:
         errors.append(f'{metrics_file.name}: {exc}')
     for metric_name in (
@@ -776,9 +776,9 @@ if len(pod_node_ids) < 2:
     errors.append(f'expected metrics scrapes from at least 2 distinct dataplane nodeIds, got {sorted(pod_node_ids)}')
 
 for metric_name in (
-    'aether_gateway_snapshot_builds_total',
-    'aether_gateway_snapshot_published_total',
-    'aether_gateway_controlplane_admin_requests_total',
+    'nantian_gateway_snapshot_builds_total',
+    'nantian_gateway_snapshot_published_total',
+    'nantian_gateway_controlplane_admin_requests_total',
     'go_threads',
     'process_cpu_seconds_total',
 ):
@@ -791,7 +791,7 @@ for route in ('livez', 'readyz', 'summary'):
     try:
         value = metric_int(
             controlplane_samples,
-            'aether_gateway_controlplane_admin_requests_total',
+            'nantian_gateway_controlplane_admin_requests_total',
             {'method': 'GET', 'route': route, 'status_class': '2xx'},
         )
     except AssertionError as exc:

@@ -2,7 +2,7 @@ grpcAddr: ":18080"
 adminAddr: ":18081"
 metricsAddr: ":18082"
 healthProbeAddr: ":18083"
-controllerName: "gateway.networking.k8s.io/aether-gateway"
+controllerName: "gateway.networking.k8s.io/nantian-gw"
 statusAddresses:
   - "replace-me.example.invalid"
 syncPeriod: 30s
@@ -29,20 +29,20 @@ log:
   addSource: false
 leaderElection:
   enabled: true
-  id: "aether-gateway-controlplane-leader"
+  id: "nantian-controlplane-leader"
   leaseDuration: "15s"
   renewDeadline: "10s"
   retryPeriod: "2s"
 adminAuth:
   bearerToken: ""
-  bearerTokenFile: "/etc/aether-gateway/admin-auth/token"
+  bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
 adminTLS:
   enabled: false
   certPath: ""
   keyPath: ""
 grpcTLS:
   enabled: true
-  certPath: "/etc/aether-gateway/grpc-tls/tls.crt"
-  keyPath: "/etc/aether-gateway/grpc-tls/tls.key"
-  clientCAPath: "/etc/aether-gateway/grpc-tls/ca.crt"
+  certPath: "/etc/nantian-gw/grpc-tls/tls.crt"
+  keyPath: "/etc/nantian-gw/grpc-tls/tls.key"
+  clientCAPath: "/etc/nantian-gw/grpc-tls/ca.crt"
   requireClientCert: true

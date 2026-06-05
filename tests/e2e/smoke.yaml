@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   selector:
     app: echo
@@ -15,7 +15,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   replicas: 1
   selector:
@@ -31,7 +31,7 @@ spec:
           image: m.daocloud.io/docker.io/hashicorp/http-echo:1.0.0
           args:
             - "-listen=:8080"
-            - "-text=aether-gateway-ok"
+            - "-text=nantian-gw-ok"
           ports:
             - containerPort: 8080
 ---
@@ -39,7 +39,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grpc-echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   selector:
     app: grpc-echo
@@ -53,7 +53,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grpc-echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   replicas: 1
   selector:
@@ -83,7 +83,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tls-backend
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   selector:
     app: tls-backend
@@ -97,7 +97,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tls-backend
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   replicas: 1
   selector:
@@ -137,7 +137,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: coredns
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   selector:
     app: udp
@@ -151,7 +151,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: coredns
-  namespace: aether-gateway
+  namespace: nantian-gw
 data:
   Corefile: |
     .:53 {
@@ -167,7 +167,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: coredns
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   replicas: 1
   selector:
@@ -195,17 +195,17 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether
+  name: nantian
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: edge
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: http
       protocol: HTTP
@@ -248,7 +248,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -268,7 +268,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: GRPCRoute
 metadata:
   name: grpc-echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -284,7 +284,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
 metadata:
   name: tcp-echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -298,7 +298,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
 metadata:
   name: tcp-missing
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -312,7 +312,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
 metadata:
   name: tls-echo
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -328,7 +328,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute
 metadata:
   name: udp-coredns
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -342,7 +342,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute
 metadata:
   name: udp-missing
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge
@@ -356,9 +356,9 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: default-gw
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
-  gatewayClassName: aether-gateway
+  gatewayClassName: nantian-gw
   defaultScope: All
   listeners:
     - name: http
@@ -369,7 +369,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: default-gw-route
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   useDefaultGateways: All
   rules:
@@ -381,7 +381,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ext-auth
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   selector:
     app: ext-auth
@@ -395,7 +395,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ext-auth
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   replicas: 1
   selector:
@@ -419,7 +419,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha3
 kind: BackendTLSPolicy
 metadata:
   name: ext-auth-tls
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   targetRefs:
     - group: ""
@@ -427,14 +427,14 @@ spec:
       name: ext-auth
       sectionName: https
   validation:
-    hostname: ext-auth.aether-gateway.svc.cluster.local
+    hostname: ext-auth.nantian-gw.svc.cluster.local
     wellKnownCACertificates: System
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: external-auth-route
-  namespace: aether-gateway
+  namespace: nantian-gw
 spec:
   parentRefs:
     - name: edge

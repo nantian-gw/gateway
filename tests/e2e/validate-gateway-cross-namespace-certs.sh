@@ -2,10 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-ROUTE_NAMESPACE="${ROUTE_NAMESPACE:-aether-gateway-cert-route}"
-SECRET_NAMESPACE="${SECRET_NAMESPACE:-aether-gateway-cert-secret}"
+ROUTE_NAMESPACE="${ROUTE_NAMESPACE:-nantian-gw-cert-route}"
+SECRET_NAMESPACE="${SECRET_NAMESPACE:-nantian-gw-cert-secret}"
 HTTPS_HOST_PORT="${HTTPS_HOST_PORT:-18443}"
 TEST_HOST="${TEST_HOST:-cross-cert.example.com}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
@@ -116,12 +116,12 @@ generate_tls_cert() {
 }
 
 suspend_conflicting_smoke_gateway() {
-  if ! k -n aether-gateway get gateway edge >/dev/null 2>&1; then
+  if ! k -n nantian-gw get gateway edge >/dev/null 2>&1; then
     return
   fi
 
   log "temporarily deleting smoke gateway to avoid TLS passthrough bind conflicts"
-  k -n aether-gateway delete gateway edge --ignore-not-found >/dev/null
+  k -n nantian-gw delete gateway edge --ignore-not-found >/dev/null
   SMOKE_GATEWAY_SUSPENDED="true"
 }
 
@@ -143,7 +143,7 @@ metadata:
   name: cert-edge
   namespace: ${ROUTE_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: https
       protocol: HTTPS

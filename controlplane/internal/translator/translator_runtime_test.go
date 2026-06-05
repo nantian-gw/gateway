@@ -79,7 +79,7 @@ func TestTranslateGatewayListenersPreservesMultipleAddresses(t *testing.T) {
 	}
 
 	listeners := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).
 		translateGatewayListeners(gateway, nil, nil, nil)
@@ -119,7 +119,7 @@ func TestTranslateGatewayListenersPublishesDisplayAddressesFromStatus(t *testing
 	}
 
 	listeners := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).
 		translateGatewayListeners(gateway, nil, nil, nil)

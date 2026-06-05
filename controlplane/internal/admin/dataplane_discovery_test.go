@@ -23,9 +23,9 @@ func TestDiscoverDataplaneAdminEndpointsFromEndpointSlices(t *testing.T) {
 	client := fake.NewClientBuilder().WithScheme(scheme).WithObjects(&discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dp-admin-a",
-			Namespace: "aether-gateway",
+			Namespace: "nantian-gw",
 			Labels: map[string]string{
-				"kubernetes.io/service-name": "aether-gateway-dataplane-admin",
+				"kubernetes.io/service-name": "nantian-dataplane-admin",
 			},
 		},
 		Ports: []discoveryv1.EndpointPort{{Name: &portName, Port: &port}},
@@ -44,8 +44,8 @@ func TestDiscoverDataplaneAdminEndpointsFromEndpointSlices(t *testing.T) {
 	}).Build()
 
 	discovery := NewDataplaneAdminDiscovery(client, DataplaneAdminDiscoveryConfig{
-		Namespace:   "aether-gateway",
-		ServiceName: "aether-gateway-dataplane-admin",
+		Namespace:   "nantian-gw",
+		ServiceName: "nantian-dataplane-admin",
 		PortName:    "admin",
 	})
 

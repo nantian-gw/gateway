@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
 )
 
 type servicePortKey struct {
@@ -329,7 +329,7 @@ func GatewayServiceObjectKey(gateway gatewayv1.Gateway) client.ObjectKey {
 }
 
 func gatewayServiceName(gatewayName string) string {
-	const prefix = "aether-gateway-"
+	const prefix = "nantian-gw-"
 	const maxLen = 63
 
 	base := prefix + gatewayName

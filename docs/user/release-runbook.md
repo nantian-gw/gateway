@@ -88,7 +88,7 @@ If `A4`, chaos, or soak evidence temporarily reuses a commit window that is "adj
 
 - If the data plane has `sessionPersistence` enabled, a stable shared secret has been configured, not a temporary in-process key.
 - Control plane and data plane admin authentication, metrics, TLS/mTLS, and NetworkPolicy have been configured as required by [Production Operations](operations.md).
-- If this release or installation package retains the dashboard, the `aether-gateway-dashboard` image has been separately built, scanned, and pinned; the current core release workflow only publishes controlplane / dataplane images.
+- If this release or installation package retains the dashboard, the `nantian-gw-dashboard` image has been separately built, scanned, and pinned; the current core release workflow only publishes controlplane / dataplane images.
 - Can clearly answer the following two questions:
   - Which Gateways / namespaces / domains are affected by this canary deployment?
   - How to switch back within 5 minutes if an anomaly occurs?
@@ -117,8 +117,8 @@ scripts/archive-conformance-report.sh <report-id> tmp/conformance/report-v1.5.1.
 
 This repository recommends using an independent `GatewayClass` for control plane canary deployment, for example:
 
-- Stable: `aether`
-- Canary: `aether-canary`
+- Stable: `nantian`
+- Canary: `nantian-canary`
 
 Approach:
 
@@ -321,21 +321,21 @@ The release workflow now additionally produces the following supply chain materi
 - `dataplane-image.spdx.json`
 - `release-assets.spdx.json`
 - `RELEASE_NOTES.md`
-- `aether-gateway-<tag>-release-assets.tar.gz`
+- `nantian-gw-<tag>-release-assets.tar.gz`
 
 Image provenance and SBOM attestation will be published to GHCR associated records via GitHub Artifact Attestations. At minimum, retain the following for verification:
 
 ```bash
-gh attestation verify oci://ghcr.io/<owner>/aether-gateway-controlplane@sha256:<digest> \
-  --repo <owner>/aether-gateway
+gh attestation verify oci://ghcr.io/<owner>/nantian-controlplane@sha256:<digest> \
+  --repo <owner>/nantian-gw
 
-gh attestation verify oci://ghcr.io/<owner>/aether-gateway-dataplane@sha256:<digest> \
-  --repo <owner>/aether-gateway
+gh attestation verify oci://ghcr.io/<owner>/nantian-dataplane@sha256:<digest> \
+  --repo <owner>/nantian-gw
 ```
 
 If you need to verify the provenance of the release asset tarball:
 
 ```bash
-gh attestation verify aether-gateway-<tag>-release-assets.tar.gz \
-  --repo <owner>/aether-gateway
+gh attestation verify nantian-gw-<tag>-release-assets.tar.gz \
+  --repo <owner>/nantian-gw
 ```

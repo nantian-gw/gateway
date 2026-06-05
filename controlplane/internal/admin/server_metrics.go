@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/admin/metrics"
+	"github.com/nantian-gw/gateway/controlplane/internal/admin/metrics"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
-	metricsConfigNamespace = "aether-gateway"
+	metricsConfigNamespace = "nantian-gw"
 )
 
 type metricsConfigRequest struct {

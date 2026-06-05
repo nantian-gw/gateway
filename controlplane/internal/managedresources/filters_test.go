@@ -11,8 +11,8 @@ import (
 func TestShouldAffectSnapshotIgnoresManagedFrontendResources(t *testing.T) {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "aether-gateway-dataplane",
-			Namespace: "aether-gateway",
+			Name:      "nantian-dataplane",
+			Namespace: "nantian-gw",
 			Labels: map[string]string{
 				ManagedByLabel: ManagedByValue,
 				ServiceRoleKey: ServiceRoleShared,
@@ -26,7 +26,7 @@ func TestShouldAffectSnapshotIgnoresManagedFrontendResources(t *testing.T) {
 	endpointSlice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "aeg-shared-ep-default-ipv4",
-			Namespace: "aether-gateway",
+			Namespace: "nantian-gw",
 			Labels: map[string]string{
 				discoveryv1.LabelManagedBy: ManagedByValue,
 				ServiceRoleKey:             EndpointSliceRoleSharedFrontend,

@@ -9,8 +9,8 @@ Goal: Incorporate GitHub / Dependabot security alerts on the default branch and 
 Current known status:
 
 - `2026-05-12` review of default branch GitHub Dependabot open alerts: only `#7 rust/protobuf < 3.7.2` medium remains, `scripts/check-dependabot-alert-triage.sh` outputs `open_alert_count=1`, `unreviewed_count=0`.
-- `2026-05-24` review of default branch GitHub Dependabot open alerts: still only `#7 rust/protobuf < 3.7.2` medium remains; `scripts/check-dependabot-alert-triage.sh --github-repository mahmut-Abi/aether-gateway` outputs `reviewed open alerts: 1` and passes.
-- The alert comes from the `aether-core 0.8.0 -> prometheus 0.13.x -> protobuf 2.x` transitive dependency.
+- `2026-05-24` review of default branch GitHub Dependabot open alerts: still only `#7 rust/protobuf < 3.7.2` medium remains; `scripts/check-dependabot-alert-triage.sh --github-repository mahmut-Abi/nantian-gw` outputs `reviewed open alerts: 1` and passes.
+- The alert comes from the `nantian-core 0.8.0 -> prometheus 0.13.x -> protobuf 2.x` transitive dependency.
 - `SEC-RA-004` has recorded risk acceptance; `dataplane/deny.toml` has tightened the exemption rationale to the reviewed dependency chain.
 - `scripts/run-dataplane-guardrails.sh` requires that if protobuf 2.x still exists, it must still be this reviewed dependency chain.
 - `scripts/check-dependabot-alert-triage.sh` has been integrated into `scripts/run-security-scans.sh`, classifying current open Dependabot alerts as `fixed-awaiting-platform-refresh`, `risk-accepted:SEC-RA-004`, or failing `unreviewed`; current platform alerts for `openssl`, `dompurify`, and `postcss` have disappeared, with only `protobuf < 3.7.2` passing via `SEC-RA-004` risk acceptance.

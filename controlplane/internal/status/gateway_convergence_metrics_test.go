@@ -19,11 +19,11 @@ func TestGatewayConvergenceObservationTracksServiceMetadataLag(t *testing.T) {
 	service.Annotations[gatewayConvergenceOwnerGenerationAnnotation] = "2"
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways: []gatewayv1.Gateway{*gateway},
@@ -50,11 +50,11 @@ func TestGatewayConvergenceObservationTracksFrontendEndpointSliceLag(t *testing.
 	endpointSlice.Annotations[gatewayConvergenceOwnerGenerationAnnotation] = "2"
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways:       []gatewayv1.Gateway{*gateway},
@@ -80,11 +80,11 @@ func TestGatewayConvergenceObservationTracksMissingFrontendEndpointSliceLag(t *t
 	service := gatewayInfrastructureServiceForGateway(*gateway)
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways: []gatewayv1.Gateway{*gateway},
@@ -134,11 +134,11 @@ func TestGatewayConvergenceObservationTracksProgrammedObservedGenerationLag(t *t
 	}
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways:       []gatewayv1.Gateway{*gateway},
@@ -174,11 +174,11 @@ func TestGatewayConvergenceObservationTracksProgrammedPendingReason(t *testing.T
 	}
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways:       []gatewayv1.Gateway{*gateway},
@@ -211,11 +211,11 @@ func TestGatewayConvergenceObservationNormalizesUnknownProgrammedPendingReason(t
 	endpointSlice.Annotations = cloneStringMap(service.Annotations)
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways:       []gatewayv1.Gateway{*gateway},
@@ -264,11 +264,11 @@ func TestSyncGatewayConvergenceStageMetricsTracksCurrentStageTotals(t *testing.T
 	readySlice.Annotations = cloneStringMap(readyService.Annotations)
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways: []gatewayv1.Gateway{
@@ -344,11 +344,11 @@ func TestGatewayConvergenceStageCurrentMetricUsesGaugeName(t *testing.T) {
 	readySlice.Annotations = cloneStringMap(readyService.Annotations)
 
 	state := &clusterState{
-		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")),
+		controllerName: string(gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")),
 		gatewayClasses: []gatewayv1.GatewayClass{{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: "gateway.networking.k8s.io/aether-gateway",
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
 			},
 		}},
 		gateways:       []gatewayv1.Gateway{*readyGateway},
@@ -359,17 +359,17 @@ func TestGatewayConvergenceStageCurrentMetricUsesGaugeName(t *testing.T) {
 
 	syncGatewayConvergenceStageMetrics(evaluateGateways(state, nil))
 
-	expected := strings.NewReader(`# HELP aether_gateway_controlplane_gateway_convergence_stage_current Current number of managed Gateways that have reached each convergence stage in the latest status evaluation snapshot.
-# TYPE aether_gateway_controlplane_gateway_convergence_stage_current gauge
-aether_gateway_controlplane_gateway_convergence_stage_current{stage="infrastructure_converged"} 1
-aether_gateway_controlplane_gateway_convergence_stage_current{stage="managed"} 1
-aether_gateway_controlplane_gateway_convergence_stage_current{stage="programmed"} 1
-aether_gateway_controlplane_gateway_convergence_stage_current{stage="translated"} 1
+	expected := strings.NewReader(`# HELP nantian_gateway_controlplane_gateway_convergence_stage_current Current number of managed Gateways that have reached each convergence stage in the latest status evaluation snapshot.
+# TYPE nantian_gateway_controlplane_gateway_convergence_stage_current gauge
+nantian_gateway_controlplane_gateway_convergence_stage_current{stage="infrastructure_converged"} 1
+nantian_gateway_controlplane_gateway_convergence_stage_current{stage="managed"} 1
+nantian_gateway_controlplane_gateway_convergence_stage_current{stage="programmed"} 1
+nantian_gateway_controlplane_gateway_convergence_stage_current{stage="translated"} 1
 `)
 	if err := testutil.GatherAndCompare(
 		ctrlmetrics.Registry,
 		expected,
-		"aether_gateway_controlplane_gateway_convergence_stage_current",
+		"nantian_gateway_controlplane_gateway_convergence_stage_current",
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -388,7 +388,7 @@ func gatewayWithNameAndGenerationForConvergenceTest(name string, generation int6
 			UID:        types.UID(name + "-uid"),
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,

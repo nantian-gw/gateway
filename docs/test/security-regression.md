@@ -286,7 +286,7 @@ The current repository has clearly documented and consolidated a set of Kubescap
 
 - [tests/security/kubescape-exceptions.json](../../tests/security/kubescape-exceptions.json)
 
-Currently only precise `alertOnly` exceptions are allowed for the `aether-gateway-controlplane` ServiceAccount, covering:
+Currently only precise `alertOnly` exceptions are allowed for the `nantian-controlplane` ServiceAccount, covering:
 
 - `C-0015`: The control plane needs cross-namespace `list/watch` Secret to handle Gateway certificate references, `BackendTLSPolicy`, and `ReferenceGrant`
 - `C-0007`: The control plane needs to delete its own managed derived resources such as Service, EndpointSlice, NetworkPolicy, ServiceImport

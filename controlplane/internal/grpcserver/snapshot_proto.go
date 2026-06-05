@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	controlv1 "github.com/aether-gateway/proto/gateway/control/v1"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 var newStructPB = structpb.NewStruct

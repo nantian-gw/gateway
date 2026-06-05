@@ -2,21 +2,21 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
-PRODUCER_NAMESPACE="${PRODUCER_NAMESPACE:-aether-mesh-validation}"
-CONSUMER_NAMESPACE="${CONSUMER_NAMESPACE:-aether-mesh-consumer-validation}"
+PRODUCER_NAMESPACE="${PRODUCER_NAMESPACE:-nantian-mesh-validation}"
+CONSUMER_NAMESPACE="${CONSUMER_NAMESPACE:-nantian-mesh-consumer-validation}"
 ADMIN_FORWARD_PORT="${ADMIN_FORWARD_PORT:-29080}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
 KEEP_RESOURCES="${KEEP_RESOURCES:-false}"
 ECHO_SOURCE_IMAGE="${ECHO_SOURCE_IMAGE:-m.daocloud.io/gcr.io/k8s-staging-gateway-api/echo-advanced:v20240412-v1.0.0-394-g40c666fd}"
 ECHO_IMAGE="${ECHO_IMAGE:-${LOCAL_REGISTRY_HOST}/gateway-api-conformance/echo-advanced:v20240412-v1.0.0-394-g40c666fd}"
 CLIENT_SOURCE_IMAGE="${CLIENT_SOURCE_IMAGE:-m.daocloud.io/docker.io/library/busybox:1.36.1}"
-CLIENT_IMAGE="${CLIENT_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-validation/busybox:1.36.1}"
+CLIENT_IMAGE="${CLIENT_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-gw-validation/busybox:1.36.1}"
 
 TMP_DIR=""
 PORT_FORWARD_PID=""
@@ -417,7 +417,7 @@ pick_admin_forward_port() {
 start_admin_port_forward() {
   pick_admin_forward_port
   PORT_FORWARD_LOG="${TMP_DIR}/port-forward.log"
-  k -n aether-gateway port-forward service/aether-gateway-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
+  k -n nantian-gw port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
     >"${PORT_FORWARD_LOG}" 2>&1 &
   PORT_FORWARD_PID="$!"
 

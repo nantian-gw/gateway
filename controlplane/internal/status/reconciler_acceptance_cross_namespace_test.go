@@ -14,7 +14,7 @@ import (
 
 func TestReconcileKeepsGatewayAcceptedWhenAtLeastOneListenerIsValid(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -22,13 +22,13 @@ func TestReconcileKeepsGatewayAcceptedWhenAtLeastOneListenerIsValid(t *testing.T
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http",
@@ -78,7 +78,7 @@ func TestReconcileKeepsGatewayAcceptedWhenAtLeastOneListenerIsValid(t *testing.T
 
 func TestReconcileDisallowsCrossNamespaceRouteWhenAllowedRoutesFromSame(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	namespaceMode := gatewayv1.NamespacesFromSame
 
 	k8sClient := fake.NewClientBuilder().
@@ -106,7 +106,7 @@ func TestReconcileDisallowsCrossNamespaceRouteWhenAllowedRoutesFromSame(t *testi
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -114,7 +114,7 @@ func TestReconcileDisallowsCrossNamespaceRouteWhenAllowedRoutesFromSame(t *testi
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "gateway-conformance-infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -186,7 +186,7 @@ func TestReconcileDisallowsCrossNamespaceRouteWhenAllowedRoutesFromSame(t *testi
 
 func TestReconcileAcceptsCrossNamespaceRouteWhenAllowedRoutesFromAll(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	namespaceMode := gatewayv1.NamespacesFromAll
 
 	k8sClient := fake.NewClientBuilder().
@@ -200,13 +200,13 @@ func TestReconcileAcceptsCrossNamespaceRouteWhenAllowedRoutesFromAll(t *testing.
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-web-backend"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "gateway-conformance-infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -274,7 +274,7 @@ func TestReconcileAcceptsCrossNamespaceRouteWhenAllowedRoutesFromAll(t *testing.
 
 func TestReconcileRecomputesCrossNamespaceRouteWhenNamespaceSelectorChanges(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	namespaceMode := gatewayv1.NamespacesFromSelector
 
 	k8sClient := fake.NewClientBuilder().
@@ -293,13 +293,13 @@ func TestReconcileRecomputesCrossNamespaceRouteWhenNamespaceSelectorChanges(t *t
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -391,7 +391,7 @@ func TestReconcileRecomputesCrossNamespaceRouteWhenNamespaceSelectorChanges(t *t
 
 func TestReconcileBindsRouteToGatewayListenerByParentRefPort(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -403,13 +403,13 @@ func TestReconcileBindsRouteToGatewayListenerByParentRefPort(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{Name: "http-80", Protocol: gatewayv1.HTTPProtocolType, Port: 80},
 						{Name: "http-8080", Protocol: gatewayv1.HTTPProtocolType, Port: 8080},
@@ -483,7 +483,7 @@ func TestReconcileBindsRouteToGatewayListenerByParentRefPort(t *testing.T) {
 
 func TestReconcileRejectsRouteWhenListenerKindsExcludeRouteKind(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -495,13 +495,13 @@ func TestReconcileRejectsRouteWhenListenerKindsExcludeRouteKind(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -566,7 +566,7 @@ func TestReconcileRejectsRouteWhenListenerKindsExcludeRouteKind(t *testing.T) {
 
 func TestReconcileDoesNotWriteStatusForMissingGatewayParent(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -574,7 +574,7 @@ func TestReconcileDoesNotWriteStatusForMissingGatewayParent(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&corev1.Service{
@@ -618,7 +618,7 @@ func TestReconcileDoesNotWriteStatusForMissingGatewayParent(t *testing.T) {
 
 func TestReconcileRefreshesResolvedRefsWhenReferenceGrantChanges(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -631,13 +631,13 @@ func TestReconcileRefreshesResolvedRefsWhenReferenceGrantChanges(t *testing.T) {
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "backend"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -727,7 +727,7 @@ func TestReconcileRefreshesResolvedRefsWhenReferenceGrantChanges(t *testing.T) {
 
 func TestReconcileRefreshesCertificateRefsWhenReferenceGrantChanges(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	k8sClient := fake.NewClientBuilder().
@@ -740,13 +740,13 @@ func TestReconcileRefreshesCertificateRefsWhenReferenceGrantChanges(t *testing.T
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway", Generation: 1},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
 			},
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,

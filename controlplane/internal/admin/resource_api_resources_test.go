@@ -207,7 +207,7 @@ func TestResourceEndpointSupportsStablePagination(t *testing.T) {
 	if len(resources) != 2 {
 		t.Fatalf("expected 2 paginated resources, got %+v", resources)
 	}
-	if resources[0].Kind != "GatewayClass" || resources[0].Name != "aether-gateway" {
+	if resources[0].Kind != "GatewayClass" || resources[0].Name != "nantian-gw" {
 		t.Fatalf("unexpected first paginated resource: %+v", resources[0])
 	}
 	if resources[1].Kind != "HTTPRoute" || resources[1].Namespace != "default" || resources[1].Name != "web" {
@@ -250,12 +250,12 @@ func TestResourceListUsesDirectGetForExactClusterScopedMatch(t *testing.T) {
 
 	items, err := manager.List(context.Background(), ResourceListFilter{
 		Kind: "GatewayClass",
-		Name: "aether-gateway",
+		Name: "nantian-gw",
 	})
 	if err != nil {
 		t.Fatalf("list exact cluster-scoped resource: %v", err)
 	}
-	if len(items) != 1 || items[0].Kind != "GatewayClass" || items[0].Name != "aether-gateway" {
+	if len(items) != 1 || items[0].Kind != "GatewayClass" || items[0].Name != "nantian-gw" {
 		t.Fatalf("unexpected exact cluster-scoped result: %+v", items)
 	}
 	if got := counting.GetCalls(); got != 1 {
@@ -489,7 +489,7 @@ spec:
     "namespace": "default"
   },
   "spec": {
-    "gatewayClassName": "aether-gateway"
+    "gatewayClassName": "nantian-gw"
   }
 }`),
 			statusCode: http.StatusConflict,

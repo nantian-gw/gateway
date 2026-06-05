@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/protocompat"
+	"github.com/nantian-gw/gateway/controlplane/internal/protocompat"
 )
 
 const protoPath = "proto/gateway/control/v1/control.proto"

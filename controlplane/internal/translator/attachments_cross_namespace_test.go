@@ -15,7 +15,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(t *testing.T) {
@@ -26,7 +26,7 @@ func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
 	client := newTranslatorClientBuilder(scheme).
@@ -48,7 +48,7 @@ func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -56,7 +56,7 @@ func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "same-only", Namespace: "gateway-conformance-infra"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -142,7 +142,7 @@ func TestBuildSnapshotAttachesCrossNamespaceRouteWhenAllowedRoutesFromAll(t *tes
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	namespaceMode := gatewayv1.NamespacesFromAll
 	portNumber := gatewayv1.PortNumber(8080)
 
@@ -151,7 +151,7 @@ func TestBuildSnapshotAttachesCrossNamespaceRouteWhenAllowedRoutesFromAll(t *tes
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "apps"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -159,7 +159,7 @@ func TestBuildSnapshotAttachesCrossNamespaceRouteWhenAllowedRoutesFromAll(t *tes
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -239,7 +239,7 @@ func TestBuildSnapshotAttachesRoutesOnlyForSelectorMatchedNamespacesAndParentRef
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	namespaceMode := gatewayv1.NamespacesFromSelector
 	portNumber := gatewayv1.PortNumber(8080)
 
@@ -259,7 +259,7 @@ func TestBuildSnapshotAttachesRoutesOnlyForSelectorMatchedNamespacesAndParentRef
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -267,7 +267,7 @@ func TestBuildSnapshotAttachesRoutesOnlyForSelectorMatchedNamespacesAndParentRef
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{
 						{
 							Name:     "http-80",

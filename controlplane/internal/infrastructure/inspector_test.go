@@ -17,12 +17,12 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func TestInspectReportsDerivedInfrastructureLifecycleAndDrift(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	serviceKind := gatewayv1.Kind("Service")
 	servicePort := gatewayv1.PortNumber(80)
 	httpProtocol := "http"
@@ -30,7 +30,7 @@ func TestInspectReportsDerivedInfrastructureLifecycleAndDrift(t *testing.T) {
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -41,7 +41,7 @@ func TestInspectReportsDerivedInfrastructureLifecycleAndDrift(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -70,9 +70,9 @@ func TestInspectReportsDerivedInfrastructureLifecycleAndDrift(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -258,12 +258,12 @@ func TestInspectReportsDerivedInfrastructureLifecycleAndDrift(t *testing.T) {
 
 func TestInspectScopesObservedServiceAndEndpointSliceQueries(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -274,7 +274,7 @@ func TestInspectScopesObservedServiceAndEndpointSliceQueries(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -284,9 +284,9 @@ func TestInspectScopesObservedServiceAndEndpointSliceQueries(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -365,7 +365,7 @@ func TestInspectScopesObservedServiceAndEndpointSliceQueries(t *testing.T) {
 
 func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	configMapKind := gatewayv1.Kind("ConfigMap")
 	configMapNamespace := gatewayv1.Namespace(defaultDataplaneNamespace)
 
@@ -381,7 +381,7 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -398,7 +398,7 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -412,7 +412,7 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -422,9 +422,9 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -458,8 +458,8 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 		t.Fatalf("Inspect returned error: %v", err)
 	}
 
-	if counts["gatewayclass:/aether-gateway"] != 1 {
-		t.Fatalf("shared GatewayClass get count = %d, want 1", counts["gatewayclass:/aether-gateway"])
+	if counts["gatewayclass:/nantian-gw"] != 1 {
+		t.Fatalf("shared GatewayClass get count = %d, want 1", counts["gatewayclass:/nantian-gw"])
 	}
 	if counts["configmap:"+defaultDataplaneNamespace+"/gatewayclass-params"] != 1 {
 		t.Fatalf(
@@ -471,7 +471,7 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 
 func TestInspectUsesServiceParentRouteIndexes(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	serviceKind := gatewayv1.Kind("Service")
 	servicePort := gatewayv1.PortNumber(80)
 
@@ -480,7 +480,7 @@ func TestInspectUsesServiceParentRouteIndexes(t *testing.T) {
 			WithScheme(scheme).
 			WithObjects(
 				&gatewayv1.GatewayClass{
-					ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+					ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 					Spec: gatewayv1.GatewayClassSpec{
 						ControllerName: controllerName,
 					},
@@ -491,7 +491,7 @@ func TestInspectUsesServiceParentRouteIndexes(t *testing.T) {
 						Namespace: "default",
 					},
 					Spec: gatewayv1.GatewaySpec{
-						GatewayClassName: "aether-gateway",
+						GatewayClassName: "nantian-gw",
 						Listeners: []gatewayv1.Listener{{
 							Name:     "http",
 							Protocol: gatewayv1.HTTPProtocolType,
@@ -530,9 +530,9 @@ func TestInspectUsesServiceParentRouteIndexes(t *testing.T) {
 				},
 				&corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "aether-gateway-dataplane-0",
+						Name:      "nantian-dataplane-0",
 						Namespace: defaultDataplaneNamespace,
-						Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+						Labels:    map[string]string{"app": "nantian-dataplane"},
 					},
 					Status: corev1.PodStatus{
 						PodIP: "10.0.0.50",

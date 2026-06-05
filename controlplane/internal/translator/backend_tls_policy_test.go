@@ -16,7 +16,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
@@ -73,7 +73,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -170,7 +170,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -246,7 +246,7 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithUnsupportedOptions(t *testing.T) 
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -311,7 +311,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyWhenAtLeastOneTargetIsValid(t *tes
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -395,7 +395,7 @@ func TestBuildSnapshotAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -481,7 +481,7 @@ func TestBuildSnapshotPrefersSectionScopedBackendTLSPolicyOverCatchAll(t *testin
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -554,7 +554,7 @@ func TestBuildSnapshotKeepsValidBackendTLSCAPEMsWhenSomeRefsAreInvalid(t *testin
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -628,7 +628,7 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {
@@ -696,7 +696,7 @@ func TestBuildSnapshotExternalAuthWithBackendTLSPolicy(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
 	if err != nil {

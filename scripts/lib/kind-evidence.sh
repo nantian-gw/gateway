@@ -48,8 +48,8 @@ aeg_kind_collect_admin_snapshots() {
 aeg_kind_capture_resource_snapshot() {
   local output_dir="$1"
   local label="$2"
-  local kind_context="${3:-kind-aether-gateway}"
-  local kube_namespace="${4:-aether-gateway}"
+  local kind_context="${3:-kind-nantian-gw}"
+  local kube_namespace="${4:-nantian-gw}"
   local output="${output_dir}/resources/${label}.tsv"
   local component
   local pod
@@ -68,7 +68,7 @@ aeg_kind_capture_resource_snapshot() {
         ' | awk -v component="${component}" -v pod="${pod}" 'BEGIN { FS="\t"; OFS="\t" } { print component, pod, $1, $2, $3 }'
       done < <(
         kubectl --context "${kind_context}" -n "${kube_namespace}" get pods \
-          -l "app=aether-gateway-${component}" \
+          -l "app=nantian-gw-${component}" \
           -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
       )
     done
@@ -85,7 +85,7 @@ aeg_kind_start_background_http_traffic() {
   local batch_concurrency="$7"
   local request_path="${8:-/}"
   local request_timeout="${9:-10}"
-  local expect_body_substring="${10:-aether-gateway-ok}"
+  local expect_body_substring="${10:-nantian-gw-ok}"
 
   mkdir -p "${output_dir}/traffic"
   (

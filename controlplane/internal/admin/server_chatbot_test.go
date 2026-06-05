@@ -20,8 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 func newChatbotTestServer(t *testing.T, k8sObjects ...client.Object) *Server {
@@ -60,7 +60,7 @@ func testSecret(apiKey string) *corev1.Secret {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "chatbot-config",
-			Namespace: "aether-gateway",
+			Namespace: "nantian-gw",
 		},
 		Data: map[string][]byte{
 			"provider":     []byte("openai"),
@@ -165,7 +165,7 @@ func TestPutChatbotConfig_CreatesNewSecret(t *testing.T) {
 	secret := &corev1.Secret{}
 	err := server.resources.client.Get(
 		context.Background(),
-		client.ObjectKey{Namespace: "aether-gateway", Name: "chatbot-config"},
+		client.ObjectKey{Namespace: "nantian-gw", Name: "chatbot-config"},
 		secret,
 	)
 	if err != nil {
@@ -202,7 +202,7 @@ func TestPutChatbotConfig_MaskedKeyPreservesExisting(t *testing.T) {
 	secret := &corev1.Secret{}
 	err := server.resources.client.Get(
 		context.Background(),
-		client.ObjectKey{Namespace: "aether-gateway", Name: "chatbot-config"},
+		client.ObjectKey{Namespace: "nantian-gw", Name: "chatbot-config"},
 		secret,
 	)
 	if err != nil {
@@ -237,7 +237,7 @@ func TestPutChatbotConfig_EmptyKeyPreservesExisting(t *testing.T) {
 	secret := &corev1.Secret{}
 	err := server.resources.client.Get(
 		context.Background(),
-		client.ObjectKey{Namespace: "aether-gateway", Name: "chatbot-config"},
+		client.ObjectKey{Namespace: "nantian-gw", Name: "chatbot-config"},
 		secret,
 	)
 	if err != nil {
@@ -285,9 +285,9 @@ func TestPostChatbotChat_ReturnsSSEStream(t *testing.T) {
 		t,
 		testSecretWithEndpoint("sk-test-key", mockOpenAI.URL),
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 	)
@@ -369,9 +369,9 @@ func TestPostChatbotChat_StreamsWithHistory(t *testing.T) {
 		t,
 		testSecretWithEndpoint("sk-test-key", mockOpenAI.URL),
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 	)

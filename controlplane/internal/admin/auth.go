@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
 )
 
 type Options struct {
@@ -39,7 +39,7 @@ func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
 
 		token, ok := resolveBearerToken(opts)
 		if !ok || !isAuthorizedRequest(r, token) {
-			w.Header().Set("WWW-Authenticate", `Bearer realm="aether-gateway-controlplane-admin"`)
+			w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}

@@ -14,12 +14,12 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(80)
 
 	routeV1 := &gatewayv1.HTTPRoute{
@@ -70,7 +70,7 @@ func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -78,7 +78,7 @@ func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -190,7 +190,7 @@ func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 
 func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	terminateMode := gatewayv1.TLSModeTerminate
 	servicePort := gatewayv1.PortNumber(80)
 
@@ -223,7 +223,7 @@ func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 				},
 			},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -231,7 +231,7 @@ func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw-tls", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "tls",
 						Protocol: gatewayv1.TLSProtocolType,

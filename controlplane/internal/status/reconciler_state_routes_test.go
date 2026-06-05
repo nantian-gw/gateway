@@ -16,13 +16,13 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 )
 
 func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -54,7 +54,7 @@ func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "consumer"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -68,7 +68,7 @@ func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 				},
 			},
 			&gatewayv1.Gateway{
@@ -120,7 +120,7 @@ func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
 		Reader: k8sClient,
 		listValidators: map[reflect.Type]func(client.ListOptions) error{
 			reflect.TypeOf(&gatewayv1.GatewayClassList{}): requireGatewayClassControllerList(string(controllerName)),
-			reflect.TypeOf(&gatewayv1.GatewayList{}):      requireGatewayClassNameList("aether-gateway"),
+			reflect.TypeOf(&gatewayv1.GatewayList{}):      requireGatewayClassNameList("nantian-gw"),
 			reflect.TypeOf(&gatewayv1.HTTPRouteList{}): func(opts client.ListOptions) error {
 				if opts.FieldSelector == nil || opts.FieldSelector.Empty() {
 					return fmt.Errorf("HTTPRoute list must stay scoped")
@@ -160,7 +160,7 @@ func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
 
 func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 
 	echoTLSPolicy := &gatewayv1alpha3.BackendTLSPolicy{
@@ -207,7 +207,7 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -215,7 +215,7 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -296,7 +296,7 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 
 func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 
 	policyRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
@@ -325,7 +325,7 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},

@@ -4,7 +4,7 @@ kind: Namespace
 metadata:
   name: {{ .Values.namespace.name }}
   labels:
-    {{- include "aether-gateway.labels" . | nindent 4 }}
+    {{- include "nantian-gw.labels" . | nindent 4 }}
 {{- end }}
 ---
 {{- if .Values.gatewayClass.enabled }}
@@ -13,7 +13,7 @@ kind: GatewayClass
 metadata:
   name: {{ .Values.gatewayClass.controllerName | replace "gateway.networking.k8s.io/" "" | replace "." "-" }}
   labels:
-    {{- include "aether-gateway.labels" . | nindent 4 }}
+    {{- include "nantian-gw.labels" . | nindent 4 }}
     app.kubernetes.io/component: controlplane
 spec:
   controllerName: {{ .Values.gatewayClass.controllerName }}

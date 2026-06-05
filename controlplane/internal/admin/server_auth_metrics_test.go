@@ -12,7 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
 )
 
 func TestAdminAuthProtectsManagementEndpoints(t *testing.T) {

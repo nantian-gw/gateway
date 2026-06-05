@@ -10,9 +10,9 @@ GATEWAY_API_VERSION="${GATEWAY_API_VERSION:-v1.5.1}"
 BACKENDLBPOLICY_CRD_VERSION="${BACKENDLBPOLICY_CRD_VERSION:-v1.2.1}"
 WORK_DIR="${ROOT_DIR}/tmp/gateway-api-${GATEWAY_API_VERSION}"
 GATEWAY_API_CLONE_URLS="${GATEWAY_API_CLONE_URLS:-https://gh-proxy.com/https://github.com/kubernetes-sigs/gateway-api.git,https://github.com/kubernetes-sigs/gateway-api.git}"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-GATEWAY_CLASS="${GATEWAY_CLASS:-aether}"
+GATEWAY_CLASS="${GATEWAY_CLASS:-nantian}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
@@ -35,12 +35,12 @@ DEBUG="${DEBUG:-false}"
 CLEANUP_BASE_RESOURCES="${CLEANUP_BASE_RESOURCES:-true}"
 ALLOW_FOREIGN_GATEWAY_RESOURCES="${ALLOW_FOREIGN_GATEWAY_RESOURCES:-false}"
 ALLOW_CRDS_MISMATCH="${ALLOW_CRDS_MISMATCH:-false}"
-ORGANIZATION="${ORGANIZATION:-aether-gateway}"
-PROJECT="${PROJECT:-aether-gateway}"
-IMPLEMENTATION_URL="${IMPLEMENTATION_URL:-https://github.com/aether-gateway/aether-gateway}"
+ORGANIZATION="${ORGANIZATION:-nantian-gw}"
+PROJECT="${PROJECT:-nantian-gw}"
+IMPLEMENTATION_URL="${IMPLEMENTATION_URL:-https://github.com/nantian-gw/gateway}"
 IMPLEMENTATION_VERSION="${IMPLEMENTATION_VERSION:-$(git -C "${ROOT_DIR}" rev-parse --short HEAD)}"
-IMPLEMENTATION_CONTACT="${IMPLEMENTATION_CONTACT:-maintainers@aether-gateway.local}"
-GATEWAY_CLASS_CONTROLLER="${GATEWAY_CLASS_CONTROLLER:-gateway.networking.k8s.io/aether-gateway}"
+IMPLEMENTATION_CONTACT="${IMPLEMENTATION_CONTACT:-maintainers@nantian-gw.local}"
+GATEWAY_CLASS_CONTROLLER="${GATEWAY_CLASS_CONTROLLER:-gateway.networking.k8s.io/nantian-gw}"
 ECHO_BASIC_SOURCE_IMAGE="${ECHO_BASIC_SOURCE_IMAGE:-m.daocloud.io/gcr.io/k8s-staging-gateway-api/echo-basic:v20240412-v1.0.0-394-g40c666fd}"
 ECHO_ADVANCED_SOURCE_IMAGE="${ECHO_ADVANCED_SOURCE_IMAGE:-m.daocloud.io/gcr.io/k8s-staging-gateway-api/echo-advanced:v20240412-v1.0.0-394-g40c666fd}"
 COREDNS_SOURCE_IMAGE="${COREDNS_SOURCE_IMAGE:-m.daocloud.io/docker.io/coredns/coredns:latest}"
@@ -124,12 +124,12 @@ derive_supported_features_from_controlplane() {
 }
 
 cleanup_smoke_resources() {
-  if ! kubectl --context "${KUBE_CONTEXT}" get namespace aether-gateway >/dev/null 2>&1; then
+  if ! kubectl --context "${KUBE_CONTEXT}" get namespace nantian-gw >/dev/null 2>&1; then
     return
   fi
 
-  log "cleaning aether-gateway smoke resources"
-  kubectl --context "${KUBE_CONTEXT}" -n aether-gateway delete \
+  log "cleaning nantian-gw smoke resources"
+  kubectl --context "${KUBE_CONTEXT}" -n nantian-gw delete \
     service/grpc-echo \
     service/tls-backend \
     service/coredns \
@@ -424,8 +424,8 @@ connect_registry_to_kind_network() {
 registry_storage_writable() {
   docker exec "${LOCAL_REGISTRY_NAME}" sh -c \
     'mkdir -p /var/lib/registry/docker/registry/v2/repositories &&
-     touch /var/lib/registry/.aether-gateway-write-test &&
-     rm -f /var/lib/registry/.aether-gateway-write-test' >/dev/null 2>&1
+     touch /var/lib/registry/.nantian-gw-write-test &&
+     rm -f /var/lib/registry/.nantian-gw-write-test' >/dev/null 2>&1
 }
 
 recreate_local_registry() {

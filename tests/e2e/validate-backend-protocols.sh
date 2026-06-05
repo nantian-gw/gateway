@@ -2,13 +2,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
 LOCAL_REGISTRY_NAME="${LOCAL_REGISTRY_NAME:-kind-registry}"
 LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"
 LOCAL_REGISTRY_HOST="${LOCAL_REGISTRY_HOST:-localhost:${LOCAL_REGISTRY_PORT}}"
 LOCAL_REGISTRY_PUSH_HOST="${LOCAL_REGISTRY_PUSH_HOST:-127.0.0.1:${LOCAL_REGISTRY_PORT}}"
-TEST_NAMESPACE="${TEST_NAMESPACE:-aether-backend-protocols}"
+TEST_NAMESPACE="${TEST_NAMESPACE:-nantian-backend-protocols}"
 PLAIN_HOST="${PLAIN_HOST:-plain.example.com}"
 GRPC_HOST="${GRPC_HOST:-grpc.example.com}"
 WS_HOST="${WS_HOST:-ws.example.com}"
@@ -21,13 +21,13 @@ WEBSOCKET_PROFILE_HOLD_MS="${WEBSOCKET_PROFILE_HOLD_MS:-1000}"
 WEBSOCKET_PROFILE_REQUEST_TIMEOUT="${WEBSOCKET_PROFILE_REQUEST_TIMEOUT:-5}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
 KEEP_RESOURCES="${KEEP_RESOURCES:-false}"
-DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-aether-gateway}"
+DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-nantian-gw}"
 PLAIN_SOURCE_IMAGE="${PLAIN_SOURCE_IMAGE:-m.daocloud.io/docker.io/hashicorp/http-echo:1.0.0}"
 PLAIN_IMAGE="${PLAIN_IMAGE:-${LOCAL_REGISTRY_HOST}/hashicorp/http-echo:1.0.0}"
 GRPC_SOURCE_IMAGE="${GRPC_SOURCE_IMAGE:-m.daocloud.io/gcr.io/k8s-staging-gateway-api/echo-basic:v20240412-v1.0.0-394-g40c666fd}"
 GRPC_IMAGE="${GRPC_IMAGE:-${LOCAL_REGISTRY_HOST}/gateway-api-conformance/echo-basic:v20240412-v1.0.0-394-g40c666fd}"
 WS_SOURCE_IMAGE="${WS_SOURCE_IMAGE:-m.daocloud.io/docker.io/library/python:3.12-slim-bookworm}"
-WS_IMAGE="${WS_IMAGE:-${LOCAL_REGISTRY_HOST}/aether-gateway-validation/python-ws:3.12-slim-bookworm}"
+WS_IMAGE="${WS_IMAGE:-${LOCAL_REGISTRY_HOST}/nantian-gw-validation/python-ws:3.12-slim-bookworm}"
 
 TMP_DIR=""
 PORT_FORWARD_PID=""
@@ -159,7 +159,7 @@ pick_admin_forward_port() {
 start_admin_port_forward() {
   pick_admin_forward_port
   PORT_FORWARD_LOG="${TMP_DIR}/port-forward.log"
-  k -n "${DATAPLANE_NAMESPACE}" port-forward service/aether-gateway-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
+  k -n "${DATAPLANE_NAMESPACE}" port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
     >"${PORT_FORWARD_LOG}" 2>&1 &
   PORT_FORWARD_PID="$!"
 
@@ -340,9 +340,9 @@ data:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether
+  name: nantian
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: v1
 kind: Service
@@ -478,7 +478,7 @@ metadata:
   name: protocol-edge
   namespace: ${TEST_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: http
       protocol: HTTP
@@ -668,8 +668,8 @@ import socket
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 host = os.environ["WS_HOSTNAME"]
 port = int(os.environ["GATEWAY_PORT"])
-payload = "aether-websocket"
-key = base64.b64encode(b"aether-backend-protocols").decode("ascii")
+payload = "nantian-websocket"
+key = base64.b64encode(b"nantian-backend-protocols").decode("ascii")
 
 def recv_exact(sock, size):
     data = b""

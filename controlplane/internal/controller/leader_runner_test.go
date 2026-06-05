@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/observability"
+	"github.com/nantian-gw/gateway/controlplane/internal/observability"
 )
 
 func TestReconcilerRunnerQueueMetricsDeduplicateTriggers(t *testing.T) {

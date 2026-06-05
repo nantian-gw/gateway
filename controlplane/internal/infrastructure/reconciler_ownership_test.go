@@ -31,7 +31,7 @@ func TestDesiredGatewayServiceIncludesOwnershipAndParameterAnnotations(t *testin
 			Generation: 7,
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,
@@ -70,7 +70,7 @@ func TestDesiredGatewayServiceIncludesOwnershipAndParameterAnnotations(t *testin
 	if service.Annotations["nantian.dev/owner-generation"] != "7" {
 		t.Fatalf("owner-generation annotation = %q", service.Annotations["nantian.dev/owner-generation"])
 	}
-	if service.Annotations["nantian.dev/gatewayclass-name"] != "aether-gateway" {
+	if service.Annotations["nantian.dev/gatewayclass-name"] != "nantian-gw" {
 		t.Fatalf("gatewayclass-name annotation = %q", service.Annotations["nantian.dev/gatewayclass-name"])
 	}
 	if service.Annotations["nantian.dev/infrastructure-parameters-ref"] != "default/public-gateway-infra" {
@@ -90,12 +90,12 @@ func TestDesiredGatewayServiceIncludesOwnershipAndParameterAnnotations(t *testin
 
 func TestReconcileRemovesStaleInfrastructureParameterAnnotationOnRollback(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -108,7 +108,7 @@ func TestReconcileRemovesStaleInfrastructureParameterAnnotationOnRollback(t *tes
 					Generation: 5,
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -173,7 +173,7 @@ func TestReconcileRemovesStaleInfrastructureParameterAnnotationOnRollback(t *tes
 
 func TestReconcilePropagatesOwnershipAnnotationsToGatewayEndpointSlices(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	classNamespace := gatewayv1.Namespace("infra-system")
 	parametersRef := &gatewayv1.LocalParametersReference{
 		Group: "",
@@ -184,7 +184,7 @@ func TestReconcilePropagatesOwnershipAnnotationsToGatewayEndpointSlices(t *testi
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 					ParametersRef: &gatewayv1.ParametersReference{
@@ -221,7 +221,7 @@ func TestReconcilePropagatesOwnershipAnnotationsToGatewayEndpointSlices(t *testi
 					Generation: 3,
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Infrastructure: &gatewayv1.GatewayInfrastructure{
 						ParametersRef: parametersRef,
 					},
@@ -234,9 +234,9 @@ func TestReconcilePropagatesOwnershipAnnotationsToGatewayEndpointSlices(t *testi
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

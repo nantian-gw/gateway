@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/controlplane/internal/extensionfilter"
 )
 
 func TestEvaluateResolvedRefsAcceptsHTTPRouteExtensionRef(t *testing.T) {

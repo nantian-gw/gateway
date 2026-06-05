@@ -1,6 +1,6 @@
 package backendlb
 
-import backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+import backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
 
 // PolicyPrecedes reports whether a should take precedence over b according to
 // the BackendLBPolicy conflict resolution order: older creation timestamp

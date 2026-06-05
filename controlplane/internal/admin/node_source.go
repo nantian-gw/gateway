@@ -9,13 +9,13 @@ import (
 	coordinationv1 "k8s.io/api/coordination/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 const (
 	nodeStatusManagedByLabelKey   = "app.kubernetes.io/managed-by"
-	nodeStatusManagedByLabelValue = "aether-gateway"
+	nodeStatusManagedByLabelValue = "nantian-gw"
 	nodeStatusComponentLabelKey   = "nantian.dev/component"
 	nodeStatusComponentLabelValue = "node-status"
 	nodeStatusAnnotationKey       = "nantian.dev/node-status"

@@ -14,9 +14,9 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
 )
 
 func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *testing.T) {
@@ -89,7 +89,7 @@ func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *t
 	}
 
 	backends, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).BuildBackendsForSnapshot(context.Background(), fakeScopedPolicyListValidatingTranslatorClient{
 		Client: baseClient,
@@ -162,7 +162,7 @@ func TestBuildBackendsForSnapshotPreservesUntouchedBackends(t *testing.T) {
 		Build()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	translator := New("gateway.networking.k8s.io/aether-gateway", logger)
+	translator := New("gateway.networking.k8s.io/nantian-gw", logger)
 	current, err := translator.Build(context.Background(), baseClient)
 	if err != nil {
 		t.Fatalf("initial Build returned error: %v", err)

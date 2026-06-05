@@ -25,10 +25,10 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/infrastructure"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/infrastructure"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 func TestNewServerAppliesRuntimeTimeouts(t *testing.T) {
@@ -71,7 +71,7 @@ func newInfrastructureTestServer(t *testing.T) *Server {
 	utilruntime.Must(gatewayv1.Install(scheme))
 	utilruntime.Must(gatewayv1alpha2.Install(scheme))
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	serviceKind := gatewayv1.Kind("Service")
 	servicePort := gatewayv1.PortNumber(80)
 	httpProtocol := "http"
@@ -116,7 +116,7 @@ func newInfrastructureTestServer(t *testing.T) *Server {
 		}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -127,7 +127,7 @@ func newInfrastructureTestServer(t *testing.T) *Server {
 					Namespace: "default",
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -137,9 +137,9 @@ func newInfrastructureTestServer(t *testing.T) *Server {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
-					Namespace: "aether-gateway",
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Name:      "nantian-dataplane-0",
+					Namespace: "nantian-gw",
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -199,7 +199,7 @@ func newInfrastructureTestServer(t *testing.T) *Server {
 					Name:      mesh.ShadowServiceName("default", "stale"),
 					Namespace: "default",
 					Labels: map[string]string{
-						"app.kubernetes.io/managed-by":     "aether-gateway",
+						"app.kubernetes.io/managed-by":     "nantian-gw",
 						mesh.ShadowServiceRoleLabel:        mesh.ShadowServiceRoleValue,
 						mesh.OriginalServiceNamespaceLabel: "default",
 						mesh.OriginalServiceNameLabel:      "stale",
@@ -237,9 +237,9 @@ func newTestServerWithRepository(t *testing.T, repo nodestatus.Repository, opts 
 	store.Publish(&ir.Snapshot{
 		GeneratedAt: now,
 		Workloads: []ir.Workload{
-			{Namespace: "aether-gateway", Name: "dp-1", IP: "10.0.0.1"},
-			{Namespace: "aether-gateway", Name: "dp-2", IP: "10.0.0.2"},
-			{Namespace: "aether-gateway", Name: "dp-3", IP: "10.0.0.3"},
+			{Namespace: "nantian-gw", Name: "dp-1", IP: "10.0.0.1"},
+			{Namespace: "nantian-gw", Name: "dp-2", IP: "10.0.0.2"},
+			{Namespace: "nantian-gw", Name: "dp-3", IP: "10.0.0.3"},
 		},
 		Listeners: []ir.Listener{
 			{
@@ -283,7 +283,7 @@ func newTestServerWithRepository(t *testing.T, repo nodestatus.Repository, opts 
 				},
 				Status: &ir.RouteStatus{
 					Parents: []ir.RouteParentStatus{{
-						ControllerName: "gateway.networking.k8s.io/aether-gateway",
+						ControllerName: "gateway.networking.k8s.io/nantian-gw",
 						ParentRef: ir.ParentRef{
 							Group:       "gateway.networking.k8s.io",
 							Kind:        "Gateway",
@@ -320,7 +320,7 @@ func newTestServerWithRepository(t *testing.T, repo nodestatus.Repository, opts 
 				},
 				Status: &ir.RouteStatus{
 					Parents: []ir.RouteParentStatus{{
-						ControllerName: "gateway.networking.k8s.io/aether-gateway",
+						ControllerName: "gateway.networking.k8s.io/nantian-gw",
 						ParentRef: ir.ParentRef{
 							Group:       "gateway.networking.k8s.io",
 							Kind:        "Gateway",

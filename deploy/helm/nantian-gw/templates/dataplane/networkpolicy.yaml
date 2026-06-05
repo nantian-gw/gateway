@@ -1,17 +1,17 @@
 {{- if and .Values.dataplane.enabled .Values.networkPolicies.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "aether-gateway.name" . }}-dataplane
+  name: {{ include "nantian-gw.name" . }}-dataplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "aether-gateway.dataplane.selectorLabels" . | nindent 6 }}
+      {{- include "nantian-gw.dataplane.selectorLabels" . | nindent 6 }}
   policyTypes:
     - Ingress
   ingress:

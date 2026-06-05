@@ -39,7 +39,7 @@ EXPECTED_BUNDLE_VERSION=v1.5.1 ./scripts/audit-gateway-api-bundle.sh
 If you need to verify the status output of a specific `GatewayClass`:
 
 ```bash
-GATEWAY_CLASS_NAME=aether ./scripts/audit-gateway-api-bundle.sh
+GATEWAY_CLASS_NAME=nantian ./scripts/audit-gateway-api-bundle.sh
 ```
 
 This script performs three tasks:

@@ -34,7 +34,7 @@ func TestDesiredFrontendEndpointSlicesSetServiceOwnerReference(t *testing.T) {
 	}
 	pods := []corev1.Pod{{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "aether-gateway-dataplane-0",
+			Name:      "nantian-dataplane-0",
 			Namespace: defaultDataplaneNamespace,
 		},
 		Status: corev1.PodStatus{
@@ -61,7 +61,7 @@ func TestDesiredFrontendEndpointSlicesSetServiceOwnerReference(t *testing.T) {
 
 func TestReconcileBackfillsGatewayEndpointSliceOwnerReference(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	serviceName := gatewayServiceName("public")
 	sliceName := frontendEndpointSliceName(
 		gatewayEndpointSliceNamePrefix,
@@ -73,7 +73,7 @@ func TestReconcileBackfillsGatewayEndpointSliceOwnerReference(t *testing.T) {
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -85,7 +85,7 @@ func TestReconcileBackfillsGatewayEndpointSliceOwnerReference(t *testing.T) {
 					UID:       types.UID("gateway-uid-123"),
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -141,9 +141,9 @@ func TestReconcileBackfillsGatewayEndpointSliceOwnerReference(t *testing.T) {
 			},
 			&corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aether-gateway-dataplane-0",
+					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+					Labels:    map[string]string{"app": "nantian-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

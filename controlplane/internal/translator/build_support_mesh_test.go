@@ -14,19 +14,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
 	baseClient := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -34,7 +34,7 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "apps"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,
@@ -211,7 +211,7 @@ func TestBuildLoadsMeshWorkloadsPerRouteNamespace(t *testing.T) {
 		Build()
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), scopedBuildDependencyValidatingTranslatorClient{
 		Client:                baseClient,
@@ -302,7 +302,7 @@ func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 	}
 
 	backends, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).BuildBackendsForSnapshot(
 		context.Background(),
@@ -402,7 +402,7 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 	}
 
 	backends, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).BuildBackendsForSnapshot(
 		context.Background(),
@@ -463,7 +463,7 @@ func TestRebuildMeshServiceListenersLoadsParentServicesOnDemand(t *testing.T) {
 	}
 
 	listeners, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).RebuildMeshServiceListeners(context.Background(), validatingTranslatorClient{
 		Client: baseClient,

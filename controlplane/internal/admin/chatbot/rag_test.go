@@ -27,7 +27,7 @@ func TestBuildRAGContext_EmptyCluster(t *testing.T) {
 	t.Parallel()
 
 	k8sClient := fake.NewClientBuilder().WithScheme(ragTestScheme()).Build()
-	controllerName := "gateway.networking.k8s.io/aether-gateway"
+	controllerName := "gateway.networking.k8s.io/nantian-gw"
 
 	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName)
 	if err != nil {
@@ -41,14 +41,14 @@ func TestBuildRAGContext_EmptyCluster(t *testing.T) {
 func TestBuildRAGContext_ManagedTopology(t *testing.T) {
 	t.Parallel()
 
-	controllerName := "gateway.networking.k8s.io/aether-gateway"
+	controllerName := "gateway.networking.k8s.io/nantian-gw"
 	sectionName := gatewayv1.SectionName("http")
 	pathPrefix := gatewayv1.PathMatchPathPrefix
 	pathValue := "/api"
 
 	gwc := &gatewayv1.GatewayClass{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "aether-gateway",
+			Name: "nantian-gw",
 		},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: gatewayv1.GatewayController(controllerName),
@@ -61,7 +61,7 @@ func TestBuildRAGContext_ManagedTopology(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: gatewayv1.ObjectName("aether-gateway"),
+			GatewayClassName: gatewayv1.ObjectName("nantian-gw"),
 			Listeners: []gatewayv1.Listener{
 				{
 					Name:     gatewayv1.SectionName("http"),
@@ -142,7 +142,7 @@ func TestBuildRAGContext_ManagedTopology(t *testing.T) {
 		"default/public",     // Gateway namespace/name
 		"default/api",        // HTTPRoute namespace/name
 		"default/backend-svc", // Service namespace/name
-		"aether-gateway",            // GatewayClass name
+		"nantian-gw",            // GatewayClass name
 		"8080",               // Service port
 	}
 
@@ -156,7 +156,7 @@ func TestBuildRAGContext_ManagedTopology(t *testing.T) {
 func TestBuildRAGContext_UnmanagedGatewayClass(t *testing.T) {
 	t.Parallel()
 
-	controllerName := "gateway.networking.k8s.io/aether-gateway"
+	controllerName := "gateway.networking.k8s.io/nantian-gw"
 
 	gwc := &gatewayv1.GatewayClass{
 		ObjectMeta: metav1.ObjectMeta{
@@ -204,10 +204,10 @@ func TestBuildRAGContext_UnmanagedGatewayClass(t *testing.T) {
 func TestBuildRAGContext_MultipleNamespaces(t *testing.T) {
 	t.Parallel()
 
-	controllerName := "gateway.networking.k8s.io/aether-gateway"
+	controllerName := "gateway.networking.k8s.io/nantian-gw"
 
 	gwc := &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: gatewayv1.GatewayController(controllerName),
 		},
@@ -216,7 +216,7 @@ func TestBuildRAGContext_MultipleNamespaces(t *testing.T) {
 	gw := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "public", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: gatewayv1.ObjectName("aether-gateway"),
+			GatewayClassName: gatewayv1.ObjectName("nantian-gw"),
 			Listeners: []gatewayv1.Listener{
 				{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 			},
@@ -312,10 +312,10 @@ func TestBuildRAGContext_MultipleNamespaces(t *testing.T) {
 func TestBuildRAGContext_GRPCRouteIncluded(t *testing.T) {
 	t.Parallel()
 
-	controllerName := "gateway.networking.k8s.io/aether-gateway"
+	controllerName := "gateway.networking.k8s.io/nantian-gw"
 
 	gwc := &gatewayv1.GatewayClass{
-		ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 		Spec: gatewayv1.GatewayClassSpec{
 			ControllerName: gatewayv1.GatewayController(controllerName),
 		},
@@ -324,7 +324,7 @@ func TestBuildRAGContext_GRPCRouteIncluded(t *testing.T) {
 	gw := &gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "grpc-gw", Namespace: "default"},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: gatewayv1.ObjectName("aether-gateway"),
+			GatewayClassName: gatewayv1.ObjectName("nantian-gw"),
 			Listeners: []gatewayv1.Listener{
 				{Name: "grpc", Port: 50051, Protocol: gatewayv1.HTTPProtocolType},
 			},

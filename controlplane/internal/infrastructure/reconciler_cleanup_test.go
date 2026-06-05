@@ -15,12 +15,12 @@ import (
 
 func TestReconcileDeletesStaleGatewayInfrastructureServices(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -55,13 +55,13 @@ func TestReconcileDeletesStaleGatewayInfrastructureServices(t *testing.T) {
 }
 func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.T) {
 	scheme := newScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	serviceName := gatewayServiceName("stale")
 
 	k8sClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -147,7 +147,7 @@ func TestReconcileDeletesSharedServiceWithoutManagedListeners(t *testing.T) {
 				},
 				Spec: corev1.ServiceSpec{
 					Type:     corev1.ServiceTypeNodePort,
-					Selector: map[string]string{"app": "aether-gateway-dataplane"},
+					Selector: map[string]string{"app": "nantian-dataplane"},
 					Ports: []corev1.ServicePort{{
 						Name:       "tcp-80",
 						Port:       80,
@@ -160,7 +160,7 @@ func TestReconcileDeletesSharedServiceWithoutManagedListeners(t *testing.T) {
 		).
 		Build()
 
-	reconciler := New(k8sClient, "gateway.networking.k8s.io/aether-gateway", discardLogger())
+	reconciler := New(k8sClient, "gateway.networking.k8s.io/nantian-gw", discardLogger())
 	if err := reconciler.Reconcile(context.Background()); err != nil {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}

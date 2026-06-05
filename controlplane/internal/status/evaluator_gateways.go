@@ -10,7 +10,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/controlplane/internal/gatewayapi"
 )
 
 const (
@@ -38,7 +38,7 @@ func evaluateGatewayListener(
 		accepted = rejectedListenerCondition(
 			gateway.Generation,
 			string(gatewayv1.ListenerReasonUnsupportedProtocol),
-			"Listener protocol is not supported by aether-gateway",
+			"Listener protocol is not supported by nantian-gw",
 		)
 	case policy.invalidKindRefs:
 		resolved.Status = metav1.ConditionFalse
@@ -425,7 +425,7 @@ func acceptedListenerCondition(generation int64) conditionSpec {
 		Type:               string(gatewayv1.ListenerConditionAccepted),
 		Status:             metav1.ConditionTrue,
 		Reason:             string(gatewayv1.ListenerReasonAccepted),
-		Message:            "Listener is accepted by aether-gateway",
+		Message:            "Listener is accepted by nantian-gw",
 		ObservedGeneration: generation,
 	}
 }

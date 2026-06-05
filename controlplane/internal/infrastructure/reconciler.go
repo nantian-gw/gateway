@@ -9,20 +9,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/ir"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/nodestatus"
+	"github.com/nantian-gw/gateway/controlplane/internal/ir"
+	"github.com/nantian-gw/gateway/controlplane/internal/nodestatus"
 )
 
 const (
-	defaultDataplaneNamespace = "aether-gateway"
-	defaultSharedServiceName  = "aether-gateway-dataplane"
+	defaultDataplaneNamespace = "nantian-gw"
+	defaultSharedServiceName  = "nantian-dataplane"
 	defaultAdminPortName      = "admin"
 	defaultAdminPort          = 19080
 
 	gatewayNameLabel        = "gateway.networking.k8s.io/gateway-name"
 	gatewayNamespaceLabel   = "nantian.dev/gateway-namespace"
 	managedByLabel          = "app.kubernetes.io/managed-by"
-	managedByValue          = "aether-gateway"
+	managedByValue          = "nantian-gw"
 	serviceRoleLabel        = "nantian.dev/service-role"
 	serviceRoleShared       = "shared-dataplane"
 	serviceRoleGateway      = "gateway-metadata"
@@ -30,7 +30,7 @@ const (
 )
 
 var defaultDataplaneSelector = map[string]string{
-	"app": "aether-gateway-dataplane",
+	"app": "nantian-dataplane",
 }
 
 type Options struct {

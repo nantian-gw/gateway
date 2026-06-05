@@ -18,7 +18,7 @@ func testScheme() *runtime.Scheme {
 
 func TestLoadConfig(t *testing.T) {
 	ctx := context.Background()
-	ns := "aether-gateway"
+	ns := "nantian-gw"
 
 	t.Run("success", func(t *testing.T) {
 		cl := fake.NewClientBuilder().
@@ -80,7 +80,7 @@ func TestLoadConfig(t *testing.T) {
 
 func TestSaveConfig(t *testing.T) {
 	ctx := context.Background()
-	ns := "aether-gateway"
+	ns := "nantian-gw"
 
 	t.Run("create new secret", func(t *testing.T) {
 		cl := fake.NewClientBuilder().

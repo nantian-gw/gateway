@@ -186,10 +186,10 @@ func Load(path string) (*Config, error) {
 		cfg.ReconcilerRunner.RetryBackoff = "1s"
 	}
 	if cfg.ControllerName == "" {
-		cfg.ControllerName = "gateway.networking.k8s.io/aether-gateway"
+		cfg.ControllerName = "gateway.networking.k8s.io/nantian-gw"
 	}
 	if cfg.LeaderElection.ID == "" {
-		cfg.LeaderElection.ID = "aether-gateway-controlplane-leader"
+		cfg.LeaderElection.ID = "nantian-controlplane-leader"
 	}
 	if cfg.LeaderElection.LeaseDuration == "" {
 		cfg.LeaderElection.LeaseDuration = "15s"

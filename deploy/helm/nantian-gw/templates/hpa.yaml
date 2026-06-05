@@ -1,19 +1,19 @@
 {{- if and .Values.dataplane.enabled .Values.hpa.enabled }}
-{{- $ns := include "aether-gateway.namespace" . }}
+{{- $ns := include "nantian-gw.namespace" . }}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "aether-gateway.name" . }}-dataplane
+  name: {{ include "nantian-gw.name" . }}-dataplane
   namespace: {{ $ns }}
   labels:
-    {{- include "aether-gateway.dataplane.labels" . | nindent 4 }}
+    {{- include "nantian-gw.dataplane.labels" . | nindent 4 }}
     gateway.nantian.dev/addon: dataplane-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "aether-gateway.name" . }}-dataplane
+    name: {{ include "nantian-gw.name" . }}-dataplane
   minReplicas: {{ .Values.hpa.minReplicas }}
   maxReplicas: {{ .Values.hpa.maxReplicas }}
   metrics:

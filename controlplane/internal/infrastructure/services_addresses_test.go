@@ -56,7 +56,7 @@ func TestDesiredGatewayServiceReturnsNilWithoutProgrammedListenerPorts(t *testin
 			Namespace: "default",
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "https",
 				Protocol: gatewayv1.HTTPSProtocolType,
@@ -91,7 +91,7 @@ func TestDesiredGatewayServiceIgnoresStaleProgrammedFalseListenerStatus(t *testi
 			Generation: 2,
 		},
 		Spec: gatewayv1.GatewaySpec{
-			GatewayClassName: "aether-gateway",
+			GatewayClassName: "nantian-gw",
 			Listeners: []gatewayv1.Listener{{
 				Name:     "http",
 				Protocol: gatewayv1.HTTPProtocolType,

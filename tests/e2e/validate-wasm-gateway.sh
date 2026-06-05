@@ -58,7 +58,7 @@ echo ""
 echo "--- Deploy ---"
 check "kustomize has wasmplugin CRD" bash -c "kubectl kustomize deploy/kubernetes/base/ | grep -q 'wasmplugins.gateway.nantian.dev'"
 check "kustomize RBAC has wasmplugins" bash -c "kubectl kustomize deploy/kubernetes/base/ | grep -q 'wasmplugins'"
-check "Helm lint" helm lint deploy/helm/aether-gateway/
+check "Helm lint" helm lint deploy/helm/nantian-gw/
 
 # --- Dashboard check ---
 echo ""

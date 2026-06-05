@@ -20,7 +20,7 @@ func TestBuildReturnsErrorWhenInputObjectLimitExceeded(t *testing.T) {
 
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Options{
 			Limits: Limits{
@@ -43,7 +43,7 @@ func TestBuildReturnsErrorWhenSnapshotObjectLimitExceeded(t *testing.T) {
 
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Options{
 			Limits: Limits{
@@ -66,7 +66,7 @@ func TestBuildReturnsErrorWhenSnapshotEndpointLimitExceeded(t *testing.T) {
 
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Options{
 			Limits: Limits{
@@ -89,7 +89,7 @@ func TestBuildIgnoresDisabledSnapshotLimits(t *testing.T) {
 
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		Options{
 			Limits: Limits{
@@ -119,7 +119,7 @@ func newTranslatorLimitsFixture(t *testing.T) client.Client {
 	t.Helper()
 
 	scheme := buildSupportScheme(t)
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	pathType := gatewayv1.PathMatchPathPrefix
 	hostname := gatewayv1.Hostname("example.com")
 	portNumber := gatewayv1.PortNumber(8080)
@@ -127,7 +127,7 @@ func newTranslatorLimitsFixture(t *testing.T) client.Client {
 	return newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -135,7 +135,7 @@ func newTranslatorLimitsFixture(t *testing.T) client.Client {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "http",
 						Protocol: gatewayv1.HTTPProtocolType,

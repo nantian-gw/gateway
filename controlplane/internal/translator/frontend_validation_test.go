@@ -23,13 +23,13 @@ func TestBuildSnapshotIncludesFrontendValidationCAPEMs(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -37,7 +37,7 @@ func TestBuildSnapshotIncludesFrontendValidationCAPEMs(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -103,13 +103,13 @@ func TestBuildSnapshotIncludesFrontendValidationMode(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -117,7 +117,7 @@ func TestBuildSnapshotIncludesFrontendValidationMode(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -177,13 +177,13 @@ func TestBuildSnapshotIncludesCrossNamespaceFrontendValidationWithReferenceGrant
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -191,7 +191,7 @@ func TestBuildSnapshotIncludesCrossNamespaceFrontendValidationWithReferenceGrant
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -269,13 +269,13 @@ func TestBuildSnapshotRejectsHTTPSListenerForCrossNamespaceFrontendValidationWit
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -283,7 +283,7 @@ func TestBuildSnapshotRejectsHTTPSListenerForCrossNamespaceFrontendValidationWit
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -350,13 +350,13 @@ func TestBuildSnapshotIgnoresFrontendValidationForTLSPassthroughListener(t *test
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	passthrough := gatewayv1.TLSModePassthrough
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -364,7 +364,7 @@ func TestBuildSnapshotIgnoresFrontendValidationForTLSPassthroughListener(t *test
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -430,13 +430,13 @@ func TestBuildSnapshotRejectsHTTPSListenerWhenDefaultFrontendValidationHasNoVali
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -444,7 +444,7 @@ func TestBuildSnapshotRejectsHTTPSListenerWhenDefaultFrontendValidationHasNoVali
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -536,13 +536,13 @@ func TestBuildSnapshotKeepsRejectedFrontendValidationListenerFromCurrentStatus(t
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -554,7 +554,7 @@ func TestBuildSnapshotKeepsRejectedFrontendValidationListenerFromCurrentStatus(t
 					Generation: 7,
 				},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					TLS: &gatewayv1.GatewayTLSConfig{
 						Frontend: &gatewayv1.FrontendTLSConfig{
 							Default: gatewayv1.TLSConfig{
@@ -637,13 +637,13 @@ func TestBuildSnapshotSkipsCrossNamespaceCertificateRefWithoutReferenceGrant(t *
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -651,7 +651,7 @@ func TestBuildSnapshotSkipsCrossNamespaceCertificateRefWithoutReferenceGrant(t *
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,
@@ -708,13 +708,13 @@ func TestBuildSnapshotIncludesCrossNamespaceCertificateRefWithReferenceGrant(t *
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -722,7 +722,7 @@ func TestBuildSnapshotIncludesCrossNamespaceCertificateRefWithReferenceGrant(t *
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,
@@ -794,13 +794,13 @@ func TestBuildSnapshotDeduplicatesValidListenerCertificateRefs(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -808,7 +808,7 @@ func TestBuildSnapshotDeduplicatesValidListenerCertificateRefs(t *testing.T) {
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,
@@ -893,13 +893,13 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway")
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
 	client := newTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
-				ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 				Spec: gatewayv1.GatewayClassSpec{
 					ControllerName: controllerName,
 				},
@@ -907,7 +907,7 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 			&gatewayv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
 				Spec: gatewayv1.GatewaySpec{
-					GatewayClassName: "aether-gateway",
+					GatewayClassName: "nantian-gw",
 					Listeners: []gatewayv1.Listener{{
 						Name:     "https",
 						Protocol: gatewayv1.HTTPSProtocolType,

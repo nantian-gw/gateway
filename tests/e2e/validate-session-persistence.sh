@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CLUSTER_NAME="${CLUSTER_NAME:-aether-gateway}"
+CLUSTER_NAME="${CLUSTER_NAME:-nantian-gw}"
 KUBE_CONTEXT="${KUBE_CONTEXT:-kind-${CLUSTER_NAME}}"
-TEST_NAMESPACE="${TEST_NAMESPACE:-aether-session-persistence}"
+TEST_NAMESPACE="${TEST_NAMESPACE:-nantian-session-persistence}"
 TEST_HOST="${TEST_HOST:-sticky.example.com}"
 TEST_PATH="${TEST_PATH:-/sticky}"
 SESSION_COOKIE_NAME="${SESSION_COOKIE_NAME:-sticky-backend}"
@@ -15,18 +15,18 @@ BACKEND_IMAGE="${BACKEND_IMAGE:-localhost:5001/hashicorp/http-echo:1.0.0}"
 ENSURE_KIND="${ENSURE_KIND:-false}"
 KEEP_RESOURCES="${KEEP_RESOURCES:-false}"
 KEEP_ARTIFACTS="${KEEP_ARTIFACTS:-false}"
-DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-aether-gateway}"
-DATAPLANE_CONFIGMAP="${DATAPLANE_CONFIGMAP:-aether-gateway-dataplane-config}"
-DATAPLANE_DEPLOYMENT="${DATAPLANE_DEPLOYMENT:-aether-gateway-dataplane}"
-DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=aether-gateway-dataplane}"
+DATAPLANE_NAMESPACE="${DATAPLANE_NAMESPACE:-nantian-gw}"
+DATAPLANE_CONFIGMAP="${DATAPLANE_CONFIGMAP:-nantian-dataplane-config}"
+DATAPLANE_DEPLOYMENT="${DATAPLANE_DEPLOYMENT:-nantian-dataplane}"
+DATAPLANE_SELECTOR="${DATAPLANE_SELECTOR:-app=nantian-dataplane}"
 DATAPLANE_HTTP_FORWARD_PORT="${DATAPLANE_HTTP_FORWARD_PORT:-80}"
 SESSION_SECRET="${SESSION_SECRET:-0123456789abcdef0123456789abcdef}"
 INITIAL_SESSION_SECRET="${INITIAL_SESSION_SECRET:-${SESSION_SECRET}}"
 ROTATED_SESSION_SECRET="${ROTATED_SESSION_SECRET:-fedcba9876543210fedcba9876543210}"
-SESSION_SECRET_NAME="${SESSION_SECRET_NAME:-aether-gateway-dataplane-session-persistence-e2e}"
+SESSION_SECRET_NAME="${SESSION_SECRET_NAME:-nantian-dataplane-session-persistence-e2e}"
 SESSION_SECRET_KEY="${SESSION_SECRET_KEY:-secret}"
 SESSION_SECRET_VOLUME="${SESSION_SECRET_VOLUME:-session-persistence-rotation}"
-SESSION_SECRET_MOUNT_DIR="${SESSION_SECRET_MOUNT_DIR:-/etc/aether-gateway/session-persistence-rotation}"
+SESSION_SECRET_MOUNT_DIR="${SESSION_SECRET_MOUNT_DIR:-/etc/nantian-gw/session-persistence-rotation}"
 SESSION_SECRET_FILE_PATH="${SESSION_SECRET_FILE_PATH:-${SESSION_SECRET_MOUNT_DIR}/${SESSION_SECRET_KEY}}"
 SESSION_SECRET_UPDATE_TIMEOUT_SEC="${SESSION_SECRET_UPDATE_TIMEOUT_SEC:-180}"
 
@@ -166,7 +166,7 @@ pick_admin_forward_port() {
 start_admin_port_forward() {
   pick_admin_forward_port
   PORT_FORWARD_LOG="${TMP_DIR}/port-forward.log"
-  k -n "${DATAPLANE_NAMESPACE}" port-forward service/aether-gateway-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
+  k -n "${DATAPLANE_NAMESPACE}" port-forward service/nantian-dataplane-admin "${ADMIN_FORWARD_PORT}:19080" \
     >"${PORT_FORWARD_LOG}" 2>&1 &
   PORT_FORWARD_PID="$!"
 
@@ -475,9 +475,9 @@ apply_test_resources() {
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: aether
+  name: nantian
 spec:
-  controllerName: gateway.networking.k8s.io/aether-gateway
+  controllerName: gateway.networking.k8s.io/nantian-gw
 ---
 apiVersion: v1
 kind: Service
@@ -550,7 +550,7 @@ metadata:
   name: sticky-edge
   namespace: ${TEST_NAMESPACE}
 spec:
-  gatewayClassName: aether
+  gatewayClassName: nantian
   listeners:
     - name: http
       hostname: ${TEST_HOST}

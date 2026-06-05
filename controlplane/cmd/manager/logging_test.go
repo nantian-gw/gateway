@@ -46,7 +46,7 @@ func TestConfigureKubernetesLoggingRoutesKlogThroughSlog(t *testing.T) {
 
 	configureKubernetesLogging(logger)
 	ctrl.Log.WithName("snapshot-syncer").Info("starting workers", "worker_count", 1)
-	klog.Background().Info("attempting to acquire leader lease", "lease", "aether-gateway/leader")
+	klog.Background().Info("attempting to acquire leader lease", "lease", "nantian-gw/leader")
 
 	output := buffer.String()
 	if !strings.Contains(output, `"msg":"starting workers"`) {
@@ -55,7 +55,7 @@ func TestConfigureKubernetesLoggingRoutesKlogThroughSlog(t *testing.T) {
 	if !strings.Contains(output, `"msg":"attempting to acquire leader lease"`) {
 		t.Fatalf("expected klog log through slog, got %q", output)
 	}
-	if !strings.Contains(output, `"lease":"aether-gateway/leader"`) {
+	if !strings.Contains(output, `"lease":"nantian-gw/leader"`) {
 		t.Fatalf("expected structured klog fields, got %q", output)
 	}
 	if !strings.Contains(output, `"log_origin":"klog"`) {
@@ -70,10 +70,10 @@ func TestConfigureKubernetesLoggingRoutesLegacyKlogOutputThroughSlog(t *testing.
 	logger := slog.New(slog.NewJSONHandler(&buffer, nil))
 
 	configureKubernetesLogging(logger)
-	klog.Infof("attempting to acquire leader lease %s", "aether-gateway/leader")
+	klog.Infof("attempting to acquire leader lease %s", "nantian-gw/leader")
 
 	output := buffer.String()
-	if !strings.Contains(output, `"msg":"attempting to acquire leader lease aether-gateway/leader"`) {
+	if !strings.Contains(output, `"msg":"attempting to acquire leader lease nantian-gw/leader"`) {
 		t.Fatalf("expected klog formatted output through slog, got %q", output)
 	}
 	if !strings.Contains(output, `"log_origin":"klog"`) {

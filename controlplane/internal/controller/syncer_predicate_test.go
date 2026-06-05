@@ -20,7 +20,7 @@ func TestSnapshotInputMutationPredicateSkipsStatusOnlyHTTPRouteUpdates(t *testin
 	}
 	newRoute := oldRoute.DeepCopy()
 	newRoute.Status.RouteStatus.Parents = []gatewayv1.RouteParentStatus{{
-		ControllerName: "gateway.networking.k8s.io/aether-gateway",
+		ControllerName: "gateway.networking.k8s.io/nantian-gw",
 	}}
 
 	if predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {

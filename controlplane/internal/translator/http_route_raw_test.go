@@ -49,7 +49,7 @@ func TestBuildSkipsRawHTTPRouteFetchWithoutCustomRawFilters(t *testing.T) {
 	}
 
 	_, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), validatingClient)
 	if err != nil {
@@ -94,7 +94,7 @@ func TestBuildLoadsRawHTTPRoutesOnDemandForCORSFilters(t *testing.T) {
 	}
 
 	snapshot, err := New(
-		"gateway.networking.k8s.io/aether-gateway",
+		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), validatingClient)
 	if err != nil {

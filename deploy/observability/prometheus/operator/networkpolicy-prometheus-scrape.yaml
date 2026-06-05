@@ -1,11 +1,11 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: aether-gateway-prometheus-scrape
-  namespace: aether-gateway
+  name: nantian-gw-prometheus-scrape
+  namespace: nantian-gw
   labels:
-    app.kubernetes.io/name: aether-gateway
-    app.kubernetes.io/part-of: aether-gateway
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: observability
 spec:
   podSelector:
@@ -13,8 +13,8 @@ spec:
       - key: app
         operator: In
         values:
-          - aether-gateway-controlplane
-          - aether-gateway-dataplane
+          - nantian-controlplane
+          - nantian-dataplane
   policyTypes:
     - Ingress
   ingress:

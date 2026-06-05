@@ -19,8 +19,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/aether-gateway/aether-gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/aether-gateway/aether-gateway/controlplane/internal/mesh"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/controlplane/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/controlplane/internal/mesh"
 )
 
 func BenchmarkInspectInfrastructureRouteFanout(b *testing.B) {
@@ -116,7 +116,7 @@ func newInfrastructureBenchmarkReconcilerWithClient(tb testing.TB, routeCount in
 		),
 	).Build()
 
-	return New(k8sClient, "gateway.networking.k8s.io/aether-gateway", discardLogger()), k8sClient
+	return New(k8sClient, "gateway.networking.k8s.io/nantian-gw", discardLogger()), k8sClient
 }
 
 func newInfrastructureAttachDetachStormFixture(tb testing.TB, routeCount int) *infrastructureAttachDetachStormFixture {
@@ -133,9 +133,9 @@ func newInfrastructureAttachDetachStormFixture(tb testing.TB, routeCount int) *i
 func infrastructureBenchmarkObjects(routeCount int) []client.Object {
 	objects := []client.Object{
 		&gatewayv1.GatewayClass{
-			ObjectMeta: metav1.ObjectMeta{Name: "aether-gateway"},
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
-				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/aether-gateway"),
+				ControllerName: gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw"),
 			},
 		},
 		&gatewayv1.Gateway{
@@ -144,7 +144,7 @@ func infrastructureBenchmarkObjects(routeCount int) []client.Object {
 				Namespace: "default",
 			},
 			Spec: gatewayv1.GatewaySpec{
-				GatewayClassName: "aether-gateway",
+				GatewayClassName: "nantian-gw",
 				Listeners: []gatewayv1.Listener{{
 					Name:     "http",
 					Protocol: gatewayv1.HTTPProtocolType,
@@ -154,9 +154,9 @@ func infrastructureBenchmarkObjects(routeCount int) []client.Object {
 		},
 		&corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aether-gateway-dataplane-0",
+				Name:      "nantian-dataplane-0",
 				Namespace: defaultDataplaneNamespace,
-				Labels:    map[string]string{"app": "aether-gateway-dataplane"},
+				Labels:    map[string]string{"app": "nantian-dataplane"},
 			},
 			Status: corev1.PodStatus{
 				PodIP: "10.0.0.50",

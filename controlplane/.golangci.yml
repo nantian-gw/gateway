@@ -31,7 +31,7 @@ linters:
     errcheck:
       check-blank: true
     goimports:
-      local-prefixes: github.com/aether-gateway/aether-gateway
+      local-prefixes: github.com/nantian-gw/gateway
     gocritic:
       enabled-tags:
         - diagnostic

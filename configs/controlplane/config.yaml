@@ -2,9 +2,9 @@ grpcAddr: ":18080"
 adminAddr: ":18081"
 metricsAddr: ":18082"
 healthProbeAddr: ":18083"
-controllerName: "gateway.networking.k8s.io/aether-gateway"
+controllerName: "gateway.networking.k8s.io/nantian-gw"
 statusAddress: "127.0.0.1"
-namespace: "aether-gateway"
+namespace: "nantian-gw"
 # statusAddresses:
 #   - "192.0.2.10"
 #   - "gw.example.com"
@@ -28,8 +28,8 @@ adminRuntime:
   writeTimeout: "30s"
   idleTimeout: "2m"
   dataplaneAggregation:
-    serviceName: "aether-gateway-dataplane-admin"
-    namespace: "aether-gateway"
+    serviceName: "nantian-dataplane-admin"
+    namespace: "nantian-gw"
     portName: "admin"
     timeout: "2s"
     bearerTokenFile: ""
@@ -45,7 +45,7 @@ log:
   addSource: false
 leaderElection:
   enabled: true
-  id: "aether-gateway-controlplane-leader"
+  id: "nantian-controlplane-leader"
   leaseDuration: "15s"
   renewDeadline: "10s"
   retryPeriod: "2s"
@@ -55,7 +55,7 @@ adminAuth:
 dashboardApi:
   enabled: true
   basePath: "/api/dashboard"
-  dataplaneAdminUrl: "http://aether-gateway-dataplane-admin.aether-gateway.svc.cluster.local:19080"
+  dataplaneAdminUrl: "http://nantian-dataplane-admin.nantian-gw.svc.cluster.local:19080"
   requestTimeout: "5s"
   resourceMutationsEnabled: true
 pprof:

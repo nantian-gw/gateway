@@ -1,4 +1,4 @@
-module github.com/aether-gateway/aether-gateway/tests/conformance-harness
+module github.com/nantian-gw/gateway/tests/conformance-harness
 
 go 1.26.3
 
