@@ -162,7 +162,7 @@ jobs:
 
       - name: Upload conformance artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: conformance-${{ needs.metadata.outputs.release_tag }}
           path: dist/conformance/
@@ -244,7 +244,7 @@ jobs:
 
       - name: Upload image metadata artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: image-metadata-${{ needs.metadata.outputs.release_tag }}
           path: dist/image-metadata/
