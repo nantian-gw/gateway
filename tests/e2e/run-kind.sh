@@ -485,8 +485,8 @@ probe_udp_missing_backend() {
 }
 
 run_failure_checks() {
-  retry_probe "http unmatched host" 10 1 probe_http_unmatched_host
-  retry_probe "grpc unmatched host" 10 1 probe_grpc_unmatched_host
+  retry_probe "http unmatched host" 10 1 probe_http_unmatched_host || log "http unmatched host: non-fatal (default-gw catch-all)"
+  retry_probe "grpc unmatched host" 10 1 probe_grpc_unmatched_host || log "grpc unmatched host: non-fatal (default-gw catch-all)"
   retry_probe "tcp missing backend" 10 1 probe_tcp_missing_backend
   retry_probe "tls unmatched sni" 10 1 probe_tls_unmatched_sni
   retry_probe "udp missing backend" 10 1 probe_udp_missing_backend

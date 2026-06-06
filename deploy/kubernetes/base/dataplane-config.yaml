@@ -1,4 +1,4 @@
-nodeId: "dp-kind"
+nodeId: ""
 cluster: "kind"
 controlPlaneAddr: "http://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
 adminAddr: "0.0.0.0:19080"

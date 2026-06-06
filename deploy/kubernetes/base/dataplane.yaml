@@ -53,7 +53,7 @@ spec:
           image: nantian-dataplane:dev
           imagePullPolicy: Always
           env:
-            - name: PGW_NODE_ID
+            - name: AEG_NODE_ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
