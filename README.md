@@ -3,7 +3,7 @@
 A Kubernetes Gateway API implementation targeting v1.5.1 with 55 declared supported features.
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](controlplane/go.mod)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](go.mod)
 
 ## Overview
 
@@ -116,13 +116,13 @@ Governance files: `LICENSE`, `MAINTAINERS.md`, `GOVERNANCE.md`, `CODE_OF_CONDUCT
 
 ```
 nantian-gw/
-├── controlplane/   Go controller, translator, status, admin, xDS server
-├── proto/          gRPC config discovery protocol (single source of truth)
-├── deploy/         Kubernetes Kustomize base + overlays, observability assets
-├── tests/          Unit tests, Kind smoke, conformance harness
-├── docs/           Developer and user documentation
-├── scripts/        Build, test, and release automation
-└── configs/        Local runtime configs for controlplane and dataplane
+├── cmd/            CLI entry points (manager, gateway-api-support, etc.)
+├── config/         CRD configuration templates
+├── internal/       Core packages: translator, xDS server, controllers, admin API
+├── configs/        Local runtime configs for controlplane and dataplane
+├── deploy/         Kubernetes Kustomize base + overlays, Helm chart, observability assets
+├── conformance/    Gateway API conformance test suite
+├── vendor/         Go vendored dependencies
 ```
 
 ## Project Status

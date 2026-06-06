@@ -76,8 +76,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: controlplane/go.mod
-          cache-dependency-path: controlplane/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
 
       - name: Run Go unit tests
         working-directory: controlplane
@@ -100,8 +100,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: controlplane/go.mod
-          cache-dependency-path: controlplane/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
 
       - name: Install release validation dependencies
         run: |
@@ -198,8 +198,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: controlplane/go.mod
-          cache-dependency-path: controlplane/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -216,7 +216,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: controlplane/Dockerfile
+          file: Dockerfile
           push: true
           tags: ${{ needs.metadata.outputs.control_image }}
 
