@@ -977,9 +977,9 @@ build_and_push_images() {
     --build-arg "RUST_IMAGE=${DATAPLANE_RUST_IMAGE}" \
     --build-arg "RUNTIME_IMAGE=${RUNTIME_IMAGE}" \
     --build-arg "DATAPLANE_CARGO_FEATURES=${DATAPLANE_CARGO_FEATURES}" \
-    -f "${ROOT_DIR}/dataplane/Dockerfile" \
+    -f "${ROOT_DIR}/../dataplane/Dockerfile" \
     -t "${DATAPLANE_PUSH_IMAGE}" \
-    "${ROOT_DIR}" >/dev/null
+    "${ROOT_DIR}/.." >/dev/null
   log "pushing dataplane image ${DATAPLANE_PUSH_IMAGE}"
   docker push "${DATAPLANE_PUSH_IMAGE}" >/dev/null
 

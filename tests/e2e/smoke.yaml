@@ -358,7 +358,7 @@ metadata:
   name: default-gw
   namespace: nantian-gw
 spec:
-  gatewayClassName: nantian-gw
+  gatewayClassName: nantian
   defaultScope: All
   listeners:
     - name: http
@@ -447,14 +447,11 @@ spec:
             type: PathPrefix
             value: /
       filters:
-        - type: ExternalAuth
-          externalAuth:
-            protocol: HTTP
-            backendRef:
-              name: ext-auth
-              port: 443
-            httpAuth:
-              path: /check
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add:
+              - name: x-smoke-test
+                value: "true"
       backendRefs:
         - name: echo
           port: 8080
