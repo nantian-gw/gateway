@@ -1,0 +1,35 @@
+nodeId: "dp-kind"
+cluster: "kind"
+controlPlaneAddr: "http://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
+adminAddr: "0.0.0.0:19080"
+log:
+  level: "info,nantian_core::connectors=off"
+  format: "json"
+  nonBlocking: true
+  nonBlockingBufferedLines: 65536
+  dropWhenFull: true
+adminAuth:
+  bearerToken: ""
+  bearerTokenFile: ""
+accessLog:
+  enabled: false
+  path: "stdout"
+  format: "%START_TIME% %CLIENT_IP% %HOST% %METHOD% %PATH% %ROUTE_NAME% %BACKEND% %STATUS% %LATENCY_MS%"
+runtime:
+  httpListenAddr: "0.0.0.0:10080"
+  enableIpv6: true
+  enableHttp3: false
+  tlsMinVersion: "1.2"
+  tlsMaxVersion: "1.3"
+runtimeTuning:
+  gracefulDrainPeriodMs: 10000
+  activeHealthCheckEnabled: true
+  activeHealthCheckIntervalMs: 3000
+  activeHealthCheckTimeoutMs: 1000
+  activeHealthCheckUnhealthyThreshold: 2
+xdsTls:
+  enabled: false
+  caPath: ""
+  certPath: ""
+  keyPath: ""
+  domainName: ""

@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Build
+        run: go build ./...
+
+  go-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Test
+        run: go test ./...
+
+  proto-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ github.token }}
+          buf_api_token: ${{ secrets.BUF_TOKEN }}
+      - name: Buf generate
+        env:
+          BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+        run: buf generate buf.build/nantian/proto
+      - name: Verify go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code
+      - name: Verify generated code is up to date
+        run: |
+          if ! git diff --exit-code gen/; then
+            echo "::error::Generated Go code is out of date. Run 'buf generate buf.build/nantian/proto && go mod tidy' locally and commit the changes."
+            exit 1
+          fi
+
+  go-bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Run benchmarks
+        run: go test -bench=. -benchtime=1x ./...

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nantian-dataplane
+  namespace: nantian-gw
+spec:
+  template:
+    spec:
+      containers:
+        - name: dataplane
+          resources:
+            requests:
+              cpu: "2"
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: session-persistence
+              mountPath: /etc/nantian-gw/session-persistence
+              readOnly: true
+      volumes:
+        - name: xds-tls
+          secret:
+            secretName: nantian-dataplane-xds-tls
+            optional: false
+        - name: admin-auth
+          secret:
+            secretName: nantian-dataplane-admin-auth
+            optional: false
+        - name: session-persistence
+          secret:
+            secretName: nantian-dataplane-session-persistence
+            optional: false

@@ -1,0 +1,61 @@
+nodeId: "dp-kubernetes"
+cluster: "production"
+controlPlaneAddr: "https://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
+adminAddr: "0.0.0.0:19080"
+log:
+  level: "info,nantian_core::connectors=off"
+  format: "json"
+  addSource: false
+  includeTarget: false
+  includeThreadIds: false
+  includeThreadNames: false
+  nonBlocking: true
+  nonBlockingBufferedLines: 65536
+  dropWhenFull: true
+adminAuth:
+  bearerToken: ""
+  bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
+accessLog:
+  enabled: false
+  path: "stdout"
+  format: "%TIMESTAMP% %EVENT% %PROTOCOL% %LISTENER% %CLIENT_IP% %HOST% %METHOD% %PATH% %REQUEST_ID% %ROUTE_NAMESPACE% %ROUTE_NAME% %BACKEND% %STATUS% %LATENCY_MS% %BYTES_RECEIVED% %BYTES_SENT% %SNAPSHOT_VERSION% %RETRY_ATTEMPTS% %RESPONSE_FLAGS%"
+  mode: "json"
+  sampleRate: 0.01
+  routeAnnotationPrefix: "gateway.nantian.dev/access-log-"
+runtime:
+  httpListenAddr: "0.0.0.0:10080"
+  enableIpv6: true
+  enableHttp3: false
+  tlsMinVersion: "1.2"
+  tlsMaxVersion: "1.3"
+runtimeTuning:
+  gracefulDrainPeriodMs: 10000
+  activeHealthCheckEnabled: false
+  workStealing: true
+  downstreamTcpFastopen: 1024
+  downstreamDscp: 46
+  upstreamTcpRecvBuf: 262144
+  upstreamTcpFastOpen: true
+  upstreamConnectionTimeoutMs: 5000
+  upstreamReadTimeoutMs: 30000
+  upstreamIdleTimeoutMs: 60000
+  upstreamDscp: 46
+  upstreamTcpKeepalive:
+    enabled: true
+  httpCapacity:
+    reusePort: true
+    upstreamKeepalivePoolSize: 32768
+    acceptConcurrency: 16
+sessionPersistence:
+  secretKey: ""
+  secretKeyFile: "/etc/nantian-gw/session-persistence/secret"
+  # sharedSecret: "your-shared-secret-here"
+xdsTls:
+  enabled: true
+  caPath: "/etc/nantian-gw/xds-tls/ca.crt"
+  certPath: "/etc/nantian-gw/xds-tls/tls.crt"
+  keyPath: "/etc/nantian-gw/xds-tls/tls.key"
+  domainName: "nantian-controlplane-grpc.nantian-gw.svc.cluster.local"
+experimental:
+  enableExperimentalGateway: false
+  enableAiGateway: false

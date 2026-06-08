@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  - name: nantian-controlplane
+    newName: ghcr.io/nantian-gw/nantian-controlplane
+    newTag: latest
+  - name: nantian-dataplane
+    newName: ghcr.io/nantian-gw/dataplane
+    newTag: latest
+  - name: nantian-gw-dashboard
+    newName: ghcr.io/nantian-gw/dashboard
+    newTag: latest
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: nantian-controlplane-config
+    namespace: nantian-gw
+    behavior: replace
+    files:
+      - config.yaml=controlplane-config.yaml
+  - name: nantian-dataplane-config
+    namespace: nantian-gw
+    behavior: replace
+    files:
+      - config.yaml=dataplane-config.yaml

@@ -1,0 +1,866 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Nantian Gateway Admin API",
+    "version": "1.0.0",
+    "description": "Control plane admin API for the Nantian Gateway — a Kubernetes Gateway API implementation."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:18080",
+      "description": "Default admin address"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token from adminAuth.bearerToken or adminAuth.bearerTokenFile config. Optional — if not configured, all endpoints are open."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "string",
+        "description": "Plain text error message"
+      },
+      "Summary": {
+        "type": "object",
+        "properties": {
+          "snapshotVersion": { "type": "string" },
+          "generatedAt": { "type": "string", "format": "date-time" },
+          "listenerCount": { "type": "integer" },
+          "httpRouteCount": { "type": "integer" },
+          "grpcRouteCount": { "type": "integer" },
+          "streamRouteCount": { "type": "integer" },
+          "routeCount": { "type": "integer" },
+          "backendCount": { "type": "integer" },
+          "secretCount": { "type": "integer" },
+          "nodeCount": { "type": "integer" },
+          "connectedNodeCount": { "type": "integer" },
+          "readyNodeCount": { "type": "integer" },
+          "currentVersionNodeCount": { "type": "integer" },
+          "currentVersionReadyCount": { "type": "integer" },
+          "driftedNodeCount": { "type": "integer" },
+          "readyListenerCount": { "type": "integer" },
+          "warningListenerCount": { "type": "integer" },
+          "failedListenerCount": { "type": "integer" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "SnapshotSync": {
+        "type": "object",
+        "properties": {
+          "snapshotVersion": { "type": "string" },
+          "generatedAt": { "type": "string", "format": "date-time" },
+          "readiness": { "type": "string", "enum": ["ready", "not-ready"] },
+          "connectedNodeCount": { "type": "integer" },
+          "currentVersionNodeCount": { "type": "integer" },
+          "currentVersionReadyCount": { "type": "integer" },
+          "driftedNodeCount": { "type": "integer" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Listener": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "namespace": { "type": "string" },
+          "hostnames": { "type": "array", "items": { "type": "string" } },
+          "protocol": { "type": "string" },
+          "port": { "type": "integer" },
+          "address": { "type": "string" },
+          "addresses": { "type": "array", "items": { "type": "string" } },
+          "attachedRoutes": { "type": "array", "items": { "type": "string" } },
+          "conditions": { "type": "array" },
+          "metadata": { "type": "object" }
+        }
+      },
+      "RouteList": {
+        "type": "object",
+        "properties": {
+          "http": { "type": "array", "items": { "$ref": "#/components/schemas/HTTPRoute" } },
+          "grpc": { "type": "array", "items": { "$ref": "#/components/schemas/GRPCRoute" } },
+          "stream": { "type": "array", "items": { "$ref": "#/components/schemas/StreamRoute" } }
+        }
+      },
+      "HTTPRoute": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "namespace": { "type": "string" },
+          "hostnames": { "type": "array", "items": { "type": "string" } },
+          "parentRefs": { "type": "array" },
+          "rules": { "type": "array" }
+        }
+      },
+      "GRPCRoute": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "namespace": { "type": "string" },
+          "hostnames": { "type": "array", "items": { "type": "string" } },
+          "parentRefs": { "type": "array" },
+          "rules": { "type": "array" }
+        }
+      },
+      "StreamRoute": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "namespace": { "type": "string" },
+          "parentRefs": { "type": "array" },
+          "rules": { "type": "array" }
+        }
+      },
+      "BackendCluster": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "namespace": { "type": "string" },
+          "endpoints": { "type": "array" },
+          "metadata": { "type": "object" }
+        }
+      },
+      "NodeStatus": {
+        "type": "object",
+        "properties": {
+          "nodeId": { "type": "string" },
+          "connected": { "type": "boolean" },
+          "ready": { "type": "boolean" },
+          "lastAckVersion": { "type": "string" },
+          "lastSeen": { "type": "string", "format": "date-time" },
+          "version": { "type": "string" },
+          "rejectsVersion": { "type": "string" }
+        }
+      },
+      "InfrastructureReport": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "state": { "type": "string" },
+                "role": { "type": "string" },
+                "kind": { "type": "string" },
+                "namespace": { "type": "string" },
+                "name": { "type": "string" },
+                "message": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "ServiceCatalogEntry": {
+        "type": "object",
+        "properties": {
+          "namespace": { "type": "string" },
+          "name": { "type": "string" },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "port": { "type": "integer" },
+                "protocol": { "type": "string" },
+                "targetPort": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "ResourceKindDescriptor": {
+        "type": "object",
+        "properties": {
+          "kind": { "type": "string" },
+          "apiVersion": { "type": "string" },
+          "category": { "type": "string" },
+          "description": { "type": "string" },
+          "namespaced": { "type": "boolean" },
+          "available": { "type": "boolean" },
+          "availabilityMessage": { "type": "string" }
+        }
+      },
+      "ManagedResource": {
+        "type": "object",
+        "properties": {
+          "apiVersion": { "type": "string" },
+          "kind": { "type": "string" },
+          "namespace": { "type": "string" },
+          "name": { "type": "string" },
+          "uid": { "type": "string" },
+          "generation": { "type": "integer" },
+          "creationTimestamp": { "type": "string", "format": "date-time" },
+          "labels": { "type": "object" },
+          "annotations": { "type": "object" },
+          "resource": { "type": "object", "description": "Raw Kubernetes resource as JSON" }
+        }
+      },
+      "TopologyResponse": {
+        "type": "object",
+        "properties": {
+          "snapshotVersion": { "type": "string" },
+          "generatedAt": { "type": "string", "format": "date-time" },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "listenerCount": { "type": "integer" },
+              "routeCount": { "type": "integer" },
+              "backendCount": { "type": "integer" },
+              "nodeCount": { "type": "integer" },
+              "healthyEdges": { "type": "integer" }
+            }
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "type": { "type": "string" },
+                "label": { "type": "string" },
+                "namespace": { "type": "string" },
+                "name": { "type": "string" },
+                "status": { "type": "string" },
+                "detail": { "type": "string" },
+                "metadata": { "type": "object" }
+              }
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": { "type": "string" },
+                "target": { "type": "string" },
+                "label": { "type": "string" },
+                "status": { "type": "string" }
+              }
+            }
+          },
+          "warnings": { "type": "array", "items": { "type": "string" } },
+          "metadata": { "type": "object" }
+        }
+      },
+      "DataplaneList": {
+        "type": "object",
+        "properties": {
+          "dataplanes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nodeId": { "type": "string" },
+                "url": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "ChatbotConfig": {
+        "type": "object",
+        "properties": {
+          "configured": { "type": "boolean" },
+          "provider": { "type": "string" },
+          "apiEndpoint": { "type": "string" },
+          "apiKey": { "type": "string", "description": "Masked (e.g. sk-••••3xyz)" },
+          "model": { "type": "string" },
+          "temperature": { "type": "number" }
+        }
+      },
+      "ChatbotConfigRequest": {
+        "type": "object",
+        "properties": {
+          "provider": { "type": "string" },
+          "apiEndpoint": { "type": "string" },
+          "apiKey": { "type": "string", "description": "Send masked value (••••) to preserve existing key" },
+          "model": { "type": "string" },
+          "temperature": { "type": "number" }
+        }
+      },
+      "MetricsConfig": {
+        "type": "object",
+        "properties": {
+          "prometheusUrl": { "type": "string" }
+        }
+      },
+      "MetricsQueryRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "description": "PromQL query" },
+          "start": { "type": "string", "description": "Range query start (RFC3339)" },
+          "end": { "type": "string", "description": "Range query end (RFC3339)" },
+          "step": { "type": "string", "description": "Range query step (e.g. 15s)" }
+        }
+      },
+      "AIOverview": {
+        "type": "object",
+        "properties": {
+          "totalServices": { "type": "integer" },
+          "totalTokens": { "type": "integer" },
+          "totalRequests": { "type": "integer" },
+          "averageLatency": { "type": "number" },
+          "activeModels": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "AIServiceSummary": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "namespace": { "type": "string" },
+          "provider": { "type": "string" },
+          "format": { "type": "string" },
+          "model": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      },
+      "AICostSummary": {
+        "type": "object",
+        "properties": {
+          "totalCost": { "type": "number" },
+          "todayCost": { "type": "number" },
+          "monthCost": { "type": "number" },
+          "byModel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "model": { "type": "string" },
+                "inputTokens": { "type": "integer" },
+                "outputTokens": { "type": "integer" },
+                "cost": { "type": "number" },
+                "requests": { "type": "integer" }
+              }
+            }
+          },
+          "trend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string" },
+                "cost": { "type": "number" },
+                "model": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "namespace": {
+        "name": "namespace",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "name": {
+        "name": "name",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "sort": {
+        "name": "sort",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "order": {
+        "name": "order",
+        "in": "query",
+        "schema": { "type": "string", "enum": ["asc", "desc"] }
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "schema": { "type": "integer", "minimum": 0 }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": { "type": "integer", "minimum": 1 }
+      },
+      "kind": {
+        "name": "kind",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "hostname": {
+        "name": "hostname",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "protocol": {
+        "name": "protocol",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "attachedRoute": {
+        "name": "attachedRoute",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "state": {
+        "name": "state",
+        "in": "query",
+        "schema": { "type": "string" }
+      },
+      "role": {
+        "name": "role",
+        "in": "query",
+        "schema": { "type": "string" }
+      }
+    }
+  },
+  "paths": {
+    "/livez": {
+      "get": {
+        "summary": "Liveness probe",
+        "security": [],
+        "responses": {
+          "200": { "description": "ok", "content": { "text/plain": { "schema": { "type": "string", "example": "ok" } } } }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "summary": "Readiness probe",
+        "security": [],
+        "responses": {
+          "200": { "description": "ready", "content": { "text/plain": { "schema": { "type": "string", "example": "ready" } } } },
+          "503": { "description": "Not ready", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/summary": {
+      "get": {
+        "summary": "Get cluster overview summary",
+        "responses": {
+          "200": { "description": "Summary", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Summary" } } } }
+        }
+      }
+    },
+    "/v1/snapshot-sync": {
+      "get": {
+        "summary": "Get snapshot sync status",
+        "responses": {
+          "200": { "description": "Sync status", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SnapshotSync" } } } }
+        }
+      }
+    },
+    "/v1/snapshot": {
+      "get": {
+        "summary": "Get current IR snapshot",
+        "responses": {
+          "200": { "description": "Current snapshot", "content": { "application/json": { "schema": { "type": "object" } } } }
+        }
+      }
+    },
+    "/v1/listeners": {
+      "get": {
+        "summary": "List listeners",
+        "parameters": [
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/hostname" },
+          { "$ref": "#/components/parameters/protocol" },
+          { "$ref": "#/components/parameters/attachedRoute" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Listeners", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Listener" } } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/listeners/{name}": {
+      "get": {
+        "summary": "Get listener detail",
+        "parameters": [
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Listener", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Listener" } } } },
+          "404": { "description": "Not found", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/routes": {
+      "get": {
+        "summary": "List routes (HTTP, gRPC, Stream)",
+        "parameters": [
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/namespace" },
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/hostname" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Routes grouped by type", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RouteList" } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/routes/{kind}/{namespace}/{name}": {
+      "get": {
+        "summary": "Get route detail",
+        "parameters": [
+          { "name": "kind", "in": "path", "required": true, "schema": { "type": "string", "enum": ["HTTPRoute", "GRPCRoute", "StreamRoute"] } },
+          { "name": "namespace", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Route detail" },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Not found", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/backends": {
+      "get": {
+        "summary": "List backend clusters",
+        "parameters": [
+          { "$ref": "#/components/parameters/namespace" },
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Backends", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BackendCluster" } } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/backends/{namespace}/{name}": {
+      "get": {
+        "summary": "Get backend detail",
+        "parameters": [
+          { "name": "namespace", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Backend", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BackendCluster" } } } },
+          "404": { "description": "Not found", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/nodes": {
+      "get": {
+        "summary": "List dataplane nodes",
+        "parameters": [
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Nodes", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/NodeStatus" } } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/nodes/{nodeId}": {
+      "get": {
+        "summary": "Get node detail",
+        "parameters": [
+          { "name": "nodeId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Node", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NodeStatus" } } } },
+          "404": { "description": "Not found", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/infrastructure": {
+      "get": {
+        "summary": "Get infrastructure inspection report",
+        "parameters": [
+          { "$ref": "#/components/parameters/state" },
+          { "$ref": "#/components/parameters/role" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/namespace" },
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Infrastructure report", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InfrastructureReport" } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/service-catalog": {
+      "get": {
+        "summary": "List Kubernetes services",
+        "parameters": [
+          { "$ref": "#/components/parameters/namespace" },
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/protocol" },
+          { "name": "port", "in": "query", "schema": { "type": "integer" } },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Services", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ServiceCatalogEntry" } } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/namespaces": {
+      "get": {
+        "summary": "List Kubernetes namespaces",
+        "responses": {
+          "200": { "description": "Namespaces", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "string" } } } } }
+        }
+      }
+    },
+    "/v1/resource-kinds": {
+      "get": {
+        "summary": "List supported Kubernetes resource kinds",
+        "responses": {
+          "200": { "description": "Resource kinds", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ResourceKindDescriptor" } } } } }
+        }
+      }
+    },
+    "/v1/resources": {
+      "get": {
+        "summary": "List Kubernetes resources",
+        "parameters": [
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/namespace" },
+          { "$ref": "#/components/parameters/name" },
+          { "$ref": "#/components/parameters/offset" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Resources", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ManagedResource" } } } } },
+          "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "summary": "Create a Kubernetes resource",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/yaml": {},
+            "application/json": {}
+          },
+          "description": "Kubernetes resource in YAML or JSON format"
+        },
+        "responses": {
+          "200": { "description": "Created resource", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManagedResource" } } } },
+          "400": { "description": "Invalid request", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "413": { "description": "Payload too large", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/resources/{kind}/{namespace}/{name}": {
+      "get": {
+        "summary": "Get a Kubernetes resource",
+        "parameters": [
+          { "name": "kind", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "namespace", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Resource", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManagedResource" } } } },
+          "404": { "description": "Not found", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "summary": "Update a Kubernetes resource",
+        "parameters": [
+          { "name": "kind", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "namespace", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/yaml": {},
+            "application/json": {}
+          },
+          "description": "Updated Kubernetes resource in YAML or JSON format"
+        },
+        "responses": {
+          "200": { "description": "Updated resource", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ManagedResource" } } } },
+          "400": { "description": "Invalid request", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "413": { "description": "Payload too large", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "summary": "Delete a Kubernetes resource",
+        "parameters": [
+          { "name": "kind", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "namespace", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Deleted" },
+          "404": { "description": "Not found", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/topology": {
+      "get": {
+        "summary": "Get gateway topology graph",
+        "responses": {
+          "200": { "description": "Topology", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TopologyResponse" } } } }
+        }
+      }
+    },
+    "/v1/dataplanes": {
+      "get": {
+        "summary": "List discovered dataplane admin endpoints",
+        "responses": {
+          "200": { "description": "Dataplanes", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DataplaneList" } } } },
+          "503": { "description": "Discovery not configured", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/dataplanes/{nodeId}/summary": {
+      "get": {
+        "summary": "Get dataplane summary (proxied from dataplane admin API)",
+        "parameters": [
+          { "name": "nodeId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Dataplane summary", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "400": { "description": "Missing nodeId", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Node not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "503": { "description": "Aggregation not configured", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/chatbot/config": {
+      "get": {
+        "summary": "Get chatbot LLM configuration",
+        "responses": {
+          "200": { "description": "Chatbot config (API key masked)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChatbotConfig" } } } }
+        }
+      },
+      "put": {
+        "summary": "Update chatbot LLM configuration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChatbotConfigRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated config", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChatbotConfig" } } } },
+          "400": { "description": "Invalid request", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/metrics/config": {
+      "get": {
+        "summary": "Get Prometheus metrics configuration",
+        "responses": {
+          "200": { "description": "Metrics config", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MetricsConfig" } } } }
+        }
+      },
+      "put": {
+        "summary": "Update Prometheus metrics configuration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MetricsConfig" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated config", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MetricsConfig" } } } },
+          "400": { "description": "Invalid request", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/metrics/query": {
+      "post": {
+        "summary": "Execute a PromQL query",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MetricsQueryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Prometheus query result" },
+          "400": { "description": "Invalid request", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/ai/overview": {
+      "get": {
+        "summary": "Get AI gateway overview",
+        "responses": {
+          "200": { "description": "AI overview", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AIOverview" } } } }
+        }
+      }
+    },
+    "/v1/ai/services": {
+      "get": {
+        "summary": "List AI services",
+        "responses": {
+          "200": { "description": "AI services", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AIServiceSummary" } } } } }
+        }
+      }
+    },
+    "/v1/ai/token-usage": {
+      "get": {
+        "summary": "Get AI token usage data",
+        "responses": {
+          "200": { "description": "Token usage", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } } }
+        }
+      }
+    },
+    "/v1/ai/traces": {
+      "get": {
+        "summary": "Get AI trace data",
+        "responses": {
+          "200": { "description": "Traces", "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } } }
+        }
+      }
+    },
+    "/v1/ai/costs": {
+      "get": {
+        "summary": "Get AI cost summary",
+        "responses": {
+          "200": { "description": "Cost summary", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AICostSummary" } } } }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "surfaces": [
+    {
+      "name": "controlplane-admin",
+      "displayName": "Controlplane Admin API",
+      "basePath": "/",
+      "defaultAuth": "bearer-when-configured",
+      "stability": "stable-v1",
+      "versionPolicy": "additive-compatible",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/livez",
+          "auth": "none",
+          "contentType": "text/plain"
+        },
+        {
+          "method": "GET",
+          "path": "/readyz",
+          "auth": "none",
+          "contentType": "text/plain"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/summary",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/snapshot-sync",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/snapshot",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/listeners",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/listeners/{name}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/routes",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/routes/{kind}/{namespace}/{name}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/backends",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/backends/{namespace}/{name}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/nodes",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/nodes/{nodeId}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/infrastructure",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/service-catalog",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/namespaces",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/resource-kinds",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/resources",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/resources",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/resources/{kind}/{namespace}/{name}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/resources/{kind}/{namespace}/{name}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "DELETE",
+          "path": "/v1/resources/{kind}/{namespace}/{name}",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/topology",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/dataplanes",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/dataplanes/{nodeId}/summary",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/chatbot/config",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/chatbot/config",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/chatbot/chat",
+          "auth": "bearer-when-configured",
+          "contentType": "text/event-stream"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/metrics/config",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/metrics/config",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/metrics/query",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "POST",
+          "path": "/v1/metrics/query_range",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/ai/overview",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/ai/services",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/ai/token-usage",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/ai/traces",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
+          "path": "/v1/ai/cost",
+          "auth": "bearer-when-configured",
+          "contentType": "application/json"
+        }
+      ]
+    }
+  ]
+}

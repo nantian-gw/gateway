@@ -1,0 +1,86 @@
+grpcAddr: ":18080"
+adminAddr: ":18081"
+metricsAddr: ":18082"
+healthProbeAddr: ":18083"
+controllerName: "gateway.networking.k8s.io/nantian-gw"
+statusAddress: "127.0.0.1"
+namespace: "nantian-gw"
+# statusAddresses:
+#   - "192.0.2.10"
+#   - "gw.example.com"
+syncPeriod: 30s
+syncSettleDelay: 200ms
+reconcilerRunner:
+  settleDelay: "300ms"
+  retryBackoff: "1s"
+nodeStatus:
+  leasePrefix: "aeg-node"
+  persistTimeout: "2s"
+  persistDebounce: "250ms"
+adminReadiness:
+  mode: "snapshot"
+adminLimits:
+  maxRequestBodyBytes: 2097152
+  maxResponseBodyBytes: 8388608
+adminRuntime:
+  readHeaderTimeout: "5s"
+  readTimeout: "30s"
+  writeTimeout: "30s"
+  idleTimeout: "2m"
+  dataplaneAggregation:
+    serviceName: "nantian-dataplane-admin"
+    namespace: "nantian-gw"
+    portName: "admin"
+    timeout: "2s"
+    bearerTokenFile: ""
+translatorLimits:
+  maxInputObjects: 0
+  maxSnapshotObjects: 0
+  maxSnapshotEndpoints: 0
+nodeDrift:
+  warningThreshold: "15s"
+log:
+  level: "info"
+  format: "json"
+  addSource: false
+leaderElection:
+  enabled: true
+  id: "nantian-controlplane-leader"
+  leaseDuration: "15s"
+  renewDeadline: "10s"
+  retryPeriod: "2s"
+adminAuth:
+  bearerToken: ""
+  bearerTokenFile: ""
+dashboardApi:
+  enabled: true
+  basePath: "/api/dashboard"
+  dataplaneAdminUrl: "http://nantian-dataplane-admin.nantian-gw.svc.cluster.local:19080"
+  requestTimeout: "5s"
+  resourceMutationsEnabled: true
+pprof:
+  enabled: false
+  addr: "127.0.0.1:6060"
+adminTLS:
+  enabled: false
+  certPath: ""
+  keyPath: ""
+grpcTLS:
+  enabled: false
+  certPath: ""
+  keyPath: ""
+  clientCAPath: ""
+  requireClientCert: false
+grpcRuntime:
+  keepaliveTime: "30s"
+  keepaliveTimeout: "10s"
+  minPingInterval: "15s"
+  maxConnectionIdle: "2m"
+  maxConnectionAge: "30m"
+  maxConnectionAgeGrace: "30s"
+  snapshotSendTimeout: "5s"
+  snapshotAckTimeout: "30s"
+  permitWithoutStream: false
+features:
+  enableExperimentalGateway: false
+  enableAiGateway: false

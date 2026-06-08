@@ -1,0 +1,70 @@
+name: Question
+description: Ask about usage, development, debugging, or troubleshooting.
+title: "[Question] "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write in English or Chinese.
+
+        For ownership and review routing, see `CODEOWNERS` and `MAINTAINERS.md`.
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - how to build
+        - how to test
+        - how to run locally
+        - kind / deploy
+        - admin API
+        - architecture / design
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      placeholder: Explain what you are trying to do, where you are blocked, and what you already tried.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      placeholder: |
+        - Commands run:
+        - Docs checked:
+        - Environment:
+        - Error output:
+      render: text
+
+  - type: textarea
+    id: docs_checked
+    attributes:
+      label: Docs Or Proposals Checked
+      description: List the docs, runbooks, or proposals you already checked.
+      placeholder: |
+        - README.md
+        - docs/development.md
+        - docs/user/getting-started.md
+        - docs/user/compatibility-notes.md
+        - docs/proposals/...
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked README, docs/development.md, or docs/user/getting-started.md first.
+          required: true
+        - label: If my question is about upgrade, release, or compatibility expectations, I also checked `docs/user/compatibility-notes.md` or `VERSIONING.md`.
+          required: false
+        - label: I provided enough context for others to understand the question.
+          required: true

@@ -1,0 +1,26 @@
+[
+  {
+    "op": "add",
+    "path": "/spec/ingress/-",
+    "value": {
+      "from": [
+        {
+          "ipBlock": {
+            "cidr": "0.0.0.0/0"
+          }
+        },
+        {
+          "ipBlock": {
+            "cidr": "::/0"
+          }
+        }
+      ],
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 18080
+        }
+      ]
+    }
+  }
+]

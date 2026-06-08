@@ -1,0 +1,62 @@
+name: Conformance
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gateway-api:
+    name: Gateway API Conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Create kind cluster
+        run: |
+          kind create cluster --name conformance --wait 5m
+          kubectl wait --for=condition=ready node --all --timeout=2m
+
+      - name: Install Gateway API CRDs
+        run: |
+          for i in 1 2 3; do
+            kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml && break
+            echo "Retry $i in 10s..."
+            sleep 10
+          done
+          kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
+
+      - name: Deploy nantian-gw
+        run: |
+          kubectl apply -k deploy/kubernetes/overlays/kind-conformance
+          kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=300s
+
+      - name: Record image versions
+        run: |
+          echo "=== Images under test ==="
+          kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .spec.containers[] | "  \(.name): \(.image)"'
+          echo "=== Image digests ==="
+          kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .status.containerStatuses[] | "  \(.name): \(.imageID)"'
+
+      - name: Run conformance tests
+        run: |
+          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          kubectl describe pods -n nantian-gw
+          kubectl logs -n nantian-gw --all-containers --tail=200 || true
+
+      - name: Cleanup
+        if: always()
+        run: kind delete cluster --name conformance

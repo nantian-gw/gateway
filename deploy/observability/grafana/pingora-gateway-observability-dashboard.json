@@ -1,0 +1,2067 @@
+{
+  "uid": "nantian-gw-obsv",
+  "title": "Nantian Gateway",
+  "schemaVersion": 39,
+  "tags": [
+    "controlplane",
+    "dataplane",
+    "grafana",
+    "observability",
+    "nantian-gw",
+    "prometheus"
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "label": "Prometheus",
+        "query": {
+          "query": "prometheus",
+          "refId": "StandardVariableQuery"
+        },
+        "regex": "",
+        "refresh": 1
+      },
+      {
+        "name": "namespace",
+        "type": "query",
+        "label": "Namespace",
+        "query": {
+          "query": "label_values(nantian_gateway_dataplane_ready, namespace)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "current": {
+          "text": "nantian-gw",
+          "value": "nantian-gw"
+        },
+        "definition": "label_values(nantian_gateway_dataplane_ready, namespace)"
+      },
+      {
+        "name": "pod_dp",
+        "type": "query",
+        "label": "Dataplane Pod",
+        "query": {
+          "query": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "definition": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)"
+      },
+      {
+        "name": "job_controlplane",
+        "type": "query",
+        "label": "Control Plane Job",
+        "query": {
+          "query": "label_values(nantian_gateway_controlplane_admin_requests_total, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "instance_cp",
+        "type": "query",
+        "label": "CP Instance",
+        "query": {
+          "query": "label_values(nantian_gateway_controlplane_admin_requests_total{job=~\"$job_controlplane\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "job_dataplane",
+        "type": "query",
+        "label": "Data Plane Job",
+        "query": {
+          "query": "label_values(nantian_gateway_dataplane_admin_requests_total, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "instance_dp",
+        "type": "query",
+        "label": "DP Instance",
+        "query": {
+          "query": "label_values(nantian_gateway_dataplane_admin_requests_total{job=~\"$job_dataplane\"}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "panels": [],
+      "title": "Executive Overview",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(count(nantian_gateway_dataplane_ready))",
+          "refId": "A"
+        }
+      ],
+      "title": "Ready Pods",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "mean"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "QPS",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "mean"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_response_flags_total{flag=\"none\"}[5m]) / sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m])) * 100)",
+          "refId": "A"
+        }
+      ],
+      "title": "Success Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "mean"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le)))",
+          "refId": "A"
+        }
+      ],
+      "title": "P99 Latency",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 9
+      },
+      "id": 5,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "mean"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[5m]) / sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m])) * 100)",
+          "refId": "A"
+        }
+      ],
+      "title": "5xx Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 9
+      },
+      "id": 6,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(histogram_quantile(0.95, rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m])))",
+          "refId": "A"
+        }
+      ],
+      "title": "xDS ACK p95",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 9
+      },
+      "id": 7,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Throttle",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 9
+      },
+      "id": 8,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Working Set",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Traffic SLO",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_request_events_total[5m]))",
+          "legendFormat": "requests",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[5m]))",
+          "legendFormat": "5xx",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_events_total[5m]))",
+          "legendFormat": "total events",
+          "refId": "D"
+        }
+      ],
+      "title": "Request Rate & 5xx",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 22,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_2xx_total[5m]))",
+          "legendFormat": "2xx",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_3xx_total[5m]))",
+          "legendFormat": "3xx",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_4xx_total[5m]))",
+          "legendFormat": "4xx",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[5m]))",
+          "legendFormat": "5xx",
+          "refId": "D"
+        }
+      ],
+      "title": "Status Code Distribution",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 23,
+      "options": {},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
+          "legendFormat": "p90",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[5m])) by (le))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "title": "Latency Percentiles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 24,
+      "options": {},
+      "targets": [
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_bytes_received_total[5m])",
+          "legendFormat": "received",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_bytes_sent_total[5m])",
+          "legendFormat": "sent",
+          "refId": "B"
+        }
+      ],
+      "title": "Bytes Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "id": 25,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_response_flags_total[5m])) by (flag)",
+          "legendFormat": "{{flag}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Response Flags",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 34
+      },
+      "id": 26,
+      "options": {},
+      "targets": [
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_pool_hits_total[5m])",
+          "legendFormat": "hits",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_pool_misses_total[5m])",
+          "legendFormat": "misses",
+          "refId": "B"
+        }
+      ],
+      "title": "Upstream Pool",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "id": 27,
+      "options": {},
+      "targets": [
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_retried_events_total[5m])",
+          "legendFormat": "retried",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_retried_success_events_total[5m])",
+          "legendFormat": "success",
+          "refId": "B"
+        }
+      ],
+      "title": "Retry Events",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 42
+      },
+      "id": 28,
+      "options": {},
+      "targets": [
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_peer_build_failures_total[5m])",
+          "legendFormat": "peer build",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nantian_gateway_dataplane_traffic_upstream_tls_handshake_failures_total[5m])",
+          "legendFormat": "TLS handshake",
+          "refId": "B"
+        }
+      ],
+      "title": "Upstream Failures",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "id": 30,
+      "panels": [],
+      "title": "Dataplane Runtime",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 51
+      },
+      "id": 31,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_traffic_upstream_pool_hit_ratio)",
+          "refId": "A"
+        }
+      ],
+      "title": "Pool Hit Ratio",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 51
+      },
+      "id": 32,
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_average)",
+          "legendFormat": "avg",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_max)",
+          "legendFormat": "max",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_upstream_connect_latency_ms_bucket[5m])) by (le))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ],
+      "title": "Upstream Connect Avg",
+      "type": "timeseries",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        }
+      }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 51
+      },
+      "id": 33,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_traffic_failover_success_rate)",
+          "refId": "A"
+        }
+      ],
+      "title": "Failover Success Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 51
+      },
+      "id": 34,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_endpoint_runtime_tracked_current)",
+          "refId": "A"
+        }
+      ],
+      "title": "Endpoints Tracked",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "id": 35,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_dataplane_xds_snapshots_applied_total",
+          "legendFormat": "accepted",
+          "refId": "A"
+        },
+        {
+          "expr": "nantian_gateway_dataplane_current_snapshot_rejected",
+          "legendFormat": "rejected",
+          "refId": "B"
+        }
+      ],
+      "title": "Runtime States",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 59
+      },
+      "id": 36,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_runtime_http_listener_reload_failures_total[5m]))",
+          "legendFormat": "HTTP",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_runtime_stream_listener_reload_failures_total[5m]))",
+          "legendFormat": "Stream",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_runtime_tls_listener_reload_failures_total[5m]))",
+          "legendFormat": "TLS",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_runtime_tls_current_rejected)",
+          "legendFormat": "TLS rejected",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_runtime_tls_current_failure_count)",
+          "legendFormat": "TLS failures",
+          "refId": "E"
+        }
+      ],
+      "title": "Listener Reloads",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 67
+      },
+      "id": 37,
+      "options": {},
+      "targets": [
+        {
+          "expr": "rate(nantian_gateway_dataplane_http_circuit_breaker_rejected_total[5m])",
+          "legendFormat": "rejected",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nantian_gateway_dataplane_http_circuit_breaker_rejected_backend_total[5m])",
+          "legendFormat": "per backend",
+          "refId": "B"
+        }
+      ],
+      "title": "Circuit Breaker",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 67
+      },
+      "id": 38,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum by (pod) (rate(nantian_gateway_dataplane_http_overload_rejected_total[5m]))",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Overload Rejections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 75
+      },
+      "id": 39,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum by (pod) (rate(nantian_gateway_dataplane_http_rate_limit_rejected_total[5m]))",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Rate Limiting Rejections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 75
+      },
+      "id": 48,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_http_rate_limit_global_available_tokens)",
+          "legendFormat": "global tokens",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_http_rate_limit_global_burst)",
+          "legendFormat": "burst cap",
+          "refId": "B"
+        }
+      ],
+      "title": "Rate Limiting Tokens",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 83
+      },
+      "id": 41,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_listener_attention_required_count)",
+          "legendFormat": "attention",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_listener_has_ever_failed_count)",
+          "legendFormat": "ever failed",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_listener_recovered_from_failure_count)",
+          "legendFormat": "recovered",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_listener_attention_tls_count)",
+          "legendFormat": "TLS attention",
+          "refId": "D"
+        }
+      ],
+      "title": "Listener Attention",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 83
+      },
+      "id": 42,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_dataplane_endpoint_active_unhealthy_current",
+          "legendFormat": "unhealthy",
+          "refId": "A"
+        },
+        {
+          "expr": "nantian_gateway_dataplane_endpoint_passive_ejected_current",
+          "legendFormat": "ejected",
+          "refId": "B"
+        }
+      ],
+      "title": "Endpoint Health",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 91
+      },
+      "id": 40,
+      "panels": [],
+      "title": "Resource Pressure",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 92
+      },
+      "id": 43,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_dataplane_container_cpu_cores{namespace=~\"$namespace\"} or rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m])",
+          "legendFormat": "cores",
+          "refId": "A"
+        },
+        {
+          "expr": "nantian_gateway_dataplane_container_cpu_request_cores{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"cpu\"})",
+          "legendFormat": "request",
+          "refId": "B"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 92
+      },
+      "id": 44,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m])",
+          "legendFormat": "throttle",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Throttle Ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 100
+      },
+      "id": 45,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum by (pod) (nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"})",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        },
+        {
+          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_limit_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"memory\"}))",
+          "legendFormat": "limit",
+          "refId": "B"
+        },
+        {
+          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_request_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"memory\"}))",
+          "legendFormat": "request",
+          "refId": "C"
+        }
+      ],
+      "title": "Memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 100
+      },
+      "id": 46,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_tcp_global_connections_current)",
+          "legendFormat": "TCP",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_udp_global_datagrams_current)",
+          "legendFormat": "UDP",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_http_global_inflight_current)",
+          "legendFormat": "HTTP inflight",
+          "refId": "C"
+        }
+      ],
+      "title": "Connection Overview",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 108
+      },
+      "id": 47,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_dataplane_udp_sessions_active_current",
+          "legendFormat": "active",
+          "refId": "A"
+        },
+        {
+          "expr": "nantian_gateway_dataplane_udp_session_queue_depth_current",
+          "legendFormat": "queue depth",
+          "refId": "B"
+        }
+      ],
+      "title": "UDP Sessions",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 116
+      },
+      "id": 50,
+      "panels": [],
+      "title": "Controlplane",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 117
+      },
+      "id": 51,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_snapshot_builds_total[5m]))",
+          "legendFormat": "builds",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_snapshot_build_failures_total[5m]))",
+          "legendFormat": "failures",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_snapshot_published_total[5m]))",
+          "legendFormat": "published",
+          "refId": "C"
+        }
+      ],
+      "title": "Snapshot Builds",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 117
+      },
+      "id": 52,
+      "options": {},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(nantian_gateway_snapshot_build_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(nantian_gateway_snapshot_build_duration_seconds_bucket[5m]))",
+          "legendFormat": "p50",
+          "refId": "B"
+        }
+      ],
+      "title": "Build Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 125
+      },
+      "id": 53,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_snapshot_last_build_success",
+          "legendFormat": "build OK",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(nantian_gateway_controlplane_xds_stream_terminations_total[5m])",
+          "legendFormat": "{{reason}}",
+          "refId": "B"
+        }
+      ],
+      "title": "xDS Stream Health",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 125
+      },
+      "id": 54,
+      "options": {},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m]))",
+          "legendFormat": "ACK p99",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(nantian_gateway_controlplane_xds_publish_nack_lag_seconds_bucket[5m]))",
+          "legendFormat": "NACK p99",
+          "refId": "B"
+        }
+      ],
+      "title": "xDS ACK/NACK Lag",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 133
+      },
+      "id": 55,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_xds_snapshot_send_timeouts_total[5m]))",
+          "legendFormat": "send timeout",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_xds_snapshot_ack_timeouts_total[5m]))",
+          "legendFormat": "ack timeout",
+          "refId": "B"
+        },
+        {
+          "expr": "sum by (reason) (rate(nantian_gateway_controlplane_xds_status_report_rejections_total[5m]))",
+          "legendFormat": "{{reason}}",
+          "refId": "C"
+        }
+      ],
+      "title": "xDS Send & Status",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 133
+      },
+      "id": 56,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_node_status_persist_immediate_total[5m]))",
+          "legendFormat": "immediate",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_node_status_persist_debounced_total[5m]))",
+          "legendFormat": "debounced",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_node_status_persist_dropped_total[5m]))",
+          "legendFormat": "dropped",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(nantian_gateway_controlplane_node_status_persist_queue_depth)",
+          "legendFormat": "queue depth",
+          "refId": "D"
+        }
+      ],
+      "title": "Node Status Persist",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 141
+      },
+      "id": 57,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_runs_total[5m]))",
+          "legendFormat": "runs",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_failures_total[5m]))",
+          "legendFormat": "failures",
+          "refId": "B"
+        },
+        {
+          "expr": "max(nantian_gateway_controlplane_reconciler_runner_last_run_success)",
+          "legendFormat": "last run OK",
+          "refId": "C"
+        }
+      ],
+      "title": "Reconciler Runner",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 141
+      },
+      "id": 58,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_triggers_enqueued_total[5m]))",
+          "legendFormat": "enqueued",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_reconciler_runner_triggers_settled_total[5m]))",
+          "legendFormat": "settled",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(nantian_gateway_controlplane_reconciler_runner_queue_depth)",
+          "legendFormat": "queue depth",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(nantian_gateway_controlplane_reconciler_runner_retry_pending)",
+          "legendFormat": "retry pending",
+          "refId": "D"
+        }
+      ],
+      "title": "Reconciler Queue",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 149
+      },
+      "id": 59,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(rate(nantian_gateway_controlplane_admin_requests_total[5m])) by (route)",
+          "legendFormat": "CP {{route}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(nantian_gateway_dataplane_admin_requests_total[5m])) by (route)",
+          "legendFormat": "DP {{route}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Admin API Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 149
+      },
+      "id": 11,
+      "options": {},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_controlplane_admin_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "CP p99",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_admin_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "DP p99",
+          "refId": "B"
+        }
+      ],
+      "title": "Admin API Latency p99",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 149
+      },
+      "id": 12,
+      "options": {},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_admin_request_duration_seconds_bucket[5m])) by (le, route))",
+          "legendFormat": "{{route}} p99",
+          "refId": "A"
+        }
+      ],
+      "title": "Dataplane Admin API Health",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 166
+      },
+      "id": 66,
+      "options": {},
+      "targets": [
+        {
+          "expr": "process_cpu_seconds_total",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        },
+        {
+          "expr": "process_resident_memory_bytes",
+          "legendFormat": "{{instance}} RSS",
+          "refId": "B"
+        },
+        {
+          "expr": "process_open_fds",
+          "legendFormat": "{{instance}} FDs",
+          "refId": "C"
+        },
+        {
+          "expr": "process_threads",
+          "legendFormat": "{{instance}} threads",
+          "refId": "D"
+        }
+      ],
+      "title": "Process Health",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 166
+      },
+      "id": 67,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_controlplane_gateway_convergence_stage_current",
+          "legendFormat": "{{gateway}} {{stage}}",
+          "refId": "A"
+        },
+        {
+          "expr": "nantian_gateway_controlplane_gateway_convergence_generation_lag",
+          "legendFormat": "{{gateway}} lag",
+          "refId": "B"
+        },
+        {
+          "expr": "nantian_gateway_controlplane_gateway_programmed_pending_total",
+          "legendFormat": "{{gateway}} pending",
+          "refId": "C"
+        }
+      ],
+      "title": "Gateway Convergence",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 165
+      },
+      "id": 60,
+      "panels": [],
+      "title": "Inventory / Debug",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 182
+      },
+      "id": 13,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_listener_count)",
+          "legendFormat": "listeners",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_http_route_count)",
+          "legendFormat": "HTTP routes",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_grpc_route_count)",
+          "legendFormat": "gRPC routes",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_stream_route_count)",
+          "legendFormat": "stream routes",
+          "refId": "D"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_backend_count)",
+          "legendFormat": "backends",
+          "refId": "E"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_secret_count)",
+          "legendFormat": "secrets",
+          "refId": "F"
+        }
+      ],
+      "title": "Resource Inventory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 182
+      },
+      "id": 62,
+      "options": {},
+      "targets": [
+        {
+          "expr": "nantian_gateway_dataplane_xds_connect_failures_total",
+          "legendFormat": "connect failures",
+          "refId": "A"
+        },
+        {
+          "expr": "nantian_gateway_dataplane_xds_stream_failures_total",
+          "legendFormat": "stream failures",
+          "refId": "B"
+        }
+      ],
+      "title": "xDS Connection State",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 190
+      },
+      "id": 14,
+      "options": {},
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_session_persistence_active)",
+          "legendFormat": "active",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_session_persistence_route_rule_count)",
+          "legendFormat": "route rules",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(nantian_gateway_dataplane_session_persistence_backend_policy_count)",
+          "legendFormat": "backend policies",
+          "refId": "C"
+        }
+      ],
+      "title": "Session Persistence",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 190
+      },
+      "id": 64,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_http3_available)",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP/3 Available",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 190
+      },
+      "id": 65,
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "expr": "sum(nantian_gateway_dataplane_http3_enabled)",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP/3 Enabled",
+      "type": "stat"
+    }
+  ],
+  "version": 0,
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "Prometheus datasource for Nantian Gateway metrics",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ]
+}

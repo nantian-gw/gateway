@@ -1,0 +1,48 @@
+grpcAddr: ":18080"
+adminAddr: ":18081"
+metricsAddr: ":18082"
+healthProbeAddr: ":18083"
+controllerName: "gateway.networking.k8s.io/nantian-gw"
+statusAddresses:
+  - "replace-me.example.invalid"
+syncPeriod: 30s
+syncSettleDelay: 200ms
+reconcilerRunner:
+  settleDelay: "300ms"
+  retryBackoff: "1s"
+nodeStatus:
+  leasePrefix: "aeg-node"
+  persistTimeout: "2s"
+  persistDebounce: "250ms"
+adminReadiness:
+  mode: "snapshot"
+adminRuntime:
+  readHeaderTimeout: "5s"
+  readTimeout: "30s"
+  writeTimeout: "30s"
+  idleTimeout: "2m"
+nodeDrift:
+  warningThreshold: "15s"
+log:
+  level: "info"
+  format: "json"
+  addSource: false
+leaderElection:
+  enabled: true
+  id: "nantian-controlplane-leader"
+  leaseDuration: "15s"
+  renewDeadline: "10s"
+  retryPeriod: "2s"
+adminAuth:
+  bearerToken: ""
+  bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
+adminTLS:
+  enabled: false
+  certPath: ""
+  keyPath: ""
+grpcTLS:
+  enabled: true
+  certPath: "/etc/nantian-gw/grpc-tls/tls.crt"
+  keyPath: "/etc/nantian-gw/grpc-tls/tls.key"
+  clientCAPath: "/etc/nantian-gw/grpc-tls/ca.crt"
+  requireClientCert: true

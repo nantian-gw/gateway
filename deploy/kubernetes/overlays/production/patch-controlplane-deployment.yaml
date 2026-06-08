@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nantian-controlplane
+  namespace: nantian-gw
+spec:
+  template:
+    spec:
+      containers:
+        - name: controlplane
+          volumeMounts:
+            - name: dataplane-admin-auth
+              mountPath: /etc/nantian-gw/dataplane-admin-auth
+              readOnly: true
+      volumes:
+        - name: grpc-tls
+          secret:
+            secretName: nantian-controlplane-grpc-tls
+            optional: false
+        - name: admin-auth
+          secret:
+            secretName: nantian-controlplane-admin-auth
+            optional: false
+        - name: dataplane-admin-auth
+          secret:
+            secretName: nantian-dataplane-admin-auth
+            optional: false

@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace-gatewayclass.yaml
+  - rbac.yaml
+  - controlplane.yaml
+  - dataplane.yaml
+  - dashboard.yaml
+  - services-networkpolicy.yaml
+  - aiservice-crd.yaml
+  - tokenpolicy-crd.yaml
+  - wasmplugin-crd.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: nantian-controlplane-config
+    namespace: nantian-gw
+    files:
+      - config.yaml=controlplane-config.yaml
+  - name: nantian-dataplane-config
+    namespace: nantian-gw
+    files:
+      - config.yaml=dataplane-config.yaml

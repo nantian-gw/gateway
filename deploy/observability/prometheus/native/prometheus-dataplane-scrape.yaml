@@ -1,0 +1,88 @@
+# Copy one of the following scrape_configs blocks into your Prometheus configuration.
+# Do not use both jobs at the same time for the same dataplane targets.
+
+scrape_configs:
+  - job_name: nantian-dataplane
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+    # Remove this block if dataplane admin auth is disabled.
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/nantian-dataplane-admin-token/token
+
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+            - nantian-gw
+
+    relabel_configs:
+      - source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_service_name
+          - __meta_kubernetes_endpoint_port_name
+        action: keep
+        regex: nantian-gw;nantian-dataplane-metrics;metrics
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+      - source_labels: [__meta_kubernetes_pod_ip]
+        target_label: pod_ip
+
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: service
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: instance
+---
+scrape_configs:
+  - job_name: nantian-dataplane
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+    # Remove this block if dataplane admin auth is disabled.
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/nantian-dataplane-admin-token/token
+
+    kubernetes_sd_configs:
+      - role: endpointslice
+        namespaces:
+          names:
+            - nantian-gw
+
+    relabel_configs:
+      - source_labels:
+          - __meta_kubernetes_namespace
+          - __meta_kubernetes_service_name
+          - __meta_kubernetes_endpointslice_port_name
+        action: keep
+        regex: nantian-gw;nantian-dataplane-metrics;metrics
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+      - source_labels: [__meta_kubernetes_pod_ip]
+        target_label: pod_ip
+
+      - source_labels: [__meta_kubernetes_endpointslice_endpoint_node_name]
+        target_label: node
+
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+      - source_labels: [__meta_kubernetes_service_name]
+        target_label: service
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: instance
