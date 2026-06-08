@@ -520,7 +520,7 @@ func rotationTestScheme(t *testing.T, includeBackendTLSPolicy bool) *runtime.Sch
 func readBackendTLSAsset(t *testing.T, name string) []byte {
 	t.Helper()
 
-	path := filepath.Join("..", "..", "tests", "testdata", "backendtls", name)
+	path := filepath.Join("..", "..", "test", "testdata", "backendtls", name)
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)

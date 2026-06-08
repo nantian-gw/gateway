@@ -447,7 +447,7 @@ func requireNamespaceOption(opts []client.ListOption, namespace string) error {
 func readStatusTLSAsset(t *testing.T, name string) string {
 	t.Helper()
 
-	path := filepath.Join("..", "..", "tests", "testdata", "tls", name)
+	path := filepath.Join("..", "..", "test", "testdata", "tls", name)
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
