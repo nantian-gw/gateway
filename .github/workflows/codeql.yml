@@ -66,12 +66,7 @@ jobs:
         env:
           GOPROXY: https://proxy.golang.org,direct
           GODEBUG: http2client=0
-        run: |
-          make proto
-          cd controlplane
-          go build ./...
-          cd ../tests/conformance-harness
-          go test ./... -run '^$'
+        run: go build ./...
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
