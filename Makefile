@@ -14,7 +14,7 @@ benchmarks:
 
 conformance:
 	@echo "=== Creating kind cluster: $(CLUSTER_NAME) ==="
-	kind create cluster --name $(CLUSTER_NAME) --wait 5m
+	kind create cluster --name $(CLUSTER_NAME) --image kindest/node:v1.31.0 --wait 5m
 	kubectl wait --for=condition=ready node --all --timeout=2m
 	@echo "=== Installing Gateway API CRDs ==="
 	kubectl apply -f $(GATEWAY_API_CRDS)

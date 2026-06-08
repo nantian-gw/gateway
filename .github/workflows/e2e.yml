@@ -22,7 +22,7 @@ jobs:
 
       - name: Create kind cluster
         run: |
-          kind create cluster --name e2e --wait 5m
+          kind create cluster --name e2e --image kindest/node:v1.31.0 --wait 5m
           kubectl wait --for=condition=ready node --all --timeout=2m
 
       - name: Install Gateway API CRDs
