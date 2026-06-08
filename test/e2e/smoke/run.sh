@@ -62,7 +62,7 @@ deploy_gateway() {
         return
     fi
     echo "=== Deploying nantian-gw ==="
-    kubectl apply -k "$GATEWAY_ROOT/deploy/kubernetes/overlays/kind-conformance"
+    kustomize build "$GATEWAY_ROOT/deploy/kubernetes/overlays/kind-conformance" --load-restrictor LoadRestrictionsNone | kubectl apply -f -
     kubectl wait --for=condition=ready pod --all -n "$CONTROL_PLANE_NS" --timeout="${TIMEOUT}s"
 }
 

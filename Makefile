@@ -19,7 +19,7 @@ conformance:
 	@echo "=== Installing Gateway API CRDs ==="
 	kubectl apply -f $(GATEWAY_API_CRDS)
 	@echo "=== Deploying nantian-gw ==="
-	kubectl apply -k deploy/kubernetes/overlays/kind-conformance
+	kustomize build deploy/kubernetes/overlays/kind-conformance --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 	kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=180s
 	@echo "=== Running conformance tests ==="
 	go test -tags=conformance -count=1 -v -timeout 30m ./conformance/

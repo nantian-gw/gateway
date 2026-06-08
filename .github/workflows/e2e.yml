@@ -42,9 +42,14 @@ jobs:
             kind load docker-image "ghcr.io/nantian-gw/${img}:latest" --name e2e
           done
 
+      - name: Install kustomize
+        run: |
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.7.1/kustomize_v5.7.1_linux_amd64.tar.gz" | tar xz
+          sudo mv kustomize /usr/local/bin/
+
       - name: Deploy nantian-gw
         run: |
-          kubectl apply -k deploy/kubernetes/overlays/kind-conformance
+          kustomize build deploy/kubernetes/overlays/kind-conformance --load-restrictor LoadRestrictionsNone | kubectl apply -f -
           kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=300s
 
       - name: Record image versions
