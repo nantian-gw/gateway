@@ -15,6 +15,14 @@ images:
     newName: ghcr.io/nantian-gw/dashboard
     newTag: latest
 
+patches:
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+
 generatorOptions:
   disableNameSuffixHash: true
 

@@ -30,6 +30,14 @@ jobs:
           done
           kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
 
+      - name: Pre-load images into kind
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          for img in nantian-controlplane dataplane dashboard; do
+            docker pull "ghcr.io/nantian-gw/${img}:latest"
+            kind load docker-image "ghcr.io/nantian-gw/${img}:latest" --name e2e
+          done
+
       - name: Deploy nantian-gw
         run: |
           kubectl apply -k deploy/kubernetes/overlays/kind-conformance
