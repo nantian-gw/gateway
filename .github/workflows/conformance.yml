@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  packages: read
+
 jobs:
   gateway-api:
     name: Gateway API Conformance
@@ -37,7 +40,7 @@ jobs:
 
       - name: Pre-load images into kind
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
           for img in nantian-controlplane dataplane dashboard; do
             docker pull "ghcr.io/nantian-gw/${img}:latest"
             kind load docker-image "ghcr.io/nantian-gw/${img}:latest" --name conformance
