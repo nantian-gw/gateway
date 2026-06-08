@@ -40,7 +40,7 @@ ensure_cluster() {
         return
     fi
     echo "=== Creating kind cluster: $CLUSTER_NAME ==="
-    kind create cluster --name "$CLUSTER_NAME" --image kindest/node:v1.31.0 --wait 5m
+    kind create cluster --name "$CLUSTER_NAME" --wait 5m
     kubectl wait --for=condition=ready node --all --timeout=2m
 }
 
@@ -51,7 +51,9 @@ install_gateway_api_crds() {
         return
     fi
     echo "=== Installing Gateway API CRDs ==="
-    kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+    BASE="https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1"
+    kubectl apply -f "$BASE/standard-install.yaml"
+    kubectl apply -f "$BASE/experimental-install.yaml"
     kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
 }
 

@@ -1,7 +1,8 @@
 .PHONY: build test benchmarks conformance e2e-smoke
 
 CLUSTER_NAME ?= nantian-conformance
-GATEWAY_API_CRDS ?= https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+GATEWAY_API_CRDS_STANDARD ?= https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml
+GATEWAY_API_CRDS_EXPERIMENTAL ?= https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
 
 build:
 	go build ./...
@@ -14,10 +15,11 @@ benchmarks:
 
 conformance:
 	@echo "=== Creating kind cluster: $(CLUSTER_NAME) ==="
-	kind create cluster --name $(CLUSTER_NAME) --image kindest/node:v1.31.0 --wait 5m
+	kind create cluster --name $(CLUSTER_NAME) --wait 5m
 	kubectl wait --for=condition=ready node --all --timeout=2m
 	@echo "=== Installing Gateway API CRDs ==="
-	kubectl apply -f $(GATEWAY_API_CRDS)
+	kubectl apply -f $(GATEWAY_API_CRDS_STANDARD)
+	kubectl apply -f $(GATEWAY_API_CRDS_EXPERIMENTAL)
 	@echo "=== Deploying nantian-gw ==="
 	kustomize build deploy/kubernetes/overlays/kind-conformance --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 	kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=180s
