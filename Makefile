@@ -1,7 +1,7 @@
 .PHONY: build test benchmarks conformance e2e-smoke
 
 CLUSTER_NAME ?= nantian-conformance
-GATEWAY_API_CRDS ?= https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+GATEWAY_API_CRDS ?= https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
 
 build:
 	go build ./...

@@ -28,7 +28,7 @@ jobs:
       - name: Install Gateway API CRDs
         run: |
           for i in 1 2 3; do
-            kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml && break
+            kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml && break
             echo "Retry $i in 10s..."
             sleep 10
           done
