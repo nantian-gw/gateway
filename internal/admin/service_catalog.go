@@ -30,7 +30,7 @@ type ServiceCatalogFilter struct {
 	Namespace string
 	Name      string
 	Protocol  string
-	Port      int32
+	Port      int
 	HasPort   bool
 	Sort      serviceCatalogSortField
 	Order     sortOrder
@@ -66,7 +66,7 @@ func parseServiceCatalogFilter(query url.Values) (ServiceCatalogFilter, error) {
 		if *port > 65535 {
 			return ServiceCatalogFilter{}, errInvalidQuery("port must be less than or equal to 65535")
 		}
-		filter.Port = int32(*port)
+		filter.Port = *port
 		filter.HasPort = true
 	}
 
@@ -173,7 +173,7 @@ func buildServiceCatalogEntry(service corev1.Service, filter ServiceCatalogFilte
 		if filter.Protocol != "" && string(port.Protocol) != filter.Protocol {
 			continue
 		}
-		if filter.HasPort && port.Port != filter.Port {
+		if filter.HasPort && int(port.Port) != filter.Port {
 			continue
 		}
 		entry.Ports = append(entry.Ports, ServiceCatalogPort{

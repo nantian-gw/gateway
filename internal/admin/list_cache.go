@@ -170,7 +170,7 @@ func serviceCatalogCacheKey(filter ServiceCatalogFilter) string {
 		strings.TrimSpace(filter.Namespace),
 		strings.TrimSpace(filter.Name),
 		strings.TrimSpace(filter.Protocol),
-		strconv.Itoa(int(cacheKeyPort(filter.Port, filter.HasPort))),
+		strconv.Itoa(cacheKeyPort(filter.Port, filter.HasPort)),
 		strconv.FormatBool(filter.HasPort),
 		string(filter.Sort),
 		strconv.Itoa(int(filter.Order)),
@@ -187,7 +187,7 @@ func cacheKeyLimit(limit int, hasLimit bool) int {
 	return limit
 }
 
-func cacheKeyPort(port int32, hasPort bool) int32 {
+func cacheKeyPort(port int, hasPort bool) int {
 	if !hasPort {
 		return 0
 	}
