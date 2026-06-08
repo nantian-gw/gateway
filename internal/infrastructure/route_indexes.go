@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
@@ -37,14 +38,22 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(ctx, &gatewayv1.GRPCRoute{}, grpcRouteServiceParentIndex, grpcRouteServiceParentIndexKeys); err != nil {
 		return fmt.Errorf("index GRPCRoute service parents: %w", err)
 	}
+	// v1alpha2 CRDs (TCPRoute, UDPRoute, TLSRoute) are in the experimental
+	// Gateway API channel. Skip indexing if the CRDs are not installed.
 	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, tcpRouteServiceParentIndex, tcpRouteServiceParentIndexKeys); err != nil {
-		return fmt.Errorf("index TCPRoute service parents: %w", err)
+		if !meta.IsNoMatchError(err) {
+			return fmt.Errorf("index TCPRoute service parents: %w", err)
+		}
 	}
 	if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, udpRouteServiceParentIndex, udpRouteServiceParentIndexKeys); err != nil {
-		return fmt.Errorf("index UDPRoute service parents: %w", err)
+		if !meta.IsNoMatchError(err) {
+			return fmt.Errorf("index UDPRoute service parents: %w", err)
+		}
 	}
 	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, tlsRouteServiceParentIndex, tlsRouteServiceParentIndexKeys); err != nil {
-		return fmt.Errorf("index TLSRoute service parents: %w", err)
+		if !meta.IsNoMatchError(err) {
+			return fmt.Errorf("index TLSRoute service parents: %w", err)
+		}
 	}
 
 	return nil
