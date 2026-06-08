@@ -11,6 +11,8 @@
   <a href="https://nantian.dev"><img src="https://img.shields.io/badge/docs-nantian.dev-7c3aed" alt="Docs"></a>
 </p>
 
+> 📖 [中文](README.zh-CN.md)
+
 ---
 
 ## What is Nantian Gateway?
