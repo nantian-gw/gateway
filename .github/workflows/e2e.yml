@@ -67,7 +67,7 @@ jobs:
         if: failure()
         run: |
           kubectl describe pods -n nantian-gw
-          kubectl logs -n nantian-gw --all-containers --tail=200
+          kubectl logs -n nantian-gw -l 'app.kubernetes.io/part-of=nantian-gw' --all-containers=true --tail=200 --prefix=true
 
       - name: Cleanup
         if: always()
