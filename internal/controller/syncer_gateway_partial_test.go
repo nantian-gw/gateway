@@ -478,13 +478,13 @@ func readGatewayListenerTLSAsset(t *testing.T, name string) []byte {
 	t.Helper()
 
 	for _, dir := range []string{"tls", "backendtls"} {
-		path := filepath.Join("..", "..", "tests", "testdata", dir, name)
+		path := filepath.Join("..", "..", "test", "testdata", dir, name)
 		raw, err := os.ReadFile(path)
 		if err == nil {
 			return raw
 		}
 	}
-	t.Fatalf("read test tls asset %q: file not found in tests/testdata/{tls,backendtls}", name)
+	t.Fatalf("read test tls asset %q: file not found in test/testdata/{tls,backendtls}", name)
 	return nil
 }
 

@@ -19,8 +19,8 @@ configMapGenerator:
   - name: nantian-controlplane-config
     namespace: nantian-gw
     files:
-      - config.yaml=controlplane-config.yaml
+      - config.yaml=../../../configs/controlplane/config.yaml
   - name: nantian-dataplane-config
     namespace: nantian-gw
     files:
-      - config.yaml=dataplane-config.yaml
+      - config.yaml=../../../configs/dataplane/config.yaml
