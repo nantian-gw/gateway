@@ -53,7 +53,7 @@ install_gateway_api_crds() {
     echo "=== Installing Gateway API CRDs ==="
     BASE="https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1"
     kubectl apply -f "$BASE/standard-install.yaml"
-    kubectl apply -f "$BASE/experimental-install.yaml"
+    kubectl apply -f "$BASE/experimental-install.yaml" || true
     kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
 }
 

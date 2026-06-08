@@ -31,7 +31,9 @@ jobs:
           # Install standard CRDs first (HTTPRoute has smaller annotations)
           kubectl apply -f "$BASE/standard-install.yaml"
           # Then add experimental CRDs (TCPRoute, UDPRoute, etc.)
-          kubectl apply -f "$BASE/experimental-install.yaml"
+          # HTTPRoute update may fail due to large cel annotations on older K8s,
+          # but the standard version is already installed and functional
+          kubectl apply -f "$BASE/experimental-install.yaml" || true
           kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
 
       - name: Pre-load images into kind
