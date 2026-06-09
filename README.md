@@ -47,7 +47,7 @@ The control plane is designed to stay Kubernetes-native. Gateway API resources r
 Helm is the recommended production installation path:
 
 ```bash
-helm repo add nantian-gw https://nantian-gw.github.io/helm-charts
+helm repo add nantian-gw https://charts.nantian.dev
 helm install nantian-gw nantian-gw/nantian-gw \
   --namespace nantian-gw \
   --create-namespace
