@@ -1,8 +1,10 @@
 name: Conformance
 
 on:
+  push:
+    branches: [main]
   schedule:
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -13,10 +15,18 @@ permissions:
   contents: read
   packages: read
 
+env:
+  CLUSTER_NAME: conformance
+  GATEWAY_API_VERSION: v1.5.1
+  CONTROLPLANE_IMAGE: ghcr.io/nantian-gw/nantian-controlplane:ci-${{ github.sha }}
+  DATAPLANE_IMAGE: ghcr.io/nantian-gw/dataplane:latest
+  DASHBOARD_IMAGE: ghcr.io/nantian-gw/dashboard:latest
+
 jobs:
   gateway-api:
     name: Gateway API Conformance
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v6
 
@@ -25,32 +35,25 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
+      - name: Install Kind tooling
+        run: scripts/ci/install-kind-tools.sh
+
       - name: Create kind cluster
         run: |
-          kind create cluster --name conformance --wait 5m
+          kind create cluster --name "$CLUSTER_NAME" --wait 5m
           kubectl wait --for=condition=ready node --all --timeout=2m
 
       - name: Install Gateway API CRDs
-        run: |
-          for i in 1 2 3; do
-            kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml && break
-            echo "Retry $i in 10s..."
-            sleep 10
-          done
-          kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
+        run: scripts/ci/install-gateway-api-crds.sh
 
-      - name: Pre-load images into kind
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-          for img in nantian-controlplane dataplane dashboard; do
-            docker pull "ghcr.io/nantian-gw/${img}:latest"
-            kind load docker-image "ghcr.io/nantian-gw/${img}:latest" --name conformance
-          done
+      - name: Build current control-plane image
+        run: scripts/ci/build-controlplane-image.sh
 
-      - name: Deploy nantian-gw
-        run: |
-          kubectl apply -k deploy/kubernetes/overlays/kind-conformance
-          kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=300s
+      - name: Load images into kind
+        run: scripts/ci/load-kind-images.sh
+
+      - name: Deploy Nantian Gateway
+        run: scripts/ci/deploy-kind-conformance.sh
 
       - name: Record image versions
         run: |
@@ -60,15 +63,39 @@ jobs:
           kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .status.containerStatuses[] | "  \(.name): \(.imageID)"'
 
       - name: Run conformance tests
+        id: conformance
         run: |
-          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
+          mkdir -p dist/conformance
+          report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
+          set +e
+          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
+            -args \
+            -gateway-class nantian \
+            -report-output "$report_path" \
+            -organization "Nantian Gateway" \
+            -project "Nantian Gateway" \
+            -url "https://github.com/nantian-gw/gateway" \
+            -version "${GITHUB_SHA}" \
+            -contact "https://github.com/nantian-gw/gateway/issues" 2>&1 \
+            | tee dist/conformance/run.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >>"${GITHUB_OUTPUT}"
+          exit "${status}"
 
-      - name: Collect logs on failure
+      - name: Collect diagnostics on failure
         if: failure()
-        run: |
-          kubectl describe pods -n nantian-gw
-          kubectl logs -n nantian-gw --all-containers --tail=200 || true
+        run: ARTIFACT_DIR=tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh
+
+      - name: Upload conformance artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: conformance-results
+          path: |
+            dist/conformance/
+            tmp/conformance-diagnostics/
+          if-no-files-found: warn
 
       - name: Cleanup
         if: always()
-        run: kind delete cluster --name conformance
+        run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "$CLUSTER_NAME" || true

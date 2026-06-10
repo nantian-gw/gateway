@@ -113,7 +113,51 @@ YAML
     green "  echo backend ready"
 }
 
-# ── Step 5: create HTTPRoute ──
+# ── Step 5: create Gateway, ReferenceGrant, and HTTPRoute ──
+create_gateway() {
+    echo "=== Creating Gateway ==="
+    kubectl apply -n "$CONTROL_PLANE_NS" -f - <<YAML
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: nantian-gw
+spec:
+  gatewayClassName: nantian
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+YAML
+
+    # Allow gateway status to settle before attaching routes.
+    sleep 5
+    green "  Gateway created"
+}
+
+create_reference_grant() {
+    echo "=== Creating ReferenceGrant ==="
+    kubectl apply -n "$TEST_NS" -f - <<YAML
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-nantian-gw-routes
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: $CONTROL_PLANE_NS
+  to:
+  - group: ""
+    kind: Service
+    name: echo
+YAML
+
+    green "  ReferenceGrant created"
+}
+
 create_route() {
     echo "=== Creating HTTPRoute ==="
     kubectl apply -n "$CONTROL_PLANE_NS" -f - <<YAML
@@ -180,6 +224,8 @@ main() {
     install_gateway_api_crds
     deploy_gateway
     deploy_backend
+    create_gateway
+    create_reference_grant
     create_route
     send_request
 }
