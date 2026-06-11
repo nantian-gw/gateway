@@ -25,7 +25,12 @@ const (
 	serviceParentIndexMarker        = "__service_parent__"
 )
 
-func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
+func SetupIndexes(ctx context.Context, indexer client.FieldIndexer, options ...Options) error {
+	enableExperimentalGateway := true
+	if len(options) > 0 {
+		enableExperimentalGateway = options[0].EnableExperimentalGateway
+	}
+
 	if err := indexer.IndexField(ctx, &gatewayv1.GatewayClass{}, gatewayClassControllerNameIndex, gatewayClassControllerNameIndexKeys); err != nil {
 		return fmt.Errorf("index GatewayClass controller name: %w", err)
 	}
@@ -38,6 +43,10 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(ctx, &gatewayv1.GRPCRoute{}, grpcRouteServiceParentIndex, grpcRouteServiceParentIndexKeys); err != nil {
 		return fmt.Errorf("index GRPCRoute service parents: %w", err)
 	}
+	if !enableExperimentalGateway {
+		return nil
+	}
+
 	// v1alpha2 CRDs (TCPRoute, UDPRoute, TLSRoute) are in the experimental
 	// Gateway API channel. Skip indexing if the CRDs are not installed.
 	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, tcpRouteServiceParentIndex, tcpRouteServiceParentIndexKeys); err != nil {

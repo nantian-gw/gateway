@@ -30,25 +30,37 @@ type controllerSetup interface {
 	SetupWithManager(ctrl.Manager) error
 }
 
-func SetupControllers(mgr ctrl.Manager, reconciler *Reconciler) error {
-	controllers := []controllerSetup{
-		&gatewayClassController{reconciler: reconciler},
-		&gatewayController{reconciler: reconciler},
-		&httpRouteController{reconciler: reconciler},
-		&grpcRouteController{reconciler: reconciler},
-		&tcpRouteController{reconciler: reconciler},
-		&udpRouteController{reconciler: reconciler},
-		&tlsRouteController{reconciler: reconciler},
-		&listenerSetController{reconciler: reconciler},
-	}
-
-	for _, controller := range controllers {
+func SetupControllers(mgr ctrl.Manager, reconciler *Reconciler, options ...Options) error {
+	for _, controller := range statusControllerSetups(reconciler, normalizeOptions(options)) {
 		if err := controller.SetupWithManager(mgr); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSetup {
+	controllers := []controllerSetup{
+		&gatewayClassController{reconciler: reconciler},
+		&gatewayController{
+			reconciler:                reconciler,
+			enableExperimentalGateway: opts.EnableExperimentalGateway,
+		},
+		&httpRouteController{reconciler: reconciler},
+		&grpcRouteController{reconciler: reconciler},
+	}
+
+	if opts.EnableExperimentalGateway {
+		controllers = append(controllers,
+			&tcpRouteController{reconciler: reconciler},
+			&udpRouteController{reconciler: reconciler},
+			&tlsRouteController{reconciler: reconciler},
+			&listenerSetController{reconciler: reconciler},
+		)
+	}
+
+	return controllers
 }
 
 func statusControllerOptions(maxConcurrentReconciles int) controller.Options {
@@ -102,7 +114,8 @@ func (c *gatewayClassController) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 type gatewayController struct {
-	reconciler *Reconciler
+	reconciler                *Reconciler
+	enableExperimentalGateway bool
 }
 
 func (c *gatewayController) Reconcile(
@@ -120,7 +133,7 @@ func (c *gatewayController) SetupWithManager(mgr ctrl.Manager) error {
 		gatewayInfrastructureStatusRequests,
 	)
 
-	return ctrl.NewControllerManagedBy(mgr).
+	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("gateway-status").
 		WithOptions(statusControllerOptions(2)).
 		For(&gatewayv1.Gateway{}, generationChanged).
@@ -133,12 +146,16 @@ func (c *gatewayController) SetupWithManager(mgr ctrl.Manager) error {
 			&discoveryv1.EndpointSlice{},
 			gatewayInfrastructureRequests,
 			builder.WithPredicates(gatewayFrontendEndpointSlicePredicate()),
-		).
-		Watches(
+		)
+
+	if c.enableExperimentalGateway && resourceSupported(mgr.GetScheme(), mgr.GetRESTMapper(), &gatewayv1.ListenerSet{}) {
+		controllerBuilder = controllerBuilder.Watches(
 			&gatewayv1.ListenerSet{},
 			handler.EnqueueRequestsFromMapFunc(gatewayListenerSetStatusRequests),
-		).
-		Complete(c)
+		)
+	}
+
+	return controllerBuilder.Complete(c)
 }
 
 func gatewayInfrastructureServicePredicate() predicate.Predicate {

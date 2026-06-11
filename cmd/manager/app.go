@@ -33,8 +33,8 @@ import (
 	"github.com/nantian-gw/gateway/internal/admin"
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/controller"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
 	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
 	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
 	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
 	"github.com/nantian-gw/gateway/internal/grpcserver"
@@ -172,27 +172,34 @@ func run(configPath string) error {
 			},
 		},
 	)
-	statuser := status.NewWithAddressesAndReader(
+	statusOptions := status.Options{EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway}
+	statuser := status.NewWithAddressesAndReaderOptions(
 		mgr.GetClient(),
 		mgr.GetAPIReader(),
 		cfg.ControllerName,
 		cfg.AdvertisedAddresses(),
 		logger,
+		statusOptions,
 	)
 	statuser.SetEventRecorder(mgr.GetEventRecorderFor("gateway-status"))
 	if err := translator.SetupIndexes(ctx, mgr.GetFieldIndexer()); err != nil {
 		return fmt.Errorf("set up translator indexes: %w", err)
 	}
-	if err := infrastructure.SetupIndexes(ctx, mgr.GetFieldIndexer()); err != nil {
+	if err := infrastructure.SetupIndexes(
+		ctx,
+		mgr.GetFieldIndexer(),
+		infrastructure.Options{EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway},
+	); err != nil {
 		return fmt.Errorf("set up infrastructure indexes: %w", err)
 	}
-	if err := status.SetupIndexes(ctx, mgr.GetFieldIndexer()); err != nil {
+	if err := status.SetupIndexes(ctx, mgr.GetFieldIndexer(), statusOptions); err != nil {
 		return fmt.Errorf("set up status indexes: %w", err)
 	}
 
 	infraOptions := infrastructure.DefaultOptions()
 	infraOptions.SnapshotStore = store
 	infraOptions.NodeStatus = nodes
+	infraOptions.EnableExperimentalGateway = cfg.Features.EnableExperimentalGateway
 	infra := infrastructure.NewWithOptions(mgr.GetClient(), mgr.GetAPIReader(), cfg.ControllerName, infraOptions, logger)
 	statusScopedReconcile := func(ctx context.Context, scope controller.ReconcilerRunnerScope) error {
 		switch scope {
@@ -239,6 +246,7 @@ func run(configPath string) error {
 		logger,
 		reconcilerRunner.QueueRunForScopes,
 	)
+	syncer.SetOptions(controller.SyncerOptions{EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway})
 	syncer.SetSettleDelay(cfg.SyncSettleDelayDuration())
 	if err := syncer.SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("set up snapshot sync controller: %w", err)
@@ -246,7 +254,7 @@ func run(configPath string) error {
 	if err := mgr.Add(syncer); err != nil {
 		return fmt.Errorf("add syncer runnable: %w", err)
 	}
-	if err := status.SetupControllers(mgr, statuser); err != nil {
+	if err := status.SetupControllers(mgr, statuser, statusOptions); err != nil {
 		return fmt.Errorf("set up status controllers: %w", err)
 	}
 	if err := mgr.Add(reconcilerRunner); err != nil {

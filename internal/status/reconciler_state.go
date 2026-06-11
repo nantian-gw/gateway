@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 func (r *Reconciler) loadState(ctx context.Context) (*clusterState, error) {
@@ -39,7 +39,7 @@ func (r *Reconciler) loadState(ctx context.Context) (*clusterState, error) {
 	}
 	state.index()
 
-	httpRoutes, err := loadHTTPRoutesForState(ctx, r.listReader, state.managedGateways)
+	httpRoutes, err := loadHTTPRoutesForState(ctx, r.listReader, state.managedGateways, r.options)
 	if err != nil {
 		return nil, err
 	}
@@ -51,29 +51,31 @@ func (r *Reconciler) loadState(ctx context.Context) (*clusterState, error) {
 	}
 	state.grpcRoutes = grpcRoutes
 
-	tcpRoutes, err := loadTCPRoutesForState(ctx, r.listReader, state.managedGateways)
-	if err != nil {
-		return nil, err
-	}
-	state.tcpRoutes = tcpRoutes
+	if r.experimentalGatewayEnabled() {
+		tcpRoutes, err := loadTCPRoutesForState(ctx, r.listReader, state.managedGateways)
+		if err != nil {
+			return nil, err
+		}
+		state.tcpRoutes = tcpRoutes
 
-	udpRoutes, err := loadUDPRoutesForState(ctx, r.listReader, state.managedGateways)
-	if err != nil {
-		return nil, err
-	}
-	state.udpRoutes = udpRoutes
+		udpRoutes, err := loadUDPRoutesForState(ctx, r.listReader, state.managedGateways)
+		if err != nil {
+			return nil, err
+		}
+		state.udpRoutes = udpRoutes
 
-	tlsRoutes, err := loadTLSRoutesForState(ctx, r.listReader, state.managedGateways)
-	if err != nil {
-		return nil, err
-	}
-	state.tlsRoutes = tlsRoutes
+		tlsRoutes, err := loadTLSRoutesForState(ctx, r.listReader, state.managedGateways)
+		if err != nil {
+			return nil, err
+		}
+		state.tlsRoutes = tlsRoutes
 
-	listenerSets, err := loadListenerSetsForState(ctx, r.listReader, state.managedGateways)
-	if err != nil {
-		return nil, err
+		listenerSets, err := loadListenerSetsForState(ctx, r.listReader, state.managedGateways)
+		if err != nil {
+			return nil, err
+		}
+		state.listenerSets = listenerSets
 	}
-	state.listenerSets = listenerSets
 
 	if err := r.loadRouteReferencedBackendPolicies(ctx, state); err != nil {
 		return nil, err

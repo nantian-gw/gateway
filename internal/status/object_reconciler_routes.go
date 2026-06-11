@@ -131,6 +131,10 @@ func (r *Reconciler) listAllRoutes(ctx context.Context, state *clusterState) err
 	}
 	state.grpcRoutes = grpcRoutes.Items
 
+	if !r.experimentalGatewayEnabled() {
+		return nil
+	}
+
 	var tcpRoutes gatewayv1alpha2.TCPRouteList
 	if err := r.reader.List(ctx, &tcpRoutes); err != nil {
 		return err

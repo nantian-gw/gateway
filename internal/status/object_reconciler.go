@@ -83,11 +83,13 @@ func (r *Reconciler) loadGatewayObjectState(
 	if err := r.loadGatewayReferenceGrants(ctx, state, gateway); err != nil {
 		return nil, err
 	}
-	if err := r.loadGatewayListenerSets(ctx, state); err != nil {
-		return nil, err
-	}
-	if err := r.loadListenerSetNamespaces(ctx, state); err != nil {
-		return nil, err
+	if r.experimentalGatewayEnabled() {
+		if err := r.loadGatewayListenerSets(ctx, state); err != nil {
+			return nil, err
+		}
+		if err := r.loadListenerSetNamespaces(ctx, state); err != nil {
+			return nil, err
+		}
 	}
 
 	state.index()
@@ -199,6 +201,13 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 	}
 	state.grpcRoutes = grpcRoutes
 
+	if !r.experimentalGatewayEnabled() {
+		if gatewayapi.GatewayActsAsDefault(gateway) {
+			return r.loadDefaultGatewayRoutes(ctx, state, gateway)
+		}
+		return nil
+	}
+
 	tcpRoutes, err := listTCPRoutesForGateway(ctx, r.reader, key)
 	if err != nil {
 		return err
@@ -242,6 +251,10 @@ func (r *Reconciler) loadDefaultGatewayRoutes(
 		return err
 	}
 	state.grpcRoutes = mergeGRPCRoutesByKey(state.grpcRoutes, filterGRPCRoutesByDefaultScope(grpcRoutes.Items, gateway.Spec.DefaultScope))
+
+	if !r.experimentalGatewayEnabled() {
+		return nil
+	}
 
 	var tcpRoutes gatewayv1alpha2.TCPRouteList
 	if err := r.reader.List(ctx, &tcpRoutes); err != nil {

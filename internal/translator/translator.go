@@ -18,8 +18,8 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
 	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
+	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
 	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
 	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
 	"github.com/nantian-gw/gateway/internal/ir"
@@ -73,9 +73,9 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		referenceGrants     []gatewayv1beta1.ReferenceGrant
 		backendTLSPolicies  []gatewayv1alpha3.BackendTLSPolicy
 		backendLBPolicies   []backendlbv1alpha2.BackendLBPolicy
-		aiServices           []aiservicev1alpha1.AIService
-		tokenPolicies        []tokenpolicyv1alpha1.TokenPolicy
-		wasmPlugins          []wasmpluginv1alpha1.WasmPlugin
+		aiServices          []aiservicev1alpha1.AIService
+		tokenPolicies       []tokenpolicyv1alpha1.TokenPolicy
+		wasmPlugins         []wasmpluginv1alpha1.WasmPlugin
 		services            []corev1.Service
 		serviceImports      []mcsv1alpha1.ServiceImport
 		pods                []corev1.Pod
@@ -99,16 +99,25 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		return cl.List(groupCtx, &grpcRoutes)
 	})
 	group.Go(func() error {
-		return cl.List(groupCtx, &tcpRoutes)
+		if err := cl.List(groupCtx, &tcpRoutes); err != nil && !isOptionalResourceMissing(err) {
+			return err
+		}
+		return nil
 	})
 	group.Go(func() error {
-		return cl.List(groupCtx, &udpRoutes)
+		if err := cl.List(groupCtx, &udpRoutes); err != nil && !isOptionalResourceMissing(err) {
+			return err
+		}
+		return nil
 	})
 	group.Go(func() error {
-		return cl.List(groupCtx, &tlsRoutes)
+		if err := cl.List(groupCtx, &tlsRoutes); err != nil && !isOptionalResourceMissing(err) {
+			return err
+		}
+		return nil
 	})
 	group.Go(func() error {
-		if err := cl.List(groupCtx, &listenerSets); err != nil && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
+		if err := cl.List(groupCtx, &listenerSets); err != nil && !isOptionalResourceMissing(err) {
 			return err
 		}
 		return nil
@@ -495,4 +504,8 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 	}
 
 	return snapshot, nil
+}
+
+func isOptionalResourceMissing(err error) bool {
+	return meta.IsNoMatchError(err) || runtime.IsNotRegisteredError(err)
 }

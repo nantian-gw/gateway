@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
@@ -19,19 +20,61 @@ import (
 )
 
 type fakeFieldIndexer struct {
-	errs map[string]error
+	errs    map[string]error
+	objects []client.Object
 }
 
 func (f *fakeFieldIndexer) IndexField(
 	_ context.Context,
-	_ client.Object,
+	object client.Object,
 	field string,
 	_ client.IndexerFunc,
 ) error {
+	if f != nil {
+		f.objects = append(f.objects, object)
+	}
 	if f == nil || f.errs == nil {
 		return nil
 	}
 	return f.errs[field]
+}
+
+func TestSetupIndexesStandardModeSkipsExperimentalRouteIndexes(t *testing.T) {
+	indexer := &fakeFieldIndexer{}
+
+	if err := SetupIndexes(context.Background(), indexer, Options{EnableExperimentalGateway: false}); err != nil {
+		t.Fatalf("SetupIndexes returned error: %v", err)
+	}
+
+	for _, object := range indexer.objects {
+		switch object.(type) {
+		case *gatewayv1alpha2.TCPRoute, *gatewayv1alpha2.UDPRoute, *gatewayv1alpha2.TLSRoute:
+			t.Fatalf("standard mode registered experimental route index for %T", object)
+		}
+	}
+}
+
+func TestSetupIndexesExperimentalModeIncludesExperimentalRouteIndexes(t *testing.T) {
+	indexer := &fakeFieldIndexer{}
+
+	if err := SetupIndexes(context.Background(), indexer, Options{EnableExperimentalGateway: true}); err != nil {
+		t.Fatalf("SetupIndexes returned error: %v", err)
+	}
+
+	seen := map[reflect.Type]bool{}
+	for _, object := range indexer.objects {
+		seen[reflect.TypeOf(object)] = true
+	}
+
+	for _, want := range []client.Object{
+		&gatewayv1alpha2.TCPRoute{},
+		&gatewayv1alpha2.UDPRoute{},
+		&gatewayv1alpha2.TLSRoute{},
+	} {
+		if !seen[reflect.TypeOf(want)] {
+			t.Fatalf("experimental mode did not register index for %T", want)
+		}
+	}
 }
 
 func TestSetupIndexesIgnoresMissingStatusBackendLBPolicyCRD(t *testing.T) {

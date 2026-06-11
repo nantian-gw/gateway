@@ -101,6 +101,60 @@ func TestReconcileUsesClientForBulkStateLists(t *testing.T) {
 	}
 }
 
+func TestReconcileStandardModeSkipsExperimentalGatewayAPILists(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(
+			&gatewayv1.GatewayClass{},
+			&gatewayv1.Gateway{},
+			&gatewayv1.HTTPRoute{},
+			&gatewayv1.GRPCRoute{},
+		).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "http",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+					}},
+				},
+			},
+		).
+		Build()
+
+	reconciler := NewWithAddressesAndReaderOptions(
+		k8sClient,
+		restrictedReader{
+			Reader: k8sClient,
+			blockedListTypes: map[reflect.Type]string{
+				reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}): "standard mode should not list TCPRoutes",
+				reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}): "standard mode should not list UDPRoutes",
+				reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}): "standard mode should not list TLSRoutes",
+				reflect.TypeOf(&gatewayv1.ListenerSetList{}):    "standard mode should not list ListenerSets",
+			},
+		},
+		string(controllerName),
+		[]string{"127.0.0.1"},
+		discardLogger(),
+		Options{EnableExperimentalGateway: false},
+	)
+	if err := reconciler.Reconcile(context.Background()); err != nil {
+		t.Fatalf("Reconcile returned error: %v", err)
+	}
+}
+
 func TestReconcileScopesManagedGatewayListsWithIndexes(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

@@ -13,7 +13,9 @@ func loadHTTPRoutesForState(
 	ctx context.Context,
 	reader client.Reader,
 	managedGateways []gatewayv1.Gateway,
+	options ...Options,
 ) ([]gatewayv1.HTTPRoute, error) {
+	opts := normalizeOptions(options)
 	serviceParentRoutes, scoped, err := listHTTPRoutesWithServiceParents(ctx, reader)
 	if err != nil {
 		return nil, err
@@ -40,21 +42,23 @@ func loadHTTPRoutesForState(
 		}
 	}
 
-	listenerSetRoutes, err := listHTTPRoutesWithListenerSetParents(ctx, reader)
-	if err != nil {
-		return nil, err
-	}
-	listenerSets, err := loadListenerSetsForState(ctx, reader, managedGateways)
-	if err != nil {
-		return nil, err
-	}
-	lsByKey := make(map[string]gatewayv1.ListenerSet, len(listenerSets))
-	for _, ls := range listenerSets {
-		lsByKey[namespacedName(ls.Namespace, ls.Name)] = ls
-	}
-	for _, route := range listenerSetRoutes {
-		if routeHasListenerSetParentForManagedGateway(route.Spec.ParentRefs, route.Namespace, lsByKey, managedGateways) {
-			index[namespacedName(route.Namespace, route.Name)] = route
+	if opts.EnableExperimentalGateway {
+		listenerSetRoutes, err := listHTTPRoutesWithListenerSetParents(ctx, reader)
+		if err != nil {
+			return nil, err
+		}
+		listenerSets, err := loadListenerSetsForState(ctx, reader, managedGateways)
+		if err != nil {
+			return nil, err
+		}
+		lsByKey := make(map[string]gatewayv1.ListenerSet, len(listenerSets))
+		for _, ls := range listenerSets {
+			lsByKey[namespacedName(ls.Namespace, ls.Name)] = ls
+		}
+		for _, route := range listenerSetRoutes {
+			if routeHasListenerSetParentForManagedGateway(route.Spec.ParentRefs, route.Namespace, lsByKey, managedGateways) {
+				index[namespacedName(route.Namespace, route.Name)] = route
+			}
 		}
 	}
 

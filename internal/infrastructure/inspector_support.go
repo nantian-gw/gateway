@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
@@ -194,17 +195,22 @@ func (r *Reconciler) loadMeshServiceParents(ctx context.Context) ([]mesh.Service
 	if err != nil {
 		return nil, err
 	}
-	tcpRoutes, err := listTCPRoutesWithServiceParents(ctx, r.client)
-	if err != nil {
-		return nil, err
-	}
-	udpRoutes, err := listUDPRoutesWithServiceParents(ctx, r.client)
-	if err != nil {
-		return nil, err
-	}
-	tlsRoutes, err := listTLSRoutesWithServiceParents(ctx, r.client)
-	if err != nil {
-		return nil, err
+	var tcpRoutes []gatewayv1alpha2.TCPRoute
+	var udpRoutes []gatewayv1alpha2.UDPRoute
+	var tlsRoutes []gatewayv1alpha2.TLSRoute
+	if r.options.EnableExperimentalGateway {
+		tcpRoutes, err = listTCPRoutesWithServiceParents(ctx, r.client)
+		if err != nil {
+			return nil, err
+		}
+		udpRoutes, err = listUDPRoutesWithServiceParents(ctx, r.client)
+		if err != nil {
+			return nil, err
+		}
+		tlsRoutes, err = listTLSRoutesWithServiceParents(ctx, r.client)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return collectMeshServiceParents(

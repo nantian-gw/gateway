@@ -33,10 +33,19 @@ type Syncer struct {
 	retryPending                   snapshotPendingBuild
 	backendTLSPolicyConfigMapIndex bool
 	missingFieldIndexFallbacks     map[missingFieldIndexFallbackLogKey]struct{}
+	options                        SyncerOptions
 }
 
 type ComponentReconciler interface {
 	Reconcile(context.Context) error
+}
+
+type SyncerOptions struct {
+	EnableExperimentalGateway bool
+}
+
+func defaultSyncerOptions() SyncerOptions {
+	return SyncerOptions{EnableExperimentalGateway: true}
 }
 
 func NewSyncer(
@@ -62,7 +71,15 @@ func NewSyncer(
 		logger:      logger,
 		leaderRun:   leaderRun,
 		settleDelay: 0,
+		options:     defaultSyncerOptions(),
 	}
+}
+
+func (s *Syncer) SetOptions(options SyncerOptions) {
+	if s == nil {
+		return
+	}
+	s.options = options
 }
 
 func (s *Syncer) Run(ctx context.Context) {

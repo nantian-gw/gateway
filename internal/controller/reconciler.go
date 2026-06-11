@@ -91,28 +91,28 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&corev1.ConfigMap{}, snapshotRequests).
 		Watches(&discoveryv1.EndpointSlice{}, snapshotRequests, snapshotInputPredicate)
 
-	if resourceSupported(mgr, &gatewayv1alpha2.TCPRoute{}) {
+	if s.options.EnableExperimentalGateway && resourceSupported(mgr, &gatewayv1alpha2.TCPRoute{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&gatewayv1alpha2.TCPRoute{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &gatewayv1alpha2.UDPRoute{}) {
+	if s.options.EnableExperimentalGateway && resourceSupported(mgr, &gatewayv1alpha2.UDPRoute{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&gatewayv1alpha2.UDPRoute{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &gatewayv1alpha2.TLSRoute{}) {
+	if s.options.EnableExperimentalGateway && resourceSupported(mgr, &gatewayv1alpha2.TLSRoute{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&gatewayv1alpha2.TLSRoute{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &gatewayv1.ListenerSet{}) {
+	if s.options.EnableExperimentalGateway && resourceSupported(mgr, &gatewayv1.ListenerSet{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&gatewayv1.ListenerSet{},
 			snapshotRequests,

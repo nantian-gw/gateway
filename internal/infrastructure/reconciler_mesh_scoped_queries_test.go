@@ -199,6 +199,37 @@ func TestReconcileMeshServicesScopesServiceAndEndpointLookups(t *testing.T) {
 	}
 }
 
+func TestLoadMeshServiceParentsStandardModeSkipsExperimentalRouteLists(t *testing.T) {
+	scheme := newScheme(t)
+	baseClient := withInfrastructureRouteParentIndexes(
+		fake.NewClientBuilder().WithScheme(scheme),
+	).Build()
+	reconciler := NewWithOptions(
+		rawValidatingClient{
+			Client: baseClient,
+			listValidators: map[reflect.Type]func([]client.ListOption) error{
+				reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}): func([]client.ListOption) error {
+					return fmt.Errorf("standard mode should not list TCPRoutes")
+				},
+				reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}): func([]client.ListOption) error {
+					return fmt.Errorf("standard mode should not list UDPRoutes")
+				},
+				reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}): func([]client.ListOption) error {
+					return fmt.Errorf("standard mode should not list TLSRoutes")
+				},
+			},
+		},
+		nil,
+		"gateway.networking.k8s.io/nantian-gw",
+		Options{EnableExperimentalGateway: false},
+		discardLogger(),
+	)
+
+	if _, err := reconciler.loadMeshServiceParents(context.Background()); err != nil {
+		t.Fatalf("loadMeshServiceParents returned error: %v", err)
+	}
+}
+
 func TestLoadMeshFrontendNetworkPolicyPortsScopesManagedMeshServices(t *testing.T) {
 	scheme := newScheme(t)
 

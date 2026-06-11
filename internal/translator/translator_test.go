@@ -9,9 +9,12 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -19,6 +22,62 @@ import (
 	"github.com/nantian-gw/gateway/internal/extensionfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
+
+func TestBuildIgnoresMissingExperimentalGatewayRouteCRDs(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	baseClient := newTranslatorClientBuilder(scheme).
+		WithObjects(&gatewayv1.GatewayClass{
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+			Spec: gatewayv1.GatewayClassSpec{
+				ControllerName: controllerName,
+			},
+		}).
+		Build()
+
+	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if _, err := xlator.Build(context.Background(), missingExperimentalGatewayCRDClient{Client: baseClient}); err != nil {
+		t.Fatalf("Build returned error for missing experimental Gateway API CRDs: %v", err)
+	}
+}
+
+type missingExperimentalGatewayCRDClient struct {
+	client.Client
+}
+
+func (c missingExperimentalGatewayCRDClient) List(
+	ctx context.Context,
+	list client.ObjectList,
+	opts ...client.ListOption,
+) error {
+	switch list.(type) {
+	case *gatewayv1alpha2.TCPRouteList:
+		return noKindMatch("gateway.networking.k8s.io", "TCPRoute", "v1alpha2")
+	case *gatewayv1alpha2.UDPRouteList:
+		return noKindMatch("gateway.networking.k8s.io", "UDPRoute", "v1alpha2")
+	case *gatewayv1alpha2.TLSRouteList:
+		return noKindMatch("gateway.networking.k8s.io", "TLSRoute", "v1alpha2")
+	case *gatewayv1.ListenerSetList:
+		return noKindMatch("gateway.networking.k8s.io", "ListenerSet", "v1")
+	}
+	return c.Client.List(ctx, list, opts...)
+}
+
+func noKindMatch(group, kind, version string) error {
+	return &meta.NoKindMatchError{
+		GroupKind: schema.GroupKind{
+			Group: group,
+			Kind:  kind,
+		},
+		SearchedVersions: []string{version},
+	}
+}
 
 func TestBuildSnapshot(t *testing.T) {
 	scheme := runtime.NewScheme()

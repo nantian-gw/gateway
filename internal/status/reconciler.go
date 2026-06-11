@@ -11,14 +11,15 @@ import (
 )
 
 type Reconciler struct {
-	client               client.Client
-	listReader           client.Reader
-	reader               client.Reader
-	controllerName       string
-	statusAddresses      []string
-	logger               *slog.Logger
-	recorder             record.EventRecorder
+	client                client.Client
+	listReader            client.Reader
+	reader                client.Reader
+	controllerName        string
+	statusAddresses       []string
+	logger                *slog.Logger
+	recorder              record.EventRecorder
 	triggerInfrastructure func()
+	options               Options
 }
 
 type noopEventRecorder struct{}
@@ -55,6 +56,17 @@ func NewWithAddressesAndReader(
 	statusAddresses []string,
 	logger *slog.Logger,
 ) *Reconciler {
+	return NewWithAddressesAndReaderOptions(client, reader, controllerName, statusAddresses, logger, defaultOptions())
+}
+
+func NewWithAddressesAndReaderOptions(
+	client client.Client,
+	reader client.Reader,
+	controllerName string,
+	statusAddresses []string,
+	logger *slog.Logger,
+	options Options,
+) *Reconciler {
 	if reader == nil {
 		reader = client
 	}
@@ -66,7 +78,12 @@ func NewWithAddressesAndReader(
 		statusAddresses: append([]string(nil), statusAddresses...),
 		logger:          logger,
 		recorder:        noopEventRecorder{},
+		options:         options,
 	}
+}
+
+func (r *Reconciler) experimentalGatewayEnabled() bool {
+	return r != nil && r.options.EnableExperimentalGateway
 }
 
 func (r *Reconciler) SetEventRecorder(recorder record.EventRecorder) {

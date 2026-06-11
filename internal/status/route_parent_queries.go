@@ -13,42 +13,48 @@ import (
 )
 
 const (
-	statusHTTPRouteGatewayParentIndex       = "nantian.dev/status.httproute.gateway-parents"
-	statusGRPCRouteGatewayParentIndex       = "nantian.dev/status.grpcroute.gateway-parents"
-	statusTCPRouteGatewayParentIndex        = "nantian.dev/status.tcproute.gateway-parents"
-	statusUDPRouteGatewayParentIndex        = "nantian.dev/status.udproute.gateway-parents"
-	statusTLSRouteGatewayParentIndex        = "nantian.dev/status.tlsroute.gateway-parents"
-	statusHTTPRouteServiceParentIndex       = "nantian.dev/status.httproute.service-parents"
-	statusGRPCRouteServiceParentIndex       = "nantian.dev/status.grpcroute.service-parents"
-	statusTCPRouteServiceParentIndex        = "nantian.dev/status.tcproute.service-parents"
-	statusUDPRouteServiceParentIndex        = "nantian.dev/status.udproute.service-parents"
-	statusTLSRouteServiceParentIndex        = "nantian.dev/status.tlsroute.service-parents"
-	statusHTTPRouteListenerSetParentIndex   = "nantian.dev/status.httproute.listenerset-parents"
-	statusServiceParentIndexMarker          = "__service_parent__"
-	statusListenerSetParentIndexMarker      = "__listenerset_parent__"
+	statusHTTPRouteGatewayParentIndex     = "nantian.dev/status.httproute.gateway-parents"
+	statusGRPCRouteGatewayParentIndex     = "nantian.dev/status.grpcroute.gateway-parents"
+	statusTCPRouteGatewayParentIndex      = "nantian.dev/status.tcproute.gateway-parents"
+	statusUDPRouteGatewayParentIndex      = "nantian.dev/status.udproute.gateway-parents"
+	statusTLSRouteGatewayParentIndex      = "nantian.dev/status.tlsroute.gateway-parents"
+	statusHTTPRouteServiceParentIndex     = "nantian.dev/status.httproute.service-parents"
+	statusGRPCRouteServiceParentIndex     = "nantian.dev/status.grpcroute.service-parents"
+	statusTCPRouteServiceParentIndex      = "nantian.dev/status.tcproute.service-parents"
+	statusUDPRouteServiceParentIndex      = "nantian.dev/status.udproute.service-parents"
+	statusTLSRouteServiceParentIndex      = "nantian.dev/status.tlsroute.service-parents"
+	statusHTTPRouteListenerSetParentIndex = "nantian.dev/status.httproute.listenerset-parents"
+	statusServiceParentIndexMarker        = "__service_parent__"
+	statusListenerSetParentIndexMarker    = "__listenerset_parent__"
 )
 
-func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
+func SetupIndexes(ctx context.Context, indexer client.FieldIndexer, options ...Options) error {
+	opts := normalizeOptions(options)
+
 	if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys); err != nil {
 		return fmt.Errorf("index HTTPRoute gateway parents: %w", err)
 	}
 	if err := indexer.IndexField(ctx, &gatewayv1.GRPCRoute{}, statusGRPCRouteGatewayParentIndex, statusGRPCRouteGatewayParentIndexKeys); err != nil {
 		return fmt.Errorf("index GRPCRoute gateway parents: %w", err)
 	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, statusTCPRouteGatewayParentIndex, statusTCPRouteGatewayParentIndexKeys); err != nil {
-		return fmt.Errorf("index TCPRoute gateway parents: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteGatewayParentIndex, statusUDPRouteGatewayParentIndexKeys); err != nil {
-		return fmt.Errorf("index UDPRoute gateway parents: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteGatewayParentIndex, statusTLSRouteGatewayParentIndexKeys); err != nil {
-		return fmt.Errorf("index TLSRoute gateway parents: %w", err)
+	if opts.EnableExperimentalGateway {
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, statusTCPRouteGatewayParentIndex, statusTCPRouteGatewayParentIndexKeys); err != nil {
+			return fmt.Errorf("index TCPRoute gateway parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteGatewayParentIndex, statusUDPRouteGatewayParentIndexKeys); err != nil {
+			return fmt.Errorf("index UDPRoute gateway parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteGatewayParentIndex, statusTLSRouteGatewayParentIndexKeys); err != nil {
+			return fmt.Errorf("index TLSRoute gateway parents: %w", err)
+		}
 	}
 	if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys); err != nil {
 		return fmt.Errorf("index HTTPRoute service parents: %w", err)
 	}
-	if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys); err != nil {
-		return fmt.Errorf("index HTTPRoute ListenerSet parents: %w", err)
+	if opts.EnableExperimentalGateway {
+		if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys); err != nil {
+			return fmt.Errorf("index HTTPRoute ListenerSet parents: %w", err)
+		}
 	}
 	if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, statusHTTPRouteBackendRefIndex, statusHTTPRouteBackendRefIndexKeys); err != nil {
 		return fmt.Errorf("index HTTPRoute backend refs: %w", err)
@@ -59,23 +65,25 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(ctx, &gatewayv1.GRPCRoute{}, statusGRPCRouteBackendRefIndex, statusGRPCRouteBackendRefIndexKeys); err != nil {
 		return fmt.Errorf("index GRPCRoute backend refs: %w", err)
 	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, statusTCPRouteServiceParentIndex, statusTCPRouteServiceParentIndexKeys); err != nil {
-		return fmt.Errorf("index TCPRoute service parents: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, statusTCPRouteBackendRefIndex, statusTCPRouteBackendRefIndexKeys); err != nil {
-		return fmt.Errorf("index TCPRoute backend refs: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteServiceParentIndex, statusUDPRouteServiceParentIndexKeys); err != nil {
-		return fmt.Errorf("index UDPRoute service parents: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteBackendRefIndex, statusUDPRouteBackendRefIndexKeys); err != nil {
-		return fmt.Errorf("index UDPRoute backend refs: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteServiceParentIndex, statusTLSRouteServiceParentIndexKeys); err != nil {
-		return fmt.Errorf("index TLSRoute service parents: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteBackendRefIndex, statusTLSRouteBackendRefIndexKeys); err != nil {
-		return fmt.Errorf("index TLSRoute backend refs: %w", err)
+	if opts.EnableExperimentalGateway {
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, statusTCPRouteServiceParentIndex, statusTCPRouteServiceParentIndexKeys); err != nil {
+			return fmt.Errorf("index TCPRoute service parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TCPRoute{}, statusTCPRouteBackendRefIndex, statusTCPRouteBackendRefIndexKeys); err != nil {
+			return fmt.Errorf("index TCPRoute backend refs: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteServiceParentIndex, statusUDPRouteServiceParentIndexKeys); err != nil {
+			return fmt.Errorf("index UDPRoute service parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteBackendRefIndex, statusUDPRouteBackendRefIndexKeys); err != nil {
+			return fmt.Errorf("index UDPRoute backend refs: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteServiceParentIndex, statusTLSRouteServiceParentIndexKeys); err != nil {
+			return fmt.Errorf("index TLSRoute service parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteBackendRefIndex, statusTLSRouteBackendRefIndexKeys); err != nil {
+			return fmt.Errorf("index TLSRoute backend refs: %w", err)
+		}
 	}
 	if err := setupPolicyTargetRefIndexes(ctx, indexer); err != nil {
 		return err

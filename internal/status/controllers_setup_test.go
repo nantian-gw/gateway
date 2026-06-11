@@ -8,6 +8,43 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
+func TestStatusControllerSetupsStandardModeSkipsExperimentalControllers(t *testing.T) {
+	t.Parallel()
+
+	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: false})
+	for _, controller := range controllers {
+		switch controller.(type) {
+		case *tcpRouteController, *udpRouteController, *tlsRouteController, *listenerSetController:
+			t.Fatalf("standard mode included experimental status controller %T", controller)
+		}
+	}
+}
+
+func TestStatusControllerSetupsExperimentalModeIncludesExperimentalControllers(t *testing.T) {
+	t.Parallel()
+
+	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: true})
+	seen := map[string]bool{}
+	for _, controller := range controllers {
+		switch controller.(type) {
+		case *tcpRouteController:
+			seen["tcp"] = true
+		case *udpRouteController:
+			seen["udp"] = true
+		case *tlsRouteController:
+			seen["tls"] = true
+		case *listenerSetController:
+			seen["listenerset"] = true
+		}
+	}
+
+	for _, name := range []string{"tcp", "udp", "tls", "listenerset"} {
+		if !seen[name] {
+			t.Fatalf("experimental mode did not include %s status controller", name)
+		}
+	}
+}
+
 func TestResourceSupportedReturnsFalseWhenRESTMappingMissing(t *testing.T) {
 	t.Parallel()
 

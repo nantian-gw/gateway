@@ -34,11 +34,12 @@ var defaultDataplaneSelector = map[string]string{
 }
 
 type Options struct {
-	DataplaneNamespace string
-	SharedServiceName  string
-	DataplaneSelector  map[string]string
-	SnapshotStore      *ir.SnapshotStore
-	NodeStatus         *nodestatus.Registry
+	DataplaneNamespace        string
+	SharedServiceName         string
+	DataplaneSelector         map[string]string
+	SnapshotStore             *ir.SnapshotStore
+	NodeStatus                *nodestatus.Registry
+	EnableExperimentalGateway bool
 }
 
 type Reconciler struct {
@@ -85,9 +86,10 @@ func NewWithOptions(
 
 func DefaultOptions() Options {
 	return Options{
-		DataplaneNamespace: defaultDataplaneNamespace,
-		SharedServiceName:  defaultSharedServiceName,
-		DataplaneSelector:  cloneStringMap(defaultDataplaneSelector),
+		DataplaneNamespace:        defaultDataplaneNamespace,
+		SharedServiceName:         defaultSharedServiceName,
+		DataplaneSelector:         cloneStringMap(defaultDataplaneSelector),
+		EnableExperimentalGateway: true,
 	}
 }
 
