@@ -160,6 +160,33 @@ func referenceGrantTargetNamespacesForGateway(
 		}
 	}
 
+	gatewayKey := namespacedName(gateway.Namespace, gateway.Name)
+	for _, listenerSet := range state.listenerSets {
+		if listenerSetParentGatewayKey(listenerSet) != gatewayKey {
+			continue
+		}
+		for _, listener := range listenerSet.Spec.Listeners {
+			if listener.TLS == nil {
+				continue
+			}
+			for _, certificateRef := range listener.TLS.CertificateRefs {
+				if group := strings.TrimSpace(stringOrEmpty(certificateRef.Group)); group != "" {
+					continue
+				}
+
+				kind := strings.TrimSpace(stringOrEmpty(certificateRef.Kind))
+				if kind != "" && kind != "Secret" {
+					continue
+				}
+
+				targetNamespace := namespaceOrDefault(certificateRef.Namespace, listenerSet.Namespace)
+				if targetNamespace != listenerSet.Namespace {
+					namespaces[targetNamespace] = struct{}{}
+				}
+			}
+		}
+	}
+
 	if backendTLS := gatewayapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 		clientCertificateRef := backendTLS.ClientCertificateRef
 		if group := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Group)); group == "" {

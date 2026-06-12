@@ -304,11 +304,7 @@ func evaluateListenerSetParentRef(
 		return routeParentEvaluation{}, false
 	}
 
-	parentRefNs := ""
-	if ls.Spec.ParentRef.Namespace != nil {
-		parentRefNs = string(*ls.Spec.ParentRef.Namespace)
-	}
-	gwKey := namespacedName(parentRefNs, string(ls.Spec.ParentRef.Name))
+	gwKey := listenerSetParentGatewayKey(ls)
 	gateway, ok := state.managedGatewayByKey[gwKey]
 	if !ok {
 		return routeParentEvaluation{}, false

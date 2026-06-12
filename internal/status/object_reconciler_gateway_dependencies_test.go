@@ -188,7 +188,7 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 		WithIndex(&gatewayv1alpha2.TCPRoute{}, statusTCPRouteGatewayParentIndex, statusTCPRouteGatewayParentIndexKeys).
 		WithIndex(&gatewayv1alpha2.UDPRoute{}, statusUDPRouteGatewayParentIndex, statusUDPRouteGatewayParentIndexKeys).
 		WithIndex(&gatewayv1alpha2.TLSRoute{}, statusTLSRouteGatewayParentIndex, statusTLSRouteGatewayParentIndexKeys).
-		WithStatusSubresource(&gatewayv1.Gateway{}).
+		WithStatusSubresource(&gatewayv1.Gateway{}, &gatewayv1.ListenerSet{}).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
@@ -232,6 +232,21 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 				},
 			},
 			&gatewayv1beta1.ReferenceGrant{
+				ObjectMeta: metav1.ObjectMeta{Name: "allow-listener-set-cert", Namespace: "listener-certs"},
+				Spec: gatewayv1beta1.ReferenceGrantSpec{
+					From: []gatewayv1beta1.ReferenceGrantFrom{{
+						Group:     gatewayv1beta1.Group(gatewayv1.GroupName),
+						Kind:      gatewayv1beta1.Kind("ListenerSet"),
+						Namespace: gatewayv1beta1.Namespace("default"),
+					}},
+					To: []gatewayv1beta1.ReferenceGrantTo{{
+						Group: gatewayv1beta1.Group(""),
+						Kind:  gatewayv1beta1.Kind("Secret"),
+						Name:  ptr(gatewayv1beta1.ObjectName("listener-cert")),
+					}},
+				},
+			},
+			&gatewayv1beta1.ReferenceGrant{
 				ObjectMeta: metav1.ObjectMeta{Name: "allow-route-backend", Namespace: "shared"},
 				Spec: gatewayv1beta1.ReferenceGrantSpec{
 					From: []gatewayv1beta1.ReferenceGrantFrom{{
@@ -270,6 +285,7 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "certs"}},
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "listener-certs"}},
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
@@ -287,6 +303,24 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 							CertificateRefs: []gatewayv1.SecretObjectReference{{
 								Name:      "shared-cert",
 								Namespace: namespacePtr("certs"),
+							}},
+						},
+					}},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "https",
+						Protocol: gatewayv1.HTTPSProtocolType,
+						Port:     8443,
+						TLS: &gatewayv1.ListenerTLSConfig{
+							Mode: &mode,
+							CertificateRefs: []gatewayv1.SecretObjectReference{{
+								Name:      "listener-cert",
+								Namespace: namespacePtr("listener-certs"),
 							}},
 						},
 					}},
@@ -385,7 +419,7 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 					return fmt.Errorf("ReferenceGrant list must be namespaced")
 				}
 				switch listOptions.Namespace {
-				case "shared", "certs":
+				case "shared", "certs", "listener-certs":
 					seenGrantNamespaces[listOptions.Namespace]++
 					return nil
 				default:
@@ -408,8 +442,45 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 	if seenGrantNamespaces["certs"] == 0 {
 		t.Fatalf("expected ReferenceGrant list for certs namespace")
 	}
+	if seenGrantNamespaces["listener-certs"] == 0 {
+		t.Fatalf("expected ReferenceGrant list for listener-certs namespace")
+	}
 	if reader.gatewayClassGets != 1 {
 		t.Fatalf("GatewayClass reader Get count = %d, want 1", reader.gatewayClassGets)
+	}
+}
+
+func TestReferenceGrantTargetNamespacesForGatewayIncludesListenerSetTLSRefs(t *testing.T) {
+	mode := gatewayv1.TLSModeTerminate
+	state := &clusterState{
+		listenerSets: []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name:     "https",
+					Protocol: gatewayv1.HTTPSProtocolType,
+					Port:     443,
+					TLS: &gatewayv1.ListenerTLSConfig{
+						Mode: &mode,
+						CertificateRefs: []gatewayv1.SecretObjectReference{{
+							Name:      "shared-cert",
+							Namespace: namespacePtr("certs"),
+						}},
+					},
+				}},
+			},
+		}},
+	}
+
+	got := referenceGrantTargetNamespacesForGateway(
+		gatewayv1.Gateway{ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"}},
+		state,
+	)
+	want := []string{"certs"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("referenceGrantTargetNamespacesForGateway() = %#v, want %#v", got, want)
 	}
 }
 

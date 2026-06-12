@@ -145,6 +145,27 @@ func TestHTTPRouteStatusRequestsForServiceImportEnqueuesBackendRoutes(t *testing
 	}
 }
 
+func TestGatewayListenerSetStatusRequestsDefaultsParentNamespace(t *testing.T) {
+	t.Parallel()
+
+	got := gatewayListenerSetStatusRequests(
+		context.Background(),
+		&gatewayv1.ListenerSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+			},
+		},
+	)
+
+	want := []reconcile.Request{{
+		NamespacedName: types.NamespacedName{Namespace: "default", Name: "gw"},
+	}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("gatewayListenerSetStatusRequests() = %#v, want %#v", got, want)
+	}
+}
+
 func sortedRequests(items []reconcile.Request) []reconcile.Request {
 	out := append([]reconcile.Request(nil), items...)
 	sort.Slice(out, func(i, j int) bool {

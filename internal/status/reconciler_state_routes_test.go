@@ -164,6 +164,41 @@ func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
 	}
 }
 
+func TestLoadListenerSetsForStateDefaultsParentNamespace(t *testing.T) {
+	scheme := newScheme(t)
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "other", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "other-gw"},
+				},
+			},
+		).
+		Build()
+
+	sets, err := loadListenerSetsForState(context.Background(), k8sClient, []gatewayv1.Gateway{{
+		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+	}})
+	if err != nil {
+		t.Fatalf("loadListenerSetsForState returned error: %v", err)
+	}
+
+	if len(sets) != 1 {
+		t.Fatalf("expected 1 ListenerSet, got %d: %#v", len(sets), sets)
+	}
+	if sets[0].Namespace != "default" || sets[0].Name != "ls" {
+		t.Fatalf("loaded ListenerSet = %s/%s, want default/ls", sets[0].Namespace, sets[0].Name)
+	}
+}
+
 func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

@@ -81,9 +81,6 @@ func (r *Reconciler) loadGatewayObjectState(
 	if err := r.loadGatewayTLSConfigMaps(ctx, state, gateway); err != nil {
 		return nil, err
 	}
-	if err := r.loadGatewayReferenceGrants(ctx, state, gateway); err != nil {
-		return nil, err
-	}
 	if r.experimentalGatewayEnabled() {
 		if err := r.loadGatewayListenerSets(ctx, state); err != nil {
 			return nil, err
@@ -91,6 +88,9 @@ func (r *Reconciler) loadGatewayObjectState(
 		if err := r.loadListenerSetNamespaces(ctx, state); err != nil {
 			return nil, err
 		}
+	}
+	if err := r.loadGatewayReferenceGrants(ctx, state, gateway); err != nil {
+		return nil, err
 	}
 
 	state.index()

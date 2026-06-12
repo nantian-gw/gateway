@@ -524,18 +524,14 @@ func gatewayListenerSetStatusRequests(
 	if !ok || ls == nil {
 		return nil
 	}
-	ref := ls.Spec.ParentRef
-	ns := ""
-	if ref.Namespace != nil {
-		ns = string(*ref.Namespace)
-	}
-	if ns == "" || string(ref.Name) == "" {
+	name := string(ls.Spec.ParentRef.Name)
+	if name == "" {
 		return nil
 	}
 	return []reconcile.Request{{
 		NamespacedName: client.ObjectKey{
-			Namespace: ns,
-			Name:      string(ref.Name),
+			Namespace: listenerSetParentGatewayNamespace(*ls),
+			Name:      name,
 		},
 	}}
 }

@@ -91,6 +91,52 @@ func TestEvaluateListenerSets(t *testing.T) {
 		}
 	})
 
+	t.Run("managed Gateway defaults omitted ParentRef namespace to ListenerSet namespace", func(t *testing.T) {
+		state := &clusterState{controllerName: "example.com/gateway"}
+		lses := []gatewayv1.ListenerSet{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "my-ls",
+					Namespace:  "default",
+					Generation: 3,
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name: "gw1",
+					},
+				},
+			},
+		}
+		managedGateways := map[string]gatewayv1.Gateway{
+			"default/gw1": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gw1",
+					Namespace: "default",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: from(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+		}
+
+		result := evaluateListenerSets(state, lses, managedGateways, nil)
+
+		if len(result) != 1 {
+			t.Fatalf("expected 1 result, got %d", len(result))
+		}
+		eval, ok := result["default/my-ls"]
+		if !ok {
+			t.Fatalf("expected key 'default/my-ls', got %v", result)
+		}
+		if eval.accepted.Status != metav1.ConditionTrue {
+			t.Fatalf("accepted status = %s, want True; reason=%s message=%s", eval.accepted.Status, eval.accepted.Reason, eval.accepted.Message)
+		}
+	})
+
 	t.Run("managed Gateway with namespace in ParentRef", func(t *testing.T) {
 		state := &clusterState{controllerName: "example.com/gateway"}
 		lses := []gatewayv1.ListenerSet{
@@ -653,6 +699,75 @@ func TestEvaluateListenerSetAttachedRoutesForAllDerivedListeners(t *testing.T) {
 	listenerTwoStatus := listenerEntryStatusByName(t, eval.listeners, "listener-two")
 	if listenerTwoStatus.AttachedRoutes != 2 {
 		t.Fatalf("expected listener-two attachedRoutes=2, got %d", listenerTwoStatus.AttachedRoutes)
+	}
+}
+
+func TestEvaluateListenerSetAttachedRoutesDefaultsParentGatewayNamespace(t *testing.T) {
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	parentKind := gatewayv1.Kind("ListenerSet")
+
+	state := &clusterState{
+		controllerName: string(controllerName),
+		gatewayClasses: []gatewayv1.GatewayClass{{
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+			Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+		}},
+		gateways: []gatewayv1.Gateway{{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+			Spec: gatewayv1.GatewaySpec{
+				GatewayClassName: "nantian-gw",
+				AllowedListeners: &gatewayv1.AllowedListeners{
+					Namespaces: &gatewayv1.ListenerNamespaces{
+						From: ptr(gatewayv1.NamespacesFromAll),
+					},
+				},
+			},
+		}},
+		listenerSets: []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name:     "ls-listener",
+					Port:     80,
+					Protocol: gatewayv1.HTTPProtocolType,
+					AllowedRoutes: &gatewayv1.AllowedRoutes{
+						Namespaces: &gatewayv1.RouteNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+				}},
+			},
+		}},
+		httpRoutes: []gatewayv1.HTTPRoute{{
+			ObjectMeta: metav1.ObjectMeta{Name: "listener-set-route", Namespace: "default", Generation: 1},
+			Spec: gatewayv1.HTTPRouteSpec{
+				CommonRouteSpec: gatewayv1.CommonRouteSpec{
+					ParentRefs: []gatewayv1.ParentReference{{
+						Group: &parentGroup,
+						Kind:  &parentKind,
+						Name:  "ls",
+					}},
+				},
+			},
+		}},
+		namespaces: []corev1.Namespace{
+			{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+		},
+	}
+	state.index()
+
+	routeState := evaluateRoutes(state)
+	evals := evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey, routeState.attachments)
+	eval, ok := evals["default/ls"]
+	if !ok {
+		t.Fatalf("expected ListenerSet evaluation for default/ls, got %#v", evals)
+	}
+
+	listenerStatus := listenerEntryStatusByName(t, eval.listeners, "ls-listener")
+	if listenerStatus.AttachedRoutes != 1 {
+		t.Fatalf("expected ls-listener attachedRoutes=1, got %d", listenerStatus.AttachedRoutes)
 	}
 }
 

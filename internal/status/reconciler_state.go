@@ -111,12 +111,7 @@ func loadListenerSetsForState(
 	}
 	out := make([]gatewayv1.ListenerSet, 0, len(allSets.Items))
 	for _, ls := range allSets.Items {
-		ref := ls.Spec.ParentRef
-		ns := ""
-		if ref.Namespace != nil {
-			ns = string(*ref.Namespace)
-		}
-		key := ns + "/" + string(ref.Name)
+		key := listenerSetParentGatewayKey(ls)
 		if managed[key] {
 			out = append(out, ls)
 		}

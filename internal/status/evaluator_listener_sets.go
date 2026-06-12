@@ -64,18 +64,24 @@ func evaluateListenerSets(
 func groupListenerSetsByGateway(lses []gatewayv1.ListenerSet) map[string][]gatewayv1.ListenerSet {
 	out := make(map[string][]gatewayv1.ListenerSet)
 	for _, ls := range lses {
-		ref := ls.Spec.ParentRef
-		ns := ""
-		if ref.Namespace != nil {
-			ns = string(*ref.Namespace)
-		}
-		gwKey := ns + "/" + string(ref.Name)
-		if gwKey == "/" {
+		gwKey := listenerSetParentGatewayKey(ls)
+		if gwKey == "" {
 			continue
 		}
 		out[gwKey] = append(out[gwKey], ls)
 	}
 	return out
+}
+
+func listenerSetParentGatewayKey(ls gatewayv1.ListenerSet) string {
+	if string(ls.Spec.ParentRef.Name) == "" {
+		return ""
+	}
+	return namespacedName(listenerSetParentGatewayNamespace(ls), string(ls.Spec.ParentRef.Name))
+}
+
+func listenerSetParentGatewayNamespace(ls gatewayv1.ListenerSet) string {
+	return namespaceOrDefault(ls.Spec.ParentRef.Namespace, ls.Namespace)
 }
 
 func evaluateOneListenerSet(
