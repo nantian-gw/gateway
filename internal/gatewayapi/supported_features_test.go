@@ -80,6 +80,58 @@ func TestSupportedFeatureNamesAreSortedAndComplete(t *testing.T) {
 	}
 }
 
+func TestSupportedFeatureNamesForOptionsExcludesExperimentalGatewayFeaturesWhenDisabled(t *testing.T) {
+	got := SupportedFeatureNamesForOptions(FeatureOptions{EnableExperimentalGateway: false})
+	names := featureNameSet(got)
+
+	for _, name := range []gatewayfeatures.FeatureName{
+		gatewayfeatures.SupportListenerSet,
+		SupportedTCPRoute,
+		gatewayfeatures.SupportUDPRoute,
+		gatewayfeatures.SupportTLSRoute,
+		gatewayfeatures.SupportTLSRouteModeTerminate,
+		gatewayfeatures.SupportTLSRouteModeMixed,
+	} {
+		if names[name] {
+			t.Fatalf("feature %s should not be advertised when experimental Gateway support is disabled: %#v", name, got)
+		}
+	}
+
+	for _, name := range []gatewayfeatures.FeatureName{
+		gatewayfeatures.SupportGateway,
+		gatewayfeatures.SupportHTTPRoute,
+		gatewayfeatures.SupportGRPCRoute,
+		gatewayfeatures.SupportReferenceGrant,
+	} {
+		if !names[name] {
+			t.Fatalf("feature %s should remain advertised when experimental Gateway support is disabled: %#v", name, got)
+		}
+	}
+}
+
+func TestSupportedFeatureNamesForOptionsIncludesExperimentalGatewayFeaturesWhenEnabled(t *testing.T) {
+	got := SupportedFeatureNamesForOptions(FeatureOptions{EnableExperimentalGateway: true})
+	names := featureNameSet(got)
+
+	for _, name := range []gatewayfeatures.FeatureName{
+		gatewayfeatures.SupportListenerSet,
+		SupportedTCPRoute,
+		gatewayfeatures.SupportUDPRoute,
+		gatewayfeatures.SupportTLSRoute,
+		gatewayfeatures.SupportTLSRouteModeTerminate,
+		gatewayfeatures.SupportTLSRouteModeMixed,
+	} {
+		if !names[name] {
+			t.Fatalf("feature %s should be advertised when experimental Gateway support is enabled: %#v", name, got)
+		}
+	}
+
+	want := SupportedFeatureNames()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("enabled runtime feature names = %#v, want complete supported set %#v", got, want)
+	}
+}
+
 func TestSupportedFeaturesExposeSortedGatewayClassStatusShape(t *testing.T) {
 	got := SupportedFeatures()
 	names := make([]gatewayfeatures.FeatureName, 0, len(got))
@@ -113,5 +165,13 @@ func sortedFeatureNames(items []gatewayfeatures.FeatureName) []gatewayfeatures.F
 	sort.Slice(out, func(i, j int) bool {
 		return out[i] < out[j]
 	})
+	return out
+}
+
+func featureNameSet(items []gatewayfeatures.FeatureName) map[gatewayfeatures.FeatureName]bool {
+	out := make(map[gatewayfeatures.FeatureName]bool, len(items))
+	for _, item := range items {
+		out[item] = true
+	}
 	return out
 }

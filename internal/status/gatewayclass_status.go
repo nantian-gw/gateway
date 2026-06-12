@@ -65,7 +65,9 @@ func (r *gatewayClassStatusSupportResolver) resolve(
 			r.err = err
 		} else {
 			r.crds = crds.Items
-			r.features = gatewayapi.SupportedFeatures()
+			r.features = gatewayapi.SupportedFeaturesForOptions(gatewayapi.FeatureOptions{
+				EnableExperimentalGateway: r.reconciler.experimentalGatewayEnabled(),
+			})
 		}
 	}
 	if r.err != nil {

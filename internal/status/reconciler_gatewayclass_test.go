@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatewayfeatures "sigs.k8s.io/gateway-api/pkg/features"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
@@ -95,6 +96,61 @@ func TestReconcileGatewayClassObjectPublishesSupportedVersionAndFeatures(t *test
 	)
 	if !reflect.DeepEqual(gatewayClass.Status.SupportedFeatures, gatewayapi.SupportedFeatures()) {
 		t.Fatalf("unexpected supported features: %#v", gatewayClass.Status.SupportedFeatures)
+	}
+}
+
+func TestReconcileGatewayClassObjectFiltersExperimentalGatewayFeaturesWhenDisabled(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&gatewayv1.GatewayClass{}).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 3},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			gatewayAPICRD("gatewayclasses.gateway.networking.k8s.io", "v1.5.1"),
+		).
+		Build()
+
+	reconciler := NewWithAddressesAndReaderOptions(
+		k8sClient,
+		k8sClient,
+		string(controllerName),
+		[]string{"127.0.0.1"},
+		discardLogger(),
+		Options{EnableExperimentalGateway: false},
+	)
+	if err := reconciler.ReconcileGatewayClassObject(context.Background(), "nantian-gw"); err != nil {
+		t.Fatalf("ReconcileGatewayClassObject returned error: %v", err)
+	}
+
+	var gatewayClass gatewayv1.GatewayClass
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass); err != nil {
+		t.Fatalf("Get GatewayClass returned error: %v", err)
+	}
+
+	want := gatewayapi.SupportedFeaturesForOptions(gatewayapi.FeatureOptions{EnableExperimentalGateway: false})
+	if !reflect.DeepEqual(gatewayClass.Status.SupportedFeatures, want) {
+		t.Fatalf("supported features with experimental Gateway disabled = %#v, want %#v", gatewayClass.Status.SupportedFeatures, want)
+	}
+
+	names := supportedFeatureStatusNameSet(gatewayClass.Status.SupportedFeatures)
+	for _, name := range []gatewayv1.FeatureName{
+		gatewayv1.FeatureName(gatewayapi.SupportedTCPRoute),
+		gatewayv1.FeatureName(gatewayfeatures.SupportListenerSet),
+		gatewayv1.FeatureName(gatewayfeatures.SupportUDPRoute),
+		gatewayv1.FeatureName(gatewayfeatures.SupportTLSRoute),
+		gatewayv1.FeatureName(gatewayfeatures.SupportTLSRouteModeTerminate),
+		gatewayv1.FeatureName(gatewayfeatures.SupportTLSRouteModeMixed),
+	} {
+		if names[name] {
+			t.Fatalf("feature %s should not be advertised when experimental Gateway support is disabled: %#v", name, gatewayClass.Status.SupportedFeatures)
+		}
 	}
 }
 
@@ -379,4 +435,12 @@ func TestReconcileLoadsGatewayAPICRDsOncePerFullReconcile(t *testing.T) {
 	if crdLists != 1 {
 		t.Fatalf("gateway API CRD list count = %d, want 1", crdLists)
 	}
+}
+
+func supportedFeatureStatusNameSet(items []gatewayv1.SupportedFeature) map[gatewayv1.FeatureName]bool {
+	out := make(map[gatewayv1.FeatureName]bool, len(items))
+	for _, item := range items {
+		out[item.Name] = true
+	}
+	return out
 }
