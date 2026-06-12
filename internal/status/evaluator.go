@@ -90,6 +90,18 @@ func evaluateGateways(state *clusterState, attachments map[listenerKey]map[strin
 			listenerEvals = append(listenerEvals, eval)
 		}
 
+		for _, eval := range evaluateGatewayListenerSetListeners(state, gateway, state.listenerSets) {
+			if eval.acceptedCondition.Status == metav1.ConditionTrue {
+				acceptedListeners++
+			} else {
+				invalidListeners++
+			}
+			if eval.programmedCondition.Status != metav1.ConditionTrue {
+				listenersProgrammed = false
+			}
+			listenerEvals = append(listenerEvals, eval)
+		}
+
 		addressEvaluation := evaluateGatewayAddresses(
 			gateway.Spec.Addresses,
 			gatewayPublishedAddresses(state, gateway),
