@@ -27,6 +27,15 @@ type kindPortMapping struct {
 	Protocol      string `yaml:"protocol"`
 }
 
+type controlPlaneConfig struct {
+	Features controlPlaneFeatures `yaml:"features"`
+}
+
+type controlPlaneFeatures struct {
+	EnableExperimentalGateway bool `yaml:"enableExperimentalGateway"`
+	EnableAiGateway           bool `yaml:"enableAiGateway"`
+}
+
 func TestKindCIConfigExposesConformancePorts(t *testing.T) {
 	data := readFile(t, "kind-ci-config.yaml")
 
@@ -160,6 +169,22 @@ func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 		if strings.Contains(smokeScript, oldName) {
 			t.Fatalf("smoke script still contains old resource name %q", oldName)
 		}
+	}
+}
+
+func TestConformanceOverlayEnablesAdvertisedExperimentalGatewayFeatures(t *testing.T) {
+	data := readFile(t, repoPath("deploy", "kubernetes", "overlays", "kind-conformance", "controlplane-config.yaml"))
+
+	var config controlPlaneConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		t.Fatalf("parse kind-conformance controlplane config: %v", err)
+	}
+
+	if !config.Features.EnableExperimentalGateway {
+		t.Fatalf("kind conformance controlplane config must enable experimental Gateway API support for advertised ListenerSet/TCPRoute/UDPRoute/TLSRoute features")
+	}
+	if config.Features.EnableAiGateway {
+		t.Fatalf("kind conformance controlplane config should not enable AI Gateway features")
 	}
 }
 
