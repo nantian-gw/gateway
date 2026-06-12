@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: nantian-gw
 spec:
   template:
@@ -21,13 +21,13 @@ spec:
       volumes:
         - name: xds-tls
           secret:
-            secretName: nantian-dataplane-xds-tls
+            secretName: nantian-gw-dataplane-xds-tls
             optional: false
         - name: admin-auth
           secret:
-            secretName: nantian-dataplane-admin-auth
+            secretName: nantian-gw-dataplane-admin-auth
             optional: false
         - name: session-persistence
           secret:
-            secretName: nantian-dataplane-session-persistence
+            secretName: nantian-gw-dataplane-session-persistence
             optional: false

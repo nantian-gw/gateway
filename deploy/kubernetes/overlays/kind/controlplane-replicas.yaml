@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nantian-controlplane
+  name: nantian-gw-controlplane
   namespace: nantian-gw
 spec:
   replicas: 1

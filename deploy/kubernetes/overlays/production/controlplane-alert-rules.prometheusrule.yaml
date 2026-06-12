@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: nantian-controlplane-alerts
+  name: nantian-gw-controlplane-alerts
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: nantian-gw
 spec:
   groups:
-    - name: nantian-controlplane
+    - name: nantian-gw-controlplane
       rules:
         - alert: NantianGatewayControlplaneXDSSnapshotAckTimeouts
           expr: increase(nantian_gateway_controlplane_xds_snapshot_ack_timeouts_total[10m]) > 0

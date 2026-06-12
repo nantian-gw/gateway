@@ -15,7 +15,7 @@ import (
 
 const (
 	defaultDataplaneNamespace = "nantian-gw"
-	defaultSharedServiceName  = "nantian-dataplane"
+	defaultSharedServiceName  = "nantian-gw-dataplane"
 	defaultAdminPortName      = "admin"
 	defaultAdminPort          = 19080
 
@@ -30,7 +30,7 @@ const (
 )
 
 var defaultDataplaneSelector = map[string]string{
-	"app": "nantian-dataplane",
+	"app": "nantian-gw-dataplane",
 }
 
 type Options struct {

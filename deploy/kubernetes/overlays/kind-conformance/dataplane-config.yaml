@@ -1,6 +1,6 @@
 nodeId: "dp-kind"
 cluster: "kind"
-controlPlaneAddr: "http://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
+controlPlaneAddr: "http://nantian-gw-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
 adminAddr: "0.0.0.0:19080"
 log:
   level: "info,nantian_core::connectors=off"

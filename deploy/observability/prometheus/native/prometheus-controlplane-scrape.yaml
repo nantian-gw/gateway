@@ -2,7 +2,7 @@
 # Do not use both jobs at the same time for the same controlplane targets.
 
 scrape_configs:
-  - job_name: nantian-controlplane
+  - job_name: nantian-gw-controlplane
     metrics_path: /metrics
     scrape_interval: 15s
     scrape_timeout: 10s
@@ -19,7 +19,7 @@ scrape_configs:
           - __meta_kubernetes_service_name
           - __meta_kubernetes_endpoint_port_name
         action: keep
-        regex: nantian-gw;nantian-controlplane-metrics;metrics
+        regex: nantian-gw;nantian-gw-controlplane-metrics;metrics
 
       - source_labels: [__meta_kubernetes_pod_name]
         target_label: pod
@@ -40,7 +40,7 @@ scrape_configs:
         target_label: instance
 ---
 scrape_configs:
-  - job_name: nantian-controlplane
+  - job_name: nantian-gw-controlplane
     metrics_path: /metrics
     scrape_interval: 15s
     scrape_timeout: 10s
@@ -57,7 +57,7 @@ scrape_configs:
           - __meta_kubernetes_service_name
           - __meta_kubernetes_endpointslice_port_name
         action: keep
-        regex: nantian-gw;nantian-controlplane-metrics;metrics
+        regex: nantian-gw;nantian-gw-controlplane-metrics;metrics
 
       - source_labels: [__meta_kubernetes_pod_name]
         target_label: pod

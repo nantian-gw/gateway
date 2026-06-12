@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: monitoring
   labels:
     release: kube-prometheus-stack
@@ -11,7 +11,7 @@ spec:
       - nantian-gw
   selector:
     matchLabels:
-      app: nantian-dataplane
+      app: nantian-gw-dataplane
   podMetricsEndpoints:
     - port: admin
       path: /metrics
@@ -21,5 +21,5 @@ spec:
       authorization:
         type: Bearer
         credentials:
-          name: nantian-dataplane-admin-token
+          name: nantian-gw-dataplane-admin-token
           key: token

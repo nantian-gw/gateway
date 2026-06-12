@@ -25,7 +25,7 @@ func TestDiscoverDataplaneAdminEndpointsFromEndpointSlices(t *testing.T) {
 			Name:      "dp-admin-a",
 			Namespace: "nantian-gw",
 			Labels: map[string]string{
-				"kubernetes.io/service-name": "nantian-dataplane-admin",
+				"kubernetes.io/service-name": "nantian-gw-dataplane-admin",
 			},
 		},
 		Ports: []discoveryv1.EndpointPort{{Name: &portName, Port: &port}},
@@ -45,7 +45,7 @@ func TestDiscoverDataplaneAdminEndpointsFromEndpointSlices(t *testing.T) {
 
 	discovery := NewDataplaneAdminDiscovery(client, DataplaneAdminDiscoveryConfig{
 		Namespace:   "nantian-gw",
-		ServiceName: "nantian-dataplane-admin",
+		ServiceName: "nantian-gw-dataplane-admin",
 		PortName:    "admin",
 	})
 

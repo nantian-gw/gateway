@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: monitoring
   labels:
     release: kube-prometheus-stack
@@ -22,5 +22,5 @@ spec:
       authorization:
         type: Bearer
         credentials:
-          name: nantian-dataplane-admin-token
+          name: nantian-gw-dataplane-admin-token
           key: token

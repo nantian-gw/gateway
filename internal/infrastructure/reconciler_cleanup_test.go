@@ -147,7 +147,7 @@ func TestReconcileDeletesSharedServiceWithoutManagedListeners(t *testing.T) {
 				},
 				Spec: corev1.ServiceSpec{
 					Type:     corev1.ServiceTypeNodePort,
-					Selector: map[string]string{"app": "nantian-dataplane"},
+					Selector: map[string]string{"app": "nantian-gw-dataplane"},
 					Ports: []corev1.ServicePort{{
 						Name:       "tcp-80",
 						Port:       80,

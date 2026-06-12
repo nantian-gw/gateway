@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: nantian-gw
 spec:
   replicas: 1
@@ -19,5 +19,5 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchLabels:
-                  app: nantian-dataplane
+                  app: nantian-gw-dataplane
               topologyKey: kubernetes.io/hostname

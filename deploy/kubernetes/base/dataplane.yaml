@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -19,16 +19,16 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: nantian-dataplane
+      app: nantian-gw-dataplane
   template:
     metadata:
       labels:
-        app: nantian-dataplane
+        app: nantian-gw-dataplane
         app.kubernetes.io/name: nantian-gw
         app.kubernetes.io/part-of: nantian-gw
         app.kubernetes.io/component: dataplane
     spec:
-      serviceAccountName: nantian-dataplane
+      serviceAccountName: nantian-gw-dataplane
       automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       securityContext:
@@ -47,7 +47,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: nantian-dataplane
+              app: nantian-gw-dataplane
       containers:
         - name: dataplane
           image: nantian-dataplane:dev
@@ -114,14 +114,14 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: nantian-dataplane-config
+            name: nantian-gw-dataplane-config
         - name: xds-tls
           secret:
-            secretName: nantian-dataplane-xds-tls
+            secretName: nantian-gw-dataplane-xds-tls
             optional: true
         - name: admin-auth
           secret:
-            secretName: nantian-dataplane-admin-auth
+            secretName: nantian-gw-dataplane-admin-auth
             optional: true
         - name: tmp
           emptyDir:
@@ -130,7 +130,7 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -140,4 +140,4 @@ spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: nantian-dataplane
+      app: nantian-gw-dataplane

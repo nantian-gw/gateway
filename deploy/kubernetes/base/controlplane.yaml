@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nantian-controlplane
+  name: nantian-gw-controlplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -19,16 +19,16 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: nantian-controlplane
+      app: nantian-gw-controlplane
   template:
     metadata:
       labels:
-        app: nantian-controlplane
+        app: nantian-gw-controlplane
         app.kubernetes.io/name: nantian-gw
         app.kubernetes.io/part-of: nantian-gw
         app.kubernetes.io/component: controlplane
     spec:
-      serviceAccountName: nantian-controlplane
+      serviceAccountName: nantian-gw-controlplane
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
@@ -43,7 +43,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: nantian-controlplane
+              app: nantian-gw-controlplane
       containers:
         - name: controlplane
           image: nantian-controlplane:dev
@@ -110,20 +110,20 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: nantian-controlplane-config
+            name: nantian-gw-controlplane-config
         - name: grpc-tls
           secret:
-            secretName: nantian-controlplane-grpc-tls
+            secretName: nantian-gw-controlplane-grpc-tls
             optional: true
         - name: admin-auth
           secret:
-            secretName: nantian-controlplane-admin-auth
+            secretName: nantian-gw-controlplane-admin-auth
             optional: true
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: nantian-controlplane
+  name: nantian-gw-controlplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -133,4 +133,4 @@ spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: nantian-controlplane
+      app: nantian-gw-controlplane

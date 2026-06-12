@@ -35,7 +35,7 @@ func TestInfrastructureEndpointReturnsDerivedResourceReport(t *testing.T) {
 	for _, item := range report.Resources {
 		if item.Kind == infrastructure.InfrastructureKindService &&
 			item.Namespace == "nantian-gw" &&
-			item.Name == "nantian-dataplane" {
+			item.Name == "nantian-gw-dataplane" {
 			sharedService = item
 			break
 		}

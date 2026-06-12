@@ -27,12 +27,12 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - name: nantian-controlplane-config
+  - name: nantian-gw-controlplane-config
     namespace: nantian-gw
     behavior: replace
     files:
       - config.yaml=controlplane-config.yaml
-  - name: nantian-dataplane-config
+  - name: nantian-gw-dataplane-config
     namespace: nantian-gw
     behavior: replace
     files:

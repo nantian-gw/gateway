@@ -13,8 +13,8 @@ spec:
       - key: app
         operator: In
         values:
-          - nantian-controlplane
-          - nantian-dataplane
+          - nantian-gw-controlplane
+          - nantian-gw-dataplane
   policyTypes:
     - Ingress
   ingress:
