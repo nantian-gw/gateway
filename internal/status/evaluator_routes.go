@@ -70,7 +70,7 @@ func evaluateParentRef(
 	}
 	matchedListeners := make([]listenerKey, 0)
 
-	candidates := candidateListeners(gateway, parentRef)
+	candidates := candidateListeners(state, gateway, parentRef)
 	if len(candidates) == 0 {
 		accepted.Reason = string(gatewayv1.RouteReasonNoMatchingParent)
 	} else {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -15,7 +16,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
-func candidateListeners(gateway gatewayv1.Gateway, parentRef gatewayv1.ParentReference) []gatewayv1.Listener {
+func candidateListeners(state *clusterState, gateway gatewayv1.Gateway, parentRef gatewayv1.ParentReference) []gatewayv1.Listener {
 	out := make([]gatewayv1.Listener, 0, len(gateway.Spec.Listeners))
 	for _, listener := range gateway.Spec.Listeners {
 		if parentRef.SectionName != nil && listener.Name != *parentRef.SectionName {
@@ -25,6 +26,55 @@ func candidateListeners(gateway gatewayv1.Gateway, parentRef gatewayv1.ParentRef
 			continue
 		}
 		out = append(out, listener)
+	}
+
+	gwKey := gateway.Namespace + "/" + gateway.Name
+	gwLSes := groupListenerSetsByGateway(state.listenerSets)[gwKey]
+	sort.Slice(gwLSes, func(i, j int) bool {
+		if !gwLSes[i].CreationTimestamp.Time.Equal(gwLSes[j].CreationTimestamp.Time) {
+			return gwLSes[i].CreationTimestamp.Time.Before(gwLSes[j].CreationTimestamp.Time)
+		}
+		return gwLSes[i].Namespace+"/"+gwLSes[i].Name < gwLSes[j].Namespace+"/"+gwLSes[j].Name
+	})
+
+	conflictSet := make(map[lsKey]bool, len(out))
+	for _, l := range out {
+		host := ""
+		if l.Hostname != nil {
+			host = string(*l.Hostname)
+		}
+		conflictSet[lsKey{l.Port, string(l.Protocol), host}] = true
+	}
+
+	for _, ls := range gwLSes {
+		if !gatewayAllowsListenerSet(gateway, ls, state.namespaceByName) {
+			continue
+		}
+		acceptedCond := meta.FindStatusCondition(ls.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted))
+		if acceptedCond == nil || acceptedCond.Status != metav1.ConditionTrue {
+			continue
+		}
+		for _, entry := range ls.Spec.Listeners {
+			host := ""
+			if entry.Hostname != nil {
+				host = string(*entry.Hostname)
+			}
+			key := lsKey{entry.Port, string(entry.Protocol), host}
+			if conflictSet[key] {
+				continue
+			}
+			conflictSet[key] = true
+
+			if parentRef.Port != nil && entry.Port != *parentRef.Port {
+				continue
+			}
+
+			listener := listenerEntryToInternalListener(entry, ls)
+			if parentRef.SectionName != nil && listener.Name != *parentRef.SectionName {
+				continue
+			}
+			out = append(out, listener)
+		}
 	}
 	return out
 }

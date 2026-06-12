@@ -17,6 +17,12 @@ type listenerSetEvaluation struct {
 	listeners  []gatewayv1.ListenerEntryStatus
 }
 
+type lsKey struct {
+	port     gatewayv1.PortNumber
+	protocol string
+	hostname string
+}
+
 func evaluateListenerSets(
 	state *clusterState,
 	lses []gatewayv1.ListenerSet,
@@ -83,9 +89,9 @@ func evaluateOneListenerSet(
 	listenerStatuses := make([]gatewayv1.ListenerEntryStatus, 0, len(ls.Spec.Listeners))
 	hasValidListener := len(ls.Spec.Listeners) == 0
 
-	for _, entry := range ls.Spec.Listeners {
+		for _, entry := range ls.Spec.Listeners {
 		entryEval := evaluateListenerSetEntry(entry, ls, conflictListeners, state)
-		if entryEval.accepted {
+		if entryEval.valid {
 			hasValidListener = true
 		}
 		listenerStatuses = append(listenerStatuses, entryEval.status)
@@ -130,8 +136,8 @@ func disallowedListenerSetEvaluation(ls gatewayv1.ListenerSet) listenerSetEvalua
 }
 
 type listenerSetEntryEval struct {
-	accepted bool
-	status   gatewayv1.ListenerEntryStatus
+	valid  bool
+	status gatewayv1.ListenerEntryStatus
 }
 
 func evaluateListenerSetEntry(
@@ -147,23 +153,23 @@ func evaluateListenerSetEntry(
 	acceptedCond := metav1.Condition{Type: string(gatewayv1.ListenerConditionAccepted), Status: metav1.ConditionTrue, Reason: string(gatewayv1.ListenerReasonAccepted), Message: "Listener is accepted", ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()}
 	programmedCond := metav1.Condition{Type: string(gatewayv1.ListenerConditionProgrammed), Status: metav1.ConditionTrue, Reason: string(gatewayv1.ListenerReasonProgrammed), Message: "Listener is programmed", ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()}
 	var extraConditions []metav1.Condition
-	entryAccepted := true
+	entryValid := true
 
 	if policy.invalidKindRefs {
 		resolvedRefsCond.Status = metav1.ConditionFalse
 		resolvedRefsCond.Reason = string(gatewayv1.ListenerReasonInvalidRouteKinds)
 		resolvedRefsCond.Message = "Listener contains unsupported route kinds"
-		entryAccepted = false
+		entryValid = false
 	}
-	if entryAccepted {
+	if entryValid {
 		if reason, message, ok := evaluateListenerSpec(entryListener); !ok {
 			acceptedCond.Status = metav1.ConditionFalse
 			acceptedCond.Reason = reason
 			acceptedCond.Message = message
-			entryAccepted = false
+			entryValid = false
 		}
 	}
-	if entryAccepted && entryListener.TLS != nil && len(entryListener.TLS.CertificateRefs) > 0 {
+	if entryValid && entryListener.TLS != nil && len(entryListener.TLS.CertificateRefs) > 0 {
 		reason, message, ok := evaluateListenerSetTLSRefs(entryListener, ls, state)
 		if !ok {
 			resolvedRefsCond.Status = metav1.ConditionFalse
@@ -171,7 +177,7 @@ func evaluateListenerSetEntry(
 			resolvedRefsCond.Message = message
 		}
 	}
-	if entryAccepted {
+	if entryValid {
 		if reason, message, ok := evaluateListenerConflict(conflictListeners, entryListener); !ok {
 			acceptedCond.Status = metav1.ConditionFalse
 			acceptedCond.Reason = reason
@@ -180,10 +186,9 @@ func evaluateListenerSetEntry(
 			programmedCond.Reason = reason
 			programmedCond.Message = message
 			extraConditions = append(extraConditions, metav1.Condition{Type: string(gatewayv1.ListenerConditionConflicted), Status: metav1.ConditionTrue, Reason: reason, Message: message, ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()})
-			entryAccepted = false
 		}
 	}
-	if !entryAccepted {
+	if !entryValid {
 		programmedCond.Status = metav1.ConditionFalse
 		programmedCond.Reason = acceptedCond.Reason
 		programmedCond.Message = acceptedCond.Message
@@ -193,7 +198,7 @@ func evaluateListenerSetEntry(
 	conditions = append(conditions, extraConditions...)
 
 	return listenerSetEntryEval{
-		accepted: entryAccepted,
+		valid: entryValid,
 		status: gatewayv1.ListenerEntryStatus{Name: entry.Name, SupportedKinds: policy.supportedKinds, Conditions: conditions},
 	}
 }
@@ -249,11 +254,6 @@ func evaluateGatewayListenerSetListeners(
 		return gwLSes[i].Namespace+"/"+gwLSes[i].Name < gwLSes[j].Namespace+"/"+gwLSes[j].Name
 	})
 
-	type lsKey struct {
-		port     gatewayv1.PortNumber
-		protocol string
-		hostname string
-	}
 	conflictSet := make(map[lsKey]bool, len(gateway.Spec.Listeners))
 	allListeners := make([]gatewayv1.Listener, 0, len(gateway.Spec.Listeners))
 	for _, l := range gateway.Spec.Listeners {
@@ -310,11 +310,11 @@ func countAttachedListenerSets(state *clusterState, gateway gatewayv1.Gateway) i
 		if !gatewayAllowsListenerSet(gateway, ls, state.namespaceByName) { continue }
 		lsAccepted := false
 		for _, entry := range ls.Spec.Listeners {
-			if evaluateListenerSetEntry(entry, ls, conflictSet, state).accepted { count++; lsAccepted = true; break }
+			if evaluateListenerSetEntry(entry, ls, conflictSet, state).valid { count++; lsAccepted = true; break }
 		}
 		if lsAccepted {
 			for _, entry := range ls.Spec.Listeners {
-				if evaluateListenerSetEntry(entry, ls, conflictSet, state).accepted {
+				if evaluateListenerSetEntry(entry, ls, conflictSet, state).valid {
 					conflictSet = append(conflictSet, listenerEntryToInternalListener(entry, ls))
 				}
 			}
