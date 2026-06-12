@@ -24,7 +24,7 @@ const (
 )
 
 func TestGatewayAPIConformance(t *testing.T) {
-	options := gatewayconformance.DefaultOptions(t)
+	options := applyEnvFeatureOptions(gatewayconformance.DefaultOptions(t))
 	options, expandedAllFeatures := patchAllFeatures(options)
 
 	manifestFS, err := gatewayAPIManifestFS()
@@ -44,6 +44,22 @@ func TestGatewayAPIConformance(t *testing.T) {
 	)
 
 	runConformanceWithOptions(t, options, expandedAllFeatures)
+}
+
+func applyEnvFeatureOptions(options conformancesuite.ConformanceOptions) conformancesuite.ConformanceOptions {
+	if envFlagEnabled("ALL_FEATURES") {
+		options.EnableAllSupportedFeatures = true
+	}
+	return options
+}
+
+func envFlagEnabled(name string) bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(name))) {
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func patchAllFeatures(options conformancesuite.ConformanceOptions) (conformancesuite.ConformanceOptions, bool) {

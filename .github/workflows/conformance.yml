@@ -97,3 +97,83 @@ jobs:
       - name: Cleanup
         if: always()
         run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "$CLUSTER_NAME" || true
+
+  gateway-api-all-features:
+    name: Gateway API Conformance (All Features)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      CLUSTER_NAME: conformance-all-features
+      CONFORMANCE_EXPERIMENTAL: "true"
+      ALL_FEATURES: "true"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Install Kind tooling
+        run: scripts/ci/install-kind-tools.sh
+
+      - name: Create kind cluster
+        run: scripts/ci/create-kind-cluster.sh
+
+      - name: Install Gateway API CRDs
+        run: scripts/ci/install-gateway-api-crds.sh
+
+      - name: Build current control-plane image
+        run: scripts/ci/build-controlplane-image.sh
+
+      - name: Load images into kind
+        run: scripts/ci/load-kind-images.sh
+
+      - name: Deploy Nantian Gateway
+        run: scripts/ci/deploy-kind-conformance.sh
+
+      - name: Record image versions
+        run: |
+          echo "=== Images under test ==="
+          kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .spec.containers[] | "  \(.name): \(.image)"'
+          echo "=== Image digests ==="
+          kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .status.containerStatuses[] | "  \(.name): \(.imageID)"'
+
+      - name: Run conformance tests
+        id: conformance
+        run: |
+          mkdir -p dist/conformance
+          report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
+          set +e
+          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
+            -args \
+            -gateway-class nantian-gw \
+            -report-output "$report_path" \
+            -organization "Nantian Gateway" \
+            -project "Nantian Gateway" \
+            -url "https://github.com/nantian-gw/gateway" \
+            -version "${GITHUB_SHA}" \
+            -contact "https://github.com/nantian-gw/gateway/issues" 2>&1 \
+            | tee dist/conformance/run.log
+          status=${PIPESTATUS[0]}
+          echo "exit_code=${status}" >>"${GITHUB_OUTPUT}"
+          exit "${status}"
+
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: ARTIFACT_DIR=tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh
+
+      - name: Upload conformance artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: conformance-all-features-results
+          path: |
+            dist/conformance/
+            tmp/conformance-diagnostics/
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "$CLUSTER_NAME" || true

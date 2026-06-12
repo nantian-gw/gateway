@@ -188,6 +188,46 @@ func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T
 	}
 }
 
+func TestDeployKindConformanceSupportsEnvDrivenExperimentalMode(t *testing.T) {
+	contents := string(readFile(t, repoPath("scripts", "ci", "deploy-kind-conformance.sh")))
+
+	for _, want := range []string{
+		`CONFORMANCE_EXPERIMENTAL="${CONFORMANCE_EXPERIMENTAL:-${ALL_FEATURES:-false}}"`,
+		`if [[ "$CONFORMANCE_EXPERIMENTAL" == "true" ]]; then`,
+		`enableExperimentalGateway: true`,
+		`"$overlay/controlplane-config.yaml"`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("deploy-kind-conformance.sh missing %q", want)
+		}
+	}
+
+	if strings.Contains(contents, `deploy/kubernetes/overlays/kind-conformance/controlplane-config.yaml`) {
+		t.Fatalf("deploy-kind-conformance.sh should only patch the copied temporary overlay")
+	}
+}
+
+func TestConformanceWorkflowHasScheduledAllFeaturesJob(t *testing.T) {
+	contents := string(readFile(t, repoPath(".github", "workflows", "conformance.yml")))
+
+	for _, want := range []string{
+		"Gateway API Conformance (All Features)",
+		"github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'",
+		`CLUSTER_NAME: conformance-all-features`,
+		`CONFORMANCE_EXPERIMENTAL: "true"`,
+		`ALL_FEATURES: "true"`,
+		"conformance-all-features-results",
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("conformance workflow missing %q", want)
+		}
+	}
+
+	if strings.Contains(contents, `            -all-features \`) {
+		t.Fatalf("conformance workflow should use ALL_FEATURES env instead of hard-coding -all-features")
+	}
+}
+
 func portKey(port int, protocol string) string {
 	return fmt.Sprintf("%s/%d", protocol, port)
 }
