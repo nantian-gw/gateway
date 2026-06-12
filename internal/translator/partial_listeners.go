@@ -44,7 +44,7 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		var err error
-		supportObjects, err = t.loadSupportObjects(groupCtx, cl, gateways, nil, nil, nil, nil, nil, nil)
+		supportObjects, err = t.loadSupportObjects(groupCtx, cl, gateways, nil, nil, nil, nil, nil, nil, nil)
 		return err
 	})
 	group.Go(func() error {

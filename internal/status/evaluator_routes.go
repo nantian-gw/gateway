@@ -326,7 +326,7 @@ func evaluateListenerSetParentRef(
 		allowedListeners := make([]gatewayv1.Listener, 0, len(candidates))
 		for _, listener := range candidates {
 			policy := buildListenerPolicy(listener)
-			if !listenerAllowsRoute(policy, route.kind, gateway.Namespace, route.namespace, state.namespaceByName[route.namespace]) {
+			if !listenerAllowsRoute(policy, route.kind, ls.Namespace, route.namespace, state.namespaceByName[route.namespace]) {
 				continue
 			}
 			allowedListeners = append(allowedListeners, listener)

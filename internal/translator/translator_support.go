@@ -28,6 +28,7 @@ func (t *Translator) loadSupportObjects(
 	ctx context.Context,
 	cl client.Client,
 	gateways []gatewayv1.Gateway,
+	listenerSets []gatewayv1.ListenerSet,
 	httpRoutes []gatewayv1.HTTPRoute,
 	grpcRoutes []gatewayv1.GRPCRoute,
 	tcpRoutes []gatewayv1alpha2.TCPRoute,
@@ -39,7 +40,7 @@ func (t *Translator) loadSupportObjects(
 
 	secretKeys := referencedSecretKeys(gateways)
 	configMapKeys := referencedConfigMapKeys(gateways, httpRoutes, grpcRoutes, backendTLSPolicies)
-	namespaceKeys := attachmentNamespaceKeys(gateways, httpRoutes, grpcRoutes, tcpRoutes, udpRoutes, tlsRoutes)
+	namespaceKeys := attachmentNamespaceKeys(gateways, listenerSets, httpRoutes, grpcRoutes, tcpRoutes, udpRoutes, tlsRoutes)
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
@@ -180,13 +181,16 @@ func referencedConfigMapKeys(
 
 func attachmentNamespaceKeys(
 	gateways []gatewayv1.Gateway,
+	listenerSets []gatewayv1.ListenerSet,
 	httpRoutes []gatewayv1.HTTPRoute,
 	grpcRoutes []gatewayv1.GRPCRoute,
 	tcpRoutes []gatewayv1alpha2.TCPRoute,
 	udpRoutes []gatewayv1alpha2.UDPRoute,
 	tlsRoutes []gatewayv1alpha2.TLSRoute,
 ) []client.ObjectKey {
-	if !gatewaysUseNamespaceSelectors(gateways) {
+	loadRouteNamespaces := gatewaysUseRouteNamespaceSelectors(gateways) || listenerSetsUseRouteNamespaceSelectors(listenerSets)
+	loadListenerSetNamespaces := gatewaysUseListenerSetNamespaceSelectors(gateways)
+	if !loadRouteNamespaces && !loadListenerSetNamespaces {
 		return nil
 	}
 
@@ -198,28 +202,63 @@ func attachmentNamespaceKeys(
 		keys[namespace] = client.ObjectKey{Name: namespace}
 	}
 
-	for _, route := range httpRoutes {
-		addNamespace(route.Namespace)
+	if loadRouteNamespaces {
+		for _, route := range httpRoutes {
+			addNamespace(route.Namespace)
+		}
+		for _, route := range grpcRoutes {
+			addNamespace(route.Namespace)
+		}
+		for _, route := range tcpRoutes {
+			addNamespace(route.Namespace)
+		}
+		for _, route := range udpRoutes {
+			addNamespace(route.Namespace)
+		}
+		for _, route := range tlsRoutes {
+			addNamespace(route.Namespace)
+		}
 	}
-	for _, route := range grpcRoutes {
-		addNamespace(route.Namespace)
-	}
-	for _, route := range tcpRoutes {
-		addNamespace(route.Namespace)
-	}
-	for _, route := range udpRoutes {
-		addNamespace(route.Namespace)
-	}
-	for _, route := range tlsRoutes {
-		addNamespace(route.Namespace)
+	if loadListenerSetNamespaces {
+		for _, ls := range listenerSets {
+			addNamespace(ls.Namespace)
+		}
 	}
 
 	return sortedObjectKeys(keys)
 }
 
-func gatewaysUseNamespaceSelectors(gateways []gatewayv1.Gateway) bool {
+func gatewaysUseRouteNamespaceSelectors(gateways []gatewayv1.Gateway) bool {
 	for _, gateway := range gateways {
 		for _, listener := range gatewayapi.EffectiveListeners(gateway) {
+			if listener.AllowedRoutes == nil || listener.AllowedRoutes.Namespaces == nil || listener.AllowedRoutes.Namespaces.From == nil {
+				continue
+			}
+			if *listener.AllowedRoutes.Namespaces.From == gatewayv1.NamespacesFromSelector {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func gatewaysUseListenerSetNamespaceSelectors(gateways []gatewayv1.Gateway) bool {
+	for _, gateway := range gateways {
+		if gateway.Spec.AllowedListeners == nil ||
+			gateway.Spec.AllowedListeners.Namespaces == nil ||
+			gateway.Spec.AllowedListeners.Namespaces.From == nil {
+			continue
+		}
+		if *gateway.Spec.AllowedListeners.Namespaces.From == gatewayv1.NamespacesFromSelector {
+			return true
+		}
+	}
+	return false
+}
+
+func listenerSetsUseRouteNamespaceSelectors(listenerSets []gatewayv1.ListenerSet) bool {
+	for _, ls := range listenerSets {
+		for _, listener := range ls.Spec.Listeners {
 			if listener.AllowedRoutes == nil || listener.AllowedRoutes.Namespaces == nil || listener.AllowedRoutes.Namespaces.From == nil {
 				continue
 			}

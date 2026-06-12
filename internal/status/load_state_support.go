@@ -79,6 +79,7 @@ func collectFullReconcileSupportRefs(state *clusterState) fullReconcileSupportRe
 	collectBackendTLSPolicyTrafficRefs(refs.services, refs.serviceImports, state.backendTLSPolicies)
 	collectReferenceGrantNamespaces(refs.referenceGrantNamespaces, state)
 	collectRouteNamespaceRefs(refs.namespaces, state)
+	collectListenerSetNamespaceRefs(refs.namespaces, state)
 	collectGatewaySecretRefs(refs.secrets, state.managedGateways)
 	collectGatewayConfigMapRefs(refs.configMaps, state.managedGateways, state.managedGatewayClasses)
 	collectRouteExtensionConfigMapRefs(refs.configMaps, state.httpRoutes, state.grpcRoutes)
@@ -231,6 +232,29 @@ func collectRouteNamespaceRefs(out map[string]struct{}, state *clusterState) {
 	for _, route := range state.tlsRoutes {
 		addNamespaceRef(out, route.Namespace)
 	}
+}
+
+func collectListenerSetNamespaceRefs(out map[string]struct{}, state *clusterState) {
+	if !gatewaysUseListenerSetNamespaceSelectors(state.managedGateways) {
+		return
+	}
+	for _, ls := range state.listenerSets {
+		addNamespaceRef(out, ls.Namespace)
+	}
+}
+
+func gatewaysUseListenerSetNamespaceSelectors(gateways []gatewayv1.Gateway) bool {
+	for _, gateway := range gateways {
+		if gateway.Spec.AllowedListeners == nil ||
+			gateway.Spec.AllowedListeners.Namespaces == nil ||
+			gateway.Spec.AllowedListeners.Namespaces.From == nil {
+			continue
+		}
+		if *gateway.Spec.AllowedListeners.Namespaces.From == gatewayv1.NamespacesFromSelector {
+			return true
+		}
+	}
+	return false
 }
 
 func collectGatewaySecretRefs(out map[string]client.ObjectKey, gateways []gatewayv1.Gateway) {

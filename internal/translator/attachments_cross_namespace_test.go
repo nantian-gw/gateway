@@ -411,6 +411,297 @@ func TestBuildSnapshotAttachesRoutesOnlyForSelectorMatchedNamespacesAndParentRef
 	}
 }
 
+func TestBuildSnapshotAllowsListenerSetFromSelectorMatchedNamespace(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	client := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+				Name:   "allowed-listenersets",
+				Labels: map[string]string{"allowed": "ns"},
+			}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+					}},
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromSelector),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"allowed": "ns"},
+							},
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "allowed-listenersets"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name:      "gw",
+						Namespace: ptr(gatewayv1.Namespace("infra")),
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: ptr(gatewayv1.Hostname("ls.example.com")),
+					}},
+				},
+			},
+		).
+		Build()
+
+	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	listeners := make(map[string]bool, len(snapshot.Listeners))
+	for _, listener := range snapshot.Listeners {
+		listeners[listener.Name] = true
+	}
+	if !listeners["infra/gw/allowed-listenersets/ls/ls-listener"] {
+		t.Fatalf("expected selector-matched ListenerSet listener in snapshot, got %#v", listeners)
+	}
+}
+
+func TestBuildSnapshotListenerSetAllowedRoutesSameUsesListenerSetNamespace(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	portNumber := gatewayv1.PortNumber(8080)
+
+	client := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "apps"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: ptr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "apps"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name:      "gw",
+						Namespace: ptr(gatewayv1.Namespace("infra")),
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "http",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: ptr(gatewayv1.NamespacesFromSame)},
+						},
+					}},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "apps"},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+							Kind:      ptr(gatewayv1.Kind("ListenerSet")),
+							Name:      "ls",
+							Namespace: ptr(gatewayv1.Namespace("apps")),
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: "echo",
+									Port: &portNumber,
+								},
+							},
+						}},
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "apps"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:       "http",
+						Port:       8080,
+						TargetPort: intstr.FromInt(8080),
+						Protocol:   corev1.ProtocolTCP,
+					}},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "echo-1",
+					Namespace: "apps",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "echo",
+					},
+				},
+				Ports:     []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.21"}}},
+			},
+		).
+		Build()
+
+	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	listeners := make(map[string][]string, len(snapshot.Listeners))
+	for _, listener := range snapshot.Listeners {
+		listeners[listener.Name] = listener.AttachedRoutes
+	}
+	if got := listeners["infra/gw/apps/ls/http"]; len(got) != 1 || got[0] != "apps/route" {
+		t.Fatalf("ListenerSet listener attachments = %#v, want only apps/route", got)
+	}
+}
+
+func TestBuildSnapshotListenerSetAllowedRoutesSelectorLoadsRouteNamespace(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	portNumber := gatewayv1.PortNumber(8080)
+
+	client := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+				Name:   "selected-routes",
+				Labels: map[string]string{"allowed": "ns"},
+			}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: ptr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "infra"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "selector",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{
+								From: ptr(gatewayv1.NamespacesFromSelector),
+								Selector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{"allowed": "ns"},
+								},
+							},
+						},
+					}},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "selected-routes"},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+							Kind:      ptr(gatewayv1.Kind("ListenerSet")),
+							Name:      "ls",
+							Namespace: ptr(gatewayv1.Namespace("infra")),
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: "echo",
+									Port: &portNumber,
+								},
+							},
+						}},
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "selected-routes"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:       "http",
+						Port:       8080,
+						TargetPort: intstr.FromInt(8080),
+						Protocol:   corev1.ProtocolTCP,
+					}},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "echo-1",
+					Namespace: "selected-routes",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "echo",
+					},
+				},
+				Ports:     []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.22"}}},
+			},
+		).
+		Build()
+
+	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	listeners := make(map[string][]string, len(snapshot.Listeners))
+	for _, listener := range snapshot.Listeners {
+		listeners[listener.Name] = listener.AttachedRoutes
+	}
+	if got := listeners["infra/gw/infra/ls/selector"]; len(got) != 1 || got[0] != "selected-routes/route" {
+		t.Fatalf("ListenerSet listener attachments = %#v, want only selected-routes/route", got)
+	}
+}
+
 func TestBuildSnapshotSynthesizesMeshServiceListeners(t *testing.T) {
 	scheme := runtime.NewScheme()
 	must(gatewayv1.Install(scheme), t)

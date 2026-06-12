@@ -170,7 +170,7 @@ func recordRouteAttachments(
 		}
 
 		if isListenerSetParentRef(parentRef) {
-			gwKey, listeners := resolveListenerSetParent(
+			gwKey, listenerSetNamespace, listeners := resolveListenerSetParent(
 				parentRef, routeNamespace, gatewayByKey, listenerSetByKey, listenerSetGateway, namespaceByName,
 			)
 			if gwKey == "" {
@@ -178,7 +178,7 @@ func recordRouteAttachments(
 			}
 			for _, listener := range listeners {
 				policy := buildAttachmentPolicy(listener)
-				if !attachmentListenerAllowsRoute(policy, kind, gatewayByKey[gwKey].Namespace, routeNamespace, routeNamespaceObject) {
+				if !attachmentListenerAllowsRoute(policy, kind, listenerSetNamespace, routeNamespace, routeNamespaceObject) {
 					continue
 				}
 				if !attachmentListenerMatchesHostnames(listener, hostnames) {
@@ -239,25 +239,25 @@ func resolveListenerSetParent(
 	listenerSetByKey map[string]gatewayv1.ListenerSet,
 	listenerSetGateway map[string]string,
 	namespaces map[string]corev1.Namespace,
-) (string, []gatewayv1.Listener) {
+) (string, string, []gatewayv1.Listener) {
 	lsNamespace := parentRef.Namespace
 	if lsNamespace == "" {
 		lsNamespace = routeNamespace
 	}
 	ls, ok := listenerSetByKey[lsNamespace+"/"+parentRef.Name]
 	if !ok {
-		return "", nil
+		return "", "", nil
 	}
 	gwKey, ok := listenerSetGateway[lsNamespace+"/"+parentRef.Name]
 	if !ok {
-		return "", nil
+		return "", "", nil
 	}
 	gateway, ok := gatewayByKey[gwKey]
 	if !ok {
-		return "", nil
+		return "", "", nil
 	}
 	if !gatewayAllowsListenerSet(gateway, ls, namespaces) {
-		return "", nil
+		return "", "", nil
 	}
 
 	baseListeners := gatewayapi.EffectiveListeners(gateway)
@@ -273,7 +273,7 @@ func resolveListenerSetParent(
 		}
 		out = append(out, l)
 	}
-	return gwKey, out
+	return gwKey, ls.Namespace, out
 }
 
 func listenerSetRuntimeEntryName(ls gatewayv1.ListenerSet, listener gatewayv1.Listener) string {

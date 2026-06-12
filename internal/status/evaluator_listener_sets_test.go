@@ -585,6 +585,101 @@ func TestReconcileSetsListenerSetAttachedRoutes(t *testing.T) {
 	}
 }
 
+func TestReconcileAllowsListenerSetFromSelectedNamespace(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&gatewayv1.GatewayClass{}, &gatewayv1.Gateway{}, &gatewayv1.ListenerSet{}).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
+				Name:   "gateway-api-listenerset-selector-allowed-ns",
+				Labels: map[string]string{"allowed": "ns"},
+			}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gateway-allows-listenerset-in-selected-namespace", Namespace: "gateway-conformance-infra", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						Hostname: ptr(gatewayv1.Hostname("gateway-listener.com")),
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: ptr(gatewayv1.NamespacesFromAll)},
+						},
+					}},
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromSelector),
+							Selector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"allowed": "ns"},
+							},
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "listenerset-in-selected-namespace", Namespace: "gateway-api-listenerset-selector-allowed-ns", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name:      "gateway-allows-listenerset-in-selected-namespace",
+						Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "listenerset-in-selected-namespace-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						Hostname: ptr(gatewayv1.Hostname("listenerset-in-selected-namespace-listener.com")),
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: ptr(gatewayv1.NamespacesFromAll)},
+						},
+					}},
+				},
+			},
+		).
+		Build()
+
+	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
+	for i := 0; i < 2; i++ {
+		if err := reconciler.Reconcile(context.Background()); err != nil {
+			t.Fatalf("Reconcile #%d returned error: %v", i+1, err)
+		}
+	}
+
+	var listenerSet gatewayv1.ListenerSet
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: "gateway-api-listenerset-selector-allowed-ns",
+		Name:      "listenerset-in-selected-namespace",
+	}, &listenerSet); err != nil {
+		t.Fatalf("Get ListenerSet returned error: %v", err)
+	}
+	assertCondition(t, listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerSetReasonAccepted), 1)
+	listener := listenerEntryStatusByName(t, listenerSet.Status.Listeners, "listenerset-in-selected-namespace-listener")
+	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 1)
+	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.ListenerReasonProgrammed), 1)
+
+	var gateway gatewayv1.Gateway
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: "gateway-conformance-infra",
+		Name:      "gateway-allows-listenerset-in-selected-namespace",
+	}, &gateway); err != nil {
+		t.Fatalf("Get Gateway returned error: %v", err)
+	}
+	if gateway.Status.AttachedListenerSets == nil || *gateway.Status.AttachedListenerSets != 1 {
+		t.Fatalf("AttachedListenerSets = %#v, want 1", gateway.Status.AttachedListenerSets)
+	}
+	if len(gateway.Status.Listeners) != 2 {
+		t.Fatalf("Gateway listeners = %d, want 2: %#v", len(gateway.Status.Listeners), gateway.Status.Listeners)
+	}
+}
+
 func TestEvaluateListenerSetAttachedRoutesForAllDerivedListeners(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
@@ -768,6 +863,81 @@ func TestEvaluateListenerSetAttachedRoutesDefaultsParentGatewayNamespace(t *test
 	listenerStatus := listenerEntryStatusByName(t, eval.listeners, "ls-listener")
 	if listenerStatus.AttachedRoutes != 1 {
 		t.Fatalf("expected ls-listener attachedRoutes=1, got %d", listenerStatus.AttachedRoutes)
+	}
+}
+
+func TestEvaluateListenerSetAllowedRoutesSameUsesListenerSetNamespace(t *testing.T) {
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	parentKind := gatewayv1.Kind("ListenerSet")
+
+	state := &clusterState{
+		controllerName: string(controllerName),
+		gatewayClasses: []gatewayv1.GatewayClass{{
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+			Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+		}},
+		gateways: []gatewayv1.Gateway{{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "infra", Generation: 1},
+			Spec: gatewayv1.GatewaySpec{
+				GatewayClassName: "nantian-gw",
+				AllowedListeners: &gatewayv1.AllowedListeners{
+					Namespaces: &gatewayv1.ListenerNamespaces{
+						From: ptr(gatewayv1.NamespacesFromAll),
+					},
+				},
+			},
+		}},
+		listenerSets: []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "apps", Generation: 1},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Name:      "gw",
+					Namespace: ptr(gatewayv1.Namespace("infra")),
+				},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name:     "http",
+					Port:     80,
+					Protocol: gatewayv1.HTTPProtocolType,
+					AllowedRoutes: &gatewayv1.AllowedRoutes{
+						Namespaces: &gatewayv1.RouteNamespaces{
+							From: ptr(gatewayv1.NamespacesFromSame),
+						},
+					},
+				}},
+			},
+		}},
+		httpRoutes: []gatewayv1.HTTPRoute{{
+			ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "apps", Generation: 1},
+			Spec: gatewayv1.HTTPRouteSpec{
+				CommonRouteSpec: gatewayv1.CommonRouteSpec{
+					ParentRefs: []gatewayv1.ParentReference{{
+						Group:     &parentGroup,
+						Kind:      &parentKind,
+						Name:      "ls",
+						Namespace: ptr(gatewayv1.Namespace("apps")),
+					}},
+				},
+			},
+		}},
+		namespaces: []corev1.Namespace{
+			{ObjectMeta: metav1.ObjectMeta{Name: "apps"}},
+		},
+	}
+	state.index()
+
+	routeState := evaluateRoutes(state)
+	evals := routeState.http[client.ObjectKey{Namespace: "apps", Name: "route"}]
+	if len(evals) != 1 {
+		t.Fatalf("expected 1 route parent evaluation, got %d", len(evals))
+	}
+	if evals[0].acceptedCondition.Status != metav1.ConditionTrue {
+		t.Fatalf("Accepted = %s reason=%s message=%s, want True", evals[0].acceptedCondition.Status, evals[0].acceptedCondition.Reason, evals[0].acceptedCondition.Message)
+	}
+
+	listenerKey := listenerKey{gatewayNamespace: "infra", gatewayName: "gw", listenerName: "apps/ls/http"}
+	if got := len(routeState.attachments[listenerKey]); got != 1 {
+		t.Fatalf("attached routes for ListenerSet listener = %d, want 1: %#v", got, routeState.attachments)
 	}
 }
 
