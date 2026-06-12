@@ -11,6 +11,8 @@ CONTROL_PLANE_NS="nantian-gw"
 TEST_NS="nantian-e2e"
 DATA_PLANE_SVC="nantian-dataplane"
 ECHO_PORT=8080
+LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"
+GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"
 TIMEOUT="${TIMEOUT:-180}"
 CLEANUP="${1:-}"
 FAILED=false
@@ -31,6 +33,12 @@ cleanup_cluster() {
     fi
     echo "=== Cleaning up ==="
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
+}
+
+stop_port_forward() {
+    local pid="$1"
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
 }
 
 # ── Step 1: ensure kind cluster ──
@@ -193,27 +201,34 @@ send_request() {
         return 1
     fi
 
-    echo "=== Sending test request (port-forward $dataplane_pod:10080) ==="
+    echo "=== Sending test request (port-forward $dataplane_pod ${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}) ==="
 
     # Start port-forward in background
-    kubectl port-forward -n "$CONTROL_PLANE_NS" "pod/$dataplane_pod" 10080:10080 &>/dev/null &
+    kubectl port-forward -n "$CONTROL_PLANE_NS" "pod/$dataplane_pod" "${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}" &>/dev/null &
     PF_PID=$!
-    sleep 2
 
-    # Send request and capture response
-    local response
-    response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:10080/echo 2>/dev/null || echo "000")
-    local status=$?
+    local request_deadline=$((SECONDS + TIMEOUT))
+    local response="000"
+    while (( SECONDS < request_deadline )); do
+        if ! kill -0 "$PF_PID" 2>/dev/null; then
+            stop_port_forward "$PF_PID"
+            fail "port-forward to $dataplane_pod exited before request succeeded"
+            return 1
+        fi
 
-    kill $PF_PID 2>/dev/null || true
+        response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${LOCAL_HTTP_PORT}/echo" 2>/dev/null || echo "000")
+        if [[ "$response" == "200" ]]; then
+            stop_port_forward "$PF_PID"
+            green "  PASS: GET /echo -> HTTP $response"
+            return 0
+        fi
 
-    if [[ "$response" == "200" ]]; then
-        green "  PASS: GET /echo → HTTP $response"
-        return 0
-    else
-        fail "GET /echo → HTTP $response (expected 200)"
-        return 1
-    fi
+        sleep 2
+    done
+
+    stop_port_forward "$PF_PID"
+    fail "GET /echo -> HTTP $response (expected 200 within ${TIMEOUT}s)"
+    return 1
 }
 
 # ── Main ──

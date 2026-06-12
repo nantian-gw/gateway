@@ -33,9 +33,7 @@ jobs:
         run: scripts/ci/install-kind-tools.sh
 
       - name: Create kind cluster
-        run: |
-          kind create cluster --name "$CLUSTER_NAME" --wait 5m
-          kubectl wait --for=condition=ready node --all --timeout=2m
+        run: scripts/ci/create-kind-cluster.sh
 
       - name: Install Gateway API CRDs
         run: scripts/ci/install-gateway-api-crds.sh
