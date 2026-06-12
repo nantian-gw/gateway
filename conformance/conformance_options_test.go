@@ -80,4 +80,12 @@ func TestGatewayAPIManifestFSLocalOverlayAddsMesh307Redirect(t *testing.T) {
 			t.Fatalf("local mesh redirect overlay missing %q:\n%s", want, contents)
 		}
 	}
+
+	trimmed := strings.TrimSpace(contents)
+	if !strings.HasPrefix(trimmed, "---\n") {
+		t.Fatalf("local mesh redirect overlay must start with a YAML document separator so upstream manifests can be appended safely:\n%s", contents)
+	}
+	if !strings.HasSuffix(trimmed, "\n---") {
+		t.Fatalf("local mesh redirect overlay must end with a YAML document separator so upstream manifests can be appended safely:\n%s", contents)
+	}
 }

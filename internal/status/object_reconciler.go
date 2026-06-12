@@ -63,6 +63,11 @@ func (r *Reconciler) loadGatewayObjectState(
 		state.index()
 		return state, nil
 	}
+	if r.experimentalGatewayEnabled() {
+		if err := r.loadGatewayListenerSets(ctx, state); err != nil {
+			return nil, err
+		}
+	}
 	if err := r.loadGatewayRoutes(ctx, state, gateway); err != nil {
 		return nil, err
 	}
@@ -82,9 +87,6 @@ func (r *Reconciler) loadGatewayObjectState(
 		return nil, err
 	}
 	if r.experimentalGatewayEnabled() {
-		if err := r.loadGatewayListenerSets(ctx, state); err != nil {
-			return nil, err
-		}
 		if err := r.loadListenerSetNamespaces(ctx, state); err != nil {
 			return nil, err
 		}
@@ -226,6 +228,24 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 		return err
 	}
 	state.tlsRoutes = tlsRoutes
+
+	if len(state.listenerSets) > 0 {
+		listenerSetRoutes, err := listHTTPRoutesWithListenerSetParents(ctx, r.reader)
+		if err != nil {
+			return err
+		}
+		lsByKey := make(map[string]gatewayv1.ListenerSet, len(state.listenerSets))
+		for _, ls := range state.listenerSets {
+			lsByKey[namespacedName(ls.Namespace, ls.Name)] = ls
+		}
+		routesForListenerSets := make([]gatewayv1.HTTPRoute, 0, len(listenerSetRoutes))
+		for _, route := range listenerSetRoutes {
+			if routeHasListenerSetParentForManagedGateway(route.Spec.ParentRefs, route.Namespace, lsByKey, state.gateways) {
+				routesForListenerSets = append(routesForListenerSets, route)
+			}
+		}
+		state.httpRoutes = mergeHTTPRoutesByKey(state.httpRoutes, routesForListenerSets)
+	}
 
 	if gatewayapi.GatewayActsAsDefault(gateway) {
 		if err := r.loadDefaultGatewayRoutes(ctx, state, gateway); err != nil {

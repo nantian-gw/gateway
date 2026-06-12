@@ -549,12 +549,7 @@ func routeHasListenerSetParentForManagedGateway(parentRefs []gatewayv1.ParentRef
 			if !ok {
 				continue
 			}
-			gwNs := ""
-			if ls.Spec.ParentRef.Namespace != nil {
-				gwNs = string(*ls.Spec.ParentRef.Namespace)
-			}
-			gwKey := namespacedName(gwNs, string(ls.Spec.ParentRef.Name))
-			if gwSet[gwKey] {
+			if gwSet[listenerSetParentGatewayKey(ls)] {
 				return true
 			}
 		}

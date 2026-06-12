@@ -60,6 +60,7 @@ func TestReconcileGatewayObjectAvoidsFullDependencyLists(t *testing.T) {
 
 	freshReader := fake.NewClientBuilder().
 		WithScheme(scheme).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -104,7 +105,7 @@ func TestReconcileGatewayObjectAvoidsFullDependencyLists(t *testing.T) {
 		}},
 		listValidators: map[reflect.Type]func([]client.ListOption) error{
 			reflect.TypeOf(&gatewayv1.HTTPRouteList{}): func(opts []client.ListOption) error {
-				return requireGatewayParentMatchingField(opts, statusHTTPRouteGatewayParentIndex, "default", "gw")
+				return requireHTTPRouteGatewayOrListenerSetParentMatchingField(opts, "default", "gw")
 			},
 			reflect.TypeOf(&gatewayv1.GRPCRouteList{}): func(opts []client.ListOption) error {
 				return requireGatewayParentMatchingField(opts, statusGRPCRouteGatewayParentIndex, "default", "gw")
@@ -281,6 +282,7 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 
 	freshReader := fake.NewClientBuilder().
 		WithScheme(scheme).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
@@ -378,7 +380,7 @@ func TestReconcileGatewayObjectListsReferenceGrantsPerReferencedNamespace(t *tes
 		}},
 		listValidators: map[reflect.Type]func([]client.ListOption) error{
 			reflect.TypeOf(&gatewayv1.HTTPRouteList{}): func(opts []client.ListOption) error {
-				return requireGatewayParentMatchingField(opts, statusHTTPRouteGatewayParentIndex, "default", "gw")
+				return requireHTTPRouteGatewayOrListenerSetParentMatchingField(opts, "default", "gw")
 			},
 			reflect.TypeOf(&gatewayv1.GRPCRouteList{}): func(opts []client.ListOption) error {
 				return requireGatewayParentMatchingField(opts, statusGRPCRouteGatewayParentIndex, "default", "gw")
@@ -501,4 +503,30 @@ func requireGatewayParentMatchingField(
 		}
 	}
 	return fmt.Errorf("route list must include matching field %s=%s", field, value)
+}
+
+func requireHTTPRouteGatewayOrListenerSetParentMatchingField(
+	opts []client.ListOption,
+	namespace string,
+	name string,
+) error {
+	if err := requireGatewayParentMatchingField(opts, statusHTTPRouteGatewayParentIndex, namespace, name); err == nil {
+		return nil
+	}
+	for _, opt := range opts {
+		matching, ok := opt.(client.MatchingFields)
+		if !ok {
+			continue
+		}
+		if matching[statusHTTPRouteListenerSetParentIndex] == statusListenerSetParentIndexMarker {
+			return nil
+		}
+	}
+	return fmt.Errorf(
+		"HTTPRoute list must include matching field %s=%s or %s=%s",
+		statusHTTPRouteGatewayParentIndex,
+		gatewayParentStatusIndexValue(namespace, name),
+		statusHTTPRouteListenerSetParentIndex,
+		statusListenerSetParentIndexMarker,
+	)
 }

@@ -234,6 +234,90 @@ func TestReconcileGatewayObjectCountsDefaultedRoute(t *testing.T) {
 	}
 }
 
+func TestReconcileGatewayObjectCountsListenerSetOnlyRoutes(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	listenerSetKind := gatewayv1.Kind("ListenerSet")
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&gatewayv1.Gateway{}, &gatewayv1.ListenerSet{}).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+						},
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
+				Spec:       corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 8080}}},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group: &parentGroup,
+							Kind:  &listenerSetKind,
+							Name:  "ls",
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: "echo",
+									Port: portPtr(8080),
+								},
+							},
+						}},
+					}},
+				},
+			},
+		).
+		Build()
+
+	reconciler := NewWithAddresses(k8sClient, string(controllerName), []string{"127.0.0.1"}, discardLogger())
+	if err := reconciler.ReconcileGatewayObject(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}); err != nil {
+		t.Fatalf("ReconcileGatewayObject returned error: %v", err)
+	}
+
+	var listenerSet gatewayv1.ListenerSet
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "ls"}, &listenerSet); err != nil {
+		t.Fatalf("Get ListenerSet returned error: %v", err)
+	}
+	listener := listenerEntryStatusByName(t, listenerSet.Status.Listeners, "ls-listener")
+	if listener.AttachedRoutes != 1 {
+		t.Fatalf("expected ListenerSet listener attachedRoutes=1, got %d", listener.AttachedRoutes)
+	}
+}
+
 func TestReconcileGatewayObjectAvoidsDuplicateGatewayReaderGets(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

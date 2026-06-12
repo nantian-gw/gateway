@@ -231,6 +231,125 @@ func TestReconcileHTTPRouteObjectBindsDefaultGateway(t *testing.T) {
 	assertCondition(t, parent.Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 2)
 }
 
+func TestReconcileHTTPRouteObjectKeepsListenerSetParentStatuses(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	listenerSetKind := gatewayv1.Kind("ListenerSet")
+
+	staleClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&gatewayv1.HTTPRoute{}).
+		WithObjects(&gatewayv1.HTTPRoute{
+			ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "default", Generation: 1},
+			Spec: gatewayv1.HTTPRouteSpec{
+				CommonRouteSpec: gatewayv1.CommonRouteSpec{
+					ParentRefs: []gatewayv1.ParentReference{
+						{Name: "gw"},
+						{Group: &parentGroup, Kind: &listenerSetKind, Name: "ls-1"},
+						{Group: &parentGroup, Kind: &listenerSetKind, Name: "ls-2"},
+					},
+				},
+			},
+		}).
+		Build()
+
+	freshReader := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+						},
+					}},
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls-1", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-1-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+						},
+					}},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls-2", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-2-listener",
+						Port:     81,
+						Protocol: gatewayv1.HTTPProtocolType,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+						},
+					}},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "default", Generation: 2},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{
+							{Name: "gw"},
+							{Group: &parentGroup, Kind: &listenerSetKind, Name: "ls-1"},
+							{Group: &parentGroup, Kind: &listenerSetKind, Name: "ls-2"},
+						},
+					},
+				},
+			},
+		).
+		Build()
+
+	reconciler := NewWithAddressesAndReader(
+		staleClient,
+		freshReader,
+		string(controllerName),
+		[]string{"127.0.0.1"},
+		discardLogger(),
+	)
+	if err := reconciler.ReconcileHTTPRouteObject(
+		context.Background(),
+		client.ObjectKey{Namespace: "default", Name: "route"},
+	); err != nil {
+		t.Fatalf("ReconcileHTTPRouteObject returned error: %v", err)
+	}
+
+	var route gatewayv1.HTTPRoute
+	if err := staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route); err != nil {
+		t.Fatalf("Get HTTPRoute returned error: %v", err)
+	}
+	if len(route.Status.Parents) != 3 {
+		t.Fatalf("expected 3 parent statuses, got %d: %#v", len(route.Status.Parents), route.Status.Parents)
+	}
+	for _, want := range []gatewayv1.ObjectName{"gw", "ls-1", "ls-2"} {
+		parent := routeParentStatusByName(t, route.Status.Parents, want)
+		assertCondition(t, parent.Conditions, string(gatewayv1.RouteConditionAccepted), metav1.ConditionTrue, string(gatewayv1.RouteReasonAccepted), 2)
+		assertCondition(t, parent.Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 2)
+	}
+}
+
 func TestReconcileHTTPRouteObjectAvoidsFullStateLists(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -359,6 +478,21 @@ func TestReconcileHTTPRouteObjectAvoidsFullStateLists(t *testing.T) {
 	if reader.gatewayClassGets != 1 {
 		t.Fatalf("GatewayClass reader Get count = %d, want 1", reader.gatewayClassGets)
 	}
+}
+
+func routeParentStatusByName(
+	t *testing.T,
+	parents []gatewayv1.RouteParentStatus,
+	name gatewayv1.ObjectName,
+) gatewayv1.RouteParentStatus {
+	t.Helper()
+	for _, parent := range parents {
+		if parent.ParentRef.Name == name {
+			return parent
+		}
+	}
+	t.Fatalf("parent status for %q not found in %#v", name, parents)
+	return gatewayv1.RouteParentStatus{}
 }
 
 func TestReconcileHTTPRouteObjectScopesReferenceGrantListsToTargetNamespace(t *testing.T) {

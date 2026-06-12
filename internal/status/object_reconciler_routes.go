@@ -162,8 +162,21 @@ func (r *Reconciler) loadRouteParentGateways(
 	route routeInput,
 ) error {
 	keys := make(map[string]client.ObjectKey)
+	listenerSetKeys := make(map[string]client.ObjectKey)
 	for _, parentRef := range route.parentRefs {
 		if isServiceParentRef(parentRef) {
+			continue
+		}
+
+		if isListenerSetParentRef(parentRef) {
+			if !r.experimentalGatewayEnabled() {
+				continue
+			}
+			key := client.ObjectKey{
+				Namespace: namespaceOrDefault(parentRef.Namespace, route.namespace),
+				Name:      string(parentRef.Name),
+			}
+			listenerSetKeys[namespacedName(key.Namespace, key.Name)] = key
 			continue
 		}
 
@@ -172,6 +185,24 @@ func (r *Reconciler) loadRouteParentGateways(
 			Name:      string(parentRef.Name),
 		}
 		keys[namespacedName(key.Namespace, key.Name)] = key
+	}
+
+	for _, key := range listenerSetKeys {
+		var listenerSet gatewayv1.ListenerSet
+		found, err := r.getOptional(ctx, key, &listenerSet)
+		if err != nil {
+			return err
+		}
+		if !found {
+			continue
+		}
+
+		state.listenerSets = append(state.listenerSets, listenerSet)
+		parentKey := client.ObjectKey{
+			Namespace: listenerSetParentGatewayNamespace(listenerSet),
+			Name:      string(listenerSet.Spec.ParentRef.Name),
+		}
+		keys[namespacedName(parentKey.Namespace, parentKey.Name)] = parentKey
 	}
 
 	for _, key := range keys {
