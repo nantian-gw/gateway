@@ -36,6 +36,25 @@ type controlPlaneFeatures struct {
 	EnableAiGateway           bool `yaml:"enableAiGateway"`
 }
 
+type kustomizationConfig struct {
+	Patches []kustomizationPatch `yaml:"patches"`
+}
+
+type kustomizationPatch struct {
+	Path string `yaml:"path"`
+}
+
+type deploymentReplicaConfig struct {
+	Kind     string `yaml:"kind"`
+	Metadata struct {
+		Name      string `yaml:"name"`
+		Namespace string `yaml:"namespace"`
+	} `yaml:"metadata"`
+	Spec struct {
+		Replicas *int `yaml:"replicas"`
+	} `yaml:"spec"`
+}
+
 func TestKindCIConfigExposesConformancePorts(t *testing.T) {
 	data := readFile(t, "kind-ci-config.yaml")
 
@@ -185,6 +204,42 @@ func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T
 	}
 	if config.Features.EnableAiGateway {
 		t.Fatalf("kind conformance controlplane config should not enable AI Gateway features")
+	}
+}
+
+func TestConformanceOverlayUsesSingleDataplaneReplica(t *testing.T) {
+	overlayDir := repoPath("deploy", "kubernetes", "overlays", "kind-conformance")
+	data := readFile(t, filepath.Join(overlayDir, "kustomization.yaml"))
+
+	var config kustomizationConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		t.Fatalf("parse kind-conformance kustomization: %v", err)
+	}
+
+	var patchPath string
+	for _, patch := range config.Patches {
+		if strings.Contains(patch.Path, "dataplane-replicas.yaml") {
+			patchPath = patch.Path
+			break
+		}
+	}
+	if patchPath == "" {
+		t.Fatalf("kind-conformance overlay should statically patch dataplane replicas to one")
+	}
+
+	patchData := readFile(t, filepath.Clean(filepath.Join(overlayDir, patchPath)))
+	var patch deploymentReplicaConfig
+	if err := yaml.Unmarshal(patchData, &patch); err != nil {
+		t.Fatalf("parse dataplane replica patch: %v", err)
+	}
+	if patch.Kind != "Deployment" {
+		t.Fatalf("dataplane replica patch kind = %q, want Deployment", patch.Kind)
+	}
+	if patch.Metadata.Name != "nantian-gw-dataplane" {
+		t.Fatalf("dataplane replica patch targets %q, want nantian-gw-dataplane", patch.Metadata.Name)
+	}
+	if patch.Spec.Replicas == nil || *patch.Spec.Replicas != 1 {
+		t.Fatalf("dataplane replica patch replicas = %v, want 1", patch.Spec.Replicas)
 	}
 }
 

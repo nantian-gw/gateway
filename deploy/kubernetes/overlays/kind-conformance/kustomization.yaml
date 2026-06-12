@@ -16,6 +16,7 @@ images:
     newTag: latest
 
 patches:
+  - path: dataplane-replicas.yaml
   - target:
       kind: Deployment
     patch: |-

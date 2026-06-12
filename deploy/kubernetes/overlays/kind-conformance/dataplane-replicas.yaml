@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nantian-gw-dataplane
+  namespace: nantian-gw
+spec:
+  replicas: 1

@@ -137,12 +137,15 @@ func writeConformanceReport(logf func(string, ...any), report any, output string
 }
 
 func gatewayAPIManifestFS() ([]fs.FS, error) {
+	out := []fs.FS{os.DirFS("manifests")}
+
 	workDir := strings.TrimSpace(os.Getenv("GATEWAY_API_WORK_DIR"))
-	if workDir == "" {
-		return nil, nil
+	if workDir != "" {
+		out = append(out, os.DirFS(filepath.Join(workDir, "conformance")))
 	}
 
-	return []fs.FS{os.DirFS(filepath.Join(workDir, "conformance"))}, nil
+	out = append(out, &gatewayconformance.Manifests)
+	return out, nil
 }
 
 func parseGatewayAddresses(raw string, fallback string) []gatewayv1beta1.GatewaySpecAddress {
