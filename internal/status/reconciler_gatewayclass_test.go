@@ -94,8 +94,9 @@ func TestReconcileGatewayClassObjectPublishesSupportedVersionAndFeatures(t *test
 		string(gatewayv1.GatewayClassConditionStatusSupportedVersion),
 		"Gateway API CRD bundle versions are supported: v1.5.1",
 	)
-	if !reflect.DeepEqual(gatewayClass.Status.SupportedFeatures, gatewayapi.SupportedFeatures()) {
-		t.Fatalf("unexpected supported features: %#v", gatewayClass.Status.SupportedFeatures)
+	wantFeatures := gatewayapi.SupportedFeaturesForOptions(gatewayapi.FeatureOptions{EnableExperimentalGateway: true})
+	if !reflect.DeepEqual(gatewayClass.Status.SupportedFeatures, wantFeatures) {
+		t.Fatalf("supported features = %#v, want %#v", gatewayClass.Status.SupportedFeatures, wantFeatures)
 	}
 }
 

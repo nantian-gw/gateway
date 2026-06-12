@@ -42,8 +42,6 @@ func SupportedFeatureNameSet() sets.Set[gatewayfeatures.FeatureName] {
 		gatewayfeatures.SupportGateway,
 		gatewayfeatures.SupportGatewayAddressEmpty,
 		gatewayfeatures.SupportGatewayBackendClientCertificate,
-		gatewayfeatures.SupportGatewayFrontendClientCertificateValidation,
-		gatewayfeatures.SupportGatewayFrontendClientCertificateValidationInsecureFallback,
 		gatewayfeatures.SupportGatewayHTTPSListenerDetectMisdirectedRequests,
 		gatewayfeatures.SupportGatewayHTTPListenerIsolation,
 		gatewayfeatures.SupportGatewayInfrastructurePropagation,

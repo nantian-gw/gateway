@@ -34,5 +34,4 @@ grpcTLS:
   clientCAPath: ""
   requireClientCert: false
 features:
-  enableExperimentalGateway: true
   enableAiGateway: false

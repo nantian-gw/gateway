@@ -172,7 +172,7 @@ func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 	}
 }
 
-func TestConformanceOverlayEnablesAdvertisedExperimentalGatewayFeatures(t *testing.T) {
+func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T) {
 	data := readFile(t, repoPath("deploy", "kubernetes", "overlays", "kind-conformance", "controlplane-config.yaml"))
 
 	var config controlPlaneConfig
@@ -180,8 +180,8 @@ func TestConformanceOverlayEnablesAdvertisedExperimentalGatewayFeatures(t *testi
 		t.Fatalf("parse kind-conformance controlplane config: %v", err)
 	}
 
-	if !config.Features.EnableExperimentalGateway {
-		t.Fatalf("kind conformance controlplane config must enable experimental Gateway API support for advertised ListenerSet/TCPRoute/UDPRoute/TLSRoute features")
+	if config.Features.EnableExperimentalGateway {
+		t.Fatalf("kind conformance controlplane config must not enable experimental Gateway API support")
 	}
 	if config.Features.EnableAiGateway {
 		t.Fatalf("kind conformance controlplane config should not enable AI Gateway features")
