@@ -250,7 +250,7 @@ func mergeListenerSetListeners(
 			if !listenerSetEntryAcceptedForRuntime(ls, entry) {
 				continue
 			}
-			listener := listenerEntryToRuntimeListener(entry)
+			listener := listenerEntryToRuntimeListener(entry, ls)
 			if listenerConflictsForRuntime(out, listener) {
 				continue // Gateway or older ListenerSet wins
 			}
@@ -261,15 +261,19 @@ func mergeListenerSetListeners(
 	return out
 }
 
-func listenerEntryToRuntimeListener(entry gatewayv1.ListenerEntry) gatewayv1.Listener {
+func listenerEntryToRuntimeListener(entry gatewayv1.ListenerEntry, ls gatewayv1.ListenerSet) gatewayv1.Listener {
 	return gatewayv1.Listener{
-		Name:          entry.Name,
+		Name:          listenerSetRuntimeListenerName(ls, entry.Name),
 		Hostname:      entry.Hostname,
 		Port:          entry.Port,
 		Protocol:      entry.Protocol,
 		AllowedRoutes: entry.AllowedRoutes,
 		TLS:           entry.TLS,
 	}
+}
+
+func listenerSetRuntimeListenerName(ls gatewayv1.ListenerSet, entryName gatewayv1.SectionName) gatewayv1.SectionName {
+	return gatewayv1.SectionName(ls.Namespace + "/" + ls.Name + "/" + string(entryName))
 }
 
 func listenerSetAcceptedForRuntime(ls gatewayv1.ListenerSet) bool {

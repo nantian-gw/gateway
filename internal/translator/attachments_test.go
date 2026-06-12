@@ -301,8 +301,147 @@ func TestBuildSnapshotScopesListenerSetParentRoutesToListenerSetListeners(t *tes
 	if got := listeners["default/gw/gateway-listener"]; len(got) != 0 {
 		t.Fatalf("Gateway listener unexpectedly attached ListenerSet route: %#v", got)
 	}
-	if got := listeners["default/gw/ls-listener"]; len(got) != 1 || got[0] != "default/ls-route" {
+	if got := listeners["default/gw/default/ls/ls-listener"]; len(got) != 1 || got[0] != "default/ls-route" {
 		t.Fatalf("ListenerSet listener attachments = %#v, want only default/ls-route", got)
+	}
+}
+
+func TestBuildSnapshotAttachesListenerSetParentToAllDerivedListeners(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	gatewayHostname := gatewayv1.Hostname("gateway.example.com")
+	listenerOneHostname := gatewayv1.Hostname("one.example.com")
+	listenerTwoHostname := gatewayv1.Hostname("two.example.com")
+	portNumber := gatewayv1.PortNumber(8080)
+
+	client := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: &gatewayHostname,
+					}},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name:      "gw",
+						Namespace: ptr(gatewayv1.Namespace("default")),
+					},
+					Listeners: []gatewayv1.ListenerEntry{
+						{
+							Name:     "one",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: &listenerOneHostname,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{
+									From: ptr(gatewayv1.NamespacesFromAll),
+								},
+							},
+						},
+						{
+							Name:     "two",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: &listenerTwoHostname,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{
+									From: ptr(gatewayv1.NamespacesFromAll),
+								},
+							},
+						},
+					},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{Name: "all-listeners-route", Namespace: "default"},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group: ptr(gatewayv1.Group(gatewayv1.GroupName)),
+							Kind:  ptr(gatewayv1.Kind("ListenerSet")),
+							Name:  "ls",
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: "echo",
+									Port: &portNumber,
+								},
+							},
+						}},
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:       "http",
+						Port:       8080,
+						TargetPort: intstr.FromInt(8080),
+						Protocol:   corev1.ProtocolTCP,
+					}},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "echo-1",
+					Namespace: "default",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "echo",
+					},
+				},
+				Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.0.0.10"},
+				}},
+			},
+		).
+		Build()
+
+	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	snapshot, err := xlator.Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	listeners := make(map[string][]string, len(snapshot.Listeners))
+	for _, listener := range snapshot.Listeners {
+		listeners[listener.Name] = listener.AttachedRoutes
+	}
+
+	if got := listeners["default/gw/default/ls/one"]; len(got) != 1 || got[0] != "default/all-listeners-route" {
+		t.Fatalf("ListenerSet listener one attachments = %#v, want only default/all-listeners-route", got)
+	}
+	if got := listeners["default/gw/default/ls/two"]; len(got) != 1 || got[0] != "default/all-listeners-route" {
+		t.Fatalf("ListenerSet listener two attachments = %#v, want only default/all-listeners-route", got)
 	}
 }
 

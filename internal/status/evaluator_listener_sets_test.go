@@ -539,6 +539,123 @@ func TestReconcileSetsListenerSetAttachedRoutes(t *testing.T) {
 	}
 }
 
+func TestEvaluateListenerSetAttachedRoutesForAllDerivedListeners(t *testing.T) {
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	parentKind := gatewayv1.Kind("ListenerSet")
+	listenerOne := gatewayv1.SectionName("listener-one")
+	hostOne := gatewayv1.Hostname("one.example.com")
+	hostTwo := gatewayv1.Hostname("two.example.com")
+
+	state := &clusterState{
+		controllerName: string(controllerName),
+		gatewayClasses: []gatewayv1.GatewayClass{{
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+			Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+		}},
+		gateways: []gatewayv1.Gateway{{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+			Spec: gatewayv1.GatewaySpec{
+				GatewayClassName: "nantian-gw",
+				AllowedListeners: &gatewayv1.AllowedListeners{
+					Namespaces: &gatewayv1.ListenerNamespaces{
+						From: ptr(gatewayv1.NamespacesFromAll),
+					},
+				},
+			},
+		}},
+		listenerSets: []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Name:      "gw",
+					Namespace: ptr(gatewayv1.Namespace("default")),
+				},
+				Listeners: []gatewayv1.ListenerEntry{
+					{
+						Name:     listenerOne,
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						Hostname: &hostOne,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{
+								From: ptr(gatewayv1.NamespacesFromAll),
+							},
+						},
+					},
+					{
+						Name:     "listener-two",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						Hostname: &hostTwo,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{
+								From: ptr(gatewayv1.NamespacesFromAll),
+							},
+						},
+					},
+				},
+			},
+		}},
+		httpRoutes: []gatewayv1.HTTPRoute{
+			{
+				ObjectMeta: metav1.ObjectMeta{Name: "all-listeners-route", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group: &parentGroup,
+							Kind:  &parentKind,
+							Name:  "ls",
+						}},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{Name: "listener-set-route", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group: &parentGroup,
+							Kind:  &parentKind,
+							Name:  "ls",
+						}},
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{Name: "section-route", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group:       &parentGroup,
+							Kind:        &parentKind,
+							Name:        "ls",
+							SectionName: &listenerOne,
+						}},
+					},
+				},
+			},
+		},
+		namespaces: []corev1.Namespace{
+			{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+		},
+	}
+	state.index()
+
+	routeState := evaluateRoutes(state)
+	evals := evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey, routeState.attachments)
+	eval := evals["default/ls"]
+
+	listenerOneStatus := listenerEntryStatusByName(t, eval.listeners, "listener-one")
+	if listenerOneStatus.AttachedRoutes != 3 {
+		t.Fatalf("expected listener-one attachedRoutes=3, got %d", listenerOneStatus.AttachedRoutes)
+	}
+	listenerTwoStatus := listenerEntryStatusByName(t, eval.listeners, "listener-two")
+	if listenerTwoStatus.AttachedRoutes != 2 {
+		t.Fatalf("expected listener-two attachedRoutes=2, got %d", listenerTwoStatus.AttachedRoutes)
+	}
+}
+
 func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 	ns := func(name gatewayv1.Namespace) *gatewayv1.Namespace { return &name }
 	from := func(from gatewayv1.FromNamespaces) *gatewayv1.FromNamespaces { return &from }

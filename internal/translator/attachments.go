@@ -265,7 +265,7 @@ func resolveListenerSetParent(
 	listenerSetListeners := allListeners[len(baseListeners):]
 	out := make([]gatewayv1.Listener, 0)
 	for _, l := range listenerSetListeners {
-		if parentRef.SectionName != "" && string(l.Name) != parentRef.SectionName {
+		if parentRef.SectionName != "" && listenerSetRuntimeEntryName(ls, l) != parentRef.SectionName {
 			continue
 		}
 		if parentRef.Port != 0 && uint32(l.Port) != parentRef.Port {
@@ -274,6 +274,15 @@ func resolveListenerSetParent(
 		out = append(out, l)
 	}
 	return gwKey, out
+}
+
+func listenerSetRuntimeEntryName(ls gatewayv1.ListenerSet, listener gatewayv1.Listener) string {
+	prefix := ls.Namespace + "/" + ls.Name + "/"
+	name := string(listener.Name)
+	if strings.HasPrefix(name, prefix) {
+		return strings.TrimPrefix(name, prefix)
+	}
+	return name
 }
 
 func serviceListenerMatchesParent(listener ir.Listener, parentRef ir.ParentRef) bool {

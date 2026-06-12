@@ -65,8 +65,31 @@ func TestMergeListenerSetListeners(t *testing.T) {
 		if !names["http"] {
 			t.Fatal("expected 'http' listener from Gateway")
 		}
-		if !names["https"] {
-			t.Fatal("expected 'https' listener from ListenerSet")
+		if !names["default/ls-https/https"] {
+			t.Fatal("expected ListenerSet-qualified 'https' listener")
+		}
+	})
+
+	t.Run("ListenerSet listener names include ListenerSet identity", func(t *testing.T) {
+		gw := gatewayv1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+			Spec: gatewayv1.GatewaySpec{
+				AllowedListeners: allowedListenersFromAll(),
+			},
+		}
+		sets := []gatewayv1.ListenerSet{
+			listenerSet("ls", "default", "gw", []gatewayv1.ListenerEntry{
+				{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
+			}),
+		}
+
+		result := mergeListenerSetListeners(gw, nil, sets, nil)
+
+		if len(result) != 1 {
+			t.Fatalf("expected 1 listener, got %d: %v", len(result), listenerNames(result))
+		}
+		if result[0].Name != "default/ls/http" {
+			t.Fatalf("expected ListenerSet-qualified listener name, got %s", result[0].Name)
 		}
 	})
 
@@ -221,8 +244,8 @@ func TestMergeListenerSetListeners(t *testing.T) {
 		if len(result) != 1 {
 			t.Fatalf("expected 1 listener (older wins), got %d: %v", len(result), listenerNames(result))
 		}
-		if result[0].Name != "http-older" {
-			t.Fatalf("expected older listener 'http-older', got %s", result[0].Name)
+		if result[0].Name != "default/ls-older/http-older" {
+			t.Fatalf("expected older ListenerSet-qualified listener, got %s", result[0].Name)
 		}
 	})
 
@@ -270,8 +293,8 @@ func TestMergeListenerSetListeners(t *testing.T) {
 		if len(result) != 1 {
 			t.Fatalf("expected 1 listener (alphabetical wins), got %d: %v", len(result), listenerNames(result))
 		}
-		if result[0].Name != "http-a" {
-			t.Fatalf("expected alphabetical-first listener 'http-a', got %s", result[0].Name)
+		if result[0].Name != "default/a-listener-set/http-a" {
+			t.Fatalf("expected alphabetical-first ListenerSet-qualified listener, got %s", result[0].Name)
 		}
 	})
 
