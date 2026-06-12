@@ -125,6 +125,52 @@ func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
 	}
 }
 
+func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusable(t *testing.T) {
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
+	service.Spec.ExternalIPs = []string{"203.0.113.13", "127.0.0.1"}
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(newScheme(t)).
+		WithStatusSubresource(
+			&gatewayv1.GatewayClass{},
+			&gatewayv1.Gateway{},
+		).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
+			staticAddressGatewayClass(controllerName),
+			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
+				{
+					Type:  addressTypePtr(gatewayv1.IPAddressType),
+					Value: "203.0.113.13",
+				},
+				{
+					Type:  addressTypePtr(gatewayv1.IPAddressType),
+					Value: "127.0.0.1",
+				},
+			}),
+			service,
+			endpointSlice,
+		).
+		Build()
+
+	reconcileGatewayAddresses(t, k8sClient, controllerName)
+
+	gateway := getStaticAddressGateway(t, k8sClient)
+	assertCondition(
+		t,
+		gateway.Status.Conditions,
+		string(gatewayv1.GatewayConditionProgrammed),
+		metav1.ConditionFalse,
+		string(gatewayv1.GatewayReasonAddressNotUsable),
+		1,
+	)
+	if len(gateway.Status.Addresses) != 1 || gateway.Status.Addresses[0].Value != "127.0.0.1" {
+		t.Fatalf("expected only the usable static address in status, got %#v", gateway.Status.Addresses)
+	}
+}
+
 func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
@@ -615,9 +661,9 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *test
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
 						"app.kubernetes.io/managed-by":           "someone-else",
-						"nantian.dev/service-role":                    "gateway-metadata",
+						"nantian.dev/service-role":               "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -662,9 +708,9 @@ func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMeta
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
 						"app.kubernetes.io/managed-by":           "someone-else",
-						"nantian.dev/service-role":                    "gateway-metadata",
+						"nantian.dev/service-role":               "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -718,9 +764,9 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *tes
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
 						"app.kubernetes.io/managed-by":           "nantian-gw",
-						"nantian.dev/service-role":                    "gateway-metadata",
+						"nantian.dev/service-role":               "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -844,9 +890,9 @@ func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataC
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
 						"app.kubernetes.io/managed-by":           "someone-else",
-						"nantian.dev/service-role":                    "gateway-metadata",
+						"nantian.dev/service-role":               "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -897,9 +943,9 @@ func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerive
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
 						"app.kubernetes.io/managed-by":           "someone-else",
-						"nantian.dev/service-role":                    "gateway-metadata",
+						"nantian.dev/service-role":               "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -952,9 +998,9 @@ func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerived
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
 						"app.kubernetes.io/managed-by":           "someone-else",
-						"nantian.dev/service-role":                    "gateway-metadata",
+						"nantian.dev/service-role":               "gateway-metadata",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				Status: corev1.ServiceStatus{
@@ -1077,7 +1123,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 						managedresources.ServiceRoleKey:          managedresources.EndpointSliceRoleGatewayFrontend,
 						"app.kubernetes.io/managed-by":           "nantian-gw",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
-						"nantian.dev/gateway-namespace":               "gateway-conformance-infra",
+						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
 					},
 				},
 				AddressType: discoveryv1.AddressTypeIPv4,
@@ -1175,9 +1221,9 @@ func gatewayInfrastructureService(namespace, gatewayName string) *corev1.Service
 			UID:       staticAddressServiceUID,
 			Labels: map[string]string{
 				"app.kubernetes.io/managed-by":           "nantian-gw",
-				"nantian.dev/service-role":                    "gateway-metadata",
+				"nantian.dev/service-role":               "gateway-metadata",
 				"gateway.networking.k8s.io/gateway-name": gatewayName,
-				"nantian.dev/gateway-namespace":               namespace,
+				"nantian.dev/gateway-namespace":          namespace,
 			},
 			Annotations: map[string]string{
 				"nantian.dev/owner-kind":        "Gateway",

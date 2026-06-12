@@ -164,11 +164,11 @@ func gatewayAddressUsable(address gatewayv1.GatewayStatusAddress, advertisedAddr
 		if ip.IsLoopback() {
 			return true
 		}
-		if ipInAdvertised(ip, advertisedAddresses) {
-			return true
-		}
 		if isDocumentationIP(ip) {
 			return false
+		}
+		if ipInAdvertised(ip, advertisedAddresses) {
+			return true
 		}
 		return true
 	case gatewayv1.HostnameAddressType:
