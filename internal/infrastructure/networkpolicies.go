@@ -16,7 +16,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
-const defaultDataplaneNetworkPolicyName = "nantian-dataplane"
+const defaultDataplaneNetworkPolicyName = "nantian-gw-dataplane"
 
 type networkPolicyPortKey struct {
 	port     int32

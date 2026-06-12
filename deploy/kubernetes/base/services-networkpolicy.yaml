@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nantian-controlplane-grpc
+  name: nantian-gw-controlplane-grpc
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -10,7 +10,7 @@ metadata:
     gateway.nantian.dev/service-role: grpc
 spec:
   selector:
-    app: nantian-controlplane
+    app: nantian-gw-controlplane
   ports:
     - name: grpc
       port: 18080
@@ -19,7 +19,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nantian-controlplane-admin
+  name: nantian-gw-controlplane-admin
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -28,7 +28,7 @@ metadata:
     gateway.nantian.dev/service-role: admin
 spec:
   selector:
-    app: nantian-controlplane
+    app: nantian-gw-controlplane
   ports:
     - name: admin
       port: 18081
@@ -37,7 +37,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nantian-controlplane-metrics
+  name: nantian-gw-controlplane-metrics
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -46,7 +46,7 @@ metadata:
     gateway.nantian.dev/service-role: metrics
 spec:
   selector:
-    app: nantian-controlplane
+    app: nantian-gw-controlplane
   ports:
     - name: metrics
       port: 18082
@@ -55,7 +55,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: nantian-controlplane
+  name: nantian-gw-controlplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -64,7 +64,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: nantian-controlplane
+      app: nantian-gw-controlplane
   policyTypes:
     - Ingress
   ingress:
@@ -91,7 +91,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nantian-dataplane-admin
+  name: nantian-gw-dataplane-admin
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -100,7 +100,7 @@ metadata:
     gateway.nantian.dev/service-role: admin
 spec:
   selector:
-    app: nantian-dataplane
+    app: nantian-gw-dataplane
   ports:
     - name: admin
       port: 19080
@@ -109,7 +109,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nantian-dataplane-metrics
+  name: nantian-gw-dataplane-metrics
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -118,7 +118,7 @@ metadata:
     gateway.nantian.dev/service-role: metrics
 spec:
   selector:
-    app: nantian-dataplane
+    app: nantian-gw-dataplane
   ports:
     - name: metrics
       port: 19080
@@ -127,7 +127,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -136,7 +136,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: nantian-dataplane
+      app: nantian-gw-dataplane
   policyTypes:
     - Ingress
   ingress:

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nantian-controlplane
+  name: nantian-gw-controlplane
   namespace: nantian-gw
 spec:
   template:
@@ -15,13 +15,13 @@ spec:
       volumes:
         - name: grpc-tls
           secret:
-            secretName: nantian-controlplane-grpc-tls
+            secretName: nantian-gw-controlplane-grpc-tls
             optional: false
         - name: admin-auth
           secret:
-            secretName: nantian-controlplane-admin-auth
+            secretName: nantian-gw-controlplane-admin-auth
             optional: false
         - name: dataplane-admin-auth
           secret:
-            secretName: nantian-dataplane-admin-auth
+            secretName: nantian-gw-dataplane-admin-auth
             optional: false

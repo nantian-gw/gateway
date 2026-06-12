@@ -1,7 +1,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: nantian-dataplane
+  name: nantian-gw-dataplane
   namespace: nantian-gw
   labels:
     app.kubernetes.io/name: nantian-gw
@@ -12,7 +12,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: nantian-dataplane
+    name: nantian-gw-dataplane
   minReplicas: 2
   maxReplicas: 10
   metrics:

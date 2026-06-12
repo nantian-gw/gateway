@@ -28,7 +28,7 @@ adminRuntime:
   writeTimeout: "30s"
   idleTimeout: "2m"
   dataplaneAggregation:
-    serviceName: "nantian-dataplane-admin"
+    serviceName: "nantian-gw-dataplane-admin"
     namespace: "nantian-gw"
     portName: "admin"
     timeout: "2s"
@@ -55,7 +55,7 @@ adminAuth:
 dashboardApi:
   enabled: true
   basePath: "/api/dashboard"
-  dataplaneAdminUrl: "http://nantian-dataplane-admin.nantian-gw.svc.cluster.local:19080"
+  dataplaneAdminUrl: "http://nantian-gw-dataplane-admin.nantian-gw.svc.cluster.local:19080"
   requestTimeout: "5s"
   resourceMutationsEnabled: true
 pprof:

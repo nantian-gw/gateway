@@ -1,6 +1,6 @@
 nodeId: "dp-kubernetes"
 cluster: "production"
-controlPlaneAddr: "https://nantian-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
+controlPlaneAddr: "https://nantian-gw-controlplane-grpc.nantian-gw.svc.cluster.local:18080"
 adminAddr: "0.0.0.0:19080"
 log:
   level: "info,nantian_core::connectors=off"
@@ -55,7 +55,7 @@ xdsTls:
   caPath: "/etc/nantian-gw/xds-tls/ca.crt"
   certPath: "/etc/nantian-gw/xds-tls/tls.crt"
   keyPath: "/etc/nantian-gw/xds-tls/tls.key"
-  domainName: "nantian-controlplane-grpc.nantian-gw.svc.cluster.local"
+  domainName: "nantian-gw-controlplane-grpc.nantian-gw.svc.cluster.local"
 experimental:
   enableExperimentalGateway: false
   enableAiGateway: false

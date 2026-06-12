@@ -74,7 +74,7 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -185,7 +185,7 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -745,7 +745,7 @@ func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.
 				},
 				Spec: corev1.ServiceSpec{
 					Type:                          corev1.ServiceTypeLoadBalancer,
-					Selector:                      map[string]string{"app": "nantian-dataplane"},
+					Selector:                      map[string]string{"app": "nantian-gw-dataplane"},
 					ExternalTrafficPolicy:         corev1.ServiceExternalTrafficPolicyLocal,
 					InternalTrafficPolicy:         &internalTrafficPolicy,
 					SessionAffinity:               corev1.ServiceAffinityClientIP,

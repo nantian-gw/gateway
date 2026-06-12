@@ -400,7 +400,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]))",
+          "expr": "sum(nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -435,7 +435,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"})",
+          "expr": "sum(nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"})",
           "refId": "A"
         }
       ],
@@ -1208,12 +1208,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "nantian_gateway_dataplane_container_cpu_cores{namespace=~\"$namespace\"} or rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m])",
+          "expr": "nantian_gateway_dataplane_container_cpu_cores{namespace=~\"$namespace\"} or rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m])",
           "legendFormat": "cores",
           "refId": "A"
         },
         {
-          "expr": "nantian_gateway_dataplane_container_cpu_request_cores{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"cpu\"})",
+          "expr": "nantian_gateway_dataplane_container_cpu_request_cores{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\",resource=\"cpu\"})",
           "legendFormat": "request",
           "refId": "B"
         }
@@ -1241,7 +1241,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"}[5m])",
+          "expr": "nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m])",
           "legendFormat": "throttle",
           "refId": "A"
         }
@@ -1269,17 +1269,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum by (pod) (nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\"})",
+          "expr": "sum by (pod) (nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"})",
           "legendFormat": "{{pod}}",
           "refId": "A"
         },
         {
-          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_limit_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"memory\"}))",
+          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_limit_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\",resource=\"memory\"}))",
           "legendFormat": "limit",
           "refId": "B"
         },
         {
-          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_request_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-dataplane-.*\",resource=\"memory\"}))",
+          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_request_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\",resource=\"memory\"}))",
           "legendFormat": "request",
           "refId": "C"
         }

@@ -1,5 +1,5 @@
 groups:
-  - name: nantian-dataplane
+  - name: nantian-gw-dataplane
     rules:
       - record: nantian_gateway_dataplane_ready_replicas
         expr: sum by (namespace, job) (nantian_gateway_dataplane_runtime_supervisor_http_states)
@@ -11,37 +11,37 @@ groups:
       - record: nantian_gateway_dataplane_container_cpu_cores
         expr: |
           sum by (namespace, pod, container) (
-            rate(container_cpu_usage_seconds_total{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",image!=""}[5m])
+            rate(container_cpu_usage_seconds_total{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",image!=""}[5m])
           )
       - record: nantian_gateway_dataplane_container_cpu_request_cores
         expr: |
           max by (namespace, pod, container) (
-            kube_pod_container_resource_requests{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",resource="cpu"}
+            kube_pod_container_resource_requests{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",resource="cpu"}
           )
       - record: nantian_gateway_dataplane_container_cpu_throttle_ratio
         expr: |
           sum by (namespace, pod, container) (
-            rate(container_cpu_cfs_throttled_periods_total{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",image!=""}[5m])
+            rate(container_cpu_cfs_throttled_periods_total{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",image!=""}[5m])
           )
           /
           clamp_min(
             sum by (namespace, pod, container) (
-              rate(container_cpu_cfs_periods_total{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",image!=""}[5m])
+              rate(container_cpu_cfs_periods_total{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",image!=""}[5m])
             ),
             1e-9
           )
       - record: nantian_gateway_dataplane_container_memory_working_set_bytes
         expr: |
           sum by (namespace, pod, container) (
-            container_memory_working_set_bytes{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",image!=""}
+            container_memory_working_set_bytes{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",image!=""}
           )
       - record: nantian_gateway_dataplane_container_memory_limit_bytes
         expr: |
           max by (namespace, pod, container) (
-            kube_pod_container_resource_limits{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",resource="memory"}
+            kube_pod_container_resource_limits{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",resource="memory"}
           )
       - record: nantian_gateway_dataplane_container_memory_request_bytes
         expr: |
           max by (namespace, pod, container) (
-            kube_pod_container_resource_requests{namespace="nantian-gw",pod=~"nantian-dataplane-.+",container="dataplane",resource="memory"}
+            kube_pod_container_resource_requests{namespace="nantian-gw",pod=~"nantian-gw-dataplane-.+",container="dataplane",resource="memory"}
           )

@@ -51,7 +51,7 @@ func TestReconcileGatewayInfrastructureServicesAreIdempotent(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -267,7 +267,7 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -434,7 +434,7 @@ func TestReconcileMeshServicesUsesServiceParentRouteIndexes(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "nantian-dataplane-0",
 						Namespace: defaultDataplaneNamespace,
-						Labels:    map[string]string{"app": "nantian-dataplane"},
+						Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 					},
 					Status: corev1.PodStatus{
 						PodIP: "10.0.0.50",
@@ -490,7 +490,7 @@ func TestReconcileFrontsMeshServiceFromSnapshotStoreWhenRouteCacheLags(t *testin
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -592,7 +592,7 @@ func TestReconcileFrontsMeshServiceOnlyWithAckedCurrentSnapshotNodes(t *testing.
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-current",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -606,7 +606,7 @@ func TestReconcileFrontsMeshServiceOnlyWithAckedCurrentSnapshotNodes(t *testing.
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-stale",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.51",
@@ -700,7 +700,7 @@ func TestReconcileMeshServiceRequiresCurrentSnapshotAckNodes(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-stable",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -803,7 +803,7 @@ func TestReconcileMeshServiceDeletesForeignEndpointSlicesBeforeManagedReplacemen
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -910,7 +910,7 @@ func TestReconcileFrontsSharedAndGatewayServicesOnlyWithAckedCurrentSnapshotNode
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-current",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -924,7 +924,7 @@ func TestReconcileFrontsSharedAndGatewayServicesOnlyWithAckedCurrentSnapshotNode
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-stale",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.51",
@@ -1057,7 +1057,7 @@ func TestReconcileFrontsSharedAndGatewayServicesRequireCurrentSnapshotAck(t *tes
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-stable-a",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -1071,7 +1071,7 @@ func TestReconcileFrontsSharedAndGatewayServicesRequireCurrentSnapshotAck(t *tes
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-stable-b",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.51",

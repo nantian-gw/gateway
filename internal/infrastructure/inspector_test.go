@@ -72,7 +72,7 @@ func TestInspectReportsDerivedInfrastructureLifecycleAndDrift(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -286,7 +286,7 @@ func TestInspectScopesObservedServiceAndEndpointSliceQueries(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -424,7 +424,7 @@ func TestInspectCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -532,7 +532,7 @@ func TestInspectUsesServiceParentRouteIndexes(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "nantian-dataplane-0",
 						Namespace: defaultDataplaneNamespace,
-						Labels:    map[string]string{"app": "nantian-dataplane"},
+						Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 					},
 					Status: corev1.PodStatus{
 						PodIP: "10.0.0.50",

@@ -58,7 +58,7 @@ func TestReconcileSharedServiceUpdateAvoidsRedundantReread(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -146,7 +146,7 @@ func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
@@ -564,7 +564,7 @@ func TestReconcilePropagatesGatewayInfrastructureMetadataToEndpointSlices(t *tes
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

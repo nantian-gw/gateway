@@ -139,7 +139,7 @@ func newInfrastructureTestServer(t *testing.T) *Server {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: "nantian-gw",
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

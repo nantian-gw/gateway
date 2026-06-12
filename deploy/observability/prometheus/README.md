@@ -2,8 +2,8 @@
 
 This directory contains example Prometheus scrape assets for:
 
-- the controlplane metrics endpoint exposed by `nantian-controlplane-metrics`
-- the dataplane metrics endpoint exposed by `nantian-dataplane-metrics`
+- the controlplane metrics endpoint exposed by `nantian-gw-controlplane-metrics`
+- the dataplane metrics endpoint exposed by `nantian-gw-dataplane-metrics`
 
 Use these files when you want Prometheus to scrape each dataplane pod separately so queries like `sum(nantian_gateway_dataplane_ready)` reflect ready replica counts instead of the view from a single Service request.
 
@@ -14,7 +14,7 @@ Metric names, label cardinality classes, and golden-signal expectations are docu
 `nantian_gateway_dataplane_ready` is a per-pod gauge, not a replica counter.
 
 - Metric definition: `1 if the dataplane has applied at least one snapshot, 0 otherwise.`
-- A single request to `nantian-dataplane-metrics` only hits one backend pod.
+- A single request to `nantian-gw-dataplane-metrics` only hits one backend pod.
 - Replica-level views require Prometheus to scrape every endpoint or pod independently and then aggregate with PromQL.
 
 Do not use a single static target such as:
@@ -22,7 +22,7 @@ Do not use a single static target such as:
 ```yaml
 static_configs:
   - targets:
-      - nantian-dataplane-metrics.nantian-gw.svc:19080
+      - nantian-gw-dataplane-metrics.nantian-gw.svc:19080
 ```
 
 That configuration only gives you a single-pod view.
@@ -163,11 +163,11 @@ histogram_quantile(0.95, sum by (le, route) (rate(nantian_gateway_dataplane_admi
 ```
 
 ```promql
-kube_deployment_spec_replicas{namespace="nantian-gw",deployment="nantian-dataplane"}
+kube_deployment_spec_replicas{namespace="nantian-gw",deployment="nantian-gw-dataplane"}
 ```
 
 ```promql
-kube_deployment_status_replicas_available{namespace="nantian-gw",deployment="nantian-dataplane"}
+kube_deployment_status_replicas_available{namespace="nantian-gw",deployment="nantian-gw-dataplane"}
 ```
 
 Interpretation:
@@ -175,7 +175,7 @@ Interpretation:
 - `count = 3` and `sum = 3`: three dataplane pods are being scraped separately and all are ready.
 - `count = 1` and `sum = 1`: only one scrape target is being discovered.
 - `count = 3` and `sum = 2`: three scrape targets exist but one dataplane pod is not ready under this metric’s definition.
-- Empty controlplane panels usually mean the controlplane scrape object or native `scrape_configs` block is missing, the `job_controlplane` Grafana variable is not matching the real `job` label, or NetworkPolicy blocks Prometheus from reaching `nantian-controlplane-metrics:18082`.
+- Empty controlplane panels usually mean the controlplane scrape object or native `scrape_configs` block is missing, the `job_controlplane` Grafana variable is not matching the real `job` label, or NetworkPolicy blocks Prometheus from reaching `nantian-gw-controlplane-metrics:18082`.
 - Empty container resource recording rules usually mean kubelet cAdvisor or
   kube-state-metrics is not scraped, or your cluster uses different namespace,
   pod, or container labels. Keep the recording rules aligned with your deployed
@@ -189,9 +189,9 @@ Copy it first, replace the placeholder token, then apply the real Secret manifes
 Prometheus Operator:
 
 ```bash
-cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/nantian-dataplane-admin-token.yaml
-$EDITOR /tmp/nantian-dataplane-admin-token.yaml
-kubectl apply -f /tmp/nantian-dataplane-admin-token.yaml
+cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/nantian-gw-dataplane-admin-token.yaml
+$EDITOR /tmp/nantian-gw-dataplane-admin-token.yaml
+kubectl apply -f /tmp/nantian-gw-dataplane-admin-token.yaml
 kubectl apply -f deploy/observability/prometheus/operator/networkpolicy-prometheus-scrape.yaml
 kubectl apply -f deploy/observability/prometheus/operator/podmonitor-controlplane.yaml
 kubectl apply -f deploy/observability/prometheus/operator/podmonitor-dataplane.yaml
@@ -201,9 +201,9 @@ kubectl apply -f deploy/observability/prometheus/operator/prometheusrule-datapla
 Or, if you prefer Service-based discovery:
 
 ```bash
-cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/nantian-dataplane-admin-token.yaml
-$EDITOR /tmp/nantian-dataplane-admin-token.yaml
-kubectl apply -f /tmp/nantian-dataplane-admin-token.yaml
+cp deploy/observability/prometheus/operator/secret-dataplane-admin-token.example.yaml /tmp/nantian-gw-dataplane-admin-token.yaml
+$EDITOR /tmp/nantian-gw-dataplane-admin-token.yaml
+kubectl apply -f /tmp/nantian-gw-dataplane-admin-token.yaml
 kubectl apply -f deploy/observability/prometheus/operator/networkpolicy-prometheus-scrape.yaml
 kubectl apply -f deploy/observability/prometheus/operator/servicemonitor-controlplane.yaml
 kubectl apply -f deploy/observability/prometheus/operator/servicemonitor-dataplane.yaml

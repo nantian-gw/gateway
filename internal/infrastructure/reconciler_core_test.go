@@ -68,7 +68,7 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 				},
 				Spec: corev1.ServiceSpec{
 					Type:     corev1.ServiceTypeNodePort,
-					Selector: map[string]string{"app": "nantian-dataplane"},
+					Selector: map[string]string{"app": "nantian-gw-dataplane"},
 					Ports: []corev1.ServicePort{
 						{
 							Name:       "tcp-80",
@@ -187,7 +187,7 @@ func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",

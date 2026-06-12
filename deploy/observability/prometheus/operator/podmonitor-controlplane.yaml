@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
-  name: nantian-controlplane
+  name: nantian-gw-controlplane
   namespace: monitoring
   labels:
     release: kube-prometheus-stack
@@ -11,7 +11,7 @@ spec:
       - nantian-gw
   selector:
     matchLabels:
-      app: nantian-controlplane
+      app: nantian-gw-controlplane
   podMetricsEndpoints:
     - port: metrics
       path: /metrics

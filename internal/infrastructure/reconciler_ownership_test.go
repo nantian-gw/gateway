@@ -130,7 +130,7 @@ func TestReconcileRemovesStaleInfrastructureParameterAnnotationOnRollback(t *tes
 						"nantian.dev/infrastructure-parameters-ref": "default/stale-params",
 						"nantian.dev/service-parameters-hash":       "stale",
 						"nantian.dev/owner-generation":              "1",
-						"example.com/trace":                    "stale",
+						"example.com/trace":                         "stale",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -236,7 +236,7 @@ func TestReconcilePropagatesOwnershipAnnotationsToGatewayEndpointSlices(t *testi
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-dataplane-0",
 					Namespace: defaultDataplaneNamespace,
-					Labels:    map[string]string{"app": "nantian-dataplane"},
+					Labels:    map[string]string{"app": "nantian-gw-dataplane"},
 				},
 				Status: corev1.PodStatus{
 					PodIP: "10.0.0.50",
