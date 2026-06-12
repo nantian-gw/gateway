@@ -2,8 +2,11 @@ package status
 
 import (
 	"testing"
+	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -329,6 +332,468 @@ func TestEvaluateListenerSets(t *testing.T) {
 		}
 		if _, ok := result["default/unmanaged-ls"]; ok {
 			t.Fatal("unmanaged-ls should not be in result")
+		}
+	})
+}
+
+func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
+	ns := func(name gatewayv1.Namespace) *gatewayv1.Namespace { return &name }
+	from := func(from gatewayv1.FromNamespaces) *gatewayv1.FromNamespaces { return &from }
+
+	defaultGateway := gatewayv1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "gw1", Namespace: "default", Generation: 1,
+		},
+		Spec: gatewayv1.GatewaySpec{
+			GatewayClassName: "test-class",
+			AllowedListeners: &gatewayv1.AllowedListeners{
+				Namespaces: &gatewayv1.ListenerNamespaces{
+					From: from(gatewayv1.NamespacesFromAll),
+				},
+			},
+		},
+	}
+	defaultState := &clusterState{
+		controllerName: "example.com/gateway",
+		namespaceByName: map[string]corev1.Namespace{
+			"default": {ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			"other":   {ObjectMeta: metav1.ObjectMeta{Name: "other"}},
+		},
+	}
+
+	httpProtocol := gatewayv1.HTTPProtocolType
+	hostname := func(h gatewayv1.Hostname) *gatewayv1.Hostname { return &h }
+
+	t.Run("no listenerSets returns empty", func(t *testing.T) {
+		result := evaluateGatewayListenerSetListeners(defaultState, defaultGateway, nil)
+		if len(result) != 0 {
+			t.Fatalf("expected 0 evaluations, got %d", len(result))
+		}
+	})
+
+	t.Run("listenerSet with one entry produces one evaluation", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		lses := []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "my-ls",
+				Namespace:         "default",
+				Generation:        1,
+				CreationTimestamp: metav1.Now(),
+			},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Namespace: ns("default"), Name: "gw1",
+				},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name:     "http",
+					Port:     80,
+					Protocol: httpProtocol,
+				}},
+			},
+		}}
+		lses[0].Status.Conditions = []metav1.Condition{{
+			Type:   string(gatewayv1.ListenerSetConditionAccepted),
+			Status: metav1.ConditionTrue,
+			Reason: string(gatewayv1.ListenerSetReasonAccepted),
+		}}
+
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
+		if len(result) != 1 {
+			t.Fatalf("expected 1 evaluation, got %d", len(result))
+		}
+		eval := result[0]
+		expectedName := gatewayv1.SectionName("default/my-ls/http")
+		if eval.name != expectedName {
+			t.Fatalf("eval name = %s, want %s", eval.name, expectedName)
+		}
+		if eval.acceptedCondition.Status != metav1.ConditionTrue {
+			t.Fatalf("accepted = %s, want True. reason=%s msg=%s", eval.acceptedCondition.Status, eval.acceptedCondition.Reason, eval.acceptedCondition.Message)
+		}
+	})
+
+	t.Run("listenerSet not accepted does not contribute listeners", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		lses := []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "my-ls",
+				Namespace:         "default",
+				Generation:        1,
+				CreationTimestamp: metav1.Now(),
+			},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Namespace: ns("default"), Name: "gw1",
+				},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name: "http", Port: 80, Protocol: httpProtocol,
+				}},
+			},
+		}}
+
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
+		if len(result) != 0 {
+			t.Fatalf("expected 0 evaluations (listenerset not accepted), got %d", len(result))
+		}
+	})
+
+	t.Run("listenerSet denied by namespace policy excluded", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		gw := defaultGateway.DeepCopy()
+		gw.Spec.AllowedListeners.Namespaces.From = from(gatewayv1.NamespacesFromSame)
+		lses := []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "my-ls",
+				Namespace:         "other",
+				Generation:        1,
+				CreationTimestamp: metav1.Now(),
+			},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Namespace: ns("other"), Name: "gw1",
+				},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name: "http", Port: 80, Protocol: httpProtocol,
+				}},
+			},
+		}}
+		lses[0].Status.Conditions = []metav1.Condition{{
+			Type: string(gatewayv1.ListenerSetConditionAccepted), Status: metav1.ConditionTrue,
+			Reason: string(gatewayv1.ListenerSetReasonAccepted),
+		}}
+
+		result := evaluateGatewayListenerSetListeners(state, *gw, lses)
+		if len(result) != 0 {
+			t.Fatalf("expected 0 evaluations (namespace policy denied), got %d", len(result))
+		}
+	})
+
+	t.Run("gateway spec listener wins over ListenerSet entry with same port/protocol/hostname", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		gw := defaultGateway.DeepCopy()
+		gw.Spec.Listeners = []gatewayv1.Listener{{
+			Name:     "gw-http",
+			Port:     80,
+			Protocol: httpProtocol,
+		}}
+		lses := []gatewayv1.ListenerSet{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "my-ls",
+				Namespace:         "default",
+				Generation:        1,
+				CreationTimestamp: metav1.Now(),
+			},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Namespace: ns("default"), Name: "gw1",
+				},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name: "http", Port: 80, Protocol: httpProtocol,
+				}},
+			},
+		}}
+		lses[0].Status.Conditions = []metav1.Condition{{
+			Type: string(gatewayv1.ListenerSetConditionAccepted), Status: metav1.ConditionTrue,
+			Reason: string(gatewayv1.ListenerSetReasonAccepted),
+		}}
+
+		result := evaluateGatewayListenerSetListeners(state, *gw, lses)
+		if len(result) != 0 {
+			t.Fatalf("expected 0 evaluations (gateway spec listener conflicts), got %d", len(result))
+		}
+	})
+
+	t.Run("two ListenerSets with conflicting entries: earlier wins", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		earlier := metav1.Now()
+		later := metav1.NewTime(earlier.Add(1 * time.Second))
+		lses := []gatewayv1.ListenerSet{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "first-ls",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: earlier,
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Namespace: ns("default"), Name: "gw1",
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "http-80", Port: 80, Protocol: httpProtocol,
+					}},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "second-ls",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: later,
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Namespace: ns("default"), Name: "gw1",
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "http-80-dup", Port: 80, Protocol: httpProtocol,
+					}},
+				},
+			},
+		}
+		for i := range lses {
+			lses[i].Status.Conditions = []metav1.Condition{{
+				Type: string(gatewayv1.ListenerSetConditionAccepted), Status: metav1.ConditionTrue,
+				Reason: string(gatewayv1.ListenerSetReasonAccepted),
+			}}
+		}
+
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
+		if len(result) != 1 {
+			t.Fatalf("expected 1 evaluation (earlier wins), got %d", len(result))
+		}
+		if result[0].name != "default/first-ls/http-80" {
+			t.Fatalf("expected first-ls entry, got %s", result[0].name)
+		}
+	})
+
+	t.Run("two ListenerSets with non-conflicting entries: both included", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		lses := []gatewayv1.ListenerSet{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "ls-http",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: metav1.Now(),
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Namespace: ns("default"), Name: "gw1",
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "http", Port: 80, Protocol: httpProtocol,
+					}},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "ls-grpc",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: metav1.Now(),
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Namespace: ns("default"), Name: "gw1",
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "grpc", Port: 9090, Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+			},
+		}
+		for i := range lses {
+			lses[i].Status.Conditions = []metav1.Condition{{
+				Type: string(gatewayv1.ListenerSetConditionAccepted), Status: metav1.ConditionTrue,
+				Reason: string(gatewayv1.ListenerSetReasonAccepted),
+			}}
+		}
+
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
+		if len(result) != 2 {
+			t.Fatalf("expected 2 evaluations, got %d", len(result))
+		}
+	})
+
+	t.Run("different ListenerSets same port different hostname: both included", func(t *testing.T) {
+		state := &clusterState{
+			controllerName:  "example.com/gateway",
+			namespaceByName: defaultState.namespaceByName,
+		}
+		lses := []gatewayv1.ListenerSet{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "ls-foo",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: metav1.Now(),
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Namespace: ns("default"), Name: "gw1"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "foo", Port: 80, Protocol: httpProtocol, Hostname: hostname("foo.example.com"),
+					}},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "ls-bar",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: metav1.Now(),
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Namespace: ns("default"), Name: "gw1"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "bar", Port: 80, Protocol: httpProtocol, Hostname: hostname("bar.example.com"),
+					}},
+				},
+			},
+		}
+		for i := range lses {
+			lses[i].Status.Conditions = []metav1.Condition{{
+				Type: string(gatewayv1.ListenerSetConditionAccepted), Status: metav1.ConditionTrue,
+				Reason: string(gatewayv1.ListenerSetReasonAccepted),
+			}}
+		}
+
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
+		if len(result) != 2 {
+			t.Fatalf("expected 2 evaluations (different hostnames), got %d", len(result))
+		}
+	})
+}
+
+func TestEvaluateGatewaysWithListenerSets(t *testing.T) {
+	ns := func(name gatewayv1.Namespace) *gatewayv1.Namespace { return &name }
+	from := func(from gatewayv1.FromNamespaces) *gatewayv1.FromNamespaces { return &from }
+
+	t.Run("gateway with 0 spec listeners + 1 ListenerSet reports 1 listener", func(t *testing.T) {
+		state := &clusterState{
+			controllerName: "example.com/gateway",
+			gatewayClasses: []gatewayv1.GatewayClass{{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-class"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: "example.com/gateway"},
+			}},
+			gateways: []gatewayv1.Gateway{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gw1", Namespace: "default", Generation: 1,
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "test-class",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: from(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			}},
+			listenerSets: []gatewayv1.ListenerSet{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-ls", Namespace: "default", Generation: 1,
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Namespace: ns("default"), Name: "gw1",
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+				Status: gatewayv1.ListenerSetStatus{
+					Conditions: []metav1.Condition{{
+						Type:   string(gatewayv1.ListenerSetConditionAccepted),
+						Status: metav1.ConditionTrue,
+						Reason: string(gatewayv1.ListenerSetReasonAccepted),
+					}},
+				},
+			}},
+			namespaceByName: map[string]corev1.Namespace{
+				"default": {ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			},
+		}
+		state.index()
+
+		gwEvals := evaluateGateways(state, nil)
+		if len(gwEvals) != 1 {
+			t.Fatalf("expected 1 gateway evaluation, got %d", len(gwEvals))
+		}
+		eval := gwEvals[client.ObjectKey{Namespace: "default", Name: "gw1"}]
+		if len(eval.listeners) != 1 {
+			t.Fatalf("expected 1 listener (from ListenerSet), got %d", len(eval.listeners))
+		}
+		if eval.listeners[0].name != "default/my-ls/http" {
+			t.Fatalf("unexpected listener name: %s", eval.listeners[0].name)
+		}
+		if eval.attachedListenerSets != 1 {
+			t.Fatalf("expected 1 attached listener set, got %d", eval.attachedListenerSets)
+		}
+	})
+
+	t.Run("gateway spec listener wins over conflicting ListenerSet entry", func(t *testing.T) {
+		state := &clusterState{
+			controllerName: "example.com/gateway",
+			gatewayClasses: []gatewayv1.GatewayClass{{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-class"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: "example.com/gateway"},
+			}},
+			gateways: []gatewayv1.Gateway{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gw1", Namespace: "default", Generation: 1,
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "test-class",
+					Listeners: []gatewayv1.Listener{{
+						Name: "gw-http", Port: 80, Protocol: gatewayv1.HTTPProtocolType,
+					}},
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: from(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			}},
+			listenerSets: []gatewayv1.ListenerSet{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-ls", Namespace: "default", Generation: 1,
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Namespace: ns("default"), Name: "gw1",
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+				Status: gatewayv1.ListenerSetStatus{
+					Conditions: []metav1.Condition{{
+						Type:   string(gatewayv1.ListenerSetConditionAccepted),
+						Status: metav1.ConditionTrue,
+						Reason: string(gatewayv1.ListenerSetReasonAccepted),
+					}},
+				},
+			}},
+			namespaceByName: map[string]corev1.Namespace{
+				"default": {ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			},
+		}
+		state.index()
+
+		gwEvals := evaluateGateways(state, nil)
+		eval := gwEvals[client.ObjectKey{Namespace: "default", Name: "gw1"}]
+		if len(eval.listeners) != 1 {
+			t.Fatalf("expected 1 listener (gateway spec wins), got %d", len(eval.listeners))
+		}
+		if eval.listeners[0].name != "gw-http" {
+			t.Fatalf("expected gateway spec listener 'gw-http', got %s", eval.listeners[0].name)
 		}
 	})
 }

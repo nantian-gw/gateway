@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -224,6 +225,76 @@ func gatewayAllowsListenerSet(gw gatewayv1.Gateway, ls gatewayv1.ListenerSet, na
 		return selector.Matches(labels.Set(nsObj.Labels))
 	default: return false
 	}
+}
+
+func evaluateGatewayListenerSetListeners(
+	state *clusterState,
+	gateway gatewayv1.Gateway,
+	listenerSets []gatewayv1.ListenerSet,
+) []listenerEvaluation {
+	if len(listenerSets) == 0 {
+		return nil
+	}
+
+	gwKey := gateway.Namespace + "/" + gateway.Name
+	gwLSes := groupListenerSetsByGateway(listenerSets)[gwKey]
+	if len(gwLSes) == 0 {
+		return nil
+	}
+
+	sort.Slice(gwLSes, func(i, j int) bool {
+		if !gwLSes[i].CreationTimestamp.Time.Equal(gwLSes[j].CreationTimestamp.Time) {
+			return gwLSes[i].CreationTimestamp.Time.Before(gwLSes[j].CreationTimestamp.Time)
+		}
+		return gwLSes[i].Namespace+"/"+gwLSes[i].Name < gwLSes[j].Namespace+"/"+gwLSes[j].Name
+	})
+
+	type lsKey struct {
+		port     gatewayv1.PortNumber
+		protocol string
+		hostname string
+	}
+	conflictSet := make(map[lsKey]bool, len(gateway.Spec.Listeners))
+	allListeners := make([]gatewayv1.Listener, 0, len(gateway.Spec.Listeners))
+	for _, l := range gateway.Spec.Listeners {
+		host := ""
+		if l.Hostname != nil {
+			host = string(*l.Hostname)
+		}
+		conflictSet[lsKey{l.Port, string(l.Protocol), host}] = true
+		allListeners = append(allListeners, l)
+	}
+
+	var out []listenerEvaluation
+	for _, ls := range gwLSes {
+		if !gatewayAllowsListenerSet(gateway, ls, state.namespaceByName) {
+			continue
+		}
+
+		acceptedCond := meta.FindStatusCondition(ls.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted))
+		if acceptedCond == nil || acceptedCond.Status != metav1.ConditionTrue {
+			continue
+		}
+
+		for _, entry := range ls.Spec.Listeners {
+			host := ""
+			if entry.Hostname != nil {
+				host = string(*entry.Hostname)
+			}
+			key := lsKey{entry.Port, string(entry.Protocol), host}
+			if conflictSet[key] {
+				continue
+			}
+			conflictSet[key] = true
+
+			listener := listenerEntryToInternalListener(entry, ls)
+			allListeners = append(allListeners, listener)
+
+			eval := evaluateGatewayListener(state, gateway, allListeners, listener, 0)
+			out = append(out, eval)
+		}
+	}
+	return out
 }
 
 func countAttachedListenerSets(state *clusterState, gateway gatewayv1.Gateway) int32 {
