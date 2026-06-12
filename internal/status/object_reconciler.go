@@ -35,7 +35,8 @@ func (r *Reconciler) ReconcileGatewayObject(ctx context.Context, key client.Obje
 		return err
 	}
 
-	eval, ok := evaluateGateways(state, evaluateRouteAttachments(state))[key]
+	attachments := evaluateRouteAttachments(state)
+	eval, ok := evaluateGateways(state, attachments)[key]
 	if !ok {
 		r.logger.InfoContext(ctx, "ReconcileGatewayObject: eval not found, skipping status update", "key", key)
 		deleteGatewayConvergenceStageMetric(key)
@@ -44,7 +45,7 @@ func (r *Reconciler) ReconcileGatewayObject(ctx context.Context, key client.Obje
 	if err := r.reconcileGatewayStatusWithSeed(ctx, key, &current, eval); err != nil {
 		return err
 	}
-	listenerSetEvals := evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey)
+	listenerSetEvals := evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey, attachments)
 	return r.reconcileListenerSetStatuses(ctx, state.listenerSets, listenerSetEvals)
 }
 

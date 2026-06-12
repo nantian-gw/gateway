@@ -90,7 +90,7 @@ func evaluateGateways(state *clusterState, attachments map[listenerKey]map[strin
 			listenerEvals = append(listenerEvals, eval)
 		}
 
-		for _, eval := range evaluateGatewayListenerSetListeners(state, gateway, state.listenerSets) {
+		for _, eval := range evaluateGatewayListenerSetListeners(state, gateway, state.listenerSets, attachments) {
 			if eval.acceptedCondition.Status == metav1.ConditionTrue {
 				acceptedListeners++
 			} else {
@@ -122,16 +122,16 @@ func evaluateGateways(state *clusterState, attachments map[listenerKey]map[strin
 			serviceReady, serviceMessage = gatewayInfrastructureServiceStatus(state, gateway)
 		}
 		gatewayEval := gatewayEvaluation{
-			sourceGeneration:    gateway.Generation,
-			addresses:           addressEvaluation.addresses,
-			acceptedCondition:   addressEvaluation.acceptedCondition,
-			programmedCondition: addressEvaluation.programmedCondition,
-			extraConditions:     gatewayExtraConditions(state, gateway),
-			listeners:           listenerEvals,
-			infraValidation:     infraValidation,
-			convergence:         gatewayConvergenceObservationForCurrentState(state, gateway),
-			translationReady:    translationReady,
-			infraConverged:      translationReady && serviceReady,
+			sourceGeneration:     gateway.Generation,
+			addresses:            addressEvaluation.addresses,
+			acceptedCondition:    addressEvaluation.acceptedCondition,
+			programmedCondition:  addressEvaluation.programmedCondition,
+			extraConditions:      gatewayExtraConditions(state, gateway),
+			listeners:            listenerEvals,
+			infraValidation:      infraValidation,
+			convergence:          gatewayConvergenceObservationForCurrentState(state, gateway),
+			translationReady:     translationReady,
+			infraConverged:       translationReady && serviceReady,
 			attachedListenerSets: countAttachedListenerSets(state, gateway),
 		}
 		if gatewayEval.acceptedCondition.Status == metav1.ConditionTrue && invalidListeners > 0 {

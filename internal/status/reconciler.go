@@ -146,7 +146,7 @@ func (r *Reconciler) Reconcile(ctx context.Context) error {
 	if err := r.reconcileListenerSetStatuses(
 		ctx,
 		state.listenerSets,
-		evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey),
+		evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey, routeState.attachments),
 	); err != nil {
 		return err
 	}

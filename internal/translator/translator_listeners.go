@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -234,21 +235,6 @@ func mergeListenerSetListeners(
 		return ni < nj
 	})
 
-	// Collect Gateway listeners into a set for conflict detection.
-	type listenerKey struct {
-		port     gatewayv1.PortNumber
-		protocol string
-		hostname string
-	}
-	seen := make(map[listenerKey]bool, len(base))
-	for _, l := range base {
-		host := ""
-		if l.Hostname != nil {
-			host = string(*l.Hostname)
-		}
-		seen[listenerKey{l.Port, string(l.Protocol), host}] = true
-	}
-
 	out := make([]gatewayv1.Listener, len(base))
 	copy(out, base)
 
@@ -257,27 +243,105 @@ func mergeListenerSetListeners(
 		if !gatewayAllowsListenerSet(gateway, ls, namespaces) {
 			continue
 		}
+		if !listenerSetAcceptedForRuntime(ls) {
+			continue
+		}
 		for _, entry := range ls.Spec.Listeners {
-			host := ""
-			if entry.Hostname != nil {
-				host = string(*entry.Hostname)
+			if !listenerSetEntryAcceptedForRuntime(ls, entry) {
+				continue
 			}
-			key := listenerKey{entry.Port, string(entry.Protocol), host}
-			if seen[key] {
+			listener := listenerEntryToRuntimeListener(entry)
+			if listenerConflictsForRuntime(out, listener) {
 				continue // Gateway or older ListenerSet wins
 			}
-			seen[key] = true
-			out = append(out, gatewayv1.Listener{
-				Name:     entry.Name,
-				Hostname: entry.Hostname,
-				Port:     entry.Port,
-				Protocol: entry.Protocol,
-				TLS:      entry.TLS,
-			})
+			out = append(out, listener)
 		}
 	}
 
 	return out
+}
+
+func listenerEntryToRuntimeListener(entry gatewayv1.ListenerEntry) gatewayv1.Listener {
+	return gatewayv1.Listener{
+		Name:          entry.Name,
+		Hostname:      entry.Hostname,
+		Port:          entry.Port,
+		Protocol:      entry.Protocol,
+		AllowedRoutes: entry.AllowedRoutes,
+		TLS:           entry.TLS,
+	}
+}
+
+func listenerSetAcceptedForRuntime(ls gatewayv1.ListenerSet) bool {
+	condition := meta.FindStatusCondition(ls.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted))
+	if condition == nil || listenerStatusConditionStale(condition, ls.Generation) {
+		return true
+	}
+	return condition.Status == metav1.ConditionTrue
+}
+
+func listenerSetEntryAcceptedForRuntime(ls gatewayv1.ListenerSet, entry gatewayv1.ListenerEntry) bool {
+	if len(ls.Status.Listeners) == 0 {
+		return true
+	}
+	for _, status := range ls.Status.Listeners {
+		if status.Name != entry.Name {
+			continue
+		}
+		condition := meta.FindStatusCondition(status.Conditions, string(gatewayv1.ListenerConditionAccepted))
+		if condition == nil || listenerStatusConditionStale(condition, ls.Generation) {
+			return true
+		}
+		return condition.Status == metav1.ConditionTrue
+	}
+	return false
+}
+
+func listenerStatusConditionStale(condition *metav1.Condition, generation int64) bool {
+	return condition.ObservedGeneration != 0 && generation != 0 && condition.ObservedGeneration != generation
+}
+
+func listenerConflictsForRuntime(existing []gatewayv1.Listener, current gatewayv1.Listener) bool {
+	for _, other := range existing {
+		if current.Port != other.Port {
+			continue
+		}
+		if strings.ToUpper(string(current.Protocol)) != strings.ToUpper(string(other.Protocol)) {
+			return true
+		}
+		if listenerHostnamesConflictForRuntime(current, other) {
+			return true
+		}
+	}
+	return false
+}
+
+func listenerHostnamesConflictForRuntime(left, right gatewayv1.Listener) bool {
+	leftHostname, leftSpecified := listenerHostnameForRuntime(left)
+	rightHostname, rightSpecified := listenerHostnameForRuntime(right)
+	switch {
+	case !leftSpecified && !rightSpecified:
+		return true
+	case !leftSpecified || !rightSpecified:
+		return false
+	default:
+		return normalizeRuntimeListenerHostname(leftHostname) == normalizeRuntimeListenerHostname(rightHostname)
+	}
+}
+
+func listenerHostnameForRuntime(listener gatewayv1.Listener) (string, bool) {
+	if listener.Hostname == nil {
+		return "", false
+	}
+	value := strings.TrimSpace(string(*listener.Hostname))
+	if value == "" {
+		return "", false
+	}
+	return value, true
+}
+
+func normalizeRuntimeListenerHostname(hostname string) string {
+	return strings.ToLower(strings.TrimSuffix(hostname, "."))
 }
 
 func gatewayAllowsListenerSet(gateway gatewayv1.Gateway, ls gatewayv1.ListenerSet, namespaces map[string]corev1.Namespace) bool {

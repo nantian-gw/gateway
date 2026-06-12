@@ -96,6 +96,63 @@ func TestMergeListenerSetListeners(t *testing.T) {
 		}
 	})
 
+	t.Run("Gateway wins on protocol conflict", func(t *testing.T) {
+		gw := gatewayv1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+			Spec: gatewayv1.GatewaySpec{
+				AllowedListeners: allowedListenersFromAll(),
+			},
+		}
+		base := []gatewayv1.Listener{
+			{Name: "http-gw", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
+		}
+		sets := []gatewayv1.ListenerSet{
+			listenerSet("ls-extra", "default", "gw", []gatewayv1.ListenerEntry{
+				{Name: "tcp-ls", Port: 80, Protocol: gatewayv1.TCPProtocolType},
+			}),
+		}
+
+		result := mergeListenerSetListeners(gw, base, sets, nil)
+
+		if len(result) != 1 {
+			t.Fatalf("expected 1 listener (Gateway wins protocol conflict), got %d: %v", len(result), listenerNames(result))
+		}
+		if result[0].Name != "http-gw" {
+			t.Fatalf("expected Gateway listener 'http-gw', got %s", result[0].Name)
+		}
+	})
+
+	t.Run("ListenerSet with rejected status is skipped", func(t *testing.T) {
+		gw := gatewayv1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+			Spec: gatewayv1.GatewaySpec{
+				AllowedListeners: allowedListenersFromAll(),
+			},
+		}
+		base := []gatewayv1.Listener{
+			{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
+		}
+		rejected := listenerSet("ls-rejected", "default", "gw", []gatewayv1.ListenerEntry{
+			{Name: "https", Port: 443, Protocol: gatewayv1.HTTPSProtocolType},
+		})
+		rejected.Generation = 2
+		rejected.Status.Conditions = []metav1.Condition{{
+			Type:               string(gatewayv1.ListenerSetConditionAccepted),
+			Status:             metav1.ConditionFalse,
+			Reason:             string(gatewayv1.ListenerSetReasonListenersNotValid),
+			ObservedGeneration: 2,
+		}}
+
+		result := mergeListenerSetListeners(gw, base, []gatewayv1.ListenerSet{rejected}, nil)
+
+		if len(result) != 1 {
+			t.Fatalf("expected 1 listener (rejected ListenerSet skipped), got %d: %v", len(result), listenerNames(result))
+		}
+		if result[0].Name != "http" {
+			t.Fatalf("expected base listener 'http', got %s", result[0].Name)
+		}
+	})
+
 	t.Run("hostname different is not a conflict", func(t *testing.T) {
 		gw := gatewayv1.Gateway{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
