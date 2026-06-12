@@ -131,6 +131,38 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	}
 }
 
+func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
+	conformanceWorkflow := string(readFile(t, repoPath(".github", "workflows", "conformance.yml")))
+	if !strings.Contains(conformanceWorkflow, "-gateway-class nantian-gw") {
+		t.Fatalf("conformance workflow does not use GatewayClass nantian-gw")
+	}
+	if strings.Contains(conformanceWorkflow, "-gateway-class nantian \\") {
+		t.Fatalf("conformance workflow still uses old GatewayClass nantian")
+	}
+
+	smokeScript := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
+	for _, want := range []string{
+		`GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"`,
+		`CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"`,
+		`DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"`,
+		`gatewayClassName: $GATEWAY_CLASS_NAME`,
+	} {
+		if !strings.Contains(smokeScript, want) {
+			t.Fatalf("smoke script missing %q", want)
+		}
+	}
+
+	for _, oldName := range []string{
+		"nantian-controlplane",
+		"gatewayClassName: nantian",
+		"app=nantian-dataplane",
+	} {
+		if strings.Contains(smokeScript, oldName) {
+			t.Fatalf("smoke script still contains old resource name %q", oldName)
+		}
+	}
+}
+
 func portKey(port int, protocol string) string {
 	return fmt.Sprintf("%s/%d", protocol, port)
 }

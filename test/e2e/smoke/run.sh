@@ -9,7 +9,10 @@ GATEWAY_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 CLUSTER_NAME="${CLUSTER_NAME:-nantian-e2e}"
 CONTROL_PLANE_NS="nantian-gw"
 TEST_NS="nantian-e2e"
-DATA_PLANE_SVC="nantian-dataplane"
+CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"
+DATA_PLANE_SVC="nantian-gw-dataplane"
+DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"
+GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"
 ECHO_PORT=8080
 LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"
 GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"
@@ -67,7 +70,7 @@ install_gateway_api_crds() {
 
 # ── Step 3: deploy nantian-gw ──
 deploy_gateway() {
-    if kubectl get deployment -n "$CONTROL_PLANE_NS" nantian-controlplane &>/dev/null; then
+    if kubectl get deployment -n "$CONTROL_PLANE_NS" "$CONTROL_PLANE_DEPLOYMENT" &>/dev/null; then
         yellow "nantian-gw already deployed, skipping"
         return
     fi
@@ -130,7 +133,7 @@ kind: Gateway
 metadata:
   name: nantian-gw
 spec:
-  gatewayClassName: nantian
+  gatewayClassName: $GATEWAY_CLASS_NAME
   listeners:
   - name: http
     protocol: HTTP
@@ -195,7 +198,7 @@ YAML
 # ── Step 6: port-forward and send request ──
 send_request() {
     local dataplane_pod
-    dataplane_pod=$(kubectl get pod -n "$CONTROL_PLANE_NS" -l app=nantian-dataplane -o jsonpath='{.items[0].metadata.name}')
+    dataplane_pod=$(kubectl get pod -n "$CONTROL_PLANE_NS" -l "$DATA_PLANE_SELECTOR" -o jsonpath='{.items[0].metadata.name}')
     if [[ -z "$dataplane_pod" ]]; then
         fail "no data plane pod found"
         return 1

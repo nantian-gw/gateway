@@ -68,7 +68,7 @@ jobs:
           set +e
           go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
             -args \
-            -gateway-class nantian \
+            -gateway-class nantian-gw \
             -report-output "$report_path" \
             -organization "Nantian Gateway" \
             -project "Nantian Gateway" \
