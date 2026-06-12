@@ -21,6 +21,14 @@ import (
 type routeStatusUpdater func(context.Context, client.ObjectKey, []routeParentEvaluation) error
 
 func (r *Reconciler) ReconcileGatewayObject(ctx context.Context, key client.ObjectKey) error {
+	return r.reconcileGatewayObject(ctx, key, nil)
+}
+
+func (r *Reconciler) reconcileGatewayObject(
+	ctx context.Context,
+	key client.ObjectKey,
+	listenerSetSeeds []gatewayv1.ListenerSet,
+) error {
 	var current gatewayv1.Gateway
 	if err := r.reader.Get(ctx, key, &current); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -30,7 +38,7 @@ func (r *Reconciler) ReconcileGatewayObject(ctx context.Context, key client.Obje
 		return err
 	}
 
-	state, err := r.loadGatewayObjectState(ctx, current)
+	state, err := r.loadGatewayObjectStateWithListenerSets(ctx, current, listenerSetSeeds)
 	if err != nil {
 		return err
 	}
@@ -53,6 +61,14 @@ func (r *Reconciler) loadGatewayObjectState(
 	ctx context.Context,
 	gateway gatewayv1.Gateway,
 ) (*clusterState, error) {
+	return r.loadGatewayObjectStateWithListenerSets(ctx, gateway, nil)
+}
+
+func (r *Reconciler) loadGatewayObjectStateWithListenerSets(
+	ctx context.Context,
+	gateway gatewayv1.Gateway,
+	listenerSetSeeds []gatewayv1.ListenerSet,
+) (*clusterState, error) {
 	state := r.newClusterState()
 	state.gateways = append(state.gateways, gateway)
 
@@ -67,6 +83,7 @@ func (r *Reconciler) loadGatewayObjectState(
 		if err := r.loadGatewayListenerSets(ctx, state); err != nil {
 			return nil, err
 		}
+		state.listenerSets = mergeListenerSetSeedsForGateway(state.listenerSets, listenerSetSeeds, gateway)
 	}
 	if err := r.loadGatewayRoutes(ctx, state, gateway); err != nil {
 		return nil, err
@@ -97,6 +114,37 @@ func (r *Reconciler) loadGatewayObjectState(
 
 	state.index()
 	return state, nil
+}
+
+func mergeListenerSetSeedsForGateway(
+	listenerSets []gatewayv1.ListenerSet,
+	seeds []gatewayv1.ListenerSet,
+	gateway gatewayv1.Gateway,
+) []gatewayv1.ListenerSet {
+	if len(seeds) == 0 {
+		return listenerSets
+	}
+
+	gatewayKey := namespacedName(gateway.Namespace, gateway.Name)
+	byKey := make(map[string]int, len(listenerSets))
+	for i := range listenerSets {
+		byKey[namespacedName(listenerSets[i].Namespace, listenerSets[i].Name)] = i
+	}
+
+	for _, seed := range seeds {
+		if listenerSetParentGatewayKey(seed) != gatewayKey {
+			continue
+		}
+		key := namespacedName(seed.Namespace, seed.Name)
+		if existing, ok := byKey[key]; ok {
+			listenerSets[existing] = seed
+			continue
+		}
+		byKey[key] = len(listenerSets)
+		listenerSets = append(listenerSets, seed)
+	}
+
+	return listenerSets
 }
 
 func (r *Reconciler) newClusterState() *clusterState {

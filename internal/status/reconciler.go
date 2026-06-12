@@ -249,5 +249,5 @@ func (r *Reconciler) ReconcileListenerSetObject(ctx context.Context, key client.
 	}
 	gwKey := client.ObjectKey{Namespace: gwNs, Name: string(ref.Name)}
 
-	return r.ReconcileGatewayObject(ctx, gwKey)
+	return r.reconcileGatewayObject(ctx, gwKey, []gatewayv1.ListenerSet{ls})
 }
