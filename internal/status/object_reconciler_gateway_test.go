@@ -2,6 +2,7 @@ package status
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -316,6 +317,112 @@ func TestReconcileGatewayObjectCountsListenerSetOnlyRoutes(t *testing.T) {
 	if listener.AttachedRoutes != 1 {
 		t.Fatalf("expected ListenerSet listener attachedRoutes=1, got %d", listener.AttachedRoutes)
 	}
+}
+
+func TestReconcileGatewayObjectRefreshesListenerSetStatusBeforeGatewayStatus(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&gatewayv1.Gateway{}, &gatewayv1.ListenerSet{}).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
+		WithIndex(&gatewayv1.GRPCRoute{}, statusGRPCRouteGatewayParentIndex, statusGRPCRouteGatewayParentIndexKeys).
+		WithIndex(&gatewayv1alpha2.TCPRoute{}, statusTCPRouteGatewayParentIndex, statusTCPRouteGatewayParentIndexKeys).
+		WithIndex(&gatewayv1alpha2.UDPRoute{}, statusUDPRouteGatewayParentIndex, statusUDPRouteGatewayParentIndexKeys).
+		WithIndex(&gatewayv1alpha2.TLSRoute{}, statusTLSRouteGatewayParentIndex, statusTLSRouteGatewayParentIndexKeys).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			gatewayInfrastructureService("default", "gw"),
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+				Status: gatewayv1.ListenerSetStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               string(gatewayv1.ListenerSetConditionAccepted),
+							Status:             metav1.ConditionTrue,
+							Reason:             string(gatewayv1.ListenerSetReasonAccepted),
+							ObservedGeneration: 0,
+						},
+						{
+							Type:               string(gatewayv1.ListenerSetConditionProgrammed),
+							Status:             metav1.ConditionTrue,
+							Reason:             string(gatewayv1.ListenerSetReasonProgrammed),
+							ObservedGeneration: 0,
+						},
+					},
+				},
+			},
+		).
+		Build()
+
+	orderedClient := listenerSetBeforeGatewayStatusClient{Client: k8sClient}
+	reconciler := NewWithAddressesAndReader(
+		orderedClient,
+		k8sClient,
+		string(controllerName),
+		[]string{"127.0.0.1"},
+		discardLogger(),
+	)
+	if err := reconciler.ReconcileGatewayObject(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}); err != nil {
+		t.Fatalf("ReconcileGatewayObject returned error: %v", err)
+	}
+}
+
+type listenerSetBeforeGatewayStatusClient struct {
+	client.Client
+}
+
+func (c listenerSetBeforeGatewayStatusClient) Status() client.SubResourceWriter {
+	return listenerSetBeforeGatewayStatusWriter{
+		SubResourceWriter: c.Client.Status(),
+		reader:            c.Client,
+	}
+}
+
+type listenerSetBeforeGatewayStatusWriter struct {
+	client.SubResourceWriter
+	reader client.Reader
+}
+
+func (w listenerSetBeforeGatewayStatusWriter) Update(
+	ctx context.Context,
+	obj client.Object,
+	opts ...client.SubResourceUpdateOption,
+) error {
+	if _, ok := obj.(*gatewayv1.Gateway); ok {
+		var listenerSet gatewayv1.ListenerSet
+		if err := w.reader.Get(ctx, client.ObjectKey{Namespace: "default", Name: "ls"}, &listenerSet); err != nil {
+			return err
+		}
+		if !conditionObservedGenerationCurrent(listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted), listenerSet.Generation) ||
+			!conditionObservedGenerationCurrent(listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionProgrammed), listenerSet.Generation) {
+			return errors.New("gateway status updated before ListenerSet status reached current observedGeneration")
+		}
+	}
+	return w.SubResourceWriter.Update(ctx, obj, opts...)
 }
 
 func TestReconcileListenerSetObjectRefreshesStatusWhenListCacheMissesListenerSet(t *testing.T) {

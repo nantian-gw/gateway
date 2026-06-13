@@ -50,11 +50,11 @@ func (r *Reconciler) reconcileGatewayObject(
 		deleteGatewayConvergenceStageMetric(key)
 		return nil
 	}
-	if err := r.reconcileGatewayStatusWithSeed(ctx, key, &current, eval); err != nil {
+	listenerSetEvals := evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey, attachments)
+	if err := r.reconcileListenerSetStatuses(ctx, state.listenerSets, listenerSetEvals); err != nil {
 		return err
 	}
-	listenerSetEvals := evaluateListenerSets(state, state.listenerSets, state.managedGatewayByKey, attachments)
-	return r.reconcileListenerSetStatuses(ctx, state.listenerSets, listenerSetEvals)
+	return r.reconcileGatewayStatusWithSeed(ctx, key, &current, eval)
 }
 
 func (r *Reconciler) loadGatewayObjectState(

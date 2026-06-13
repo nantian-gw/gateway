@@ -37,9 +37,7 @@ func evaluateListenerSets(
 		if !ok {
 			continue
 		}
-		sort.Slice(gwLSes, func(i, j int) bool {
-			return gwLSes[i].CreationTimestamp.Before(&gwLSes[j].CreationTimestamp)
-		})
+		sortListenerSetsByPrecedence(gwLSes)
 
 		conflictSet := make([]gatewayv1.Listener, len(gw.Spec.Listeners))
 		copy(conflictSet, gw.Spec.Listeners)
@@ -301,12 +299,7 @@ func evaluateGatewayListenerSetListeners(
 		return nil
 	}
 
-	sort.Slice(gwLSes, func(i, j int) bool {
-		if !gwLSes[i].CreationTimestamp.Time.Equal(gwLSes[j].CreationTimestamp.Time) {
-			return gwLSes[i].CreationTimestamp.Time.Before(gwLSes[j].CreationTimestamp.Time)
-		}
-		return gwLSes[i].Namespace+"/"+gwLSes[i].Name < gwLSes[j].Namespace+"/"+gwLSes[j].Name
-	})
+	sortListenerSetsByPrecedence(gwLSes)
 
 	allListeners := make([]gatewayv1.Listener, 0, len(gateway.Spec.Listeners))
 	for _, l := range gateway.Spec.Listeners {
@@ -351,7 +344,7 @@ func countAttachedListenerSets(state *clusterState, gateway gatewayv1.Gateway) i
 	if len(gwLSes) == 0 {
 		return 0
 	}
-	sort.Slice(gwLSes, func(i, j int) bool { return gwLSes[i].CreationTimestamp.Before(&gwLSes[j].CreationTimestamp) })
+	sortListenerSetsByPrecedence(gwLSes)
 
 	conflictSet := make([]gatewayv1.Listener, len(gateway.Spec.Listeners))
 	copy(conflictSet, gateway.Spec.Listeners)
@@ -377,6 +370,17 @@ func countAttachedListenerSets(state *clusterState, gateway gatewayv1.Gateway) i
 		}
 	}
 	return count
+}
+
+func sortListenerSetsByPrecedence(listenerSets []gatewayv1.ListenerSet) {
+	sort.SliceStable(listenerSets, func(i, j int) bool {
+		left := listenerSets[i]
+		right := listenerSets[j]
+		if !left.CreationTimestamp.Time.Equal(right.CreationTimestamp.Time) {
+			return left.CreationTimestamp.Time.Before(right.CreationTimestamp.Time)
+		}
+		return left.Namespace+"/"+left.Name < right.Namespace+"/"+right.Name
+	})
 }
 
 func buildDisallowedListenerSetListenerStatuses(ls gatewayv1.ListenerSet) []gatewayv1.ListenerEntryStatus {

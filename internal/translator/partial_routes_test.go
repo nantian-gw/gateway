@@ -188,6 +188,146 @@ func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 	}
 }
 
+func TestBuildRoutesForSnapshotAttachesListenerSetParentRoute(t *testing.T) {
+	scheme := buildSupportScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	servicePort := gatewayv1.PortNumber(80)
+	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	listenerSetKind := gatewayv1.Kind("ListenerSet")
+
+	cl := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "default",
+					Labels: map[string]string{
+						"kubernetes.io/metadata.name": "default",
+					},
+				},
+			},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: &listenerHostname,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{
+								From: ptr(gatewayv1.NamespacesFromAll),
+							},
+						},
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:       "http",
+						Port:       80,
+						TargetPort: intstr.FromInt(8080),
+						Protocol:   corev1.ProtocolTCP,
+					}},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "echo-1",
+					Namespace: "default",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "echo",
+					},
+				},
+				Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.0.0.10"},
+				}},
+			},
+		).
+		Build()
+
+	translator := New(
+		string(controllerName),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+	current, err := translator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	if len(current.HTTPRoutes) != 0 {
+		t.Fatalf("expected initial snapshot without HTTPRoutes, got %#v", current.HTTPRoutes)
+	}
+	if got := listenerAttachedRoutes(current.Listeners, "default/gw/default/ls/ls-listener"); len(got) != 0 {
+		t.Fatalf("expected initial ListenerSet listener without attachments, got %#v", got)
+	}
+
+	route := &gatewayv1.HTTPRoute{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls-route", Namespace: "default"},
+		Spec: gatewayv1.HTTPRouteSpec{
+			CommonRouteSpec: gatewayv1.CommonRouteSpec{
+				ParentRefs: []gatewayv1.ParentReference{{
+					Group: &parentGroup,
+					Kind:  &listenerSetKind,
+					Name:  "ls",
+				}},
+			},
+			Hostnames: []gatewayv1.Hostname{listenerHostname},
+			Rules: []gatewayv1.HTTPRouteRule{{
+				BackendRefs: []gatewayv1.HTTPBackendRef{{
+					BackendRef: gatewayv1.BackendRef{
+						BackendObjectReference: gatewayv1.BackendObjectReference{
+							Name: "echo",
+							Port: &servicePort,
+						},
+					},
+				}},
+			}},
+		},
+	}
+	if err := cl.Create(context.Background(), route); err != nil {
+		t.Fatalf("create route: %v", err)
+	}
+
+	next, err := translator.BuildRoutesForSnapshot(
+		context.Background(),
+		cl,
+		current,
+		[]client.ObjectKey{{Namespace: "default", Name: "ls-route"}},
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("BuildRoutesForSnapshot returned error: %v", err)
+	}
+
+	if got := listenerAttachedRoutes(next.Listeners, "default/gw/default/ls/ls-listener"); len(got) != 1 || got[0] != "default/ls-route" {
+		t.Fatalf("expected route-scoped rebuild to attach ListenerSet route, got %#v", got)
+	}
+}
+
 func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 	scheme := buildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -322,4 +462,13 @@ func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 	if got := next.StreamRoutes[0].Rules[0].BackendRefs[0].Name; got != "echo" {
 		t.Fatalf("TLS StreamRoute backend = %q, want echo", got)
 	}
+}
+
+func listenerAttachedRoutes(listeners []ir.Listener, name string) []string {
+	for _, listener := range listeners {
+		if listener.Name == name {
+			return listener.AttachedRoutes
+		}
+	}
+	return nil
 }

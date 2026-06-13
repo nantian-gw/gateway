@@ -124,7 +124,15 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 		return cloneListeners(current.Listeners), nil
 	}
 
-	filteredGateways, err := t.loadAttachmentParentGateways(ctx, cl, current, targetSet)
+	listenerSets, err := loadAttachmentParentListenerSets(ctx, cl, current, targetSet)
+	if err != nil {
+		return nil, err
+	}
+	if err := loadAttachmentListenerSetNamespaces(ctx, cl, namespaceByName, listenerSets); err != nil {
+		return nil, err
+	}
+
+	filteredGateways, err := t.loadAttachmentParentGateways(ctx, cl, current, targetSet, listenerSets)
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +163,7 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 	for _, gateway := range filteredGateways {
 		gatewayByKey[gateway.Namespace+"/"+gateway.Name] = gateway
 	}
+	listenerSetByKey, listenerSetGateway := listenerSetAttachmentMaps(listenerSets)
 
 	for _, route := range current.HTTPRoutes {
 		if _, ok := targetSet[route.Namespace]; !ok {
@@ -163,8 +172,8 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 		recordRouteAttachments(
 			attachments,
 			gatewayByKey,
-			nil,
-			nil,
+			listenerSetByKey,
+			listenerSetGateway,
 			namespaceByName,
 			route.Namespace,
 			route.Name,
@@ -181,8 +190,8 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 		recordRouteAttachments(
 			attachments,
 			gatewayByKey,
-			nil,
-			nil,
+			listenerSetByKey,
+			listenerSetGateway,
 			namespaceByName,
 			route.Namespace,
 			route.Name,
@@ -199,8 +208,8 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 		recordRouteAttachments(
 			attachments,
 			gatewayByKey,
-			nil,
-			nil,
+			listenerSetByKey,
+			listenerSetGateway,
 			namespaceByName,
 			route.Namespace,
 			route.Name,
@@ -234,8 +243,9 @@ func (t *Translator) loadAttachmentParentGateways(
 	cl client.Client,
 	current *ir.Snapshot,
 	targetSet map[string]struct{},
+	listenerSets []gatewayv1.ListenerSet,
 ) ([]gatewayv1.Gateway, error) {
-	gatewayKeys := attachmentParentGatewayObjectKeys(current, targetSet)
+	gatewayKeys := attachmentParentGatewayObjectKeys(current, targetSet, listenerSets)
 	if len(gatewayKeys) == 0 {
 		return nil, nil
 	}
@@ -245,6 +255,68 @@ func (t *Translator) loadAttachmentParentGateways(
 		return nil, err
 	}
 	return t.filterGatewaysByManagedClasses(ctx, cl, gateways)
+}
+
+func loadAttachmentParentListenerSets(
+	ctx context.Context,
+	cl client.Client,
+	current *ir.Snapshot,
+	targetSet map[string]struct{},
+) ([]gatewayv1.ListenerSet, error) {
+	keys := attachmentParentListenerSetObjectKeys(current, targetSet)
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	out := make([]gatewayv1.ListenerSet, 0, len(keys))
+	for _, key := range keys {
+		var listenerSet gatewayv1.ListenerSet
+		if err := cl.Get(ctx, key, &listenerSet); client.IgnoreNotFound(err) != nil {
+			return nil, err
+		}
+		if listenerSet.Name != "" {
+			out = append(out, listenerSet)
+		}
+	}
+	return out, nil
+}
+
+func loadAttachmentListenerSetNamespaces(
+	ctx context.Context,
+	cl client.Client,
+	namespaceByName map[string]corev1.Namespace,
+	listenerSets []gatewayv1.ListenerSet,
+) error {
+	for _, listenerSet := range listenerSets {
+		if listenerSet.Namespace == "" {
+			continue
+		}
+		if _, ok := namespaceByName[listenerSet.Namespace]; ok {
+			continue
+		}
+		var namespace corev1.Namespace
+		if err := cl.Get(ctx, client.ObjectKey{Name: listenerSet.Namespace}, &namespace); client.IgnoreNotFound(err) != nil {
+			return err
+		}
+		if namespace.Name != "" {
+			namespaceByName[namespace.Name] = namespace
+		}
+	}
+	return nil
+}
+
+func listenerSetAttachmentMaps(
+	listenerSets []gatewayv1.ListenerSet,
+) (map[string]gatewayv1.ListenerSet, map[string]string) {
+	listenerSetByKey := make(map[string]gatewayv1.ListenerSet, len(listenerSets))
+	listenerSetGateway := make(map[string]string, len(listenerSets))
+	for _, listenerSet := range listenerSets {
+		key := listenerSet.Namespace + "/" + listenerSet.Name
+		listenerSetByKey[key] = listenerSet
+		parentNamespace := namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
+		listenerSetGateway[key] = parentNamespace + "/" + string(listenerSet.Spec.ParentRef.Name)
+	}
+	return listenerSetByKey, listenerSetGateway
 }
 
 func (t *Translator) RefreshBackendRefMetadata(
@@ -531,6 +603,7 @@ func attachmentRouteKeysForNamespaces(snapshot *ir.Snapshot, targetSet map[strin
 func attachmentParentGatewayObjectKeys(
 	snapshot *ir.Snapshot,
 	targetSet map[string]struct{},
+	listenerSets []gatewayv1.ListenerSet,
 ) []client.ObjectKey {
 	if snapshot == nil || len(targetSet) == 0 {
 		return nil
@@ -545,7 +618,62 @@ func attachmentParentGatewayObjectKeys(
 			if isServiceParentRef(parentRef) || parentRef.Name == "" {
 				continue
 			}
+			if isListenerSetParentRef(parentRef) {
+				continue
+			}
 
+			namespace := parentRef.Namespace
+			if namespace == "" {
+				namespace = routeNamespace
+			}
+			key := client.ObjectKey{
+				Namespace: namespace,
+				Name:      parentRef.Name,
+			}
+			keys[backendObjectKey(key.Namespace, key.Name)] = key
+		}
+	}
+
+	for _, route := range snapshot.HTTPRoutes {
+		add(route.Namespace, route.ParentRefs)
+	}
+	for _, route := range snapshot.GRPCRoutes {
+		add(route.Namespace, route.ParentRefs)
+	}
+	for _, route := range snapshot.StreamRoutes {
+		add(route.Namespace, route.ParentRefs)
+	}
+	for _, listenerSet := range listenerSets {
+		if string(listenerSet.Spec.ParentRef.Name) == "" {
+			continue
+		}
+		key := client.ObjectKey{
+			Namespace: namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace),
+			Name:      string(listenerSet.Spec.ParentRef.Name),
+		}
+		keys[backendObjectKey(key.Namespace, key.Name)] = key
+	}
+
+	return sortedObjectKeys(keys)
+}
+
+func attachmentParentListenerSetObjectKeys(
+	snapshot *ir.Snapshot,
+	targetSet map[string]struct{},
+) []client.ObjectKey {
+	if snapshot == nil || len(targetSet) == 0 {
+		return nil
+	}
+
+	keys := make(map[string]client.ObjectKey)
+	add := func(routeNamespace string, parentRefs []ir.ParentRef) {
+		if _, ok := targetSet[routeNamespace]; !ok {
+			return
+		}
+		for _, parentRef := range parentRefs {
+			if !isListenerSetParentRef(parentRef) || parentRef.Name == "" {
+				continue
+			}
 			namespace := parentRef.Namespace
 			if namespace == "" {
 				namespace = routeNamespace

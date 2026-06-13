@@ -645,7 +645,7 @@ func missingParentGatewayListenerObjectKeys(
 		return nil
 	}
 
-	gatewayKeys := attachmentParentGatewayObjectKeys(snapshot, targetSet)
+	gatewayKeys := attachmentParentGatewayObjectKeys(snapshot, targetSet, nil)
 	if len(gatewayKeys) == 0 {
 		return nil
 	}

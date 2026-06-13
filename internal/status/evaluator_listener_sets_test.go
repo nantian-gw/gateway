@@ -383,6 +383,81 @@ func TestEvaluateListenerSets(t *testing.T) {
 		assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionConflicted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonProtocolConflict), 2)
 	})
 
+	t.Run("same timestamp ListenerSets use namespace and name tiebreaker", func(t *testing.T) {
+		state := &clusterState{
+			controllerName: "example.com/gateway",
+			namespaceByName: map[string]corev1.Namespace{
+				"default": {ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			},
+		}
+		sameTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+		hostname := gatewayv1.Hostname("shared.example.com")
+		lses := []gatewayv1.ListenerSet{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "b-listener-set",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: metav1.NewTime(sameTime),
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name:      "gw1",
+						Namespace: ns("default"),
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "http-b",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						Hostname: &hostname,
+					}},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "a-listener-set",
+					Namespace:         "default",
+					Generation:        1,
+					CreationTimestamp: metav1.NewTime(sameTime),
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Name:      "gw1",
+						Namespace: ns("default"),
+					},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "http-a",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+						Hostname: &hostname,
+					}},
+				},
+			},
+		}
+		managedGateways := map[string]gatewayv1.Gateway{
+			"default/gw1": {
+				ObjectMeta: metav1.ObjectMeta{Name: "gw1", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: from(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+		}
+
+		result := evaluateListenerSets(state, lses, managedGateways, nil)
+
+		first := result["default/a-listener-set"]
+		assertConditionSpec(t, first.accepted, string(gatewayv1.ListenerSetConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerSetReasonAccepted), 1)
+		assertCondition(t, listenerEntryStatusByName(t, first.listeners, "http-a").Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 1)
+
+		second := result["default/b-listener-set"]
+		assertConditionSpec(t, second.accepted, string(gatewayv1.ListenerSetConditionAccepted), metav1.ConditionFalse, string(gatewayv1.ListenerSetReasonListenersNotValid), 1)
+		assertCondition(t, listenerEntryStatusByName(t, second.listeners, "http-b").Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionFalse, string(gatewayv1.ListenerReasonHostnameConflict), 1)
+	})
+
 	t.Run("cross namespace certificate ref without ReferenceGrant leaves ListenerSet without valid listeners", func(t *testing.T) {
 		state := &clusterState{
 			controllerName: "example.com/gateway",

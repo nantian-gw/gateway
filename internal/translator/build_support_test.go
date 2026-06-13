@@ -221,7 +221,8 @@ func newTranslatorClientBuilder(scheme *runtime.Scheme) *fake.ClientBuilder {
 				return nil
 			}
 			return []string{string(gateway.Spec.GatewayClassName)}
-		})
+		}).
+		WithIndex(&gatewayv1.ListenerSet{}, listenerSetParentGatewayFieldIndex, listenerSetParentGatewayIndexKeys)
 }
 func TestBuildLoadsAttachmentNamespacesOnDemand(t *testing.T) {
 	scheme := buildSupportScheme(t)

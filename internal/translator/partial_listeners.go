@@ -15,6 +15,8 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
+const listenerSetParentGatewayFieldIndex = "nantian.dev/snapshot.listenerset.parent-gateways"
+
 func (t *Translator) BuildGatewayListenersForSnapshot(
 	ctx context.Context,
 	cl client.Client,
@@ -37,6 +39,11 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 		return nil, err
 	}
 
+	listenerSets, err := loadListenerSetsForGateways(ctx, cl, gateways)
+	if err != nil {
+		return nil, err
+	}
+
 	var (
 		supportObjects  translatorSupportObjects
 		referenceGrants []gatewayv1beta1.ReferenceGrant
@@ -44,7 +51,7 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		var err error
-		supportObjects, err = t.loadSupportObjects(groupCtx, cl, gateways, nil, nil, nil, nil, nil, nil, nil)
+		supportObjects, err = t.loadSupportObjects(groupCtx, cl, gateways, listenerSets, nil, nil, nil, nil, nil, nil)
 		return err
 	})
 	group.Go(func() error {
@@ -61,7 +68,8 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 	}
 
 	indexes := newTranslatorIndexes(nil, nil, nil, supportObjects.secrets, supportObjects.configMaps, referenceGrants)
-	listeners := t.rebuildGatewayListenersWithIndexes(current.Listeners, gatewayKeys, gateways, indexes)
+	namespaceByName := namespacesByName(supportObjects.namespaces)
+	listeners := t.rebuildGatewayListenersWithIndexes(current.Listeners, gatewayKeys, gateways, indexes, listenerSets, namespaceByName)
 	updated := ApplyPartialSnapshot(current, nil, listeners)
 	attachmentNamespaces := attachmentRouteNamespacesForGatewayKeys(current, gatewayKeys)
 	if len(attachmentNamespaces) != 0 {
@@ -135,6 +143,121 @@ func loadGateways(
 		}
 	}
 	return out, nil
+}
+
+func loadListenerSetsForGateways(
+	ctx context.Context,
+	cl client.Client,
+	gateways []gatewayv1.Gateway,
+) ([]gatewayv1.ListenerSet, error) {
+	if len(gateways) == 0 {
+		return nil, nil
+	}
+
+	gatewaySet := make(map[string]struct{}, len(gateways))
+	for _, gateway := range gateways {
+		if gateway.Name == "" {
+			continue
+		}
+		gatewaySet[gateway.Namespace+"/"+gateway.Name] = struct{}{}
+	}
+	if len(gatewaySet) == 0 {
+		return nil, nil
+	}
+
+	out := make([]gatewayv1.ListenerSet, 0)
+	seen := make(map[string]struct{})
+	for gatewayKey := range gatewaySet {
+		var list gatewayv1.ListenerSetList
+		err := cl.List(ctx, &list, client.MatchingFields{listenerSetParentGatewayFieldIndex: gatewayKey})
+		if err != nil {
+			if isOptionalResourceMissing(err) {
+				return nil, nil
+			}
+			if listenerSetParentGatewayIndexMissing(err) {
+				return listListenerSetsForGateways(ctx, cl, gatewaySet)
+			}
+			return nil, err
+		}
+		for _, listenerSet := range list.Items {
+			if listenerSetParentGatewayKey(listenerSet) != gatewayKey {
+				continue
+			}
+			key := listenerSet.Namespace + "/" + listenerSet.Name
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			out = append(out, listenerSet)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Namespace+"/"+out[i].Name < out[j].Namespace+"/"+out[j].Name
+	})
+	return out, nil
+}
+
+func listListenerSetsForGateways(
+	ctx context.Context,
+	cl client.Client,
+	gatewaySet map[string]struct{},
+) ([]gatewayv1.ListenerSet, error) {
+	var list gatewayv1.ListenerSetList
+	if err := cl.List(ctx, &list); err != nil {
+		if isOptionalResourceMissing(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	out := make([]gatewayv1.ListenerSet, 0, len(list.Items))
+	for _, listenerSet := range list.Items {
+		if _, ok := gatewaySet[listenerSetParentGatewayKey(listenerSet)]; !ok {
+			continue
+		}
+		out = append(out, listenerSet)
+	}
+	return out, nil
+}
+
+func listenerSetParentGatewayIndexMissing(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := err.Error()
+	return strings.Contains(message, "no index with name") ||
+		strings.Contains(message, "field label not supported")
+}
+
+func listenerSetParentGatewayKey(listenerSet gatewayv1.ListenerSet) string {
+	if listenerSet.Spec.ParentRef.Name == "" {
+		return ""
+	}
+	namespace := namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
+	return namespace + "/" + string(listenerSet.Spec.ParentRef.Name)
+}
+
+func listenerSetParentGatewayIndexKeys(object client.Object) []string {
+	listenerSet, ok := object.(*gatewayv1.ListenerSet)
+	if !ok || listenerSet == nil {
+		return nil
+	}
+	key := listenerSetParentGatewayKey(*listenerSet)
+	if key == "" {
+		return nil
+	}
+	return []string{key}
+}
+
+func namespacesByName(namespaces []corev1.Namespace) map[string]corev1.Namespace {
+	out := make(map[string]corev1.Namespace, len(namespaces))
+	for _, namespace := range namespaces {
+		if namespace.Name == "" {
+			continue
+		}
+		out[namespace.Name] = namespace
+	}
+	return out
 }
 
 func attachmentRouteNamespacesForGatewayKeys(
@@ -238,6 +361,8 @@ func (t *Translator) rebuildGatewayListenersWithIndexes(
 	gatewayKeys []client.ObjectKey,
 	gateways []gatewayv1.Gateway,
 	indexes translatorIndexes,
+	listenerSets []gatewayv1.ListenerSet,
+	namespaces map[string]corev1.Namespace,
 ) []ir.Listener {
 	currentByName := make(map[string]ir.Listener, len(current))
 	for _, listener := range current {
@@ -254,7 +379,7 @@ func (t *Translator) rebuildGatewayListenersWithIndexes(
 	}
 
 	for _, gateway := range gateways {
-		for _, listener := range t.translateGatewayListenersWithIndexes(gateway, indexes, nil, nil) {
+		for _, listener := range t.translateGatewayListenersWithIndexes(gateway, indexes, listenerSets, namespaces) {
 			if existing, ok := currentByName[listener.Name]; ok {
 				listener.AttachedRoutes = append([]string(nil), existing.AttachedRoutes...)
 			}

@@ -10,7 +10,73 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+
+	"github.com/nantian-gw/gateway/internal/ir"
 )
+
+func TestBuildGatewayListenersForSnapshotIncludesListenerSets(t *testing.T) {
+	scheme := buildSupportScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
+
+	cl := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: &listenerHostname,
+					}},
+				},
+			},
+		).
+		Build()
+
+	next, err := New(
+		string(controllerName),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	).BuildGatewayListenersForSnapshot(
+		context.Background(),
+		cl,
+		&ir.Snapshot{},
+		[]client.ObjectKey{{Namespace: "default", Name: "gw"}},
+	)
+	if err != nil {
+		t.Fatalf("BuildGatewayListenersForSnapshot returned error: %v", err)
+	}
+
+	found := false
+	for _, listener := range next.Listeners {
+		if listener.Name == "default/gw/default/ls/ls-listener" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected ListenerSet listener in rebuilt gateway listeners, got %#v", next.Listeners)
+	}
+}
 
 func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGateway(t *testing.T) {
 	scheme := rotationTestScheme(t, false)

@@ -86,7 +86,35 @@ func (r *Reconciler) reconcileRouteObject(
 		return err
 	}
 
+	if err := r.reconcileRouteListenerSetParentObjects(ctx, state); err != nil {
+		return err
+	}
 	return updateStatus(ctx, key, evaluateRoute(state, route))
+}
+
+func (r *Reconciler) reconcileRouteListenerSetParentObjects(ctx context.Context, state *clusterState) error {
+	if len(state.listenerSets) == 0 {
+		return nil
+	}
+
+	seedsByGateway := make(map[client.ObjectKey][]gatewayv1.ListenerSet)
+	for _, listenerSet := range state.listenerSets {
+		if string(listenerSet.Spec.ParentRef.Name) == "" {
+			continue
+		}
+		key := client.ObjectKey{
+			Namespace: listenerSetParentGatewayNamespace(listenerSet),
+			Name:      string(listenerSet.Spec.ParentRef.Name),
+		}
+		seedsByGateway[key] = append(seedsByGateway[key], listenerSet)
+	}
+
+	for key, seeds := range seedsByGateway {
+		if err := r.reconcileGatewayObject(ctx, key, seeds); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *Reconciler) loadRouteObjectState(ctx context.Context, route routeInput) (*clusterState, error) {
