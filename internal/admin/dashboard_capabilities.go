@@ -24,17 +24,7 @@ type DashboardCapabilities struct {
 
 func ResolveDashboardCapabilities(cfg *config.Config) DashboardCapabilities {
 	if cfg == nil {
-		return DashboardCapabilities{
-			Overview:        true,
-			Gateways:        true,
-			Routes:          true,
-			ReferenceGrants: true,
-			BackendTLS:      true,
-			Nodes:           true,
-			Diagnostics:     true,
-			Observability:   true,
-			Settings:        true,
-		}
+		cfg = &config.Config{}
 	}
 
 	if !cfg.DashboardEnabled() {

@@ -17,15 +17,28 @@ func TestResolveDashboardCapabilitiesHonorsDashboardAndRuntimeFlags(t *testing.T
 	}
 
 	got := ResolveDashboardCapabilities(cfg)
+	want := DashboardCapabilities{
+		Overview:        true,
+		Gateways:        true,
+		Routes:          true,
+		ReferenceGrants: true,
+		BackendTLS:      true,
+		Nodes:           true,
+		Diagnostics:     true,
+		Observability:   true,
+		Settings:        true,
+		AIOverview:      true,
+		AIServices:      true,
+		AITokenPolicies: false,
+		AICost:          true,
+		AITraces:        true,
+		AIUsage:         true,
+		WasmPlugins:     false,
+		Chatbot:         true,
+	}
 
-	if !got.Overview || !got.Gateways || !got.Settings {
-		t.Fatalf("core dashboard pages should be enabled: %+v", got)
-	}
-	if !got.AIOverview || !got.AIServices || !got.Chatbot {
-		t.Fatalf("AI capabilities should follow enableAiGateway=true: %+v", got)
-	}
-	if got.AITokenPolicies || got.WasmPlugins {
-		t.Fatalf("experimental dashboard capabilities should remain disabled: %+v", got)
+	if got != want {
+		t.Fatalf("unexpected dashboard capabilities: got %+v want %+v", got, want)
 	}
 }
 
@@ -45,7 +58,64 @@ func TestResolveDashboardCapabilitiesDisablesEverythingWhenDashboardIsDisabled(t
 
 	got := ResolveDashboardCapabilities(cfg)
 
-	if got.Overview || got.AIOverview || got.WasmPlugins || got.Chatbot {
+	if got != (DashboardCapabilities{}) {
 		t.Fatalf("dashboard.enabled=false must disable all page groups: %+v", got)
+	}
+}
+
+func TestResolveDashboardCapabilitiesNilMatchesZeroValueConfig(t *testing.T) {
+	t.Parallel()
+
+	got := ResolveDashboardCapabilities(nil)
+	want := ResolveDashboardCapabilities(&config.Config{})
+
+	if got != want {
+		t.Fatalf("nil config should resolve like zero-value config: got %+v want %+v", got, want)
+	}
+}
+
+func TestResolveDashboardCapabilitiesRespectsExplicitCapabilityOverrides(t *testing.T) {
+	t.Parallel()
+
+	enabled := true
+	aiOverview := false
+	wasmPlugins := false
+	cfg := &config.Config{
+		Dashboard: config.DashboardConfig{
+			Enabled: &enabled,
+			Capabilities: config.DashboardCapabilitiesConfig{
+				AIOverview:  &aiOverview,
+				WasmPlugins: &wasmPlugins,
+			},
+		},
+		Features: config.FeaturesConfig{
+			EnableExperimentalGateway: true,
+			EnableAiGateway:           true,
+		},
+	}
+
+	got := ResolveDashboardCapabilities(cfg)
+	want := DashboardCapabilities{
+		Overview:        true,
+		Gateways:        true,
+		Routes:          true,
+		ReferenceGrants: true,
+		BackendTLS:      true,
+		Nodes:           true,
+		Diagnostics:     true,
+		Observability:   true,
+		Settings:        true,
+		AIOverview:      false,
+		AIServices:      true,
+		AITokenPolicies: true,
+		AICost:          true,
+		AITraces:        true,
+		AIUsage:         true,
+		WasmPlugins:     false,
+		Chatbot:         true,
+	}
+
+	if got != want {
+		t.Fatalf("unexpected dashboard capabilities with explicit overrides: got %+v want %+v", got, want)
 	}
 }
