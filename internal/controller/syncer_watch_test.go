@@ -1388,6 +1388,78 @@ func TestSnapshotReconcileRequestsQueueGatewayScopedRefreshes(t *testing.T) {
 	}
 }
 
+func TestSnapshotReconcileRequestsQueueScopedRefreshForListenerSet(t *testing.T) {
+	syncer := newIndexedWatchTestSyncer(
+		t,
+		&gatewayv1.GatewayClass{
+			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+			Spec: gatewayv1.GatewayClassSpec{
+				ControllerName: "gateway.networking.k8s.io/nantian-gw",
+			},
+		},
+		&gatewayv1.Gateway{
+			ObjectMeta: metav1.ObjectMeta{Name: "edge", Namespace: "infra"},
+			Spec: gatewayv1.GatewaySpec{
+				GatewayClassName: "nantian-gw",
+				AllowedListeners: &gatewayv1.AllowedListeners{
+					Namespaces: &gatewayv1.ListenerNamespaces{
+						From: ptr(gatewayv1.NamespacesFromAll),
+					},
+				},
+			},
+		},
+		&gatewayv1.ListenerSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "listener-set", Namespace: "apps"},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Name:      "edge",
+					Namespace: ptr(gatewayv1.Namespace("infra")),
+				},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name:     "http",
+					Protocol: gatewayv1.HTTPProtocolType,
+					Port:     80,
+				}},
+			},
+		},
+		&gatewayv1.HTTPRoute{
+			ObjectMeta: metav1.ObjectMeta{Name: "listener-set-route", Namespace: "apps"},
+			Spec: gatewayv1.HTTPRouteSpec{
+				CommonRouteSpec: gatewayv1.CommonRouteSpec{
+					ParentRefs: []gatewayv1.ParentReference{{
+						Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+						Kind:      ptr(gatewayv1.Kind("ListenerSet")),
+						Name:      "listener-set",
+						Namespace: ptr(gatewayv1.Namespace("apps")),
+					}},
+				},
+			},
+		},
+	)
+
+	want := []reconcile.Request{
+		snapshotAttachmentsReconcileRequest("apps"),
+		snapshotGatewayListenersReconcileRequestForKey(client.ObjectKey{
+			Namespace: "infra",
+			Name:      "edge",
+		}),
+	}
+	if got := syncer.snapshotReconcileRequests(
+		context.Background(),
+		&gatewayv1.ListenerSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "listener-set", Namespace: "apps"},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{
+					Name:      "edge",
+					Namespace: ptr(gatewayv1.Namespace("infra")),
+				},
+			},
+		},
+	); !equalReconcileRequests(got, want) {
+		t.Fatalf("expected ListenerSet update to queue scoped rebuilds %v, got %v", want, got)
+	}
+}
+
 func TestSnapshotReconcileRequestsQueueGatewayClassScopedRefreshes(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(
 		t,

@@ -131,6 +131,124 @@ func TestReconcileAttachmentScopedRequestRebuildsOnlyAttachments(t *testing.T) {
 		t.Fatalf("expected attachment-only rebuild to detach route, got %#v", current.Listeners[0].AttachedRoutes)
 	}
 }
+
+func TestBuildSnapshotRebuildsGatewayListenersBeforeListenerSetAttachments(t *testing.T) {
+	scheme := newPartialRebuildTestScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	allNamespaces := gatewayv1.NamespacesFromAll
+
+	baseClient := newControllerClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "default",
+					Labels: map[string]string{
+						"kubernetes.io/metadata.name": "default",
+					},
+				},
+			},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: &allNamespaces,
+						},
+					},
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+					}},
+				},
+			},
+		).
+		Build()
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	snapshotStore := ir.NewSnapshotStore(logger)
+	xlator := translator.New(string(controllerName), logger)
+	current, err := xlator.Build(context.Background(), baseClient)
+	if err != nil {
+		t.Fatalf("initial Build returned error: %v", err)
+	}
+	current.HTTPRoutes = []ir.HTTPRoute{{
+		Name:      "ls-route",
+		Namespace: "default",
+		ParentRefs: []ir.ParentRef{{
+			Group:     gatewayv1.GroupName,
+			Kind:      "ListenerSet",
+			Namespace: "default",
+			Name:      "ls",
+		}},
+	}}
+	if !snapshotStore.Publish(current) {
+		t.Fatal("expected seed snapshot publish")
+	}
+
+	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
+	if err := baseClient.Create(context.Background(), &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+		Spec: gatewayv1.ListenerSetSpec{
+			ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+			Listeners: []gatewayv1.ListenerEntry{{
+				Name:     "ls-listener",
+				Protocol: gatewayv1.HTTPProtocolType,
+				Port:     80,
+				Hostname: &listenerHostname,
+				AllowedRoutes: &gatewayv1.AllowedRoutes{
+					Namespaces: &gatewayv1.RouteNamespaces{
+						From: &allNamespaces,
+					},
+				},
+			}},
+		},
+	}); err != nil {
+		t.Fatalf("create listenerset: %v", err)
+	}
+
+	syncer := NewSyncer(
+		baseClient,
+		xlator,
+		snapshotStore,
+		testMetrics(),
+		0,
+		logger,
+	)
+
+	next, err := syncer.buildSnapshot(
+		context.Background(),
+		snapshotBuildScopeGatewayListeners|snapshotBuildScopeAttachments,
+		[]string{"default"},
+		nil,
+		[]client.ObjectKey{{Namespace: "default", Name: "gw"}},
+		nil,
+		nil,
+		snapshotRouteObjectKeys{},
+	)
+	if err != nil {
+		t.Fatalf("buildSnapshot returned error: %v", err)
+	}
+
+	for _, listener := range next.Listeners {
+		if listener.Name != "default/gw/default/ls/ls-listener" {
+			continue
+		}
+		if len(listener.AttachedRoutes) != 1 || listener.AttachedRoutes[0] != "default/ls-route" {
+			t.Fatalf("expected ListenerSet listener attachments to be refreshed, got %#v", listener.AttachedRoutes)
+		}
+		return
+	}
+	t.Fatalf("expected ListenerSet listener in rebuilt snapshot, got %#v", next.Listeners)
+}
+
 func TestReconcileBackendScopedRequestRebuildsOnlyBackends(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

@@ -359,13 +359,6 @@ func (s *Syncer) buildSnapshot(
 		}
 		next = translator.ApplyPartialSnapshot(next, backends, nil)
 	}
-	if scope&snapshotBuildScopeAttachments != 0 {
-		listeners, err := s.translator.RebuildAttachmentsForNamespaces(ctx, s.client, next, attachmentNamespaces)
-		if err != nil {
-			return nil, err
-		}
-		next = translator.ApplyPartialSnapshot(next, nil, listeners)
-	}
 	if scope&snapshotBuildScopeRouteBackendRefs != 0 {
 		httpRoutes, grpcRoutes, streamRoutes, err := s.translator.RefreshBackendRefMetadataForBackends(
 			ctx,
@@ -403,6 +396,13 @@ func (s *Syncer) buildSnapshot(
 		if err != nil {
 			return nil, err
 		}
+	}
+	if scope&snapshotBuildScopeAttachments != 0 {
+		listeners, err := s.translator.RebuildAttachmentsForNamespaces(ctx, s.client, next, attachmentNamespaces)
+		if err != nil {
+			return nil, err
+		}
+		next = translator.ApplyPartialSnapshot(next, nil, listeners)
 	}
 	return next, nil
 }

@@ -336,6 +336,115 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 	}
 }
 
+func TestLoadStateFallsBackWhenListenerSetParentFieldIndexIsUnavailable(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	listenerSetKind := gatewayv1.Kind("ListenerSet")
+
+	k8sClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithIndex(&gatewayv1.GatewayClass{}, statusGatewayClassControllerNameIndex, func(object client.Object) []string {
+			gatewayClass, ok := object.(*gatewayv1.GatewayClass)
+			if !ok || gatewayClass.Spec.ControllerName == "" {
+				return nil
+			}
+			return []string{string(gatewayClass.Spec.ControllerName)}
+		}).
+		WithIndex(&gatewayv1.Gateway{}, statusGatewayGatewayClassNameIndex, func(object client.Object) []string {
+			gateway, ok := object.(*gatewayv1.Gateway)
+			if !ok || gateway.Spec.GatewayClassName == "" {
+				return nil
+			}
+			return []string{string(gateway.Spec.GatewayClassName)}
+		}).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys).
+		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: namespaceFromPtr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "http",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{Name: "listenerset-route", Namespace: "default"},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group: &parentGroup,
+							Kind:  &listenerSetKind,
+							Name:  "ls",
+						}},
+					},
+				},
+			},
+		).
+		Build()
+
+	reconciler := NewWithAddressesAndReaderOptions(
+		k8sClient,
+		k8sClient,
+		string(controllerName),
+		[]string{"127.0.0.1"},
+		discardLogger(),
+		Options{EnableExperimentalGateway: true},
+	)
+	reconciler.listReader = listenerSetParentIndexMissingReader{Reader: k8sClient}
+
+	state, err := reconciler.loadState(context.Background())
+	if err != nil {
+		t.Fatalf("loadState returned error: %v", err)
+	}
+
+	got := make([]string, 0, len(state.httpRoutes))
+	for _, route := range state.httpRoutes {
+		got = append(got, route.Namespace+"/"+route.Name)
+	}
+	want := []string{"default/listenerset-route"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("http route keys = %#v, want %#v", got, want)
+	}
+}
+
+type listenerSetParentIndexMissingReader struct {
+	client.Reader
+}
+
+func (r listenerSetParentIndexMissingReader) List(
+	ctx context.Context,
+	list client.ObjectList,
+	opts ...client.ListOption,
+) error {
+	if value, ok := matchingFieldValue(opts, statusHTTPRouteListenerSetParentIndex); ok &&
+		value == statusListenerSetParentIndexMarker {
+		return fmt.Errorf("field label not supported: %s", statusHTTPRouteListenerSetParentIndex)
+	}
+	return r.Reader.List(ctx, list, opts...)
+}
+
 func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

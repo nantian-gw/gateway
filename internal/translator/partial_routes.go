@@ -237,9 +237,27 @@ func (t *Translator) BuildRoutesForSnapshot(
 
 	attachmentNamespaces := routeChangeNamespaces(httpKeys, grpcKeys, tcpKeys, udpKeys, tlsKeys)
 	if len(attachmentNamespaces) != 0 {
-		missingGatewayKeys := missingParentGatewayListenerObjectKeys(next, attachmentNamespaces)
-		if len(missingGatewayKeys) != 0 {
-			next, err = t.BuildGatewayListenersForSnapshot(ctx, cl, next, missingGatewayKeys)
+		targetSet := make(map[string]struct{}, len(attachmentNamespaces))
+		for _, namespace := range attachmentNamespaces {
+			if namespace == "" {
+				continue
+			}
+			targetSet[namespace] = struct{}{}
+		}
+
+		missingGatewayKeyMap := objectKeyMap(missingParentGatewayListenerObjectKeys(next, attachmentNamespaces))
+		if len(targetSet) != 0 {
+			listenerSets, loadErr := loadAttachmentParentListenerSets(ctx, cl, next, targetSet)
+			if loadErr != nil {
+				return nil, loadErr
+			}
+			for _, key := range attachmentParentGatewayObjectKeys(next, targetSet, listenerSets) {
+				missingGatewayKeyMap[backendObjectKey(key.Namespace, key.Name)] = key
+			}
+		}
+
+		if len(missingGatewayKeyMap) != 0 {
+			next, err = t.BuildGatewayListenersForSnapshot(ctx, cl, next, sortedObjectKeys(missingGatewayKeyMap))
 			if err != nil {
 				return nil, err
 			}

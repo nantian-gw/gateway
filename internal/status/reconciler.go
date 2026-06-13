@@ -249,5 +249,27 @@ func (r *Reconciler) ReconcileListenerSetObject(ctx context.Context, key client.
 	}
 	gwKey := client.ObjectKey{Namespace: gwNs, Name: string(ref.Name)}
 
-	return r.reconcileGatewayObject(ctx, gwKey, []gatewayv1.ListenerSet{ls})
+	var gateway gatewayv1.Gateway
+	if err := r.reader.Get(ctx, gwKey, &gateway); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	state, err := r.loadGatewayObjectStateWithListenerSets(ctx, gateway, []gatewayv1.ListenerSet{ls})
+	if err != nil {
+		return err
+	}
+
+	eval, ok := evaluateListenerSets(
+		state,
+		state.listenerSets,
+		state.managedGatewayByKey,
+		evaluateRouteAttachments(state),
+	)[namespacedName(ls.Namespace, ls.Name)]
+	if !ok {
+		return nil
+	}
+	return r.reconcileListenerSetStatus(ctx, key, eval)
 }

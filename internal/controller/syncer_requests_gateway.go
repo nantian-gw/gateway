@@ -24,6 +24,7 @@ func listenerSetReconcileRequests(listenerSet *gatewayv1.ListenerSet) []reconcil
 		namespace = string(*parentRef.Namespace)
 	}
 	return []reconcile.Request{
+		snapshotAttachmentsReconcileRequest(listenerSet.Namespace),
 		snapshotGatewayListenersReconcileRequestForKey(client.ObjectKey{
 			Namespace: namespace,
 			Name:      string(parentRef.Name),

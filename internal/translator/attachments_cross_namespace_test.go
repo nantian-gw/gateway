@@ -702,6 +702,299 @@ func TestBuildSnapshotListenerSetAllowedRoutesSelectorLoadsRouteNamespace(t *tes
 	}
 }
 
+func TestBuildSnapshotAttachesListenerSetRoutesForMixedAllowedRoutesNamespaces(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	portNumber := gatewayv1.PortNumber(8080)
+	allNamespaces := gatewayv1.NamespacesFromAll
+	sameNamespace := gatewayv1.NamespacesFromSame
+	selectorNamespaces := gatewayv1.NamespacesFromSelector
+
+	client := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gateway-conformance-infra",
+					Labels: map[string]string{
+						"kubernetes.io/metadata.name": "gateway-conformance-infra",
+					},
+				},
+			},
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gateway-api-routes-allowed-ns",
+					Labels: map[string]string{
+						"allowed":                     "ns",
+						"kubernetes.io/metadata.name": "gateway-api-routes-allowed-ns",
+					},
+				},
+			},
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gateway-api-routes-not-allowed-ns",
+					Labels: map[string]string{
+						"kubernetes.io/metadata.name": "gateway-api-routes-not-allowed-ns",
+					},
+				},
+			},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gateway-with-listener-sets-test-allowed-routes",
+					Namespace: "gateway-conformance-infra",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: ptr(gatewayv1.Hostname("gateway-listener.com")),
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+						},
+					}},
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{From: ptr(gatewayv1.NamespacesFromAll)},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "listenerset-test-allowed-routes-namespaces",
+					Namespace: "gateway-conformance-infra",
+				},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+						Kind:      ptr(gatewayv1.Kind("Gateway")),
+						Name:      "gateway-with-listener-sets-test-allowed-routes",
+						Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+					},
+					Listeners: []gatewayv1.ListenerEntry{
+						{
+							Name:     "listener-set-listener-allowed-routes-all",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: ptr(gatewayv1.Hostname("listener-set-listener-allowed-routes-all.com")),
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+						{
+							Name:     "listener-set-listener-allowed-routes-same",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: ptr(gatewayv1.Hostname("listener-set-listener-allowed-routes-same.com")),
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &sameNamespace},
+							},
+						},
+						{
+							Name:     "listener-set-listener-allowed-routes-selector",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: ptr(gatewayv1.Hostname("listener-set-listener-allowed-routes-selector.com")),
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{
+									From: &selectorNamespaces,
+									Selector: &metav1.LabelSelector{
+										MatchLabels: map[string]string{"allowed": "ns"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "route-in-same-namespace",
+					Namespace: "gateway-conformance-infra",
+				},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+							Kind:      ptr(gatewayv1.Kind("ListenerSet")),
+							Name:      "listenerset-test-allowed-routes-namespaces",
+							Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name: "infra-backend-v1",
+									Port: &portNumber,
+								},
+							},
+						}},
+					}},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "route-in-selected-namespace",
+					Namespace: "gateway-api-routes-allowed-ns",
+				},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+							Kind:      ptr(gatewayv1.Kind("ListenerSet")),
+							Name:      "listenerset-test-allowed-routes-namespaces",
+							Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name:      "infra-backend-v2",
+									Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+									Port:      &portNumber,
+								},
+							},
+						}},
+					}},
+				},
+			},
+			&gatewayv1.HTTPRoute{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "route-not-in-selected-namespace",
+					Namespace: "gateway-api-routes-not-allowed-ns",
+				},
+				Spec: gatewayv1.HTTPRouteSpec{
+					CommonRouteSpec: gatewayv1.CommonRouteSpec{
+						ParentRefs: []gatewayv1.ParentReference{{
+							Group:     ptr(gatewayv1.Group(gatewayv1.GroupName)),
+							Kind:      ptr(gatewayv1.Kind("ListenerSet")),
+							Name:      "listenerset-test-allowed-routes-namespaces",
+							Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+						}},
+					},
+					Rules: []gatewayv1.HTTPRouteRule{{
+						BackendRefs: []gatewayv1.HTTPBackendRef{{
+							BackendRef: gatewayv1.BackendRef{
+								BackendObjectReference: gatewayv1.BackendObjectReference{
+									Name:      "infra-backend-v3",
+									Namespace: ptr(gatewayv1.Namespace("gateway-conformance-infra")),
+									Port:      &portNumber,
+								},
+							},
+						}},
+					}},
+				},
+			},
+			&gatewayv1beta1.ReferenceGrant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "listenerset-test-allowed-routes-namespaces-reference-grant",
+					Namespace: "gateway-conformance-infra",
+				},
+				Spec: gatewayv1beta1.ReferenceGrantSpec{
+					From: []gatewayv1beta1.ReferenceGrantFrom{
+						{
+							Group:     gatewayv1beta1.Group(gatewayv1.GroupVersion.Group),
+							Kind:      gatewayv1beta1.Kind("HTTPRoute"),
+							Namespace: gatewayv1beta1.Namespace("gateway-api-routes-allowed-ns"),
+						},
+						{
+							Group:     gatewayv1beta1.Group(gatewayv1.GroupVersion.Group),
+							Kind:      gatewayv1beta1.Kind("HTTPRoute"),
+							Namespace: gatewayv1beta1.Namespace("gateway-api-routes-not-allowed-ns"),
+						},
+					},
+					To: []gatewayv1beta1.ReferenceGrantTo{{
+						Group: gatewayv1beta1.Group(""),
+						Kind:  gatewayv1beta1.Kind("Service"),
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "infra-backend-v1", Namespace: "gateway-conformance-infra"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{Name: "http", Port: 8080, TargetPort: intstr.FromInt(8080), Protocol: corev1.ProtocolTCP}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "infra-backend-v2", Namespace: "gateway-conformance-infra"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{Name: "http", Port: 8080, TargetPort: intstr.FromInt(8080), Protocol: corev1.ProtocolTCP}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "infra-backend-v3", Namespace: "gateway-conformance-infra"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{Name: "http", Port: 8080, TargetPort: intstr.FromInt(8080), Protocol: corev1.ProtocolTCP}},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "infra-backend-v1-1",
+					Namespace: "gateway-conformance-infra",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "infra-backend-v1",
+					},
+				},
+				Ports:     []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.10"}}},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "infra-backend-v2-1",
+					Namespace: "gateway-conformance-infra",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "infra-backend-v2",
+					},
+				},
+				Ports:     []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.11"}}},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "infra-backend-v3-1",
+					Namespace: "gateway-conformance-infra",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "infra-backend-v3",
+					},
+				},
+				Ports:     []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.12"}}},
+			},
+		).
+		Build()
+
+	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	listeners := make(map[string][]string, len(snapshot.Listeners))
+	for _, listener := range snapshot.Listeners {
+		listeners[listener.Name] = listener.AttachedRoutes
+	}
+
+	if got := listeners["gateway-conformance-infra/gateway-with-listener-sets-test-allowed-routes/gateway-conformance-infra/listenerset-test-allowed-routes-namespaces/listener-set-listener-allowed-routes-all"]; len(got) != 3 {
+		t.Fatalf("all listener attached routes = %#v, want 3 routes", got)
+	}
+	if got := listeners["gateway-conformance-infra/gateway-with-listener-sets-test-allowed-routes/gateway-conformance-infra/listenerset-test-allowed-routes-namespaces/listener-set-listener-allowed-routes-same"]; len(got) != 1 || got[0] != "gateway-conformance-infra/route-in-same-namespace" {
+		t.Fatalf("same listener attached routes = %#v, want only same-namespace route", got)
+	}
+	if got := listeners["gateway-conformance-infra/gateway-with-listener-sets-test-allowed-routes/gateway-conformance-infra/listenerset-test-allowed-routes-namespaces/listener-set-listener-allowed-routes-selector"]; len(got) != 1 || got[0] != "gateway-api-routes-allowed-ns/route-in-selected-namespace" {
+		t.Fatalf("selector listener attached routes = %#v, want only selected-namespace route", got)
+	}
+}
+
 func TestBuildSnapshotSynthesizesMeshServiceListeners(t *testing.T) {
 	scheme := runtime.NewScheme()
 	must(gatewayv1.Install(scheme), t)

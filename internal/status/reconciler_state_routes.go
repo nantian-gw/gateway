@@ -528,7 +528,13 @@ func listHTTPRoutesWithListenerSetParents(ctx context.Context, reader client.Rea
 	if err := reader.List(ctx, &routes, client.MatchingFields{
 		statusHTTPRouteListenerSetParentIndex: statusListenerSetParentIndexMarker,
 	}); err != nil {
-		return nil, err
+		if !isMissingFieldIndexError(err) {
+			return nil, err
+		}
+		routes = gatewayv1.HTTPRouteList{}
+		if err := reader.List(ctx, &routes); err != nil {
+			return nil, err
+		}
 	}
 	return routes.Items, nil
 }
