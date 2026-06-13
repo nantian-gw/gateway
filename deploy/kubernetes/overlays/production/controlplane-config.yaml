@@ -36,6 +36,17 @@ leaderElection:
 adminAuth:
   bearerToken: ""
   bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
+dashboard:
+  enabled: true
+  capabilities:
+    aiOverview: true
+    aiServices: true
+    aiTokenPolicies: true
+    aiCost: true
+    aiTraces: true
+    aiUsage: true
+    wasmPlugins: true
+    chatbot: true
 adminTLS:
   enabled: false
   certPath: ""

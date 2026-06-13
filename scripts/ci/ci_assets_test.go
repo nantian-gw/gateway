@@ -207,6 +207,30 @@ func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T
 	}
 }
 
+func TestCheckedInControlplaneConfigsDeclareDashboardCapabilityPolicy(t *testing.T) {
+	for _, path := range []string{
+		repoPath("configs", "controlplane", "config.yaml"),
+		repoPath("deploy", "kubernetes", "overlays", "production", "controlplane-config.yaml"),
+		repoPath("deploy", "kubernetes", "overlays", "kind-conformance", "controlplane-config.yaml"),
+	} {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			contents := string(readFile(t, path))
+			for _, want := range []string{
+				"dashboard:",
+				"enabled: true",
+				"capabilities:",
+				"aiOverview: true",
+				"wasmPlugins: true",
+				"chatbot: true",
+			} {
+				if !strings.Contains(contents, want) {
+					t.Fatalf("%s missing %q", path, want)
+				}
+			}
+		})
+	}
+}
+
 func TestConformanceOverlayUsesSingleDataplaneReplica(t *testing.T) {
 	overlayDir := repoPath("deploy", "kubernetes", "overlays", "kind-conformance")
 	data := readFile(t, filepath.Join(overlayDir, "kustomization.yaml"))

@@ -60,6 +60,7 @@ type Server struct {
 	store                 *ir.SnapshotStore
 	nodes                 *nodestatus.Registry
 	resources             *ResourceManager
+	dashboardCapabilities DashboardCapabilities
 	logger                *slog.Logger
 	server                *http.Server
 	tlsConfig             *tls.Config
@@ -86,6 +87,7 @@ func NewServer(
 		store:                 store,
 		nodes:                 nodes,
 		resources:             resources,
+		dashboardCapabilities: opts.DashboardCapabilities,
 		logger:                logger,
 		tlsConfig:             opts.TLSConfig,
 		readinessMode:         normalizeReadinessMode(opts.ReadinessMode),
@@ -145,6 +147,10 @@ func adminRouteBindings() []routeBinding {
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/summary", Auth: "bearer-when-configured", ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleSummary },
+		},
+		{
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/dashboard/capabilities", Auth: "bearer-when-configured", ContentType: "application/json"},
+			handler:  func(s *Server) http.HandlerFunc { return s.handleDashboardCapabilities },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot-sync", Auth: "bearer-when-configured", ContentType: "application/json"},
@@ -317,6 +323,10 @@ func (s *Server) SetInfrastructureInspector(reconciler *infrastructure.Reconcile
 func (s *Server) SetDataplaneComponents(discovery *DataplaneAdminDiscovery, client *DataplaneAdminClient) {
 	s.dataplaneDiscovery = discovery
 	s.dataplaneClient = client
+}
+
+func (s *Server) handleDashboardCapabilities(w http.ResponseWriter, r *http.Request) {
+	s.respondJSON(w, s.dashboardCapabilities)
 }
 
 func positiveOrDefault(value, fallback int64) int64 {

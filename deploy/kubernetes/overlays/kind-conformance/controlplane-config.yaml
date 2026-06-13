@@ -27,6 +27,17 @@ leaderElection:
 adminAuth:
   bearerToken: ""
   bearerTokenFile: ""
+dashboard:
+  enabled: true
+  capabilities:
+    aiOverview: true
+    aiServices: true
+    aiTokenPolicies: true
+    aiCost: true
+    aiTraces: true
+    aiUsage: true
+    wasmPlugins: true
+    chatbot: true
 grpcTLS:
   enabled: false
   certPath: ""

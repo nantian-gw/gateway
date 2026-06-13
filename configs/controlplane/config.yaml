@@ -58,6 +58,17 @@ dashboardApi:
   dataplaneAdminUrl: "http://nantian-gw-dataplane-admin.nantian-gw.svc.cluster.local:19080"
   requestTimeout: "5s"
   resourceMutationsEnabled: true
+dashboard:
+  enabled: true
+  capabilities:
+    aiOverview: true
+    aiServices: true
+    aiTokenPolicies: true
+    aiCost: true
+    aiTraces: true
+    aiUsage: true
+    wasmPlugins: true
+    chatbot: true
 pprof:
   enabled: false
   addr: "127.0.0.1:6060"

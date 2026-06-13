@@ -55,6 +55,35 @@ func TestNewServerAppliesRuntimeTimeouts(t *testing.T) {
 	}
 }
 
+func TestDashboardCapabilitiesEndpointReturnsConfiguredPageGroups(t *testing.T) {
+	t.Parallel()
+
+	server := newTestServerWithOptions(t, Options{
+		DashboardCapabilities: DashboardCapabilities{
+			Overview:        true,
+			Gateways:        true,
+			AIOverview:      true,
+			AIServices:      true,
+			AITokenPolicies: false,
+			WasmPlugins:     false,
+			Chatbot:         true,
+		},
+	})
+
+	recorder := performRequest(t, server, http.MethodGet, "/v1/dashboard/capabilities", nil)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+
+	var resp DashboardCapabilities
+	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if !resp.Overview || !resp.AIServices || resp.AITokenPolicies || resp.WasmPlugins {
+		t.Fatalf("unexpected dashboard capabilities: %+v", resp)
+	}
+}
+
 func newTestServer(t *testing.T) *Server {
 	return newTestServerWithRepository(t, nil, Options{})
 }
