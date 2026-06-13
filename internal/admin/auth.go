@@ -1,8 +1,8 @@
 package admin
 
 import (
-	"crypto/tls"
 	"crypto/subtle"
+	"crypto/tls"
 	"log/slog"
 	"net/http"
 	"os"
@@ -27,6 +27,7 @@ type Options struct {
 	TLSConfig                 *tls.Config
 	Logger                    *slog.Logger
 	RateLimitRPS              int64
+	DashboardCapabilities     DashboardCapabilities
 }
 
 func wrapAuthHandler(next http.Handler, opts Options) http.Handler {

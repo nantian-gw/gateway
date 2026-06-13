@@ -471,3 +471,72 @@ features:
 		t.Fatal("enableAiGateway should be true")
 	}
 }
+
+func TestLoadAppliesDashboardCapabilityDefaults(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, []byte(""), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if !cfg.DashboardEnabled() {
+		t.Fatal("dashboard should be enabled by default")
+	}
+	for _, check := range []struct {
+		name string
+		got  bool
+	}{
+		{"aiOverview", cfg.DashboardCapabilities().AIOverview},
+		{"aiServices", cfg.DashboardCapabilities().AIServices},
+		{"aiTokenPolicies", cfg.DashboardCapabilities().AITokenPolicies},
+		{"aiCost", cfg.DashboardCapabilities().AICost},
+		{"aiTraces", cfg.DashboardCapabilities().AITraces},
+		{"aiUsage", cfg.DashboardCapabilities().AIUsage},
+		{"wasmPlugins", cfg.DashboardCapabilities().WasmPlugins},
+		{"chatbot", cfg.DashboardCapabilities().Chatbot},
+	} {
+		if !check.got {
+			t.Fatalf("dashboard capability %s should default to true", check.name)
+		}
+	}
+}
+
+func TestLoadRespectsExplicitDashboardCapabilityOverrides(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte(`
+dashboard:
+  enabled: false
+  capabilities:
+    aiOverview: false
+    wasmPlugins: false
+`)
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if cfg.DashboardEnabled() {
+		t.Fatal("dashboard.enabled=false must be respected")
+	}
+	caps := cfg.DashboardCapabilities()
+	if caps.AIOverview || caps.WasmPlugins {
+		t.Fatalf("explicit dashboard capability overrides not applied: %+v", caps)
+	}
+	if !caps.AIServices {
+		t.Fatal("unset dashboard capability should still default to true")
+	}
+}

@@ -43,14 +43,42 @@ type Config struct {
 	Pprof            PprofConfig            `yaml:"pprof"`
 	AdminTLS         AdminTLSConfig         `yaml:"adminTLS"`
 	GRPCTLS          GRPCTLSConfig          `yaml:"grpcTLS"`
-	GRPCRuntime      GRPCRuntimeConfig     `yaml:"grpcRuntime"`
+	GRPCRuntime      GRPCRuntimeConfig      `yaml:"grpcRuntime"`
 	Namespace        string                 `yaml:"namespace"`
 	Features         FeaturesConfig         `yaml:"features"`
+	Dashboard        DashboardConfig        `yaml:"dashboard"`
 }
 
 type FeaturesConfig struct {
 	EnableExperimentalGateway bool `yaml:"enableExperimentalGateway"`
 	EnableAiGateway           bool `yaml:"enableAiGateway"`
+}
+
+type DashboardConfig struct {
+	Enabled      *bool                       `yaml:"enabled"`
+	Capabilities DashboardCapabilitiesConfig `yaml:"capabilities"`
+}
+
+type DashboardCapabilitiesConfig struct {
+	AIOverview      *bool `yaml:"aiOverview"`
+	AIServices      *bool `yaml:"aiServices"`
+	AITokenPolicies *bool `yaml:"aiTokenPolicies"`
+	AICost          *bool `yaml:"aiCost"`
+	AITraces        *bool `yaml:"aiTraces"`
+	AIUsage         *bool `yaml:"aiUsage"`
+	WasmPlugins     *bool `yaml:"wasmPlugins"`
+	Chatbot         *bool `yaml:"chatbot"`
+}
+
+type ResolvedDashboardCapabilities struct {
+	AIOverview      bool
+	AIServices      bool
+	AITokenPolicies bool
+	AICost          bool
+	AITraces        bool
+	AIUsage         bool
+	WasmPlugins     bool
+	Chatbot         bool
 }
 
 type LogConfig struct {
@@ -97,19 +125,19 @@ type AdminLimitsConfig struct {
 }
 
 type AdminRuntimeConfig struct {
-	ReadHeaderTimeout      string                      `yaml:"readHeaderTimeout"`
-	ReadTimeout            string                      `yaml:"readTimeout"`
-	WriteTimeout           string                      `yaml:"writeTimeout"`
-	IdleTimeout            string                      `yaml:"idleTimeout"`
-	DataplaneAggregation   *DataplaneAdminAggregationConfig `yaml:"dataplaneAggregation"`
+	ReadHeaderTimeout    string                           `yaml:"readHeaderTimeout"`
+	ReadTimeout          string                           `yaml:"readTimeout"`
+	WriteTimeout         string                           `yaml:"writeTimeout"`
+	IdleTimeout          string                           `yaml:"idleTimeout"`
+	DataplaneAggregation *DataplaneAdminAggregationConfig `yaml:"dataplaneAggregation"`
 }
 
 type DataplaneAdminAggregationConfig struct {
-	ServiceName      string `yaml:"serviceName"`
-	Namespace        string `yaml:"namespace"`
-	PortName         string `yaml:"portName"`
-	Timeout          string `yaml:"timeout"`
-	BearerTokenFile  string `yaml:"bearerTokenFile"`
+	ServiceName     string `yaml:"serviceName"`
+	Namespace       string `yaml:"namespace"`
+	PortName        string `yaml:"portName"`
+	Timeout         string `yaml:"timeout"`
+	BearerTokenFile string `yaml:"bearerTokenFile"`
 }
 
 type TranslatorLimitsConfig struct {
@@ -335,6 +363,23 @@ func (c *Config) TranslatorResourceLimits() TranslatorLimitsConfig {
 	}
 }
 
+func (c *Config) DashboardEnabled() bool {
+	return boolValueOrDefault(c.Dashboard.Enabled, true)
+}
+
+func (c *Config) DashboardCapabilities() ResolvedDashboardCapabilities {
+	return ResolvedDashboardCapabilities{
+		AIOverview:      boolValueOrDefault(c.Dashboard.Capabilities.AIOverview, true),
+		AIServices:      boolValueOrDefault(c.Dashboard.Capabilities.AIServices, true),
+		AITokenPolicies: boolValueOrDefault(c.Dashboard.Capabilities.AITokenPolicies, true),
+		AICost:          boolValueOrDefault(c.Dashboard.Capabilities.AICost, true),
+		AITraces:        boolValueOrDefault(c.Dashboard.Capabilities.AITraces, true),
+		AIUsage:         boolValueOrDefault(c.Dashboard.Capabilities.AIUsage, true),
+		WasmPlugins:     boolValueOrDefault(c.Dashboard.Capabilities.WasmPlugins, true),
+		Chatbot:         boolValueOrDefault(c.Dashboard.Capabilities.Chatbot, true),
+	}
+}
+
 func (c *Config) GRPCKeepaliveTimeDuration() time.Duration {
 	return parseDurationOrDefault(c.GRPCRuntime.KeepaliveTime, 30*time.Second)
 }
@@ -471,6 +516,13 @@ func positiveIntOrZero(value int) int {
 		return value
 	}
 	return 0
+}
+
+func boolValueOrDefault(value *bool, fallback bool) bool {
+	if value == nil {
+		return fallback
+	}
+	return *value
 }
 
 func (c *Config) DataplaneAggregationConfig() *DataplaneAdminAggregationConfig {

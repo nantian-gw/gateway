@@ -325,6 +325,7 @@ func run(configPath string) error {
 			TLSConfig:                 adminTLSConfig,
 			Logger:                    logger,
 			RateLimitRPS:              cfg.AdminAuth.RateLimitRPS,
+			DashboardCapabilities:     admin.ResolveDashboardCapabilities(cfg),
 		},
 	)
 	adminServer.SetInfrastructureInspector(infra)
