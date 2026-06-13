@@ -43,6 +43,18 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 	if err != nil {
 		return nil, err
 	}
+	gatewaySet := make(map[string]struct{}, len(gateways))
+	for _, gateway := range gateways {
+		if gateway.Name == "" {
+			continue
+		}
+		gatewaySet[gateway.Namespace+"/"+gateway.Name] = struct{}{}
+	}
+	referencedListenerSets, err := loadReferencedListenerSetsForGatewaysFromSnapshot(ctx, cl, current, gatewaySet)
+	if err != nil {
+		return nil, err
+	}
+	listenerSets = mergeListenerSetLists(listenerSets, referencedListenerSets)
 
 	var (
 		supportObjects  translatorSupportObjects
@@ -195,6 +207,93 @@ func loadListenerSetsForGateways(
 		return out[i].Namespace+"/"+out[i].Name < out[j].Namespace+"/"+out[j].Name
 	})
 	return out, nil
+}
+
+func loadReferencedListenerSetsForGatewaysFromSnapshot(
+	ctx context.Context,
+	cl client.Client,
+	current *ir.Snapshot,
+	gatewaySet map[string]struct{},
+) ([]gatewayv1.ListenerSet, error) {
+	if current == nil || len(gatewaySet) == 0 {
+		return nil, nil
+	}
+
+	keys := make(map[string]client.ObjectKey)
+	add := func(routeNamespace string, parentRefs []ir.ParentRef) {
+		for _, parentRef := range parentRefs {
+			if !isListenerSetParentRef(parentRef) || parentRef.Name == "" {
+				continue
+			}
+			namespace := parentRef.Namespace
+			if namespace == "" {
+				namespace = routeNamespace
+			}
+			key := client.ObjectKey{Namespace: namespace, Name: parentRef.Name}
+			keys[backendObjectKey(namespace, parentRef.Name)] = key
+		}
+	}
+
+	for _, route := range current.HTTPRoutes {
+		add(route.Namespace, route.ParentRefs)
+	}
+	for _, route := range current.GRPCRoutes {
+		add(route.Namespace, route.ParentRefs)
+	}
+	for _, route := range current.StreamRoutes {
+		add(route.Namespace, route.ParentRefs)
+	}
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	out := make([]gatewayv1.ListenerSet, 0, len(keys))
+	for _, key := range sortedObjectKeys(keys) {
+		var listenerSet gatewayv1.ListenerSet
+		if err := cl.Get(ctx, key, &listenerSet); client.IgnoreNotFound(err) != nil {
+			return nil, err
+		}
+		if listenerSet.Name == "" {
+			continue
+		}
+		if _, ok := gatewaySet[listenerSetParentGatewayKey(listenerSet)]; !ok {
+			continue
+		}
+		out = append(out, listenerSet)
+	}
+	return out, nil
+}
+
+func mergeListenerSetLists(
+	base []gatewayv1.ListenerSet,
+	extra []gatewayv1.ListenerSet,
+) []gatewayv1.ListenerSet {
+	if len(extra) == 0 {
+		return base
+	}
+
+	merged := make(map[string]gatewayv1.ListenerSet, len(base)+len(extra))
+	for _, listenerSet := range base {
+		if listenerSet.Name == "" {
+			continue
+		}
+		merged[listenerSet.Namespace+"/"+listenerSet.Name] = listenerSet
+	}
+	for _, listenerSet := range extra {
+		if listenerSet.Name == "" {
+			continue
+		}
+		merged[listenerSet.Namespace+"/"+listenerSet.Name] = listenerSet
+	}
+
+	out := make([]gatewayv1.ListenerSet, 0, len(merged))
+	for _, listenerSet := range merged {
+		out = append(out, listenerSet)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Namespace+"/"+out[i].Name < out[j].Namespace+"/"+out[j].Name
+	})
+	return out
 }
 
 func listListenerSetsForGateways(
