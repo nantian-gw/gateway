@@ -4,8 +4,8 @@ import (
 	"context"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 func GetListenerSetV1(ctx context.Context, c client.Client, key client.ObjectKey) (*gatewayv1.ListenerSet, *gatewayv1.ListenerSet, error) {

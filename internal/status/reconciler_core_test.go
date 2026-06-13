@@ -275,6 +275,107 @@ func TestReconcileUsesReaderStateForObservedGeneration(t *testing.T) {
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 2)
 }
 
+func TestReconcileUsesReaderStateForListenerSetObservedGeneration(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	staleClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(
+			&gatewayv1.GatewayClass{},
+			&gatewayv1.Gateway{},
+			&gatewayv1.ListenerSet{},
+		).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: namespaceFromPtr(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+			},
+		).
+		Build()
+
+	freshReader := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: namespaceFromPtr(gatewayv1.NamespacesFromAll),
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "ls-listener",
+						Port:     80,
+						Protocol: gatewayv1.HTTPProtocolType,
+					}},
+				},
+			},
+		).
+		Build()
+
+	reconciler := NewWithAddressesAndReader(
+		staleClient,
+		freshReader,
+		string(controllerName),
+		[]string{"127.0.0.1"},
+		discardLogger(),
+	)
+	if err := reconciler.Reconcile(context.Background()); err != nil {
+		t.Fatalf("Reconcile returned error: %v", err)
+	}
+
+	var listenerSet gatewayv1.ListenerSet
+	if err := staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "ls"}, &listenerSet); err != nil {
+		t.Fatalf("Get ListenerSet returned error: %v", err)
+	}
+	assertCondition(t, listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerSetReasonAccepted), 1)
+	assertCondition(t, listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.ListenerSetReasonProgrammed), 1)
+	listener := listenerEntryStatusByName(t, listenerSet.Status.Listeners, "ls-listener")
+	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 1)
+	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.ListenerReasonProgrammed), 1)
+}
+
 func TestReconcileUsesReaderGatewayListenersWhenGenerationChanges(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

@@ -32,16 +32,19 @@ func (r *Reconciler) reconcileListenerSetStatus(
 	eval listenerSetEvaluation,
 ) error {
 	return r.retryStatusUpdate(ctx, "listenerset", func() error {
-		currentRaw, current, err := gatewayapi.GetListenerSetV1(ctx, r.client, key)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return nil
+		var current gatewayv1.ListenerSet
+		if err := r.reader.Get(ctx, key, &current); err != nil {
+			if !apierrors.IsNotFound(err) {
+				return err
 			}
-			return err
+			if err := r.client.Get(ctx, key, &current); err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
 		}
-		if currentRaw == nil {
-			return nil
-		}
+		currentRaw := current.DeepCopy()
 
 		generation := current.Generation
 		if evalGeneration := listenerSetEvaluationObservedGeneration(eval); evalGeneration > generation {
@@ -56,6 +59,12 @@ func (r *Reconciler) reconcileListenerSetStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, *desired) {
 			return nil
 		}
-		return gatewayapi.UpdateListenerSetV1Status(ctx, r.client, currentRaw, *desired)
+		if err := gatewayapi.UpdateListenerSetV1Status(ctx, r.client, currentRaw, *desired); err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+		return nil
 	})
 }
