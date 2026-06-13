@@ -43,7 +43,11 @@ func (r *Reconciler) reconcileListenerSetStatus(
 			return nil
 		}
 
-		eval = listenerSetEvaluationWithObservedGeneration(eval, current.Generation)
+		generation := current.Generation
+		if evalGeneration := listenerSetEvaluationObservedGeneration(eval); evalGeneration > generation {
+			generation = evalGeneration
+		}
+		eval = listenerSetEvaluationWithObservedGeneration(eval, generation)
 		desired := current.Status.DeepCopy()
 		setCondition(&desired.Conditions, eval.accepted)
 		setCondition(&desired.Conditions, eval.programmed)

@@ -48,6 +48,21 @@ func listenerSetEvaluationWithObservedGeneration(eval listenerSetEvaluation, gen
 	return eval
 }
 
+func listenerSetEvaluationObservedGeneration(eval listenerSetEvaluation) int64 {
+	generation := eval.accepted.ObservedGeneration
+	if eval.programmed.ObservedGeneration > generation {
+		generation = eval.programmed.ObservedGeneration
+	}
+	for _, listener := range eval.listeners {
+		for _, condition := range listener.Conditions {
+			if condition.ObservedGeneration > generation {
+				generation = condition.ObservedGeneration
+			}
+		}
+	}
+	return generation
+}
+
 func routeParentEvaluationsWithObservedGeneration(
 	evals []routeParentEvaluation,
 	generation int64,
