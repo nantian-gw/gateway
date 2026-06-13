@@ -28,12 +28,29 @@ type kindPortMapping struct {
 }
 
 type controlPlaneConfig struct {
-	Features controlPlaneFeatures `yaml:"features"`
+	Features  controlPlaneFeatures  `yaml:"features"`
+	Dashboard controlPlaneDashboard `yaml:"dashboard"`
 }
 
 type controlPlaneFeatures struct {
 	EnableExperimentalGateway bool `yaml:"enableExperimentalGateway"`
 	EnableAiGateway           bool `yaml:"enableAiGateway"`
+}
+
+type controlPlaneDashboard struct {
+	Enabled      bool                              `yaml:"enabled"`
+	Capabilities controlPlaneDashboardCapabilities `yaml:"capabilities"`
+}
+
+type controlPlaneDashboardCapabilities struct {
+	AIOverview      bool `yaml:"aiOverview"`
+	AIServices      bool `yaml:"aiServices"`
+	AITokenPolicies bool `yaml:"aiTokenPolicies"`
+	AICost          bool `yaml:"aiCost"`
+	AITraces        bool `yaml:"aiTraces"`
+	AIUsage         bool `yaml:"aiUsage"`
+	WasmPlugins     bool `yaml:"wasmPlugins"`
+	Chatbot         bool `yaml:"chatbot"`
 }
 
 type kustomizationConfig struct {
@@ -213,23 +230,32 @@ func TestCheckedInControlplaneConfigsDeclareDashboardCapabilityPolicy(t *testing
 		repoPath("deploy", "kubernetes", "overlays", "production", "controlplane-config.yaml"),
 		repoPath("deploy", "kubernetes", "overlays", "kind-conformance", "controlplane-config.yaml"),
 	} {
-		t.Run(filepath.Base(path), func(t *testing.T) {
-			contents := string(readFile(t, path))
-			for _, want := range []string{
-				"dashboard:",
-				"enabled: true",
-				"capabilities:",
-				"aiOverview: true",
-				"aiServices: true",
-				"aiTokenPolicies: true",
-				"aiCost: true",
-				"aiTraces: true",
-				"aiUsage: true",
-				"wasmPlugins: true",
-				"chatbot: true",
+		t.Run(path, func(t *testing.T) {
+			var config controlPlaneConfig
+			if err := yaml.Unmarshal(readFile(t, path), &config); err != nil {
+				t.Fatalf("parse %s: %v", path, err)
+			}
+
+			if !config.Dashboard.Enabled {
+				t.Fatalf("%s dashboard.enabled = false, want true", path)
+			}
+
+			caps := config.Dashboard.Capabilities
+			for _, check := range []struct {
+				name string
+				got  bool
+			}{
+				{"aiOverview", caps.AIOverview},
+				{"aiServices", caps.AIServices},
+				{"aiTokenPolicies", caps.AITokenPolicies},
+				{"aiCost", caps.AICost},
+				{"aiTraces", caps.AITraces},
+				{"aiUsage", caps.AIUsage},
+				{"wasmPlugins", caps.WasmPlugins},
+				{"chatbot", caps.Chatbot},
 			} {
-				if !strings.Contains(contents, want) {
-					t.Fatalf("%s missing %q", path, want)
+				if !check.got {
+					t.Fatalf("%s dashboard.capabilities.%s = false, want true", path, check.name)
 				}
 			}
 		})
