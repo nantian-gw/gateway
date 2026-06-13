@@ -122,7 +122,7 @@ kubectl apply -k deploy/kubernetes/overlays/production
 | BackendTLSPolicy | ✅ 完全支持 |
 | BackendLBPolicy | ✅ 完全支持 |
 
-详见[完整合规性报告](reports/conformance/)。
+该表仅作能力级概览，不表示默认运行时已启用全部特性；默认运行时对应 `enableExperimentalGateway=false`。`ListenerSet`、`TLSRouteModeTerminate`、`TLSRouteModeMixed`、`UDPRoute` 需要启用 `enableExperimentalGateway=true`，精确状态请查看 [Gateway API 支持矩阵](docs/gateway-api-feature-support.md)。
 
 ### AI Gateway
 
@@ -173,7 +173,7 @@ spec:
 | 理解核心概念 | [概念](https://nantian.dev/concepts/) |
 | 配置 AI Gateway | [AI Gateway 文档](docs/design/ai-gateway/) |
 | 编写 Wasm 插件 | [Wasm SDK 文档](docs/design/wasm/) |
-| 查看支持的特性 | [Gateway API 支持矩阵](docs/gateway-api-support.md) |
+| 查看支持的特性 | [Gateway API 支持矩阵](docs/gateway-api-feature-support.md) |
 | 参与贡献 | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | 报告 Bug | [Issues](https://github.com/nantian-gw/gateway/issues) |
 | 查看路线图 | [ROADMAP.md](ROADMAP.md) |
