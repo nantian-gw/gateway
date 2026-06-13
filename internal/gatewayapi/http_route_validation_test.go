@@ -1,6 +1,7 @@
 package gatewayapi
 
 import (
+	"reflect"
 	"testing"
 
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -150,6 +151,65 @@ func TestValidateHTTPRouteRulesAcceptsBackendExternalAuthFilter(t *testing.T) {
 	}
 	if message := summary.InvalidRuleMessage(); message != "" {
 		t.Fatalf("InvalidRuleMessage() = %q, want empty", message)
+	}
+}
+
+func TestValidateHTTPRouteRulesBuildsPartialInvalidMessages(t *testing.T) {
+	route := gatewayv1.HTTPRoute{
+		Spec: gatewayv1.HTTPRouteSpec{
+			Rules: []gatewayv1.HTTPRouteRule{
+				{
+					Filters: []gatewayv1.HTTPRouteFilter{{
+						Type: gatewayv1.HTTPRouteFilterType("Unsupported"),
+					}},
+				},
+				{
+					Filters: []gatewayv1.HTTPRouteFilter{
+						{Type: gatewayv1.HTTPRouteFilterRequestRedirect},
+						{Type: gatewayv1.HTTPRouteFilterURLRewrite},
+					},
+				},
+				{},
+			},
+		},
+	}
+
+	summary := ValidateHTTPRouteRules(route)
+	if !reflect.DeepEqual(summary.InvalidRuleIndexes, []int{0, 1}) {
+		t.Fatalf("InvalidRuleIndexes = %#v, want [0 1]", summary.InvalidRuleIndexes)
+	}
+	if summary.FullyInvalid(len(route.Spec.Rules)) {
+		t.Fatal("FullyInvalid() = true, want false for partially invalid route")
+	}
+	if !summary.PartiallyInvalid(len(route.Spec.Rules)) {
+		t.Fatal("PartiallyInvalid() = false, want true")
+	}
+
+	wantInvalid := "HTTPRoute rules 1, 2 are invalid: rule 1 uses unsupported Unsupported filter; rule 2 must not combine RequestRedirect and URLRewrite filters"
+	if got := summary.InvalidRuleMessage(); got != wantInvalid {
+		t.Fatalf("InvalidRuleMessage() = %q, want %q", got, wantInvalid)
+	}
+
+	wantAccepted := "HTTPRoute rule 1 uses unsupported Unsupported filter"
+	if got := summary.AcceptedErrorMessage(); got != wantAccepted {
+		t.Fatalf("AcceptedErrorMessage() = %q, want %q", got, wantAccepted)
+	}
+
+	wantDropped := "Dropped Rules 1, 2 because " + wantInvalid
+	if got := summary.DroppedRulesMessage(); got != wantDropped {
+		t.Fatalf("DroppedRulesMessage() = %q, want %q", got, wantDropped)
+	}
+}
+
+func TestHTTPRouteRuleMessageCompactsRepeatedMessages(t *testing.T) {
+	summary := HTTPRouteRuleValidationSummary{
+		InvalidRuleIndexes:  []int{0, 2},
+		invalidRuleMessages: []string{"uses unsupported Foo filter", "uses unsupported Foo filter"},
+	}
+
+	want := "HTTPRoute rules 1, 3 uses unsupported Foo filter"
+	if got := summary.InvalidRuleMessage(); got != want {
+		t.Fatalf("InvalidRuleMessage() = %q, want %q", got, want)
 	}
 }
 
