@@ -90,6 +90,7 @@ Both commands require local Kubernetes tooling such as Kind, kubectl, and kustom
 Nantian Gateway targets Gateway API v1.5.1. Use the conformance package and supported-feature declarations as the local source of truth for exact support status:
 
 - [Conformance tests](conformance/)
+- [Gateway API support matrix](docs/gateway-api-feature-support.md)
 - [Gateway API support tool](cmd/gateway-api-support/)
 - [Supported feature declarations](internal/gatewayapi/supported_features.go)
 
