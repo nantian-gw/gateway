@@ -220,6 +220,11 @@ func TestCheckedInControlplaneConfigsDeclareDashboardCapabilityPolicy(t *testing
 				"enabled: true",
 				"capabilities:",
 				"aiOverview: true",
+				"aiServices: true",
+				"aiTokenPolicies: true",
+				"aiCost: true",
+				"aiTraces: true",
+				"aiUsage: true",
 				"wasmPlugins: true",
 				"chatbot: true",
 			} {

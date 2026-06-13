@@ -58,17 +58,16 @@ func TestNewServerAppliesRuntimeTimeouts(t *testing.T) {
 func TestDashboardCapabilitiesEndpointReturnsConfiguredPageGroups(t *testing.T) {
 	t.Parallel()
 
-	server := newTestServerWithOptions(t, Options{
-		DashboardCapabilities: DashboardCapabilities{
-			Overview:        true,
-			Gateways:        true,
-			AIOverview:      true,
-			AIServices:      true,
-			AITokenPolicies: false,
-			WasmPlugins:     false,
-			Chatbot:         true,
-		},
-	})
+	want := DashboardCapabilities{
+		Overview:        true,
+		Gateways:        true,
+		AIOverview:      true,
+		AIServices:      true,
+		AITokenPolicies: false,
+		WasmPlugins:     false,
+		Chatbot:         true,
+	}
+	server := newTestServerWithOptions(t, Options{DashboardCapabilities: want})
 
 	recorder := performRequest(t, server, http.MethodGet, "/v1/dashboard/capabilities", nil)
 	if recorder.Code != http.StatusOK {
@@ -79,8 +78,8 @@ func TestDashboardCapabilitiesEndpointReturnsConfiguredPageGroups(t *testing.T) 
 	if err := json.Unmarshal(recorder.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if !resp.Overview || !resp.AIServices || resp.AITokenPolicies || resp.WasmPlugins {
-		t.Fatalf("unexpected dashboard capabilities: %+v", resp)
+	if resp != want {
+		t.Fatalf("dashboard capabilities mismatch: got %+v, want %+v", resp, want)
 	}
 }
 
