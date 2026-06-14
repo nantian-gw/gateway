@@ -114,7 +114,7 @@ The tracing-enabled controlplane configuration should:
 - set `tracing.insecure` and `tracing.samplerRatio` to conservative, explicit values suitable for an example profile
 - include a clearly replaceable OTLP endpoint value, consistent with existing repository style where operators must edit environment-specific values before apply
 
-The overlay must be renderable with `kubectl kustomize`, even if the operator has not yet deployed a collector.
+The overlay must be renderable with `kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone`, even if the operator has not yet deployed a collector. This repository already relies on `LoadRestrictionsNone` because `deploy/kubernetes/base/kustomization.yaml` references shared config assets outside the base directory root.
 
 ### 4. Repository-local operator documentation
 
@@ -217,7 +217,7 @@ The implementation plan derived from this design must include, at minimum, these
 ```bash
 go test ./cmd/manager ./internal/observability ./internal/controller ./internal/infrastructure
 make test
-kubectl kustomize deploy/kubernetes/overlays/observability-enabled >/tmp/nantian-gw-observability-enabled.yaml
+kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone >/tmp/nantian-gw-observability-enabled.yaml
 git diff --check origin/main...HEAD
 git -C /root/nantian-gw/dataplane status --short --branch
 git -C /root/nantian-gw/dashboard status --short --branch

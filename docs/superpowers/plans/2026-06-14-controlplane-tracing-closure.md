@@ -1,12 +1,12 @@
 # Controlplane Tracing Closure Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. The checklist below is the completed execution record for this plan.
 
 **Goal:** Build a repository-local controlplane tracing closure for `gateway` so operators can enable, verify, and troubleshoot tracing from this repository alone.
 
 **Architecture:** Keep the existing config-driven OpenTelemetry setup, add a small tracing summary helper for startup visibility, enrich the highest-value controlplane spans with stable diagnostic attributes, and add an explicit tracing-enabled Kustomize overlay that reuses the current deployment layout. Document the new entry point in the repository README and deploy guide without changing default behavior for existing install paths.
 
-**Tech Stack:** Go 1.26, OpenTelemetry Go SDK, controller-runtime, Kustomize via `kubectl kustomize`, Markdown repository docs
+**Tech Stack:** Go 1.26, OpenTelemetry Go SDK, controller-runtime, Kustomize via `kustomize build --load-restrictor LoadRestrictionsNone`, Markdown repository docs
 
 ---
 
@@ -53,7 +53,7 @@
 - Modify: `cmd/manager/app.go`
 - Modify: `cmd/manager/app_test.go`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add this test to `internal/observability/tracing_test.go`:
 
@@ -120,7 +120,7 @@ func TestLogControlplaneTracingStatusRedactsHeaderValues(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [x] **Step 2: Run the focused tests to verify they fail**
 
 Run:
 
@@ -130,7 +130,7 @@ go test ./internal/observability ./cmd/manager -run 'TestSummarizeTracingNormali
 
 Expected: FAIL with undefined `SummarizeTracing` and undefined `logControlplaneTracingStatus`.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 Add this helper to `internal/observability/tracing.go`:
 
@@ -203,7 +203,7 @@ import (
 )
 ```
 
-- [ ] **Step 4: Run the focused tests to verify they pass**
+- [x] **Step 4: Run the focused tests to verify they pass**
 
 Run:
 
@@ -213,7 +213,7 @@ go test ./internal/observability ./cmd/manager -run 'TestSummarizeTracingNormali
 
 Expected: PASS with 3 passing tests and no leaked header values in output.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -233,7 +233,7 @@ git commit -m "feat: add controlplane tracing startup summary"
 - Modify: `internal/infrastructure/reconciler.go`
 - Modify: `internal/infrastructure/reconciler_core_test.go`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add this test to `internal/controller/leader_runner_test.go`:
 
@@ -406,7 +406,7 @@ func spanIntAttr(span tracetest.SpanStub, key string) int64 {
 }
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [x] **Step 2: Run the focused tests to verify they fail**
 
 Run:
 
@@ -416,7 +416,7 @@ go test ./internal/controller ./internal/infrastructure -run 'TestReconcilerRunn
 
 Expected: FAIL because the new span attributes are not emitted yet.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [x] **Step 3: Write the minimal implementation**
 
 Update the run span in `internal/controller/leader_runner.go`:
 
@@ -466,7 +466,7 @@ Update the infrastructure reconcile span in `internal/infrastructure/reconciler.
 	span.SetAttributes(attribute.Bool("infrastructure.gateway_services_failed", gwErr != nil))
 ```
 
-- [ ] **Step 4: Run the focused tests to verify they pass**
+- [x] **Step 4: Run the focused tests to verify they pass**
 
 Run:
 
@@ -476,7 +476,7 @@ go test ./internal/controller ./internal/infrastructure -run 'TestReconcilerRunn
 
 Expected: PASS with all tracing-focused controller and infrastructure tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -491,17 +491,17 @@ git commit -m "feat: enrich controlplane tracing spans"
 - Create: `deploy/kubernetes/overlays/observability-enabled/kustomization.yaml`
 - Create: `deploy/kubernetes/overlays/observability-enabled/controlplane-config.yaml`
 
-- [ ] **Step 1: Run the render command to verify the overlay does not exist yet**
+- [x] **Step 1: Run the render command to verify the overlay does not exist yet**
 
 Run:
 
 ```bash
-kubectl kustomize deploy/kubernetes/overlays/observability-enabled
+kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone
 ```
 
 Expected: FAIL with a path-not-found error because the overlay directory does not exist yet.
 
-- [ ] **Step 2: Create the tracing-enabled overlay files**
+- [x] **Step 2: Create the tracing-enabled overlay files**
 
 Create `deploy/kubernetes/overlays/observability-enabled/kustomization.yaml`:
 
@@ -592,22 +592,22 @@ tracing:
   samplerRatio: 0.1
 ```
 
-- [ ] **Step 3: Render the overlay and verify the tracing config appears**
+- [x] **Step 3: Render the overlay and verify the tracing config appears**
 
 Run:
 
 ```bash
-kubectl kustomize deploy/kubernetes/overlays/observability-enabled >/tmp/nantian-gw-observability-enabled.yaml
+kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone >/tmp/nantian-gw-observability-enabled.yaml
 rg -n "tracing:" /tmp/nantian-gw-observability-enabled.yaml
 rg -n "otel-collector.observability.svc.cluster.local:4317" /tmp/nantian-gw-observability-enabled.yaml
 ```
 
 Expected:
-- `kubectl kustomize` exits 0
+- `kustomize build --load-restrictor LoadRestrictionsNone` exits 0
 - the rendered manifest contains a controlplane ConfigMap with the tracing block
 - the rendered manifest contains the OTLP endpoint example value
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
@@ -623,7 +623,7 @@ git commit -m "feat: add tracing-enabled deployment overlay"
 - Modify: `deploy/README.md`
 - Modify: `deploy/kubernetes/overlays/production/README.md`
 
-- [ ] **Step 1: Confirm the docs do not yet describe the new overlay**
+- [x] **Step 1: Confirm the docs do not yet describe the new overlay**
 
 Run:
 
@@ -633,7 +633,7 @@ rg -n "observability-enabled|controlplane tracing|otel-collector" README.md depl
 
 Expected: existing matches do not yet describe the new overlay as the concrete tracing enablement path.
 
-- [ ] **Step 2: Update the docs**
+- [x] **Step 2: Update the docs**
 
 Add this block to `README.md` under **Operations And Observability**:
 
@@ -656,11 +656,11 @@ And add a short verification subsection:
 1. Render the overlay:
 
    ```bash
-   kubectl kustomize deploy/kubernetes/overlays/observability-enabled
+   kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone
    ```
 
 2. Update the OTLP endpoint in `deploy/kubernetes/overlays/observability-enabled/controlplane-config.yaml`.
-3. Apply the overlay and inspect controlplane logs for `configured controlplane tracing`.
+3. Apply the overlay, restart the controlplane Deployment, and inspect controlplane logs for `configured controlplane tracing`.
 4. If traces do not appear, first verify that:
    - the tracing-enabled overlay was used instead of `production`
    - the OTLP endpoint is reachable from the controlplane Pod
@@ -673,14 +673,14 @@ Update `deploy/kubernetes/overlays/production/README.md` so the profile sentence
 The matrix of install profiles, Secrets, NetworkPolicy, Services, ports, HPA, PDB, and resource requests/limits can be found in [Install Profile Matrix](../../../../docs/user/install-profiles.md). This directory is the current Kustomize source for the `single-cluster-prod` and `multi-replica-prod` profiles. The `observability-enabled` profile now lives in `../observability-enabled/` and reuses this overlay as its base.
 ```
 
-- [ ] **Step 3: Run repository acceptance commands**
+- [x] **Step 3: Run repository acceptance commands**
 
 Run:
 
 ```bash
 go test ./cmd/manager ./internal/observability ./internal/controller ./internal/infrastructure
 make test
-kubectl kustomize deploy/kubernetes/overlays/observability-enabled >/tmp/nantian-gw-observability-enabled.yaml
+kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone >/tmp/nantian-gw-observability-enabled.yaml
 git diff --check origin/main...HEAD
 git -C /root/nantian-gw/dataplane status --short --branch
 git -C /root/nantian-gw/dashboard status --short --branch
@@ -696,7 +696,7 @@ Expected:
 - `git diff --check origin/main...HEAD` prints no whitespace or merge-marker issues
 - sibling repositories show no modified tracked files caused by this task
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
@@ -717,3 +717,56 @@ git commit -m "docs: document controlplane tracing enablement"
   - no placeholder keywords or cross-task shorthand remain
 - Type consistency:
   - `SummarizeTracing`, `logControlplaneTracingStatus`, and `snapshotRouteObjectKeys.count()` are introduced before later tasks depend on them
+
+## Execution Record
+
+### Task 1
+
+- Focused verification command:
+  `go test ./internal/observability ./cmd/manager -run 'TestSummarizeTracingNormalizesFields|TestLogControlplaneTracingStatusRedactsHeaderValues|TestControlplaneTracingConfigUsesNormalizedConfigValues' -count=1`
+- Result:
+  PASS after implementing the tracing summary helper and startup logging path.
+- Commit:
+  `3050d1d` `feat: add controlplane tracing startup summary`
+
+### Task 2
+
+- Focused verification command:
+  `go test ./internal/controller ./internal/infrastructure -run 'TestReconcilerRunnerRunSpanRecordsScopeResults|TestSyncerPublishSnapshotSpanRecordsBuildShape|TestInfrastructureReconcileSpanRecordsGatewayServiceResult|TestReconcilerRunnerCreatesScopeSpans|TestSyncerPublishSnapshotCreatesSpan|TestInfrastructureReconcileCreatesSpan' -count=1`
+- Result:
+  PASS after adding run, snapshot, and infrastructure reconcile attributes.
+- Commit:
+  `4005d19` `feat: enrich controlplane tracing spans`
+
+### Task 3
+
+- Overlay render command:
+  `kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone >/tmp/nantian-gw-observability-enabled.yaml`
+- Validation commands:
+  `rg -n "tracing:" /tmp/nantian-gw-observability-enabled.yaml`
+  `rg -n "otel-collector.observability.svc.cluster.local:4317" /tmp/nantian-gw-observability-enabled.yaml`
+- Result:
+  PASS. The rendered ConfigMap contains the tracing block and example OTLP endpoint.
+- Commit:
+  `7973ad3` `feat: add tracing-enabled deployment overlay`
+
+### Task 4
+
+- Acceptance commands:
+  `go test ./cmd/manager ./internal/observability ./internal/controller ./internal/infrastructure`
+  `make test`
+  `kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone >/tmp/nantian-gw-observability-enabled.yaml`
+  `git diff --check origin/main...HEAD`
+  `git -C /root/nantian-gw/dataplane status --short --branch`
+  `git -C /root/nantian-gw/dashboard status --short --branch`
+  `git -C /root/nantian-gw/website status --short --branch`
+  `git -C /root/nantian-gw/proto status --short --branch`
+  `git -C /root/nantian-gw/helm-charts status --short --branch`
+- Results:
+  - `go test ...` PASS
+  - `make test` PASS
+  - overlay render command PASS
+  - `git diff --check origin/main...HEAD` PASS with no output
+  - sibling repository tracked branches remained unchanged; only pre-existing untracked files were present in `dashboard` and `website`
+- Commit:
+  `bc50159` `docs: document controlplane tracing enablement`

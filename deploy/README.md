@@ -235,9 +235,12 @@ rg -n "tracing:|endpoint:|samplerRatio" \
   /tmp/nantian-gw-observability-enabled.yaml
 ```
 
-After applying the rendered manifest, inspect controlplane logs for the startup summary that confirms tracing was configured:
+Apply the rendered manifest, restart the controlplane Deployment so the ConfigMap replacement takes effect, and then inspect logs for the startup summary that confirms tracing was configured:
 
 ```bash
+kubectl apply -f /tmp/nantian-gw-observability-enabled.yaml
+kubectl rollout restart deploy/nantian-gw-controlplane -n nantian-gw
+kubectl rollout status deploy/nantian-gw-controlplane -n nantian-gw
 kubectl logs -n nantian-gw deploy/nantian-gw-controlplane | rg "configured controlplane tracing"
 ```
 
