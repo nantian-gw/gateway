@@ -143,6 +143,7 @@ func (r *Reconciler) Reconcile(ctx context.Context) error {
 		span.RecordError(gwErr)
 		span.SetStatus(codes.Error, gwErr.Error())
 	}
+	span.SetAttributes(attribute.Bool("infrastructure.gateway_services_failed", gwErr != nil))
 	r.logger.InfoContext(ctx, "infrastructure reconciler completed", "error", gwErr)
 	return gwErr
 }

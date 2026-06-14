@@ -200,7 +200,12 @@ func (r *ReconcilerRunner) runOnce(ctx context.Context, scopes ...ReconcilerRunn
 	defer span.End()
 
 	requestedScopes := newRunnerScopeSet(scopes...)
-	span.SetAttributes(attribute.StringSlice("reconciler.scopes", runnerScopeStrings(requestedScopes.sortedOrFull())))
+	requested := requestedScopes.sortedOrFull()
+	span.SetAttributes(
+		attribute.StringSlice("reconciler.scopes", runnerScopeStrings(requested)),
+		attribute.StringSlice("reconciler.scopes.requested", runnerScopeStrings(requested)),
+		attribute.Int("reconciler.scope_count", len(requested)),
+	)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -237,6 +242,11 @@ func (r *ReconcilerRunner) runOnce(ctx context.Context, scopes ...ReconcilerRunn
 		setGauge(r.metricsGauge(func(m *observability.Metrics) prometheus.Gauge {
 			return m.ReconcilerRunnerLastRunSuccess
 		}), 0)
+		span.SetAttributes(
+			attribute.StringSlice("reconciler.scopes.succeeded", runnerScopeStrings(successfulScopes.sorted())),
+			attribute.StringSlice("reconciler.scopes.failed", runnerScopeStrings(failedScopes.sorted())),
+			attribute.Bool("reconciler.failed", !failedScopes.empty()),
+		)
 		r.scheduleRetry(failedScopes.sortedOrFull()...)
 		return
 	}
@@ -245,6 +255,11 @@ func (r *ReconcilerRunner) runOnce(ctx context.Context, scopes ...ReconcilerRunn
 	setGauge(r.metricsGauge(func(m *observability.Metrics) prometheus.Gauge {
 		return m.ReconcilerRunnerLastRunSuccess
 	}), 1)
+	span.SetAttributes(
+		attribute.StringSlice("reconciler.scopes.succeeded", runnerScopeStrings(successfulScopes.sorted())),
+		attribute.StringSlice("reconciler.scopes.failed", runnerScopeStrings(failedScopes.sorted())),
+		attribute.Bool("reconciler.failed", !failedScopes.empty()),
+	)
 }
 
 func (r *ReconcilerRunner) runScope(ctx context.Context, scope ReconcilerRunnerScope) bool {

@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"slices"
@@ -251,6 +252,100 @@ func TestInfrastructureReconcileCreatesSpan(t *testing.T) {
 	}
 }
 
+func TestInfrastructureReconcileSpanRecordsGatewayServiceResult(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	reconciler := New(newInfrastructureClientBuilder(newScheme(t)).Build(), "gateway.networking.k8s.io/nantian-gw", discardLogger())
+	_ = reconciler.Reconcile(context.Background())
+
+	span, ok := spanByName(exporter.GetSpans(), "controlplane.infrastructure.reconcile")
+	if !ok {
+		t.Fatal("expected infrastructure reconcile span")
+	}
+	if !spanHasAttr(span, "infrastructure.gateway_services_failed") {
+		t.Fatal("expected infrastructure.gateway_services_failed attribute")
+	}
+	if got := spanBoolAttr(span, "infrastructure.gateway_services_failed"); got {
+		t.Fatal("expected empty infrastructure reconcile to complete without gateway service failure")
+	}
+}
+
+func TestInfrastructureReconcileSpanRecordsGatewayServiceFailure(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	baseClient := newInfrastructureClientBuilder(scheme).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "public",
+					Namespace: "default",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "http",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+					}},
+				},
+			},
+		).
+		Build()
+
+	wantErr := errors.New("gateway services list failed")
+	reconciler := New(
+		validatingClient{
+			Client: baseClient,
+			listValidators: map[reflect.Type]func(client.ListOptions) error{
+				reflect.TypeOf(&corev1.ServiceList{}): func(opts client.ListOptions) error {
+					wantLabels := map[string]string{
+						managedByLabel:   managedByValue,
+						serviceRoleLabel: serviceRoleGateway,
+					}
+					if opts.LabelSelector == nil || !opts.LabelSelector.Matches(labels.Set(wantLabels)) {
+						return nil
+					}
+					return wantErr
+				},
+			},
+		},
+		string(controllerName),
+		discardLogger(),
+	)
+
+	err := reconciler.Reconcile(context.Background())
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("Reconcile error = %v, want %v", err, wantErr)
+	}
+
+	span, ok := spanByName(exporter.GetSpans(), "controlplane.infrastructure.reconcile")
+	if !ok {
+		t.Fatal("expected infrastructure reconcile span")
+	}
+	if !spanHasAttr(span, "infrastructure.gateway_services_failed") {
+		t.Fatal("expected infrastructure.gateway_services_failed attribute")
+	}
+	if got := spanBoolAttr(span, "infrastructure.gateway_services_failed"); !got {
+		t.Fatal("expected infrastructure reconcile to record gateway service failure")
+	}
+}
+
 func TestSharedNodePortForStaysInsideDefaultNodePortRange(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -284,4 +379,31 @@ func spanNames(spans tracetest.SpanStubs) []string {
 		names = append(names, span.Name)
 	}
 	return names
+}
+
+func spanByName(spans tracetest.SpanStubs, name string) (tracetest.SpanStub, bool) {
+	for _, span := range spans {
+		if span.Name == name {
+			return span, true
+		}
+	}
+	return tracetest.SpanStub{}, false
+}
+
+func spanBoolAttr(span tracetest.SpanStub, key string) bool {
+	for _, attr := range span.Attributes {
+		if string(attr.Key) == key {
+			return attr.Value.AsBool()
+		}
+	}
+	return false
+}
+
+func spanHasAttr(span tracetest.SpanStub, key string) bool {
+	for _, attr := range span.Attributes {
+		if string(attr.Key) == key {
+			return true
+		}
+	}
+	return false
 }

@@ -91,6 +91,10 @@ type snapshotRouteObjectKeys struct {
 	tls  []client.ObjectKey
 }
 
+func (k snapshotRouteObjectKeys) count() int {
+	return len(k.http) + len(k.grpc) + len(k.tcp) + len(k.udp) + len(k.tls)
+}
+
 type snapshotPendingBuild struct {
 	scope                snapshotBuildScope
 	attachmentNamespaces map[string]struct{}

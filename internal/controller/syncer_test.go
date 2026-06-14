@@ -265,6 +265,74 @@ func TestSyncerPublishSnapshotCreatesSpan(t *testing.T) {
 	}
 }
 
+func TestSyncerPublishSnapshotSpanRecordsBuildShape(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	scheme := runtime.NewScheme()
+	mustAddToScheme(t, scheme, gatewayv1.Install)
+	mustAddToScheme(t, scheme, gatewayv1alpha2.Install)
+	mustAddToScheme(t, scheme, gatewayv1beta1.Install)
+	mustAddToScheme(t, scheme, corev1.AddToScheme)
+	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	store := ir.NewSnapshotStore(logger)
+	syncer := NewSyncer(
+		newControllerClientBuilder(scheme).Build(),
+		translator.New("gateway.networking.k8s.io/nantian-gw", logger),
+		store,
+		testMetrics(),
+		0,
+		logger,
+	)
+
+	_, _ = syncer.publishSnapshotWithScope(
+		context.Background(),
+		snapshotBuildScopeRoutes,
+		[]string{"apps"},
+		[]string{"backends"},
+		[]client.ObjectKey{{Namespace: "default", Name: "edge"}},
+		[]client.ObjectKey{{Namespace: "default", Name: "echo"}},
+		nil,
+		snapshotRouteObjectKeys{
+			http: []client.ObjectKey{{Namespace: "default", Name: "echo"}},
+		},
+	)
+
+	span, ok := spanByName(exporter.GetSpans(), "controlplane.syncer.publish_snapshot")
+	if !ok {
+		t.Fatal("expected publish snapshot span")
+	}
+	if got := spanStringAttr(span, "snapshot.scope"); got != snapshotBuildScopeRoutes.String() {
+		t.Fatalf("snapshot scope = %q, want %q", got, snapshotBuildScopeRoutes.String())
+	}
+	if got := spanIntAttr(span, "snapshot.attachment_namespace_count"); got != 1 {
+		t.Fatalf("attachment namespace count = %d, want 1", got)
+	}
+	if got := spanIntAttr(span, "snapshot.backend_namespace_count"); got != 1 {
+		t.Fatalf("backend namespace count = %d, want 1", got)
+	}
+	if got := spanIntAttr(span, "snapshot.gateway_key_count"); got != 1 {
+		t.Fatalf("gateway key count = %d, want 1", got)
+	}
+	if got := spanIntAttr(span, "snapshot.service_key_count"); got != 1 {
+		t.Fatalf("service key count = %d, want 1", got)
+	}
+	if got := spanIntAttr(span, "snapshot.service_import_key_count"); got != 0 {
+		t.Fatalf("service import key count = %d, want 0", got)
+	}
+	if got := spanIntAttr(span, "snapshot.route_key_count"); got != 1 {
+		t.Fatalf("route key count = %d, want 1", got)
+	}
+	if got := spanBoolAttr(span, "snapshot.published"); !got {
+		t.Fatal("expected snapshot span to record publish=true")
+	}
+}
+
 func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 	scheme := runtime.NewScheme()
 	mustAddToScheme(t, scheme, gatewayv1.Install)

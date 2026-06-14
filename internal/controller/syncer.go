@@ -189,7 +189,15 @@ func (s *Syncer) publishSnapshotWithScope(
 	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/controller")
 	ctx, span := tracer.Start(ctx, "controlplane.syncer.publish_snapshot")
 	defer span.End()
-	span.SetAttributes(attribute.String("snapshot.scope", scope.String()))
+	span.SetAttributes(
+		attribute.String("snapshot.scope", scope.String()),
+		attribute.Int("snapshot.attachment_namespace_count", len(attachmentNamespaces)),
+		attribute.Int("snapshot.backend_namespace_count", len(backendNamespaces)),
+		attribute.Int("snapshot.gateway_key_count", len(gatewayKeys)),
+		attribute.Int("snapshot.service_key_count", len(serviceKeys)),
+		attribute.Int("snapshot.service_import_key_count", len(serviceImportKeys)),
+		attribute.Int("snapshot.route_key_count", routeKeys.count()),
+	)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()

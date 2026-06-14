@@ -308,6 +308,73 @@ func TestReconcilerRunnerCreatesScopeSpans(t *testing.T) {
 	}
 }
 
+func TestReconcilerRunnerRunSpanRecordsScopeResults(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	runner := NewReconcilerRunner(
+		time.Second,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		testReconcilerRunnerMetrics(),
+		NewScopedReconciler("infra", staticReconciler{}, ReconcilerRunnerScopeInfra),
+	)
+
+	runner.runOnce(context.Background(), ReconcilerRunnerScopeInfra)
+
+	runSpan, ok := spanByName(exporter.GetSpans(), "controlplane.reconciler_runner.run")
+	if !ok {
+		t.Fatal("expected run span")
+	}
+	if got := spanStringSliceAttr(runSpan, "reconciler.scopes.requested"); !slices.Equal(got, []string{"infra"}) {
+		t.Fatalf("requested scopes = %v, want [infra]", got)
+	}
+	if got := spanIntAttr(runSpan, "reconciler.scope_count"); got != 1 {
+		t.Fatalf("scope count = %d, want 1", got)
+	}
+	if got := spanStringSliceAttr(runSpan, "reconciler.scopes.succeeded"); !slices.Equal(got, []string{"infra"}) {
+		t.Fatalf("succeeded scopes = %v, want [infra]", got)
+	}
+	if got := spanStringSliceAttr(runSpan, "reconciler.scopes.failed"); !slices.Equal(got, []string{}) {
+		t.Fatalf("failed scopes = %v, want []", got)
+	}
+	if got := spanBoolAttr(runSpan, "reconciler.failed"); got {
+		t.Fatal("expected successful run span")
+	}
+}
+
+func TestReconcilerRunnerRunSpanRecordsFailureResults(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	runner := NewReconcilerRunner(
+		time.Second,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		testReconcilerRunnerMetrics(),
+		NewScopedReconciler("infra", staticReconciler{err: errors.New("boom")}, ReconcilerRunnerScopeInfra),
+	)
+
+	runner.SetRetryBackoff(time.Hour)
+	defer runner.stopAsyncTriggers()
+	runner.runOnce(context.Background(), ReconcilerRunnerScopeInfra)
+
+	runSpan, ok := spanByName(exporter.GetSpans(), "controlplane.reconciler_runner.run")
+	if !ok {
+		t.Fatal("expected run span")
+	}
+	if got := spanStringSliceAttr(runSpan, "reconciler.scopes.failed"); !slices.Equal(got, []string{"infra"}) {
+		t.Fatalf("failed scopes = %v, want [infra]", got)
+	}
+	if got := spanBoolAttr(runSpan, "reconciler.failed"); !got {
+		t.Fatal("expected failed run span")
+	}
+}
+
 func TestReconcilerRunnerScopesForSnapshotBuildScope(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -464,6 +531,51 @@ func spanNames(spans tracetest.SpanStubs) []string {
 		names = append(names, span.Name)
 	}
 	return names
+}
+
+func spanByName(spans tracetest.SpanStubs, name string) (tracetest.SpanStub, bool) {
+	for _, span := range spans {
+		if span.Name == name {
+			return span, true
+		}
+	}
+	return tracetest.SpanStub{}, false
+}
+
+func spanStringAttr(span tracetest.SpanStub, key string) string {
+	for _, attr := range span.Attributes {
+		if string(attr.Key) == key {
+			return attr.Value.AsString()
+		}
+	}
+	return ""
+}
+
+func spanStringSliceAttr(span tracetest.SpanStub, key string) []string {
+	for _, attr := range span.Attributes {
+		if string(attr.Key) == key {
+			return attr.Value.AsStringSlice()
+		}
+	}
+	return nil
+}
+
+func spanBoolAttr(span tracetest.SpanStub, key string) bool {
+	for _, attr := range span.Attributes {
+		if string(attr.Key) == key {
+			return attr.Value.AsBool()
+		}
+	}
+	return false
+}
+
+func spanIntAttr(span tracetest.SpanStub, key string) int64 {
+	for _, attr := range span.Attributes {
+		if string(attr.Key) == key {
+			return attr.Value.AsInt64()
+		}
+	}
+	return 0
 }
 
 func testReconcilerRunnerMetrics() *observability.Metrics {
