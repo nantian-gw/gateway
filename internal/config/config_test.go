@@ -209,7 +209,7 @@ func TestAdminOperabilitySettingsRespectConfiguredValues(t *testing.T) {
 			Enabled:      true,
 			Endpoint:     "otel-collector:4317",
 			Insecure:     true,
-			SamplerRatio: 0.35,
+			SamplerRatio: float64Ptr(0.35),
 			Headers: map[string]string{
 				"authorization": "Bearer token",
 			},
@@ -230,17 +230,43 @@ func TestAdminOperabilitySettingsRespectConfiguredValues(t *testing.T) {
 	}
 }
 
+func float64Ptr(v float64) *float64 {
+	return &v
+}
+
 func TestTracingSamplerRatioClampsOutOfRangeValues(t *testing.T) {
 	t.Parallel()
 
-	cfg := &Config{Tracing: TracingConfig{SamplerRatio: 7}}
+	high := 7.0
+	cfg := &Config{Tracing: TracingConfig{SamplerRatio: &high}}
 	if got := cfg.TracingSamplerRatio(); got != 1.0 {
 		t.Fatalf("unexpected clamped high tracing sampler ratio: %v", got)
 	}
 
-	cfg = &Config{Tracing: TracingConfig{SamplerRatio: -2}}
+	low := -2.0
+	cfg = &Config{Tracing: TracingConfig{SamplerRatio: &low}}
 	if got := cfg.TracingSamplerRatio(); got != 0.0 {
 		t.Fatalf("unexpected clamped low tracing sampler ratio: %v", got)
+	}
+}
+
+func TestLoadPreservesExplicitZeroTracingSamplerRatio(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte("tracing:\n  samplerRatio: 0\n")
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if got := cfg.TracingSamplerRatio(); got != 0.0 {
+		t.Fatalf("unexpected explicit zero tracing sampler ratio: %v", got)
 	}
 }
 

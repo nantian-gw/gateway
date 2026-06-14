@@ -131,7 +131,7 @@ type TracingConfig struct {
 	Enabled      bool              `yaml:"enabled"`
 	Endpoint     string            `yaml:"endpoint"`
 	Insecure     bool              `yaml:"insecure"`
-	SamplerRatio float64           `yaml:"samplerRatio"`
+	SamplerRatio *float64          `yaml:"samplerRatio"`
 	Headers      map[string]string `yaml:"headers"`
 }
 
@@ -298,8 +298,9 @@ func Load(path string) (*Config, error) {
 	if cfg.Pprof.Addr == "" {
 		cfg.Pprof.Addr = "127.0.0.1:6060"
 	}
-	if cfg.Tracing.SamplerRatio == 0 {
-		cfg.Tracing.SamplerRatio = 1.0
+	if cfg.Tracing.SamplerRatio == nil {
+		ratio := 1.0
+		cfg.Tracing.SamplerRatio = &ratio
 	}
 
 	return &cfg, nil
@@ -413,14 +414,14 @@ func (c *Config) DashboardCapabilities() ResolvedDashboardCapabilities {
 
 func (c *Config) TracingSamplerRatio() float64 {
 	switch {
-	case c.Tracing.SamplerRatio < 0:
-		return 0
-	case c.Tracing.SamplerRatio > 1:
+	case c.Tracing.SamplerRatio == nil:
 		return 1
-	case c.Tracing.SamplerRatio == 0:
+	case *c.Tracing.SamplerRatio < 0:
+		return 0
+	case *c.Tracing.SamplerRatio > 1:
 		return 1
 	default:
-		return c.Tracing.SamplerRatio
+		return *c.Tracing.SamplerRatio
 	}
 }
 
