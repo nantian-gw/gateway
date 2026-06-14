@@ -22,15 +22,42 @@ type tokenBucket struct {
 	lastRefill time.Time
 }
 
-func newRateLimiter(rps, burst int64) *rateLimiter {
+func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
 	if rps <= 0 {
 		return nil
 	}
-	if burst <= 0 {
-		burst = rps
+
+	rate := float64(rps)
+	burst := rps
+	switch v := burstOrWindow.(type) {
+	case int:
+		if v > 0 {
+			burst = int64(v)
+		}
+	case int64:
+		if v > 0 {
+			burst = v
+		}
+	case uint:
+		if v > 0 {
+			burst = int64(v)
+		}
+	case uint64:
+		if v > 0 {
+			burst = int64(v)
+		}
+	case time.Duration:
+		if v > 0 {
+			// Legacy callers pass a fixed window. Model the same effective limit
+			// with a token bucket by refilling rps tokens per window.
+			rate = float64(rps) / v.Seconds()
+		}
+	default:
+		// Unknown input types fall back to the RPS-derived burst.
 	}
+
 	return &rateLimiter{
-		rate:   float64(rps),
+		rate:   rate,
 		burst:  float64(burst),
 		now:    func() time.Time { return time.Now().UTC() },
 		client: make(map[string]tokenBucket),
