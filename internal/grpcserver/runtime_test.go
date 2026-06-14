@@ -88,6 +88,15 @@ func TestRuntimeServerOptionsFromConfigFallsBackForNonPositiveSnapshotSendTimeou
 	}
 }
 
+func TestRuntimeServerOptionsFromConfigIncludesTracingStatsHandler(t *testing.T) {
+	t.Parallel()
+
+	opts, _ := runtimeServerOptionsFromConfig(config.GRPCRuntimeConfig{})
+	if len(opts) != 3 {
+		t.Fatalf("unexpected runtime server option count: %d", len(opts))
+	}
+}
+
 type appliedServerOptions struct {
 	keepaliveTime         time.Duration
 	keepaliveTimeout      time.Duration

@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
@@ -53,6 +54,7 @@ func runtimeServerOptionsFromConfig(cfg config.GRPCRuntimeConfig) ([]grpc.Server
 	return []grpc.ServerOption{
 		grpc.KeepaliveParams(settings.keepaliveParams),
 		grpc.KeepaliveEnforcementPolicy(settings.keepalivePolicy),
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 	}, settings
 }
 

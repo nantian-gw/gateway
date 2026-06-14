@@ -107,6 +107,7 @@ func NewServer(
 	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst); rl != nil {
 		handler = rl.middleware(handler)
 	}
+	handler = wrapTracingHandler(handler, "admin")
 	handler = wrapMetricsHandler(handler, opts.Metrics)
 
 	s.server = &http.Server{

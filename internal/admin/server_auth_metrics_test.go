@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/nantian-gw/gateway/internal/observability"
 )
@@ -186,6 +189,31 @@ func TestAdminRateLimiterBucketsByClientIPWithoutPort(t *testing.T) {
 	now = now.Add(time.Second)
 	if !rl.allow("203.0.113.10:3000") {
 		t.Fatal("expected bucket refill after one second")
+	}
+}
+
+func TestAdminTracingMiddlewareCreatesRequestSpan(t *testing.T) {
+	t.Parallel()
+
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	handler := wrapTracingHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+	}), "summary")
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/v1/summary", nil))
+
+	spans := exporter.GetSpans()
+	if len(spans) != 1 {
+		t.Fatalf("unexpected span count: %d", len(spans))
+	}
+	if spans[0].Name != "admin GET /v1/summary" {
+		t.Fatalf("unexpected span name: %q", spans[0].Name)
 	}
 }
 
