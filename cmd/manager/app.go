@@ -98,6 +98,22 @@ func controlplaneTracingConfig(cfg *config.Config) observability.TracingConfig {
 	}
 }
 
+func logControlplaneTracingStatus(logger *slog.Logger, cfg observability.TracingConfig) {
+	if logger == nil {
+		return
+	}
+
+	summary := observability.SummarizeTracing(cfg)
+	logger.Info(
+		"configured controlplane tracing",
+		"enabled", summary.Enabled,
+		"endpoint", summary.Endpoint,
+		"insecure", summary.Insecure,
+		"sampler_ratio", summary.SamplerRatio,
+		"header_count", summary.HeaderCount,
+	)
+}
+
 func run(configPath string) error {
 	cfg, err := config.Load(configPath)
 	if err != nil {
@@ -113,10 +129,12 @@ func run(configPath string) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	tracingShutdown, err := observability.ConfigureTracing(ctx, controlplaneTracingConfig(cfg))
+	tracingCfg := controlplaneTracingConfig(cfg)
+	tracingShutdown, err := observability.ConfigureTracing(ctx, tracingCfg)
 	if err != nil {
 		return fmt.Errorf("configure tracing: %w", err)
 	}
+	logControlplaneTracingStatus(logger, tracingCfg)
 	defer func() {
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
 		defer shutdownCancel()

@@ -20,6 +20,25 @@ type TracingConfig struct {
 	Headers      map[string]string
 }
 
+type TracingSummary struct {
+	Enabled      bool
+	Endpoint     string
+	Insecure     bool
+	SamplerRatio float64
+	HeaderCount  int
+}
+
+func SummarizeTracing(cfg TracingConfig) TracingSummary {
+	headers := traceHeaders(cfg.Headers)
+	return TracingSummary{
+		Enabled:      cfg.Enabled,
+		Endpoint:     strings.TrimSpace(cfg.Endpoint),
+		Insecure:     cfg.Insecure,
+		SamplerRatio: clampSamplerRatio(cfg.SamplerRatio),
+		HeaderCount:  len(headers),
+	}
+}
+
 func ConfigureTracing(ctx context.Context, cfg TracingConfig) (func(context.Context) error, error) {
 	if !cfg.Enabled {
 		return func(context.Context) error { return nil }, nil

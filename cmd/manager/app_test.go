@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"log/slog"
+	"strings"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -112,6 +114,32 @@ func TestControlplaneTracingConfigUsesNormalizedConfigValues(t *testing.T) {
 	}
 	if got.Headers["authorization"] != "Bearer token" {
 		t.Fatalf("unexpected tracing headers: %#v", got.Headers)
+	}
+}
+
+func TestLogControlplaneTracingStatusRedactsHeaderValues(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+
+	logControlplaneTracingStatus(logger, observability.TracingConfig{
+		Enabled:      true,
+		Endpoint:     "otel-collector:4317",
+		Insecure:     true,
+		SamplerRatio: 0.25,
+		Headers: map[string]string{
+			"authorization": "Bearer secret-token",
+		},
+	})
+
+	output := buf.String()
+	if !strings.Contains(output, "configured controlplane tracing") {
+		t.Fatalf("expected tracing log message, got %q", output)
+	}
+	if !strings.Contains(output, "header_count=1") {
+		t.Fatalf("expected tracing header count in log output, got %q", output)
+	}
+	if strings.Contains(output, "secret-token") {
+		t.Fatalf("expected tracing log to redact header values, got %q", output)
 	}
 }
 

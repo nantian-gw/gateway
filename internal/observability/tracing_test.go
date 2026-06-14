@@ -43,3 +43,34 @@ func TestConfigureTracingClampsSamplerAndAppliesHeaders(t *testing.T) {
 		t.Fatalf("unexpected clamped sampler ratio: %v", got)
 	}
 }
+
+func TestSummarizeTracingNormalizesFields(t *testing.T) {
+	t.Parallel()
+
+	summary := SummarizeTracing(TracingConfig{
+		Enabled:      true,
+		Endpoint:     " otel-collector:4317 ",
+		Insecure:     true,
+		SamplerRatio: 5,
+		Headers: map[string]string{
+			" authorization ": " Bearer token ",
+			"":                "ignored",
+		},
+	})
+
+	if !summary.Enabled {
+		t.Fatal("expected tracing summary to stay enabled")
+	}
+	if summary.Endpoint != "otel-collector:4317" {
+		t.Fatalf("summary endpoint = %q, want otel-collector:4317", summary.Endpoint)
+	}
+	if !summary.Insecure {
+		t.Fatal("expected insecure transport to be preserved")
+	}
+	if summary.SamplerRatio != 1 {
+		t.Fatalf("summary sampler ratio = %v, want 1", summary.SamplerRatio)
+	}
+	if summary.HeaderCount != 1 {
+		t.Fatalf("summary header count = %d, want 1", summary.HeaderCount)
+	}
+}
