@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../production
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: nantian-gw-controlplane-config
+    namespace: nantian-gw
+    behavior: replace
+    files:
+      - config.yaml=controlplane-config.yaml
