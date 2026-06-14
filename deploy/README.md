@@ -14,6 +14,7 @@ deploy/
     overlays/
       kind/
       kind-hostnetwork/
+      observability-enabled/
       production/
   observability/
     grafana/
@@ -31,6 +32,8 @@ deploy/
   Kind high-concurrency stress test entry point. It reuses `kind/` but places the dataplane in host network, adjusting rolling strategy and resource limits to reduce the impact of Services, conntrack, and CFS quotas on tail latency.
 - `deploy/kubernetes/overlays/production/`
   Hardened overlay for long-term environments, containing stricter configuration, patches, Secret templates, and optional alert rules.
+- `deploy/kubernetes/overlays/observability-enabled/`
+  Controlplane tracing entry point for operators who want OTLP trace export without changing the default production overlay. It reuses `production/` and replaces only the controlplane ConfigMap content with a tracing-enabled example configuration.
 - `deploy/observability/grafana/`
   Observability-related assets, currently primarily Grafana JSON.
 
@@ -68,6 +71,8 @@ Responsibilities in `deploy/kubernetes/overlays/`:
 | `overlays/production/kustomization.yaml` | Production overlay entry point |
 | `overlays/production/controlplane-config.yaml` | Production controlplane configuration replacement |
 | `overlays/production/dataplane-config.yaml` | Production dataplane configuration replacement |
+| `overlays/observability-enabled/kustomization.yaml` | Observability-enabled entry point, reuses `production` |
+| `overlays/observability-enabled/controlplane-config.yaml` | Tracing-enabled controlplane configuration replacement example |
 | `overlays/production/patch-*.yaml` | Tightens key Secret mounts from optional to required |
 | `overlays/production/*.secret.example.yaml` | Production-required Secret templates |
 | `overlays/production/controlplane-alert-rules.prometheusrule.yaml` | Optional alert rule template |
@@ -193,12 +198,14 @@ If you're troubleshooting "why doesn't a certain Gateway have an external addres
 ## When to Use Which Entry Point
 
 - Local or Kind bring-up:
-  `kubectl kustomize deploy/kubernetes/overlays/kind`
+  `kustomize build deploy/kubernetes/overlays/kind --load-restrictor LoadRestrictionsNone`
 - Kind high-concurrency stress test:
-  `kubectl kustomize deploy/kubernetes/overlays/kind-hostnetwork`
+  `kustomize build deploy/kubernetes/overlays/kind-hostnetwork --load-restrictor LoadRestrictionsNone`
   This entry point places the dataplane directly on the node network. During stress testing, hit the Gateway listener port on the Kind node container IP, e.g., HTTP listener `http://<node-ip>/`, to isolate the impact of Services, kube-proxy, and conntrack on tail latency.
 - Long-term environments:
-  `kubectl apply -k deploy/kubernetes/overlays/production`
+  `kustomize build deploy/kubernetes/overlays/production --load-restrictor LoadRestrictionsNone | kubectl apply -f -`
+- Long-term environments with controlplane OTLP tracing enabled:
+  `kustomize build deploy/kubernetes/overlays/observability-enabled --load-restrictor LoadRestrictionsNone | kubectl apply -f -`
 - Release single-file install manifest:
   Rendered from the Kustomize entry point corresponding to the install profile via `scripts/render-release-manifest.sh --profile <profile>` as `install.yaml`. The current profile matrix is in `docs/user/install-profiles.md`
   The current render script only replaces controlplane / dataplane images; dashboard resources come from base manifests. In production environments where the dashboard is needed, patch the `nantian-gw-dashboard` image to a published, digest-pinned image in your own overlay or release pipeline.
@@ -208,3 +215,34 @@ If you're troubleshooting "why doesn't a certain Gateway have an external addres
   Use `deploy/observability/grafana/nantian-gw-observability-dashboard.json`
 
 If you are choosing a business traffic entry point rather than an install entry point, see `docs/user/traffic-profiles.md`. That document provides north-south HTTP/gRPC, north-south TCP/UDP, and east-west service parent examples separately.
+
+## Controlplane Tracing Verification
+
+Use `deploy/kubernetes/overlays/observability-enabled/` when you want the production install baseline plus a tracing-enabled controlplane configuration example. This overlay reuses `overlays/production/` and replaces only `nantian-gw-controlplane-config`.
+
+Render the overlay with the same load-restrictor setting already used by repository scripts:
+
+```bash
+kustomize build deploy/kubernetes/overlays/observability-enabled \
+  --load-restrictor LoadRestrictionsNone \
+  >/tmp/nantian-gw-observability-enabled.yaml
+```
+
+Then verify the rendered manifest contains the tracing block and endpoint fields from your configured example:
+
+```bash
+rg -n "tracing:|endpoint:|samplerRatio" \
+  /tmp/nantian-gw-observability-enabled.yaml
+```
+
+After applying the rendered manifest, inspect controlplane logs for the startup summary that confirms tracing was configured:
+
+```bash
+kubectl logs -n nantian-gw deploy/nantian-gw-controlplane | rg "configured controlplane tracing"
+```
+
+Troubleshooting:
+
+- Wrong overlay used: if the rendered manifest or live ConfigMap does not contain a `tracing:` block, you likely applied `overlays/production/` instead of `overlays/observability-enabled/`.
+- OTLP endpoint unreachable: if tracing is enabled but spans do not arrive, confirm the endpoint in `deploy/kubernetes/overlays/observability-enabled/controlplane-config.yaml` resolves and accepts OTLP/gRPC traffic from the `nantian-gw` namespace.
+- Tracing header values intentionally redacted from startup logs: startup logs summarize tracing configuration, but do not echo sensitive header values; inspect the applied ConfigMap or Secret-backed configuration source instead of expecting those values in logs.

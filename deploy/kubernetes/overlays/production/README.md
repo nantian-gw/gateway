@@ -2,7 +2,7 @@
 
 This directory provides a Kustomize overlay for long-term environments, enabling a production-oriented install baseline without polluting the `deploy/kubernetes/base/` default baseline.
 
-The matrix of install profiles, Secrets, NetworkPolicy, Services, ports, HPA, PDB, and resource requests/limits can be found in [Install Profile Matrix](../../../../docs/user/install-profiles.md). This directory is the current Kustomize source for the `single-cluster-prod`, `multi-replica-prod`, and `observability-enabled` profiles.
+The matrix of install profiles, Secrets, NetworkPolicy, Services, ports, HPA, PDB, and resource requests/limits can be found in [Install Profile Matrix](../../../../docs/user/install-profiles.md). This directory is the current Kustomize source for the `single-cluster-prod` and `multi-replica-prod` profiles. The `observability-enabled` profile now lives in `../observability-enabled/` and reuses this overlay as its base.
 
 The current overlay does the following by default:
 
@@ -52,7 +52,7 @@ This overlay is a production-oriented install baseline, not a guarantee that cap
 First preview the final manifests:
 
 ```bash
-kubectl kustomize deploy/kubernetes/overlays/production
+kustomize build deploy/kubernetes/overlays/production --load-restrictor LoadRestrictionsNone
 ```
 
 To render a release single-file manifest using the same profile source:
@@ -68,7 +68,9 @@ To render a release single-file manifest using the same profile source:
 Apply after confirming correctness:
 
 ```bash
-kubectl apply -k deploy/kubernetes/overlays/production
+kustomize build deploy/kubernetes/overlays/production \
+  --load-restrictor LoadRestrictionsNone \
+  | kubectl apply -f -
 ```
 
 ## Production Environment Conformance Prerequisites

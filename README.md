@@ -60,7 +60,9 @@ See the [Helm chart repository](https://github.com/nantian-gw/helm-charts) for v
 Repository-local Kubernetes overlays are available under `deploy/kubernetes/`:
 
 ```bash
-kubectl apply -k deploy/kubernetes/overlays/production
+kustomize build deploy/kubernetes/overlays/production \
+  --load-restrictor LoadRestrictionsNone \
+  | kubectl apply -f -
 ```
 
 ### Requirements
@@ -118,6 +120,7 @@ The gateway control plane exposes operational surfaces for production use:
 
 - Admin APIs for health, topology, runtime state, and diagnostics.
 - Prometheus metrics for controller, admin, and gRPC publication paths.
+- Controlplane tracing can be enabled with `deploy/kubernetes/overlays/observability-enabled/` when you want OTLP trace export from the controlplane without changing the default production overlay.
 - Deployment overlays under `deploy/kubernetes/`.
 - Observability assets under `deploy/observability/`.
 - Generated admin API contracts under `docs/contracts/`.
