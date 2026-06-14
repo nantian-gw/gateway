@@ -156,3 +156,27 @@ func TestInfrastructureEndpointSupportsFilteringSortingAndPagination(t *testing.
 		t.Fatalf("expected 400 for invalid infrastructure offset, got %d", recorder.Code)
 	}
 }
+
+func TestInfrastructureEmitsPaginationHeaders(t *testing.T) {
+	t.Parallel()
+
+	server := newInfrastructureTestServer(t)
+
+	var report infrastructure.InfrastructureReport
+	recorder := performRequest(t, server, http.MethodGet, "/v1/infrastructure?kind=service&offset=1&limit=2", &report)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "2" {
+		t.Fatalf("unexpected page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "1" {
+		t.Fatalf("unexpected page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "5" {
+		t.Fatalf("unexpected total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "true" {
+		t.Fatalf("unexpected has-next-page header: %q", got)
+	}
+}

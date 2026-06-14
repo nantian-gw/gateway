@@ -6,6 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
@@ -183,6 +186,11 @@ func (s *Syncer) publishSnapshotWithScope(
 	serviceImportKeys []client.ObjectKey,
 	routeKeys snapshotRouteObjectKeys,
 ) (bool, error) {
+	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/controller")
+	ctx, span := tracer.Start(ctx, "controlplane.syncer.publish_snapshot")
+	defer span.End()
+	span.SetAttributes(attribute.String("snapshot.scope", scope.String()))
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -210,6 +218,8 @@ func (s *Syncer) publishSnapshotWithScope(
 			incCounter(metrics.BuildFailures)
 			setGauge(metrics.LastBuildSuccess, 0)
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to rebuild snapshot", "error", err)
 		return false, err
 	}
@@ -222,8 +232,10 @@ func (s *Syncer) publishSnapshotWithScope(
 		if metrics != nil {
 			incCounter(metrics.PublishedTotal)
 		}
+		span.SetAttributes(attribute.Bool("snapshot.published", true))
 		return true, nil
 	}
+	span.SetAttributes(attribute.Bool("snapshot.published", false))
 	return false, nil
 }
 

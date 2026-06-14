@@ -120,6 +120,59 @@ func TestServiceCatalogEndpointSupportsFilteringSortingAndPagination(t *testing.
 	}
 }
 
+func TestServiceCatalogClampLimitAndEmitPaginationHeaders(t *testing.T) {
+	t.Parallel()
+
+	manager := resourceManagerForTest(t)
+	createServiceForTest(t, manager, &corev1.Service{
+		TypeMeta:   metav1TypeMeta("v1", "Service"),
+		ObjectMeta: metav1ObjectMeta("ops", "metrics"),
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:       "prom",
+				Port:       9090,
+				Protocol:   corev1.ProtocolTCP,
+				TargetPort: intstr.FromString("prom"),
+			}},
+		},
+	})
+	createServiceForTest(t, manager, &corev1.Service{
+		TypeMeta:   metav1TypeMeta("v1", "Service"),
+		ObjectMeta: metav1ObjectMeta("default", "echo"),
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:       "udp",
+				Port:       53,
+				Protocol:   corev1.ProtocolUDP,
+				TargetPort: intstr.FromInt(53),
+			}},
+		},
+	})
+
+	server := newTestServerWithResourceManagerAndOptions(t, manager, Options{MaxListItems: 1})
+
+	var services []ServiceCatalogEntry
+	recorder := performRequest(t, server, http.MethodGet, "/v1/service-catalog?sort=name&limit=9&offset=0", &services)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if len(services) != 1 {
+		t.Fatalf("expected clamped service catalog page size of 1, got %+v", services)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "0" {
+		t.Fatalf("unexpected page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "3" {
+		t.Fatalf("unexpected total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "true" {
+		t.Fatalf("unexpected has-next-page header: %q", got)
+	}
+}
+
 func TestServiceCatalogListUsesDirectGetForExactMatch(t *testing.T) {
 	t.Parallel()
 
@@ -160,7 +213,7 @@ func TestServiceCatalogListCachesRepeatedNamespaceList(t *testing.T) {
 	}
 
 	for i := 0; i < 2; i++ {
-		items, err := manager.ListServiceCatalog(context.Background(), filter)
+		items, _, err := manager.ListServiceCatalog(context.Background(), filter, 0)
 		if err != nil {
 			t.Fatalf("list service catalog on iteration %d: %v", i, err)
 		}
@@ -191,10 +244,10 @@ func TestServiceCatalogListCacheSeparatesPagination(t *testing.T) {
 	second := first
 	second.Offset = 1
 
-	if _, err := manager.ListServiceCatalog(context.Background(), first); err != nil {
+	if _, _, err := manager.ListServiceCatalog(context.Background(), first, 0); err != nil {
 		t.Fatalf("list first service catalog page: %v", err)
 	}
-	if _, err := manager.ListServiceCatalog(context.Background(), second); err != nil {
+	if _, _, err := manager.ListServiceCatalog(context.Background(), second, 0); err != nil {
 		t.Fatalf("list second service catalog page: %v", err)
 	}
 	if got := counting.ListCalls(); got != 2 {

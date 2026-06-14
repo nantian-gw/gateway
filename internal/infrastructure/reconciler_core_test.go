@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -232,6 +236,21 @@ func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
 	}
 }
 
+func TestInfrastructureReconcileCreatesSpan(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	reconciler := New(newInfrastructureClientBuilder(newScheme(t)).Build(), "gateway.networking.k8s.io/nantian-gw", discardLogger())
+	_ = reconciler.Reconcile(context.Background())
+
+	if !slices.Contains(spanNames(exporter.GetSpans()), "controlplane.infrastructure.reconcile") {
+		t.Fatalf("expected infrastructure reconcile span")
+	}
+}
+
 func TestSharedNodePortForStaysInsideDefaultNodePortRange(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -257,4 +276,12 @@ func TestSharedNodePortForStaysInsideDefaultNodePortRange(t *testing.T) {
 			}
 		})
 	}
+}
+
+func spanNames(spans tracetest.SpanStubs) []string {
+	names := make([]string, 0, len(spans))
+	for _, span := range spans {
+		names = append(names, span.Name)
+	}
+	return names
 }

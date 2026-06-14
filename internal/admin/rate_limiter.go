@@ -1,30 +1,72 @@
 package admin
 
 import (
+	"math"
+	"net"
 	"net/http"
+	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
 type rateLimiter struct {
-	maxRequests int64
-	window      time.Duration
-
-	mu        sync.Mutex
-	lastReset time.Time
-	counters  map[string]*int64
+	rate   float64
+	burst  float64
+	now    func() time.Time
+	mu     sync.Mutex
+	client map[string]tokenBucket
 }
 
-func newRateLimiter(maxRequests int64, window time.Duration) *rateLimiter {
-	if maxRequests <= 0 || window <= 0 {
+type tokenBucket struct {
+	tokens     float64
+	lastRefill time.Time
+}
+
+func newRateLimiter(rps, burst int64) *rateLimiter {
+	if rps <= 0 {
 		return nil
 	}
-	return &rateLimiter{
-		maxRequests: maxRequests,
-		window:      window,
-		counters:    make(map[string]*int64),
+	if burst <= 0 {
+		burst = rps
 	}
+	return &rateLimiter{
+		rate:   float64(rps),
+		burst:  float64(burst),
+		now:    func() time.Time { return time.Now().UTC() },
+		client: make(map[string]tokenBucket),
+	}
+}
+
+func (rl *rateLimiter) allow(remoteAddr string) bool {
+	if rl == nil {
+		return true
+	}
+
+	key := normalizeClientIP(remoteAddr)
+	now := rl.now()
+
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	bucket := rl.client[key]
+	if bucket.lastRefill.IsZero() {
+		bucket.tokens = rl.burst
+		bucket.lastRefill = now
+	}
+
+	if elapsed := now.Sub(bucket.lastRefill).Seconds(); elapsed > 0 {
+		bucket.tokens = math.Min(rl.burst, bucket.tokens+elapsed*rl.rate)
+		bucket.lastRefill = now
+	}
+
+	if bucket.tokens < 1 {
+		rl.client[key] = bucket
+		return false
+	}
+
+	bucket.tokens--
+	rl.client[key] = bucket
+	return true
 }
 
 func (rl *rateLimiter) middleware(next http.Handler) http.Handler {
@@ -33,32 +75,28 @@ func (rl *rateLimiter) middleware(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := r.RemoteAddr
-
-		rl.mu.Lock()
-		now := time.Now().UTC()
-		if now.Sub(rl.lastReset) >= rl.window {
-			rl.counters = make(map[string]*int64)
-			rl.lastReset = now
-		}
-
-		counter, ok := rl.counters[key]
-		if !ok {
-			var c int64 = 1
-			rl.counters[key] = &c
-			rl.mu.Unlock()
+		if isProbePath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
-
-		count := atomic.AddInt64(counter, 1)
-		rl.mu.Unlock()
-
-		if count > rl.maxRequests {
+		if !rl.allow(r.RemoteAddr) {
 			http.Error(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
-
 		next.ServeHTTP(w, r)
 	})
+}
+
+func normalizeClientIP(remoteAddr string) string {
+	remoteAddr = strings.TrimSpace(remoteAddr)
+	if remoteAddr == "" {
+		return ""
+	}
+
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err == nil {
+		return host
+	}
+
+	return remoteAddr
 }

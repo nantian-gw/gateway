@@ -125,6 +125,49 @@ func TestLoadAppliesProductionDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadAppliesAdminOperabilityDefaults(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, []byte(""), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if got := cfg.AdminMaxListItems(); got != 1000 {
+		t.Fatalf("unexpected admin max list items: %d", got)
+	}
+	if got := cfg.AdminAuth.RateLimitBurst; got != 0 {
+		t.Fatalf("unexpected raw admin rate limit burst default: %d", got)
+	}
+	if got := cfg.AdminRateLimitBurst(); got != cfg.AdminAuth.RateLimitRPS {
+		t.Fatalf("unexpected effective admin rate limit burst default: %d", got)
+	}
+	if cfg.Tracing.Enabled {
+		t.Fatal("tracing should be disabled by default")
+	}
+	if got := cfg.TracingSamplerRatio(); got != 1.0 {
+		t.Fatalf("unexpected tracing sampler ratio default: %v", got)
+	}
+	if got := cfg.TracingHeaders(); len(got) != 0 {
+		t.Fatalf("unexpected tracing headers default: %#v", got)
+	}
+}
+
+func TestAdminRateLimitBurstFallsBackToRPSWhenUnset(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{AdminAuth: AdminAuthConfig{RateLimitRPS: 7}}
+	if got := cfg.AdminRateLimitBurst(); got != 7 {
+		t.Fatalf("unexpected effective admin rate limit burst: %d", got)
+	}
+}
+
 func TestGRPCTLSEnabledWhenCertificatesConfigured(t *testing.T) {
 	t.Parallel()
 
@@ -155,6 +198,171 @@ func TestAdminLimitsRespectConfiguredValues(t *testing.T) {
 	}
 	if got := cfg.AdminMaxResponseBodyBytes(); got != 16384 {
 		t.Fatalf("unexpected admin max response body bytes: %d", got)
+	}
+}
+
+func TestAdminOperabilitySettingsRespectConfiguredValues(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{
+		AdminLimits: AdminLimitsConfig{
+			MaxListItems:         250,
+			MaxRequestBodyBytes:  4096,
+			MaxResponseBodyBytes: 16384,
+		},
+		AdminAuth: AdminAuthConfig{
+			RateLimitRPS:   12,
+			RateLimitBurst: 36,
+		},
+		Tracing: TracingConfig{
+			Enabled:      true,
+			Endpoint:     "otel-collector:4317",
+			Insecure:     true,
+			SamplerRatio: float64Ptr(0.35),
+			Headers: map[string]string{
+				"authorization": "Bearer token",
+			},
+		},
+	}
+
+	if got := cfg.AdminMaxListItems(); got != 250 {
+		t.Fatalf("unexpected admin max list items: %d", got)
+	}
+	if got := cfg.AdminRateLimitBurst(); got != 36 {
+		t.Fatalf("unexpected admin rate limit burst: %d", got)
+	}
+	if got := cfg.TracingSamplerRatio(); got != 0.35 {
+		t.Fatalf("unexpected tracing sampler ratio: %v", got)
+	}
+	if got := cfg.TracingHeaders()["authorization"]; got != "Bearer token" {
+		t.Fatalf("unexpected tracing header value: %q", got)
+	}
+}
+
+func float64Ptr(v float64) *float64 {
+	return &v
+}
+
+func TestTracingSamplerRatioClampsOutOfRangeValues(t *testing.T) {
+	t.Parallel()
+
+	high := 7.0
+	cfg := &Config{Tracing: TracingConfig{SamplerRatio: &high}}
+	if got := cfg.TracingSamplerRatio(); got != 1.0 {
+		t.Fatalf("unexpected clamped high tracing sampler ratio: %v", got)
+	}
+
+	low := -2.0
+	cfg = &Config{Tracing: TracingConfig{SamplerRatio: &low}}
+	if got := cfg.TracingSamplerRatio(); got != 0.0 {
+		t.Fatalf("unexpected clamped low tracing sampler ratio: %v", got)
+	}
+}
+
+func TestLoadPreservesExplicitZeroTracingSamplerRatio(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte("tracing:\n  samplerRatio: 0\n")
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if got := cfg.TracingSamplerRatio(); got != 0.0 {
+		t.Fatalf("unexpected explicit zero tracing sampler ratio: %v", got)
+	}
+}
+
+func TestLoadParsesAdminOperabilityAndTracingSettings(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte(`
+adminLimits:
+  maxListItems: 250
+adminAuth:
+  rateLimitRPS: 12
+  rateLimitBurst: 36
+tracing:
+  enabled: true
+  endpoint: otel-collector:4317
+  insecure: true
+  samplerRatio: 0.25
+  headers:
+    " authorization ": " Bearer token "
+`)
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if got := cfg.AdminLimits.MaxListItems; got != 250 {
+		t.Fatalf("unexpected raw admin max list items: %d", got)
+	}
+	if got := cfg.AdminMaxListItems(); got != 250 {
+		t.Fatalf("unexpected effective admin max list items: %d", got)
+	}
+	if got := cfg.AdminAuth.RateLimitBurst; got != 36 {
+		t.Fatalf("unexpected raw admin rate limit burst: %d", got)
+	}
+	if got := cfg.AdminRateLimitBurst(); got != 36 {
+		t.Fatalf("unexpected effective admin rate limit burst: %d", got)
+	}
+	if !cfg.Tracing.Enabled {
+		t.Fatal("tracing should be enabled")
+	}
+	if got := cfg.Tracing.Endpoint; got != "otel-collector:4317" {
+		t.Fatalf("unexpected tracing endpoint: %q", got)
+	}
+	if !cfg.Tracing.Insecure {
+		t.Fatal("tracing insecure should be true")
+	}
+	if cfg.Tracing.SamplerRatio == nil {
+		t.Fatal("tracing sampler ratio pointer should be populated")
+	}
+	if got := *cfg.Tracing.SamplerRatio; got != 0.25 {
+		t.Fatalf("unexpected raw tracing sampler ratio: %v", got)
+	}
+	if got := cfg.TracingSamplerRatio(); got != 0.25 {
+		t.Fatalf("unexpected effective tracing sampler ratio: %v", got)
+	}
+	if got := cfg.Tracing.Headers[" authorization "]; got != " Bearer token " {
+		t.Fatalf("unexpected raw tracing header value: %q", got)
+	}
+	if got := cfg.TracingHeaders()["authorization"]; got != "Bearer token" {
+		t.Fatalf("unexpected effective tracing header value: %q", got)
+	}
+}
+
+func TestTracingHeadersTrimAndCopy(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{
+		Tracing: TracingConfig{
+			Headers: map[string]string{
+				" x-api-key ": " secret ",
+			},
+		},
+	}
+
+	headers := cfg.TracingHeaders()
+	if got := headers["x-api-key"]; got != "secret" {
+		t.Fatalf("unexpected trimmed tracing header: %q", got)
+	}
+	headers["x-api-key"] = "mutated"
+	if got := cfg.Tracing.Headers[" x-api-key "]; got != " secret " {
+		t.Fatalf("unexpected source tracing header after mutation: %q", got)
 	}
 }
 

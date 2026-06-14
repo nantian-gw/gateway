@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -83,6 +84,20 @@ func controlplaneManagerOptions(
 	}
 }
 
+func controlplaneTracingConfig(cfg *config.Config) observability.TracingConfig {
+	if cfg == nil {
+		return observability.TracingConfig{}
+	}
+
+	return observability.TracingConfig{
+		Enabled:      cfg.Tracing.Enabled,
+		Endpoint:     strings.TrimSpace(cfg.Tracing.Endpoint),
+		Insecure:     cfg.Tracing.Insecure,
+		SamplerRatio: cfg.TracingSamplerRatio(),
+		Headers:      cfg.TracingHeaders(),
+	}
+}
+
 func run(configPath string) error {
 	cfg, err := config.Load(configPath)
 	if err != nil {
@@ -97,6 +112,16 @@ func run(configPath string) error {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	tracingShutdown, err := observability.ConfigureTracing(ctx, controlplaneTracingConfig(cfg))
+	if err != nil {
+		return fmt.Errorf("configure tracing: %w", err)
+	}
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
+		defer shutdownCancel()
+		_ = tracingShutdown(shutdownCtx)
+	}()
 
 	scheme, err := buildScheme(cfg)
 	if err != nil {

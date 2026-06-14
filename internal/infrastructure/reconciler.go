@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"sort"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -94,28 +97,52 @@ func DefaultOptions() Options {
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context) error {
+	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/infrastructure")
+	ctx, span := tracer.Start(ctx, "controlplane.infrastructure.reconcile")
+	defer span.End()
+
 	r.logger.InfoContext(ctx, "infrastructure reconciler starting")
 	managedGateways, err := r.loadManagedGateways(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+	span.SetAttributes(attribute.Int("infrastructure.managed_gateways", len(managedGateways)))
 	r.logger.InfoContext(ctx, "infrastructure reconciler loaded gateways", "count", len(managedGateways))
 	sharedPods, gatewayPods, meshPods, err := r.loadFrontendEligibleDataplanePods(ctx)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+	span.SetAttributes(
+		attribute.Int("infrastructure.shared_pods", len(sharedPods)),
+		attribute.Int("infrastructure.gateway_pods", len(gatewayPods)),
+		attribute.Int("infrastructure.mesh_pods", len(meshPods)),
+	)
 
 	if err := r.reconcileSharedService(ctx, managedGateways, sharedPods); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	if err := r.reconcileMeshServicesWithPods(ctx, meshPods); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	if err := reconcileDataplaneNetworkPolicy(ctx, r.client, managedGateways, r.options); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
 	gwErr := r.reconcileGatewayServices(ctx, managedGateways, gatewayPods)
+	if gwErr != nil {
+		span.RecordError(gwErr)
+		span.SetStatus(codes.Error, gwErr.Error())
+	}
 	r.logger.InfoContext(ctx, "infrastructure reconciler completed", "error", gwErr)
 	return gwErr
 }

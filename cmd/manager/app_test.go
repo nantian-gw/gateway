@@ -83,6 +83,38 @@ func TestNewMetricsServerAppliesRuntimeTimeouts(t *testing.T) {
 	}
 }
 
+func TestControlplaneTracingConfigUsesNormalizedConfigValues(t *testing.T) {
+	ratio := 0.35
+	cfg := &config.Config{
+		Tracing: config.TracingConfig{
+			Enabled:      true,
+			Endpoint:     " otel-collector:4317 ",
+			Insecure:     true,
+			SamplerRatio: &ratio,
+			Headers: map[string]string{
+				" authorization ": " Bearer token ",
+			},
+		},
+	}
+
+	got := controlplaneTracingConfig(cfg)
+	if !got.Enabled {
+		t.Fatal("expected tracing to stay enabled")
+	}
+	if got.Endpoint != "otel-collector:4317" {
+		t.Fatalf("unexpected tracing endpoint: %q", got.Endpoint)
+	}
+	if !got.Insecure {
+		t.Fatal("expected insecure tracing transport to be preserved")
+	}
+	if got.SamplerRatio != 0.35 {
+		t.Fatalf("unexpected tracing sampler ratio: %v", got.SamplerRatio)
+	}
+	if got.Headers["authorization"] != "Bearer token" {
+		t.Fatalf("unexpected tracing headers: %#v", got.Headers)
+	}
+}
+
 func TestBuildSchemeFeaturesDisabled(t *testing.T) {
 	cfg := &config.Config{
 		Features: config.FeaturesConfig{

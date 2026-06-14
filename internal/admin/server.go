@@ -68,6 +68,7 @@ type Server struct {
 	driftWarningThreshold time.Duration
 	maxRequestBodyBytes   int64
 	maxResponseBodyBytes  int64
+	maxListItems          int
 	now                   func() time.Time
 	infra                 *infrastructure.Reconciler
 	detailIndex           *snapshotDetailIndexCache
@@ -94,6 +95,7 @@ func NewServer(
 		driftWarningThreshold: opts.NodeDriftWarningThreshold,
 		maxRequestBodyBytes:   positiveOrDefault(opts.MaxRequestBodyBytes, defaultMaxRequestBodyBytes),
 		maxResponseBodyBytes:  positiveOrDefault(opts.MaxResponseBodyBytes, defaultMaxResponseBodyBytes),
+		maxListItems:          opts.MaxListItems,
 		now:                   func() time.Time { return time.Now().UTC() },
 		detailIndex:           newSnapshotDetailIndexCache(),
 	}
@@ -102,10 +104,11 @@ func NewServer(
 	s.registerRoutes(mux)
 
 	handler := wrapAuthHandler(mux, opts)
-	handler = wrapMetricsHandler(handler, opts.Metrics)
-	if rl := newRateLimiter(opts.RateLimitRPS, 1*time.Second); rl != nil {
+	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst); rl != nil {
 		handler = rl.middleware(handler)
 	}
+	handler = wrapTracingHandler(handler, "admin")
+	handler = wrapMetricsHandler(handler, opts.Metrics)
 
 	s.server = &http.Server{
 		Addr:              addr,

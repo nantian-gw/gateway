@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +13,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/nantian-gw/gateway/internal/observability"
 )
@@ -279,6 +283,31 @@ func TestReconcilerRunnerRecordsDurationMetricsByScope(t *testing.T) {
 	}
 }
 
+func TestReconcilerRunnerCreatesScopeSpans(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	runner := NewReconcilerRunner(
+		time.Second,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		testReconcilerRunnerMetrics(),
+		staticReconciler{},
+	)
+
+	runner.runOnce(context.Background(), ReconcilerRunnerScopeInfra)
+
+	names := spanNames(exporter.GetSpans())
+	if !slices.Contains(names, "controlplane.reconciler_runner.run") {
+		t.Fatalf("expected run span, got %v", names)
+	}
+	if !slices.Contains(names, "controlplane.reconciler_runner.scope") {
+		t.Fatalf("expected scope span, got %v", names)
+	}
+}
+
 func TestReconcilerRunnerScopesForSnapshotBuildScope(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -427,6 +456,14 @@ func (r *recordingReconciler) setErr(err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.err = err
+}
+
+func spanNames(spans tracetest.SpanStubs) []string {
+	names := make([]string, 0, len(spans))
+	for _, span := range spans {
+		names = append(names, span.Name)
+	}
+	return names
 }
 
 func testReconcilerRunnerMetrics() *observability.Metrics {

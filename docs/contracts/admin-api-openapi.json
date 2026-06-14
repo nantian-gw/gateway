@@ -24,6 +24,24 @@
         "description": "Bearer token from adminAuth.bearerToken or adminAuth.bearerTokenFile config. Optional — if not configured, all endpoints are open."
       }
     },
+    "headers": {
+      "XNantianPageLimit": {
+        "description": "Effective page limit after server-side clamping.",
+        "schema": { "type": "integer" }
+      },
+      "XNantianPageOffset": {
+        "description": "Effective zero-based page offset.",
+        "schema": { "type": "integer" }
+      },
+      "XNantianTotalCount": {
+        "description": "Total matched items before pagination.",
+        "schema": { "type": "integer" }
+      },
+      "XNantianHasNextPage": {
+        "description": "Whether additional results remain after this page.",
+        "schema": { "type": "boolean" }
+      }
+    },
     "schemas": {
       "Error": {
         "type": "string",
@@ -478,7 +496,23 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Listeners", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Listener" } } } } },
+          "200": {
+            "description": "Listeners",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Listener" }
+                }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
@@ -509,7 +543,20 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Routes grouped by type", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RouteList" } } } },
+          "200": {
+            "description": "Routes grouped by type",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RouteList" }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
@@ -541,7 +588,23 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Backends", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BackendCluster" } } } } },
+          "200": {
+            "description": "Backends",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/BackendCluster" }
+                }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
@@ -570,7 +633,23 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Nodes", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/NodeStatus" } } } } },
+          "200": {
+            "description": "Nodes",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/NodeStatus" }
+                }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
@@ -602,7 +681,20 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Infrastructure report", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InfrastructureReport" } } } },
+          "200": {
+            "description": "Infrastructure report",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InfrastructureReport" }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
@@ -622,7 +714,23 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Services", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ServiceCatalogEntry" } } } } },
+          "200": {
+            "description": "Services",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ServiceCatalogEntry" }
+                }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
@@ -655,7 +763,23 @@
           { "$ref": "#/components/parameters/limit" }
         ],
         "responses": {
-          "200": { "description": "Resources", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ManagedResource" } } } } },
+          "200": {
+            "description": "Resources",
+            "headers": {
+              "X-Nantian-Page-Limit": { "$ref": "#/components/headers/XNantianPageLimit" },
+              "X-Nantian-Page-Offset": { "$ref": "#/components/headers/XNantianPageOffset" },
+              "X-Nantian-Total-Count": { "$ref": "#/components/headers/XNantianTotalCount" },
+              "X-Nantian-Has-Next-Page": { "$ref": "#/components/headers/XNantianHasNextPage" }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ManagedResource" }
+                }
+              }
+            }
+          },
           "400": { "description": "Invalid query", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "501": { "description": "Not configured", "content": { "text/plain": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }

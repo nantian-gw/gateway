@@ -102,14 +102,23 @@ func parseServiceCatalogFilter(query url.Values) (ServiceCatalogFilter, error) {
 	return filter, nil
 }
 
-func (m *ResourceManager) ListServiceCatalog(ctx context.Context, filter ServiceCatalogFilter) ([]ServiceCatalogEntry, error) {
+func (m *ResourceManager) ListServiceCatalog(
+	ctx context.Context,
+	filter ServiceCatalogFilter,
+	maxListItems int,
+) ([]ServiceCatalogEntry, pageMetadata, error) {
 	if exact := strings.TrimSpace(filter.Namespace); exact != "" && strings.TrimSpace(filter.Name) != "" {
-		return m.getExactServiceCatalogEntry(ctx, filter)
+		items, err := m.getExactServiceCatalogEntry(ctx, filter)
+		if err != nil {
+			return nil, pageMetadata{}, err
+		}
+		paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+		return paged, meta, nil
 	}
 
 	cacheKey := serviceCatalogCacheKey(filter)
-	if items, ok := m.listCache.getServiceCatalogEntries(cacheKey); ok {
-		return items, nil
+	if items, meta, ok := m.listCache.getServiceCatalogEntries(cacheKey); ok {
+		return items, meta, nil
 	}
 
 	var services corev1.ServiceList
@@ -118,7 +127,7 @@ func (m *ResourceManager) ListServiceCatalog(ctx context.Context, filter Service
 		listOptions = append(listOptions, client.InNamespace(filter.Namespace))
 	}
 	if err := m.client.List(ctx, &services, listOptions...); err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 
 	items := make([]ServiceCatalogEntry, 0, len(services.Items))
@@ -131,13 +140,9 @@ func (m *ResourceManager) ListServiceCatalog(ctx context.Context, filter Service
 	}
 
 	sortServiceCatalogEntries(items, filter.Sort, filter.Order)
-	items = paginateSlice(items, listPagination{
-		offset:   filter.Offset,
-		limit:    filter.Limit,
-		hasLimit: filter.HasLimit,
-	})
-	m.listCache.putServiceCatalogEntries(cacheKey, items)
-	return items, nil
+	paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+	m.listCache.putServiceCatalogEntries(cacheKey, paged, meta)
+	return paged, meta, nil
 }
 
 func (m *ResourceManager) getExactServiceCatalogEntry(ctx context.Context, filter ServiceCatalogFilter) ([]ServiceCatalogEntry, error) {
@@ -154,6 +159,14 @@ func (m *ResourceManager) getExactServiceCatalogEntry(ctx context.Context, filte
 		return []ServiceCatalogEntry{}, nil
 	}
 	return []ServiceCatalogEntry{entry}, nil
+}
+
+func serviceCatalogPagination(filter ServiceCatalogFilter) listPagination {
+	return listPagination{
+		offset:   filter.Offset,
+		limit:    filter.Limit,
+		hasLimit: filter.HasLimit,
+	}
 }
 
 func buildServiceCatalogEntry(service corev1.Service, filter ServiceCatalogFilter) (ServiceCatalogEntry, bool) {

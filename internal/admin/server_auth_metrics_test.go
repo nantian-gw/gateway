@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/nantian-gw/gateway/internal/observability"
 )
@@ -137,6 +140,78 @@ func TestAdminAuthSkipsProbeEndpoints(t *testing.T) {
 	recorder = performRequest(t, server, http.MethodGet, "/readyz", nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected readyz to bypass auth, got %d", recorder.Code)
+	}
+}
+
+func TestAdminRateLimiterUsesBurstAndRecords429Metrics(t *testing.T) {
+	t.Parallel()
+
+	metrics := observability.NewMetrics()
+	server := newTestServerWithOptions(t, Options{
+		RateLimitRPS:   1,
+		RateLimitBurst: 1,
+		Metrics:        metrics,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req.RemoteAddr = "203.0.113.10:12345"
+	recorder := httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected first request to pass, got %d", recorder.Code)
+	}
+
+	recorder = httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected second request to be rate limited, got %d", recorder.Code)
+	}
+
+	if got := testutil.ToFloat64(metrics.AdminAPIRequestsTotal.WithLabelValues(http.MethodGet, "summary", "4xx")); got != 1 {
+		t.Fatalf("unexpected 4xx admin request metric total: %v", got)
+	}
+}
+
+func TestAdminRateLimiterBucketsByClientIPWithoutPort(t *testing.T) {
+	t.Parallel()
+
+	rl := newRateLimiter(1, 1)
+	now := time.Unix(1, 0).UTC()
+	rl.now = func() time.Time { return now }
+
+	if !rl.allow("203.0.113.10:1000") {
+		t.Fatal("expected initial request to pass")
+	}
+	if rl.allow("203.0.113.10:2000") {
+		t.Fatal("expected same client IP with different port to share the same bucket")
+	}
+
+	now = now.Add(time.Second)
+	if !rl.allow("203.0.113.10:3000") {
+		t.Fatal("expected bucket refill after one second")
+	}
+}
+
+func TestAdminTracingMiddlewareCreatesRequestSpan(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	handler := wrapTracingHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+	}), "summary")
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/v1/summary", nil))
+
+	spans := exporter.GetSpans()
+	if len(spans) != 1 {
+		t.Fatalf("unexpected span count: %d", len(spans))
+	}
+	if spans[0].Name != "admin GET /v1/summary" {
+		t.Fatalf("unexpected span name: %q", spans[0].Name)
 	}
 }
 

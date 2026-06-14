@@ -28,7 +28,9 @@ func (s *Server) handleInfrastructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, filterInfrastructureReport(report, filter))
+	items, meta := filterInfrastructureReport(report, filter, s.maxListItems)
+	writePaginationHeaders(w.Header(), meta)
+	s.respondJSON(w, items)
 }
 
 func (s *Server) handleServiceCatalog(w http.ResponseWriter, r *http.Request) {
@@ -43,12 +45,13 @@ func (s *Server) handleServiceCatalog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := s.resources.ListServiceCatalog(r.Context(), filter)
+	items, meta, err := s.resources.ListServiceCatalog(r.Context(), filter, s.maxListItems)
 	if err != nil {
 		s.respondRequestError(w, err)
 		return
 	}
 
+	writePaginationHeaders(w.Header(), meta)
 	s.respondJSON(w, items)
 }
 
@@ -91,12 +94,13 @@ func (s *Server) handleResources(w http.ResponseWriter, r *http.Request) {
 		filter.Offset = *offset
 	}
 
-	items, err := s.resources.List(r.Context(), filter)
+	items, meta, err := s.resources.List(r.Context(), filter, s.maxListItems)
 	if err != nil {
 		s.respondRequestError(w, err)
 		return
 	}
 
+	writePaginationHeaders(w.Header(), meta)
 	s.respondJSON(w, items)
 }
 
