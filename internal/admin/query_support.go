@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
@@ -110,6 +111,14 @@ type listPagination struct {
 	offset   int
 	limit    int
 	hasLimit bool
+}
+
+type pageMetadata struct {
+	TotalCount int
+	Offset     int
+	Limit      int
+	HasLimit   bool
+	HasNext    bool
 }
 
 func parseListPagination(query url.Values) (listPagination, error) {
@@ -345,6 +354,42 @@ func paginateSlice[T any](items []T, pagination listPagination) []T {
 		end = start + pagination.limit
 	}
 	return items[start:end]
+}
+
+func clampPagination(pagination listPagination, maxListItems int) listPagination {
+	if !pagination.hasLimit || maxListItems <= 0 || pagination.limit <= maxListItems {
+		return pagination
+	}
+	pagination.limit = maxListItems
+	return pagination
+}
+
+func paginateSliceWithMetadata[T any](items []T, pagination listPagination, maxListItems int) ([]T, pageMetadata) {
+	pagination = clampPagination(pagination, maxListItems)
+
+	meta := pageMetadata{
+		TotalCount: len(items),
+		Offset:     pagination.offset,
+		Limit:      pagination.limit,
+		HasLimit:   pagination.hasLimit,
+	}
+
+	paged := paginateSlice(items, pagination)
+	meta.HasNext = meta.Offset+len(paged) < meta.TotalCount
+
+	return paged, meta
+}
+
+func writePaginationHeaders(header http.Header, meta pageMetadata) {
+	header.Set("X-Nantian-Total-Count", strconv.Itoa(meta.TotalCount))
+
+	if meta.HasLimit {
+		header.Set("X-Nantian-Page-Limit", strconv.Itoa(meta.Limit))
+	}
+	if meta.HasLimit || meta.Offset > 0 {
+		header.Set("X-Nantian-Page-Offset", strconv.Itoa(meta.Offset))
+		header.Set("X-Nantian-Has-Next-Page", strconv.FormatBool(meta.HasNext))
+	}
 }
 
 func listenerProtocolValue(listener ir.Listener) string {

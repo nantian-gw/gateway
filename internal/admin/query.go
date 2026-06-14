@@ -21,20 +21,20 @@ func newRouteListResponse() routeListResponse {
 	}
 }
 
-func filterListeners(listeners []ir.Listener, query url.Values) ([]ir.Listener, error) {
+func filterListeners(listeners []ir.Listener, query url.Values, maxListItems int) ([]ir.Listener, pageMetadata, error) {
 	out := make([]ir.Listener, 0)
 
 	sortField, err := parseListenerSortField(query.Get("sort"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	order, err := parseSortOrder(query.Get("order"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	pagination, err := parseListPagination(query)
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 
 	name := strings.TrimSpace(query.Get("name"))
@@ -42,7 +42,7 @@ func filterListeners(listeners []ir.Listener, query url.Values) ([]ir.Listener, 
 	attachedRoute := strings.TrimSpace(query.Get("attachedRoute"))
 	protocol, err := parseProtocolFilter(query.Get("protocol"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 
 	for _, listener := range listeners {
@@ -62,30 +62,31 @@ func filterListeners(listeners []ir.Listener, query url.Values) ([]ir.Listener, 
 	}
 
 	sortListeners(out, sortField, order)
-	return paginateSlice(out, pagination), nil
+	paged, meta := paginateSliceWithMetadata(out, pagination, maxListItems)
+	return paged, meta, nil
 }
 
-func filterRoutes(snapshot *ir.Snapshot, query url.Values) (routeListResponse, error) {
+func filterRoutes(snapshot *ir.Snapshot, query url.Values, maxListItems int) (routeListResponse, pageMetadata, error) {
 	response := newRouteListResponse()
 	if snapshot == nil {
-		return response, nil
+		return response, pageMetadata{}, nil
 	}
 
 	kind, err := parseRouteKindFilter(query.Get("kind"))
 	if err != nil {
-		return response, err
+		return response, pageMetadata{}, err
 	}
 	sortField, err := parseRouteSortField(query.Get("sort"))
 	if err != nil {
-		return response, err
+		return response, pageMetadata{}, err
 	}
 	order, err := parseSortOrder(query.Get("order"))
 	if err != nil {
-		return response, err
+		return response, pageMetadata{}, err
 	}
 	pagination, err := parseRoutePagination(query, kind)
 	if err != nil {
-		return response, err
+		return response, pageMetadata{}, err
 	}
 
 	namespace := strings.TrimSpace(query.Get("namespace"))
@@ -125,45 +126,58 @@ func filterRoutes(snapshot *ir.Snapshot, query url.Values) (routeListResponse, e
 	sortStreamRoutes(response.Stream, sortField, order)
 
 	if kind != "" {
+		paginationRequested := query.Get("limit") != "" || query.Get("offset") != ""
 		switch kind {
 		case "HTTP":
-			response.HTTP = paginateSlice(response.HTTP, pagination)
+			if paginationRequested {
+				paged, meta := paginateSliceWithMetadata(response.HTTP, pagination, maxListItems)
+				response.HTTP = paged
+				return response, meta, nil
+			}
 		case "GRPC":
-			response.GRPC = paginateSlice(response.GRPC, pagination)
+			if paginationRequested {
+				paged, meta := paginateSliceWithMetadata(response.GRPC, pagination, maxListItems)
+				response.GRPC = paged
+				return response, meta, nil
+			}
 		default:
-			response.Stream = paginateSlice(response.Stream, pagination)
+			if paginationRequested {
+				paged, meta := paginateSliceWithMetadata(response.Stream, pagination, maxListItems)
+				response.Stream = paged
+				return response, meta, nil
+			}
 		}
 	}
 
-	return response, nil
+	return response, pageMetadata{}, nil
 }
 
-func filterBackends(snapshot *ir.Snapshot, query url.Values) ([]ir.BackendCluster, error) {
+func filterBackends(snapshot *ir.Snapshot, query url.Values, maxListItems int) ([]ir.BackendCluster, pageMetadata, error) {
 	out := make([]ir.BackendCluster, 0)
 
 	sortField, err := parseBackendSortField(query.Get("sort"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	order, err := parseSortOrder(query.Get("order"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	pagination, err := parseListPagination(query)
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 
 	includeAll, err := parseIncludeAllBackends(query.Get("all"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 
 	namespace := strings.TrimSpace(query.Get("namespace"))
 	name := strings.TrimSpace(query.Get("name"))
 	protocol, err := parseBackendProtocolFilter(query.Get("protocol"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	service := strings.TrimSpace(query.Get("service"))
 
@@ -184,34 +198,35 @@ func filterBackends(snapshot *ir.Snapshot, query url.Values) ([]ir.BackendCluste
 	}
 
 	sortBackends(out, sortField, order)
-	return paginateSlice(out, pagination), nil
+	paged, meta := paginateSliceWithMetadata(out, pagination, maxListItems)
+	return paged, meta, nil
 }
 
-func filterNodes(nodes []ir.NodeStatus, query url.Values) ([]ir.NodeStatus, error) {
+func filterNodes(nodes []ir.NodeStatus, query url.Values, maxListItems int) ([]ir.NodeStatus, pageMetadata, error) {
 	out := make([]ir.NodeStatus, 0)
 
 	sortField, err := parseNodeSortField(query.Get("sort"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	order, err := parseSortOrder(query.Get("order"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	pagination, err := parseListPagination(query)
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 
 	nodeID := strings.TrimSpace(query.Get("nodeId"))
 	cluster := strings.TrimSpace(query.Get("cluster"))
 	connected, err := parseOptionalBool(query.Get("connected"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	ready, err := parseOptionalBool(query.Get("ready"))
 	if err != nil {
-		return nil, err
+		return nil, pageMetadata{}, err
 	}
 	version := strings.TrimSpace(query.Get("version"))
 
@@ -235,7 +250,8 @@ func filterNodes(nodes []ir.NodeStatus, query url.Values) ([]ir.NodeStatus, erro
 	}
 
 	sortNodes(out, sortField, order)
-	return paginateSlice(out, pagination), nil
+	paged, meta := paginateSliceWithMetadata(out, pagination, maxListItems)
+	return paged, meta, nil
 }
 
 func findNode(nodes []ir.NodeStatus, nodeID string) (ir.NodeStatus, bool) {

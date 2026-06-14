@@ -70,7 +70,8 @@ func parseInfrastructureQueryFilter(query url.Values) (infrastructureQueryFilter
 func filterInfrastructureReport(
 	report infrastructure.InfrastructureReport,
 	filter infrastructureQueryFilter,
-) infrastructure.InfrastructureReport {
+	maxListItems int,
+) (infrastructure.InfrastructureReport, pageMetadata) {
 	filtered := make([]infrastructure.InfrastructureResource, 0, len(report.Resources))
 	for _, item := range report.Resources {
 		if filter.State != "" && item.State != filter.State {
@@ -93,8 +94,9 @@ func filterInfrastructureReport(
 
 	sortInfrastructureResources(filtered, filter.Sort, filter.Order)
 
-	report.Resources = paginateSlice(filtered, filter.Pagination)
-	return report
+	paged, meta := paginateSliceWithMetadata(filtered, filter.Pagination, maxListItems)
+	report.Resources = paged
+	return report, meta
 }
 
 func parseInfrastructureStateFilter(raw string) (string, error) {

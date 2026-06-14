@@ -113,6 +113,33 @@ func TestListenerEndpointsSupportPaginationContract(t *testing.T) {
 	}
 }
 
+func TestListenersClampLimitAndEmitPaginationHeaders(t *testing.T) {
+	t.Parallel()
+
+	server := newTestServerWithOptions(t, Options{MaxListItems: 1})
+
+	var listeners []ir.Listener
+	recorder := performRequest(t, server, http.MethodGet, "/v1/listeners?offset=0&limit=5", &listeners)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if len(listeners) != 1 {
+		t.Fatalf("expected clamped listener page size of 1, got %d", len(listeners))
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected effective page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "0" {
+		t.Fatalf("unexpected page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "2" {
+		t.Fatalf("unexpected total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "true" {
+		t.Fatalf("unexpected has-next-page header: %q", got)
+	}
+}
+
 func TestSnapshotSyncEndpointReturnsAckAndReadinessBreakdown(t *testing.T) {
 	server := newTestServerWithOptions(t, Options{ReadinessMode: readinessModeCurrentSnapshotAll, NodeDriftWarningThreshold: 15 * time.Second})
 	server.now = func() time.Time {
@@ -333,5 +360,36 @@ func TestRouteEndpointsSupportSortingAndKindScopedPagination(t *testing.T) {
 	recorder = performRequest(t, server, http.MethodGet, "/v1/routes?order=sideways", nil)
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid route order, got %d", recorder.Code)
+	}
+}
+
+func TestRoutesEmitPaginationHeadersForKindScopedPagination(t *testing.T) {
+	t.Parallel()
+
+	server := newTestServer(t)
+	server.store.Publish(&ir.Snapshot{
+		GeneratedAt: time.Now().UTC(),
+		GRPCRoutes: []ir.GRPCRoute{
+			{Name: "payments", Namespace: "ops", Hostnames: []string{"payments.example.com"}},
+			{Name: "accounts", Namespace: "default", Hostnames: []string{"accounts.example.com"}},
+		},
+	})
+
+	var routes routeListResponse
+	recorder := performRequest(t, server, http.MethodGet, "/v1/routes?kind=grpc&limit=1&offset=1", &routes)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected effective page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "1" {
+		t.Fatalf("unexpected page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "2" {
+		t.Fatalf("unexpected total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "false" {
+		t.Fatalf("unexpected has-next-page header: %q", got)
 	}
 }

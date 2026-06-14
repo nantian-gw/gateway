@@ -14,12 +14,13 @@ func (s *Server) handleListeners(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := filterListeners(displayListeners(snapshot.Listeners), r.URL.Query())
+	items, meta, err := filterListeners(displayListeners(snapshot.Listeners), r.URL.Query(), s.maxListItems)
 	if err != nil {
 		s.respondQueryError(w, err)
 		return
 	}
 
+	writePaginationHeaders(w.Header(), meta)
 	s.respondJSON(w, items)
 }
 
@@ -40,12 +41,15 @@ func (s *Server) handleListenerDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleRoutes(w http.ResponseWriter, r *http.Request) {
-	items, err := filterRoutes(s.store.Current(), r.URL.Query())
+	items, meta, err := filterRoutes(s.store.Current(), r.URL.Query(), s.maxListItems)
 	if err != nil {
 		s.respondQueryError(w, err)
 		return
 	}
 
+	if meta.HasLimit || meta.Offset > 0 {
+		writePaginationHeaders(w.Header(), meta)
+	}
 	s.respondJSON(w, items)
 }
 
@@ -75,12 +79,13 @@ func (s *Server) handleBackends(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, err := filterBackends(snapshot, r.URL.Query())
+	items, meta, err := filterBackends(snapshot, r.URL.Query(), s.maxListItems)
 	if err != nil {
 		s.respondQueryError(w, err)
 		return
 	}
 
+	writePaginationHeaders(w.Header(), meta)
 	s.respondJSON(w, items)
 }
 
@@ -102,12 +107,13 @@ func (s *Server) handleBackendDetail(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleNodes(w http.ResponseWriter, r *http.Request) {
 	snapshot := s.store.Current()
-	items, err := filterNodes(s.currentNodes(r.Context(), snapshot), r.URL.Query())
+	items, meta, err := filterNodes(s.currentNodes(r.Context(), snapshot), r.URL.Query(), s.maxListItems)
 	if err != nil {
 		s.respondQueryError(w, err)
 		return
 	}
 
+	writePaginationHeaders(w.Header(), meta)
 	s.respondJSON(w, items)
 }
 

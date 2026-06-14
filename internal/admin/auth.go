@@ -19,6 +19,7 @@ type Options struct {
 	NodeDriftWarningThreshold time.Duration
 	MaxRequestBodyBytes       int64
 	MaxResponseBodyBytes      int64
+	MaxListItems              int
 	ReadHeaderTimeout         time.Duration
 	ReadTimeout               time.Duration
 	WriteTimeout              time.Duration
@@ -27,6 +28,7 @@ type Options struct {
 	TLSConfig                 *tls.Config
 	Logger                    *slog.Logger
 	RateLimitRPS              int64
+	RateLimitBurst            int64
 	DashboardCapabilities     DashboardCapabilities
 }
 

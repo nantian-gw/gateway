@@ -28,7 +28,9 @@ func (s *Server) handleInfrastructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, filterInfrastructureReport(report, filter))
+	items, meta := filterInfrastructureReport(report, filter, s.maxListItems)
+	writePaginationHeaders(w.Header(), meta)
+	s.respondJSON(w, items)
 }
 
 func (s *Server) handleServiceCatalog(w http.ResponseWriter, r *http.Request) {

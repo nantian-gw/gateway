@@ -37,7 +37,7 @@ func BenchmarkFilterRoutesQueryRouteFanout(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				response, err := filterRoutes(snapshot, query)
+				response, _, err := filterRoutes(snapshot, query, 0)
 				if err != nil {
 					b.Fatalf("filterRoutes returned error: %v", err)
 				}
@@ -64,7 +64,7 @@ func BenchmarkFilterBackendsQueryRouteFanout(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				backends, err := filterBackends(snapshot, query)
+				backends, _, err := filterBackends(snapshot, query, 0)
 				if err != nil {
 					b.Fatalf("filterBackends returned error: %v", err)
 				}

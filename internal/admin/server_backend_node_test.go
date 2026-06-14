@@ -154,6 +154,18 @@ func TestBackendEndpointsSupportPaginationContract(t *testing.T) {
 	if got := strings.Join(backendKeys(backends), ","); got != "ops/metrics:9090" {
 		t.Fatalf("unexpected paginated backends: %s", got)
 	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected backend page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "1" {
+		t.Fatalf("unexpected backend page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "2" {
+		t.Fatalf("unexpected backend total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "false" {
+		t.Fatalf("unexpected backend has-next-page header: %q", got)
+	}
 
 	recorder = performRequest(t, server, http.MethodGet, "/v1/backends?all=true&sort=name&order=desc&limit=1", &backends)
 	if recorder.Code != http.StatusOK {
@@ -161,6 +173,18 @@ func TestBackendEndpointsSupportPaginationContract(t *testing.T) {
 	}
 	if got := strings.Join(backendKeys(backends), ","); got != "ops/metrics:9090" {
 		t.Fatalf("unexpected sorted paginated backends: %s", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected backend page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "0" {
+		t.Fatalf("unexpected backend page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "2" {
+		t.Fatalf("unexpected backend total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "true" {
+		t.Fatalf("unexpected backend has-next-page header: %q", got)
 	}
 
 	recorder = performRequest(t, server, http.MethodGet, "/v1/backends?limit=0", nil)
@@ -228,6 +252,18 @@ func TestNodeEndpointsSupportPaginationContract(t *testing.T) {
 	if got := strings.Join(nodeIDs(nodes), ","); got != "dp-2" {
 		t.Fatalf("unexpected paginated nodes: %s", got)
 	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected node page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "1" {
+		t.Fatalf("unexpected node page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "2" {
+		t.Fatalf("unexpected node total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "false" {
+		t.Fatalf("unexpected node has-next-page header: %q", got)
+	}
 
 	recorder = performRequest(t, server, http.MethodGet, "/v1/nodes?sort=version&order=desc&limit=1", &nodes)
 	if recorder.Code != http.StatusOK {
@@ -235,6 +271,18 @@ func TestNodeEndpointsSupportPaginationContract(t *testing.T) {
 	}
 	if got := strings.Join(nodeIDs(nodes), ","); got != "dp-2" {
 		t.Fatalf("unexpected sorted paginated nodes: %s", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected node page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "0" {
+		t.Fatalf("unexpected node page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "2" {
+		t.Fatalf("unexpected node total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "true" {
+		t.Fatalf("unexpected node has-next-page header: %q", got)
 	}
 
 	recorder = performRequest(t, server, http.MethodGet, "/v1/nodes?limit=0", nil)
