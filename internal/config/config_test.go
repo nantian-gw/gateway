@@ -125,6 +125,40 @@ func TestLoadAppliesProductionDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadAppliesAdminOperabilityDefaults(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, []byte(""), 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	if got := cfg.AdminMaxListItems(); got != 1000 {
+		t.Fatalf("unexpected admin max list items: %d", got)
+	}
+	if got := cfg.AdminAuth.RateLimitBurst; got != 0 {
+		t.Fatalf("unexpected raw admin rate limit burst default: %d", got)
+	}
+	if got := cfg.AdminRateLimitBurst(); got != cfg.AdminAuth.RateLimitRPS {
+		t.Fatalf("unexpected effective admin rate limit burst default: %d", got)
+	}
+	if cfg.Tracing.Enabled {
+		t.Fatal("tracing should be disabled by default")
+	}
+	if got := cfg.TracingSamplerRatio(); got != 1.0 {
+		t.Fatalf("unexpected tracing sampler ratio default: %v", got)
+	}
+	if got := cfg.TracingHeaders(); len(got) != 0 {
+		t.Fatalf("unexpected tracing headers default: %#v", got)
+	}
+}
+
 func TestGRPCTLSEnabledWhenCertificatesConfigured(t *testing.T) {
 	t.Parallel()
 
@@ -155,6 +189,58 @@ func TestAdminLimitsRespectConfiguredValues(t *testing.T) {
 	}
 	if got := cfg.AdminMaxResponseBodyBytes(); got != 16384 {
 		t.Fatalf("unexpected admin max response body bytes: %d", got)
+	}
+}
+
+func TestAdminOperabilitySettingsRespectConfiguredValues(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{
+		AdminLimits: AdminLimitsConfig{
+			MaxListItems:         250,
+			MaxRequestBodyBytes:  4096,
+			MaxResponseBodyBytes: 16384,
+		},
+		AdminAuth: AdminAuthConfig{
+			RateLimitRPS:   12,
+			RateLimitBurst: 36,
+		},
+		Tracing: TracingConfig{
+			Enabled:      true,
+			Endpoint:     "otel-collector:4317",
+			Insecure:     true,
+			SamplerRatio: 0.35,
+			Headers: map[string]string{
+				"authorization": "Bearer token",
+			},
+		},
+	}
+
+	if got := cfg.AdminMaxListItems(); got != 250 {
+		t.Fatalf("unexpected admin max list items: %d", got)
+	}
+	if got := cfg.AdminRateLimitBurst(); got != 36 {
+		t.Fatalf("unexpected admin rate limit burst: %d", got)
+	}
+	if got := cfg.TracingSamplerRatio(); got != 0.35 {
+		t.Fatalf("unexpected tracing sampler ratio: %v", got)
+	}
+	if got := cfg.TracingHeaders()["authorization"]; got != "Bearer token" {
+		t.Fatalf("unexpected tracing header value: %q", got)
+	}
+}
+
+func TestTracingSamplerRatioClampsOutOfRangeValues(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{Tracing: TracingConfig{SamplerRatio: 7}}
+	if got := cfg.TracingSamplerRatio(); got != 1.0 {
+		t.Fatalf("unexpected clamped high tracing sampler ratio: %v", got)
+	}
+
+	cfg = &Config{Tracing: TracingConfig{SamplerRatio: -2}}
+	if got := cfg.TracingSamplerRatio(); got != 0.0 {
+		t.Fatalf("unexpected clamped low tracing sampler ratio: %v", got)
 	}
 }
 

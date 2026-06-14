@@ -47,6 +47,7 @@ type Config struct {
 	Namespace        string                 `yaml:"namespace"`
 	Features         FeaturesConfig         `yaml:"features"`
 	Dashboard        DashboardConfig        `yaml:"dashboard"`
+	Tracing          TracingConfig          `yaml:"tracing"`
 }
 
 type FeaturesConfig struct {
@@ -99,6 +100,7 @@ type AdminAuthConfig struct {
 	BearerToken     string `yaml:"bearerToken"`
 	BearerTokenFile string `yaml:"bearerTokenFile"`
 	RateLimitRPS    int64  `yaml:"rateLimitRPS"`
+	RateLimitBurst  int64  `yaml:"rateLimitBurst"`
 }
 
 type PprofConfig struct {
@@ -122,6 +124,15 @@ type AdminReadinessConfig struct {
 type AdminLimitsConfig struct {
 	MaxRequestBodyBytes  int64 `yaml:"maxRequestBodyBytes"`
 	MaxResponseBodyBytes int64 `yaml:"maxResponseBodyBytes"`
+	MaxListItems         int   `yaml:"maxListItems"`
+}
+
+type TracingConfig struct {
+	Enabled      bool              `yaml:"enabled"`
+	Endpoint     string            `yaml:"endpoint"`
+	Insecure     bool              `yaml:"insecure"`
+	SamplerRatio float64           `yaml:"samplerRatio"`
+	Headers      map[string]string `yaml:"headers"`
 }
 
 type AdminRuntimeConfig struct {
@@ -287,6 +298,9 @@ func Load(path string) (*Config, error) {
 	if cfg.Pprof.Addr == "" {
 		cfg.Pprof.Addr = "127.0.0.1:6060"
 	}
+	if cfg.Tracing.SamplerRatio == 0 {
+		cfg.Tracing.SamplerRatio = 1.0
+	}
 
 	return &cfg, nil
 }
@@ -339,6 +353,23 @@ func (c *Config) AdminMaxResponseBodyBytes() int64 {
 	return positiveInt64OrDefault(c.AdminLimits.MaxResponseBodyBytes, 8<<20)
 }
 
+func (c *Config) AdminMaxListItems() int {
+	if c.AdminLimits.MaxListItems > 0 {
+		return c.AdminLimits.MaxListItems
+	}
+	return 1000
+}
+
+func (c *Config) AdminRateLimitBurst() int64 {
+	if c.AdminAuth.RateLimitBurst > 0 {
+		return c.AdminAuth.RateLimitBurst
+	}
+	if c.AdminAuth.RateLimitRPS > 0 {
+		return c.AdminAuth.RateLimitRPS
+	}
+	return 0
+}
+
 func (c *Config) AdminReadHeaderTimeoutDuration() time.Duration {
 	return parsePositiveDurationOrDefault(c.AdminRuntime.ReadHeaderTimeout, 5*time.Second)
 }
@@ -378,6 +409,32 @@ func (c *Config) DashboardCapabilities() ResolvedDashboardCapabilities {
 		WasmPlugins:     boolValueOrDefault(c.Dashboard.Capabilities.WasmPlugins, true),
 		Chatbot:         boolValueOrDefault(c.Dashboard.Capabilities.Chatbot, true),
 	}
+}
+
+func (c *Config) TracingSamplerRatio() float64 {
+	switch {
+	case c.Tracing.SamplerRatio < 0:
+		return 0
+	case c.Tracing.SamplerRatio > 1:
+		return 1
+	case c.Tracing.SamplerRatio == 0:
+		return 1
+	default:
+		return c.Tracing.SamplerRatio
+	}
+}
+
+func (c *Config) TracingHeaders() map[string]string {
+	if len(c.Tracing.Headers) == 0 {
+		return nil
+	}
+
+	out := make(map[string]string, len(c.Tracing.Headers))
+	for k, v := range c.Tracing.Headers {
+		out[strings.TrimSpace(k)] = strings.TrimSpace(v)
+	}
+
+	return out
 }
 
 func (c *Config) GRPCKeepaliveTimeDuration() time.Duration {
