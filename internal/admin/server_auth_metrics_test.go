@@ -140,6 +140,55 @@ func TestAdminAuthSkipsProbeEndpoints(t *testing.T) {
 	}
 }
 
+func TestAdminRateLimiterUsesBurstAndRecords429Metrics(t *testing.T) {
+	t.Parallel()
+
+	metrics := observability.NewMetrics()
+	server := newTestServerWithOptions(t, Options{
+		RateLimitRPS:   1,
+		RateLimitBurst: 1,
+		Metrics:        metrics,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req.RemoteAddr = "203.0.113.10:12345"
+	recorder := httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected first request to pass, got %d", recorder.Code)
+	}
+
+	recorder = httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected second request to be rate limited, got %d", recorder.Code)
+	}
+
+	if got := testutil.ToFloat64(metrics.AdminAPIRequestsTotal.WithLabelValues(http.MethodGet, "summary", "4xx")); got != 1 {
+		t.Fatalf("unexpected 4xx admin request metric total: %v", got)
+	}
+}
+
+func TestAdminRateLimiterBucketsByClientIPWithoutPort(t *testing.T) {
+	t.Parallel()
+
+	rl := newRateLimiter(1, 1)
+	now := time.Unix(1, 0).UTC()
+	rl.now = func() time.Time { return now }
+
+	if !rl.allow("203.0.113.10:1000") {
+		t.Fatal("expected initial request to pass")
+	}
+	if rl.allow("203.0.113.10:2000") {
+		t.Fatal("expected same client IP with different port to share the same bucket")
+	}
+
+	now = now.Add(time.Second)
+	if !rl.allow("203.0.113.10:3000") {
+		t.Fatal("expected bucket refill after one second")
+	}
+}
+
 func TestReadinessCurrentSnapshotAnyRequiresReadyCurrentNode(t *testing.T) {
 	server := newTestServerWithOptions(t, Options{ReadinessMode: readinessModeCurrentSnapshotAny})
 

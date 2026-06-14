@@ -104,10 +104,10 @@ func NewServer(
 	s.registerRoutes(mux)
 
 	handler := wrapAuthHandler(mux, opts)
-	handler = wrapMetricsHandler(handler, opts.Metrics)
-	if rl := newRateLimiter(opts.RateLimitRPS, 1*time.Second); rl != nil {
+	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst); rl != nil {
 		handler = rl.middleware(handler)
 	}
+	handler = wrapMetricsHandler(handler, opts.Metrics)
 
 	s.server = &http.Server{
 		Addr:              addr,

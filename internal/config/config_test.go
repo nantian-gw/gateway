@@ -159,6 +159,15 @@ func TestLoadAppliesAdminOperabilityDefaults(t *testing.T) {
 	}
 }
 
+func TestAdminRateLimitBurstFallsBackToRPSWhenUnset(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{AdminAuth: AdminAuthConfig{RateLimitRPS: 7}}
+	if got := cfg.AdminRateLimitBurst(); got != 7 {
+		t.Fatalf("unexpected effective admin rate limit burst: %d", got)
+	}
+}
+
 func TestGRPCTLSEnabledWhenCertificatesConfigured(t *testing.T) {
 	t.Parallel()
 
