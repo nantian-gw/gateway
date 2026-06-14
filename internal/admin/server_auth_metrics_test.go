@@ -193,8 +193,6 @@ func TestAdminRateLimiterBucketsByClientIPWithoutPort(t *testing.T) {
 }
 
 func TestAdminTracingMiddlewareCreatesRequestSpan(t *testing.T) {
-	t.Parallel()
-
 	exporter := tracetest.NewInMemoryExporter()
 	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
 	original := otel.GetTracerProvider()

@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"go.opentelemetry.io/otel"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -207,6 +211,57 @@ func TestReconcileAllowsNilMetrics(t *testing.T) {
 	}
 	if snapshot := store.Current(); snapshot == nil {
 		t.Fatal("expected snapshot to be published with nil metrics")
+	}
+}
+
+func TestSyncerPublishSnapshotCreatesSpan(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter))
+	original := otel.GetTracerProvider()
+	otel.SetTracerProvider(provider)
+	defer func() { otel.SetTracerProvider(original) }()
+
+	scheme := runtime.NewScheme()
+	mustAddToScheme(t, scheme, gatewayv1.Install)
+	mustAddToScheme(t, scheme, gatewayv1alpha2.Install)
+	mustAddToScheme(t, scheme, gatewayv1beta1.Install)
+	mustAddToScheme(t, scheme, corev1.AddToScheme)
+	mustAddToScheme(t, scheme, discoveryv1.AddToScheme)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	client := newControllerClientBuilder(scheme).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec:       gatewayv1.GatewayClassSpec{ControllerName: controllerName},
+			},
+		).
+		Build()
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	store := ir.NewSnapshotStore(logger)
+	syncer := NewSyncer(
+		client,
+		translator.New(string(controllerName), logger),
+		store,
+		testMetrics(),
+		0,
+		logger,
+	)
+
+	_, _ = syncer.publishSnapshotWithScope(
+		context.Background(),
+		snapshotBuildScopeFull,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		snapshotRouteObjectKeys{},
+	)
+
+	if !slices.Contains(spanNames(exporter.GetSpans()), "controlplane.syncer.publish_snapshot") {
+		t.Fatalf("expected publish snapshot span")
 	}
 }
 

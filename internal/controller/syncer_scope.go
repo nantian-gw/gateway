@@ -29,6 +29,42 @@ const (
 	snapshotBuildScopeFull
 )
 
+func (s snapshotBuildScope) String() string {
+	switch s {
+	case snapshotBuildScopeNone:
+		return "none"
+	case snapshotBuildScopeFull:
+		return "full"
+	}
+
+	parts := make([]string, 0, 7)
+	if s&snapshotBuildScopeBackends != 0 {
+		parts = append(parts, "backends")
+	}
+	if s&snapshotBuildScopeAttachments != 0 {
+		parts = append(parts, "attachments")
+	}
+	if s&snapshotBuildScopeGatewayListeners != 0 {
+		parts = append(parts, "gateway_listeners")
+	}
+	if s&snapshotBuildScopeRoutes != 0 {
+		parts = append(parts, "routes")
+	}
+	if s&snapshotBuildScopeRouteBackendRefs != 0 {
+		parts = append(parts, "route_backend_refs")
+	}
+	if s&snapshotBuildScopeMeshListeners != 0 {
+		parts = append(parts, "mesh_listeners")
+	}
+	if s&snapshotBuildScopeWorkloads != 0 {
+		parts = append(parts, "workloads")
+	}
+	if len(parts) == 0 {
+		return "none"
+	}
+	return strings.Join(parts, "+")
+}
+
 const (
 	snapshotReconcileRequestName                 = "snapshot"
 	snapshotBackendsReconcileRequestName         = "snapshot-backends"

@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/nantian-gw/gateway/internal/observability"
 )
@@ -188,14 +191,20 @@ func (r *ReconcilerRunner) Start(ctx context.Context) error {
 }
 
 func (r *ReconcilerRunner) NeedLeaderElection() bool {
-return true
+	return true
 }
 
 func (r *ReconcilerRunner) runOnce(ctx context.Context, scopes ...ReconcilerRunnerScope) {
+	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/controller")
+	ctx, span := tracer.Start(ctx, "controlplane.reconciler_runner.run")
+	defer span.End()
+
+	requestedScopes := newRunnerScopeSet(scopes...)
+	span.SetAttributes(attribute.StringSlice("reconciler.scopes", runnerScopeStrings(requestedScopes.sortedOrFull())))
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	requestedScopes := newRunnerScopeSet(scopes...)
 	incCounter(r.metricsCounter(func(m *observability.Metrics) prometheus.Counter {
 		return m.ReconcilerRunnerRunsTotal
 	}))
@@ -239,6 +248,11 @@ func (r *ReconcilerRunner) runOnce(ctx context.Context, scopes ...ReconcilerRunn
 }
 
 func (r *ReconcilerRunner) runScope(ctx context.Context, scope ReconcilerRunnerScope) bool {
+	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/controller")
+	ctx, span := tracer.Start(ctx, "controlplane.reconciler_runner.scope")
+	defer span.End()
+	span.SetAttributes(attribute.String("reconciler.scope", scope.String()))
+
 	failed := false
 	for _, reconciler := range r.reconcilers {
 		if !reconciler.supports(scope) {
@@ -246,6 +260,8 @@ func (r *ReconcilerRunner) runScope(ctx context.Context, scope ReconcilerRunnerS
 		}
 		if err := reconciler.reconcile(ctx, scope); err != nil {
 			failed = true
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			attrs := []any{"scope", scope.String(), "error", err}
 			if reconciler.name != "" {
 				attrs = append(attrs, "reconciler", reconciler.name)
@@ -399,6 +415,14 @@ func normalizeReconcilerRunnerScope(scope ReconcilerRunnerScope) ReconcilerRunne
 	default:
 		return ReconcilerRunnerScopeFull
 	}
+}
+
+func runnerScopeStrings(scopes []ReconcilerRunnerScope) []string {
+	out := make([]string, 0, len(scopes))
+	for _, scope := range scopes {
+		out = append(out, scope.String())
+	}
+	return out
 }
 
 func incCounter(counter prometheus.Counter) {
