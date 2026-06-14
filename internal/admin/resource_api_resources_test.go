@@ -215,6 +215,34 @@ func TestResourceEndpointSupportsStablePagination(t *testing.T) {
 	}
 }
 
+func TestResourcesEmitPaginationHeaders(t *testing.T) {
+	t.Parallel()
+
+	server := newTestServerWithResourceManagerAndOptions(
+		t,
+		resourceManagerForTest(t),
+		Options{MaxListItems: 2},
+	)
+
+	var resources []ManagedResource
+	recorder := performRequest(t, server, http.MethodGet, "/v1/resources?limit=1&offset=1", &resources)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Limit"); got != "1" {
+		t.Fatalf("unexpected page limit header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Page-Offset"); got != "1" {
+		t.Fatalf("unexpected page offset header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Total-Count"); got != "3" {
+		t.Fatalf("unexpected total count header: %q", got)
+	}
+	if got := recorder.Header().Get("X-Nantian-Has-Next-Page"); got != "true" {
+		t.Fatalf("unexpected has-next-page header: %q", got)
+	}
+}
+
 func TestResourceListUsesDirectGetForExactNamespacedMatch(t *testing.T) {
 	t.Parallel()
 
@@ -222,11 +250,11 @@ func TestResourceListUsesDirectGetForExactNamespacedMatch(t *testing.T) {
 	counting := &countingResourceClient{Client: manager.client}
 	manager.client = counting
 
-	items, err := manager.List(context.Background(), ResourceListFilter{
+	items, _, err := manager.List(context.Background(), ResourceListFilter{
 		Kind:      "HTTPRoute",
 		Namespace: "default",
 		Name:      "web",
-	})
+	}, 0)
 	if err != nil {
 		t.Fatalf("list exact namespaced resource: %v", err)
 	}
@@ -248,10 +276,10 @@ func TestResourceListUsesDirectGetForExactClusterScopedMatch(t *testing.T) {
 	counting := &countingResourceClient{Client: manager.client}
 	manager.client = counting
 
-	items, err := manager.List(context.Background(), ResourceListFilter{
+	items, _, err := manager.List(context.Background(), ResourceListFilter{
 		Kind: "GatewayClass",
 		Name: "nantian-gw",
-	})
+	}, 0)
 	if err != nil {
 		t.Fatalf("list exact cluster-scoped resource: %v", err)
 	}
@@ -281,7 +309,7 @@ func TestResourceListCachesRepeatedKindList(t *testing.T) {
 	}
 
 	for i := 0; i < 2; i++ {
-		items, err := manager.List(context.Background(), filter)
+		items, _, err := manager.List(context.Background(), filter, 0)
 		if err != nil {
 			t.Fatalf("list resources on iteration %d: %v", i, err)
 		}
@@ -305,10 +333,10 @@ func TestResourceListCacheExpires(t *testing.T) {
 	manager.client = counting
 
 	filter := ResourceListFilter{Kind: "HTTPRoute", Namespace: "default"}
-	if _, err := manager.List(context.Background(), filter); err != nil {
+	if _, _, err := manager.List(context.Background(), filter, 0); err != nil {
 		t.Fatalf("initial list resources: %v", err)
 	}
-	if _, err := manager.List(context.Background(), filter); err != nil {
+	if _, _, err := manager.List(context.Background(), filter, 0); err != nil {
 		t.Fatalf("cached list resources: %v", err)
 	}
 	if got := counting.ListCalls(); got != 1 {
@@ -316,7 +344,7 @@ func TestResourceListCacheExpires(t *testing.T) {
 	}
 
 	now = now.Add(time.Second)
-	if _, err := manager.List(context.Background(), filter); err != nil {
+	if _, _, err := manager.List(context.Background(), filter, 0); err != nil {
 		t.Fatalf("expired list resources: %v", err)
 	}
 	if got := counting.ListCalls(); got != 2 {
@@ -333,7 +361,7 @@ func TestResourceMutationInvalidatesListCache(t *testing.T) {
 	manager.client = counting
 
 	filter := ResourceListFilter{Kind: "Gateway", Namespace: "default"}
-	items, err := manager.List(context.Background(), filter)
+	items, _, err := manager.List(context.Background(), filter, 0)
 	if err != nil {
 		t.Fatalf("initial gateway list: %v", err)
 	}
@@ -346,7 +374,7 @@ func TestResourceMutationInvalidatesListCache(t *testing.T) {
 		t.Fatal("expected gateway delete to report deleted=true")
 	}
 
-	items, err = manager.List(context.Background(), filter)
+	items, _, err = manager.List(context.Background(), filter, 0)
 	if err != nil {
 		t.Fatalf("gateway list after delete: %v", err)
 	}

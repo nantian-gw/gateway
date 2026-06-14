@@ -96,7 +96,7 @@ func BenchmarkListResourcesQueryPaths(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					manager.invalidateListCache()
-					items, err := manager.List(ctx, filter)
+					items, _, err := manager.List(ctx, filter, 0)
 					if err != nil {
 						b.Fatalf("ResourceManager.List returned error: %v", err)
 					}
@@ -115,13 +115,13 @@ func BenchmarkListResourcesQueryPaths(b *testing.B) {
 					HasLimit:  true,
 				}
 				manager.invalidateListCache()
-				if _, err := manager.List(ctx, filter); err != nil {
+				if _, _, err := manager.List(ctx, filter, 0); err != nil {
 					b.Fatalf("warm ResourceManager.List cache returned error: %v", err)
 				}
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					items, err := manager.List(ctx, filter)
+					items, _, err := manager.List(ctx, filter, 0)
 					if err != nil {
 						b.Fatalf("ResourceManager.List cached returned error: %v", err)
 					}
@@ -140,7 +140,7 @@ func BenchmarkListResourcesQueryPaths(b *testing.B) {
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					items, err := manager.List(ctx, filter)
+					items, _, err := manager.List(ctx, filter, 0)
 					if err != nil {
 						b.Fatalf("ResourceManager.List exact match returned error: %v", err)
 					}
@@ -174,7 +174,7 @@ func BenchmarkListServiceCatalogQueryPaths(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					manager.invalidateListCache()
-					items, err := manager.ListServiceCatalog(ctx, filter)
+					items, _, err := manager.ListServiceCatalog(ctx, filter, 0)
 					if err != nil {
 						b.Fatalf("ListServiceCatalog returned error: %v", err)
 					}
@@ -194,13 +194,13 @@ func BenchmarkListServiceCatalogQueryPaths(b *testing.B) {
 					HasLimit:  true,
 				}
 				manager.invalidateListCache()
-				if _, err := manager.ListServiceCatalog(ctx, filter); err != nil {
+				if _, _, err := manager.ListServiceCatalog(ctx, filter, 0); err != nil {
 					b.Fatalf("warm ListServiceCatalog cache returned error: %v", err)
 				}
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					items, err := manager.ListServiceCatalog(ctx, filter)
+					items, _, err := manager.ListServiceCatalog(ctx, filter, 0)
 					if err != nil {
 						b.Fatalf("ListServiceCatalog cached returned error: %v", err)
 					}
@@ -221,7 +221,7 @@ func BenchmarkListServiceCatalogQueryPaths(b *testing.B) {
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					items, err := manager.ListServiceCatalog(ctx, filter)
+					items, _, err := manager.ListServiceCatalog(ctx, filter, 0)
 					if err != nil {
 						b.Fatalf("ListServiceCatalog exact match returned error: %v", err)
 					}

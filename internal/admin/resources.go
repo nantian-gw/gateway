@@ -100,9 +100,13 @@ func (m *ResourceManager) DescribeKinds(ctx context.Context) []ResourceKindDescr
 	return items
 }
 
-func (m *ResourceManager) List(ctx context.Context, filter ResourceListFilter) ([]ManagedResource, error) {
-	if items, handled, err := m.listExactMatch(ctx, filter); handled {
-		return items, err
+func (m *ResourceManager) List(
+	ctx context.Context,
+	filter ResourceListFilter,
+	maxListItems int,
+) ([]ManagedResource, pageMetadata, error) {
+	if items, meta, handled, err := m.listExactMatch(ctx, filter, maxListItems); handled {
+		return items, meta, err
 	}
 
 	kinds := supportedResourceKinds
@@ -110,32 +114,36 @@ func (m *ResourceManager) List(ctx context.Context, filter ResourceListFilter) (
 	if strings.TrimSpace(filter.Kind) != "" {
 		spec, err := resourceKindSpecFor(filter.Kind)
 		if err != nil {
-			return nil, err
+			return nil, pageMetadata{}, err
 		}
 		kinds = []resourceKindSpec{spec}
 		canonicalKind = spec.descriptor.Kind
 	}
 
 	cacheKey := resourceListCacheKey(filter, canonicalKind)
-	if items, ok := m.listCache.getManagedResources(cacheKey); ok {
-		return items, nil
+	if items, meta, ok := m.listCache.getManagedResources(cacheKey); ok {
+		return items, meta, nil
 	}
 
 	out := make([]ManagedResource, 0)
 	for _, spec := range kinds {
 		items, err := m.listByKind(ctx, spec, filter)
 		if err != nil {
-			return nil, err
+			return nil, pageMetadata{}, err
 		}
 		out = append(out, items...)
 	}
 
-	out = paginateManagedResources(out, filter)
-	m.listCache.putManagedResources(cacheKey, out)
-	return out, nil
+	paged, meta := paginateManagedResources(out, filter, maxListItems)
+	m.listCache.putManagedResources(cacheKey, paged, meta)
+	return paged, meta, nil
 }
 
-func paginateManagedResources(out []ManagedResource, filter ResourceListFilter) []ManagedResource {
+func paginateManagedResources(
+	out []ManagedResource,
+	filter ResourceListFilter,
+	maxListItems int,
+) ([]ManagedResource, pageMetadata) {
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Kind != out[j].Kind {
 			return out[i].Kind < out[j].Kind
@@ -146,17 +154,7 @@ func paginateManagedResources(out []ManagedResource, filter ResourceListFilter) 
 		return out[i].Name < out[j].Name
 	})
 
-	if filter.Offset > 0 {
-		if filter.Offset >= len(out) {
-			return []ManagedResource{}
-		}
-		out = out[filter.Offset:]
-	}
-	if filter.HasLimit && filter.Limit < len(out) {
-		out = out[:filter.Limit]
-	}
-
-	return out
+	return paginateSliceWithMetadata(out, resourceListPagination(filter), maxListItems)
 }
 
 func (m *ResourceManager) Get(ctx context.Context, kind, namespace, name string) (ManagedResource, bool, error) {
@@ -288,35 +286,50 @@ func (m *ResourceManager) listByKind(ctx context.Context, spec resourceKindSpec,
 	return out, nil
 }
 
-func (m *ResourceManager) listExactMatch(ctx context.Context, filter ResourceListFilter) ([]ManagedResource, bool, error) {
+func (m *ResourceManager) listExactMatch(
+	ctx context.Context,
+	filter ResourceListFilter,
+	maxListItems int,
+) ([]ManagedResource, pageMetadata, bool, error) {
 	kind := strings.TrimSpace(filter.Kind)
 	name := strings.TrimSpace(filter.Name)
 	if kind == "" || name == "" {
-		return nil, false, nil
+		return nil, pageMetadata{}, false, nil
 	}
 
 	spec, err := resourceKindSpecFor(kind)
 	if err != nil {
-		return nil, true, err
+		return nil, pageMetadata{}, true, err
 	}
 
 	namespace := strings.TrimSpace(filter.Namespace)
 	switch {
 	case spec.namespaced && namespace == "":
-		return nil, false, nil
+		return nil, pageMetadata{}, false, nil
 	case !spec.namespaced && namespace != "" && namespace != clusterScopeNamespaceMarker:
-		return paginateManagedResources([]ManagedResource{}, filter), true, nil
+		items, meta := paginateManagedResources([]ManagedResource{}, filter, maxListItems)
+		return items, meta, true, nil
 	}
 
 	item, ok, err := m.getBySpec(ctx, spec, namespace, name)
 	if err != nil {
-		return nil, true, err
+		return nil, pageMetadata{}, true, err
 	}
 	if !ok {
-		return paginateManagedResources([]ManagedResource{}, filter), true, nil
+		items, meta := paginateManagedResources([]ManagedResource{}, filter, maxListItems)
+		return items, meta, true, nil
 	}
 
-	return paginateManagedResources([]ManagedResource{item}, filter), true, nil
+	items, meta := paginateManagedResources([]ManagedResource{item}, filter, maxListItems)
+	return items, meta, true, nil
+}
+
+func resourceListPagination(filter ResourceListFilter) listPagination {
+	return listPagination{
+		offset:   filter.Offset,
+		limit:    filter.Limit,
+		hasLimit: filter.HasLimit,
+	}
 }
 
 func (m *ResourceManager) getBySpec(
