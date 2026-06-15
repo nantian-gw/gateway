@@ -10,7 +10,7 @@ log:
   dropWhenFull: true
 adminAuth:
   bearerToken: ""
-  bearerTokenFile: ""
+  bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
 accessLog:
   enabled: false
   path: "stdout"

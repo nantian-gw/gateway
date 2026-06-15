@@ -15,6 +15,12 @@ adminRuntime:
   readTimeout: "30s"
   writeTimeout: "30s"
   idleTimeout: "2m"
+  dataplaneAggregation:
+    serviceName: "nantian-gw-dataplane-admin"
+    namespace: "nantian-gw"
+    portName: "admin"
+    timeout: "2s"
+    bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
 log:
   level: "info"
   format: "json"

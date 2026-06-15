@@ -27,6 +27,16 @@ patches:
 generatorOptions:
   disableNameSuffixHash: true
 
+secretGenerator:
+  - name: nantian-gw-dataplane-admin-auth
+    namespace: nantian-gw
+    literals:
+      - token=kind-conformance-dataplane-admin-token
+  - name: nantian-gw-controlplane-admin-auth
+    namespace: nantian-gw
+    literals:
+      - token=kind-conformance-dataplane-admin-token
+
 configMapGenerator:
   - name: nantian-gw-controlplane-config
     namespace: nantian-gw
