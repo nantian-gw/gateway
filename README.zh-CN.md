@@ -89,7 +89,7 @@ spec:
 ### Helm（推荐用于生产环境）
 
 ```bash
-helm repo add nantian-gw https://charts.nantian.dev
+helm repo add nantian-gw https://chart.nantian.dev
 helm install nantian-gw nantian-gw/nantian-gw \
   --namespace nantian-gw \
   --create-namespace
