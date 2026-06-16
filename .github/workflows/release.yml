@@ -76,18 +76,23 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - name: Checkout
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v6
+
+      - name: Checkout release source
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.metadata.outputs.checkout_ref }}
+          path: release-src
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+          go-version-file: release-src/go.mod
+          cache-dependency-path: release-src/go.sum
 
       - name: Run Go unit tests
+        working-directory: release-src
         run: go test -count=1 -timeout 5m ./...
 
   kind-smoke:
@@ -107,34 +112,44 @@ jobs:
       ALL_FEATURES: "true"
 
     steps:
-      - name: Checkout
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v6
+
+      - name: Checkout release source
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.metadata.outputs.checkout_ref }}
           fetch-depth: 0
+          path: release-src
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+          go-version-file: release-src/go.mod
+          cache-dependency-path: release-src/go.sum
 
       - name: Install Kind tooling
+        working-directory: release-src
         run: scripts/ci/install-kind-tools.sh
 
       - name: Create kind cluster
+        working-directory: release-src
         run: scripts/ci/create-kind-cluster.sh
 
       - name: Install Gateway API CRDs
+        working-directory: release-src
         run: scripts/ci/install-gateway-api-crds.sh
 
       - name: Build current control-plane image
+        working-directory: release-src
         run: scripts/ci/build-controlplane-image.sh
 
       - name: Load images into kind
+        working-directory: release-src
         run: scripts/ci/load-kind-images.sh
 
       - name: Deploy Nantian Gateway
+        working-directory: release-src
         run: scripts/ci/deploy-kind-conformance.sh
 
       - name: Record image versions
@@ -145,15 +160,16 @@ jobs:
           kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .status.containerStatuses[] | "  \(.name): \(.imageID)"'
 
       - name: Run smoke test
-        run: CLUSTER_NAME="$CLUSTER_NAME" ./test/e2e/smoke/run.sh --no-cleanup
+        run: CLUSTER_NAME="$CLUSTER_NAME" GATEWAY_HTTP_PORT=80 ./test/e2e/smoke/run.sh --no-cleanup --skip-bootstrap
 
       - name: Run full Gateway API conformance
         id: conformance
         env:
           RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
+        working-directory: release-src
         run: |
           mkdir -p dist/conformance
-          report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
+          report_path="${GITHUB_WORKSPACE}/release-src/dist/conformance/report.yaml"
           set +e
           go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
             -args \
@@ -171,6 +187,7 @@ jobs:
 
       - name: Collect diagnostics on failure
         if: failure()
+        working-directory: release-src
         run: ARTIFACT_DIR=tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh
 
       - name: Upload conformance artifacts
@@ -179,8 +196,8 @@ jobs:
         with:
           name: conformance-${{ needs.metadata.outputs.release_tag }}
           path: |
-            dist/conformance/
-            tmp/conformance-diagnostics/
+            release-src/dist/conformance/
+            release-src/tmp/conformance-diagnostics/
           if-no-files-found: warn
 
       - name: Cleanup
@@ -199,16 +216,20 @@ jobs:
       control_digest: ${{ steps.build-controlplane.outputs.digest }}
 
     steps:
-      - name: Checkout
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v6
+
+      - name: Checkout release source
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.metadata.outputs.checkout_ref }}
+          path: release-src
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+          go-version-file: release-src/go.mod
+          cache-dependency-path: release-src/go.sum
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -224,13 +245,13 @@ jobs:
         id: build-controlplane
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: Dockerfile
+          context: release-src
+          file: release-src/Dockerfile
           push: true
           tags: ${{ needs.metadata.outputs.control_image }}
 
       - name: Prepare image metadata directory
-        run: mkdir -p dist/image-metadata
+        run: mkdir -p release-src/dist/image-metadata
 
       - name: Generate image provenance
         env:
@@ -239,7 +260,7 @@ jobs:
           CONTROL_IMAGE: ${{ needs.metadata.outputs.control_image }}
           TIMESTAMP: ${{ github.event.repository.updated_at }}
         run: |
-          cat > dist/image-metadata/provenance.json <<HEREDOC
+          cat > release-src/dist/image-metadata/provenance.json <<HEREDOC
           {
             "release": "${RELEASE_TAG}",
             "ci_run": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
@@ -256,5 +277,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: image-metadata-${{ needs.metadata.outputs.release_tag }}
-          path: dist/image-metadata/
+          path: release-src/dist/image-metadata/
           if-no-files-found: warn

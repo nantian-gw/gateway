@@ -162,14 +162,17 @@ func TestReleaseWorkflowUsesCurrentCIEntrypoints(t *testing.T) {
 
 	for _, want := range []string{
 		`checkout_ref: ${{ steps.vars.outputs.checkout_ref }}`,
-		`ref: ${{ needs.metadata.outputs.checkout_ref }}`,
+		`path: release-src`,
+		`go-version-file: release-src/go.mod`,
+		`cache-dependency-path: release-src/go.sum`,
+		`working-directory: release-src`,
 		`run: go test -count=1 -timeout 5m ./...`,
 		`run: scripts/ci/install-kind-tools.sh`,
 		`run: scripts/ci/create-kind-cluster.sh`,
 		`run: scripts/ci/install-gateway-api-crds.sh`,
 		`run: scripts/ci/load-kind-images.sh`,
 		`run: scripts/ci/deploy-kind-conformance.sh`,
-		`run: CLUSTER_NAME="$CLUSTER_NAME" ./test/e2e/smoke/run.sh --no-cleanup`,
+		`run: CLUSTER_NAME="$CLUSTER_NAME" GATEWAY_HTTP_PORT=80 ./test/e2e/smoke/run.sh --no-cleanup --skip-bootstrap`,
 		`go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \`,
 	} {
 		if !strings.Contains(contents, want) {
@@ -194,11 +197,18 @@ func TestSecurityScanWorkflowUsesExistingHelper(t *testing.T) {
 	contents := string(readFile(t, repoPath(".github", "workflows", "security-scans.yml")))
 	helperPath := repoPath("scripts", "ci", "run-security-scans.sh")
 
-	if !strings.Contains(contents, `run: scripts/ci/run-security-scans.sh`) {
-		t.Fatalf("security scan workflow must invoke scripts/ci/run-security-scans.sh")
+	if !strings.Contains(contents, `path: release-src`) {
+		t.Fatalf("security scan workflow must checkout the release source into release-src")
 	}
-	if !strings.Contains(contents, `ref: ${{ inputs.checkout_ref }}`) {
-		t.Fatalf("security scan workflow must checkout the caller-provided ref")
+	if !strings.Contains(contents, `go-version-file: release-src/go.mod`) {
+		t.Fatalf("security scan workflow must resolve the Go toolchain from release-src")
+	}
+	if !strings.Contains(contents, `SCAN_ROOT=release-src scripts/ci/run-security-scans.sh`) {
+		t.Fatalf("security scan workflow must scan release-src through the branch helper")
+	}
+	if strings.Contains(contents, `run: scripts/ci/run-security-scans.sh`) &&
+		!strings.Contains(contents, `SCAN_ROOT=release-src scripts/ci/run-security-scans.sh`) {
+		t.Fatalf("security scan workflow must not depend on a helper file from the checked-out release tag")
 	}
 
 	if _, err := os.Stat(helperPath); err != nil {
@@ -210,10 +220,10 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	contents := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
 
 	for _, want := range []string{
-		`LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"`,
+		`GATEWAY_HOST="${GATEWAY_HOST:-127.0.0.1}"`,
 		`GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"`,
-		`service/$DATA_PLANE_SVC`,
-		`"${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}"`,
+		`wait_for_gateway_programmed`,
+		`http://${GATEWAY_HOST}:${GATEWAY_HTTP_PORT}/echo`,
 		`request_deadline=`,
 	} {
 		if !strings.Contains(contents, want) {
@@ -222,6 +232,9 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	}
 
 	for _, unwanted := range []string{
+		`LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"`,
+		`service/$DATA_PLANE_SVC`,
+		`kubectl port-forward`,
 		`pod/$dataplane_pod`,
 		`dataplane_pod=$(kubectl get pod`,
 		`port-forward to $dataplane_pod exited before request succeeded`,
@@ -246,7 +259,6 @@ func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 	for _, want := range []string{
 		`GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"`,
 		`CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"`,
-		`DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"`,
 		`gatewayClassName: $GATEWAY_CLASS_NAME`,
 	} {
 		if !strings.Contains(smokeScript, want) {
@@ -261,6 +273,22 @@ func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 	} {
 		if strings.Contains(smokeScript, oldName) {
 			t.Fatalf("smoke script still contains old resource name %q", oldName)
+		}
+	}
+}
+
+func TestSecurityScanHelperSupportsAlternateScanRoot(t *testing.T) {
+	contents := string(readFile(t, repoPath("scripts", "ci", "run-security-scans.sh")))
+
+	for _, want := range []string{
+		`SCAN_ROOT="${SCAN_ROOT:-${1:-.}}"`,
+		`cd "$SCAN_ROOT"`,
+		`osv-scanner scan source -r . --format json --output-file`,
+		`grype dir:. -o json --file`,
+		`kubescape scan framework nsa`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("security scan helper missing %q", want)
 		}
 	}
 }

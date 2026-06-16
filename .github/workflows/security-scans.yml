@@ -29,16 +29,20 @@ jobs:
     timeout-minutes: 35
 
     steps:
-      - name: Checkout
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v6
+
+      - name: Checkout release source
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.checkout_ref }}
+          path: release-src
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+          go-version-file: release-src/go.mod
+          cache-dependency-path: release-src/go.sum
 
       - name: Install scanner prerequisites
         run: |
@@ -70,7 +74,7 @@ jobs:
           echo "${RUNNER_TEMP:-/tmp}/bin" >>"${GITHUB_PATH}"
 
       - name: Run security scan bundle
-        run: scripts/ci/run-security-scans.sh
+        run: SCAN_ROOT=release-src scripts/ci/run-security-scans.sh
 
       - name: Upload security scan artifacts
         if: always()

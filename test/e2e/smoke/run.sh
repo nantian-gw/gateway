@@ -10,15 +10,29 @@ CLUSTER_NAME="${CLUSTER_NAME:-nantian-e2e}"
 CONTROL_PLANE_NS="nantian-gw"
 TEST_NS="nantian-e2e"
 CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"
-DATA_PLANE_SVC="nantian-gw-dataplane"
-DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"
 GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"
-ECHO_PORT=8080
-LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"
+GATEWAY_HOST="${GATEWAY_HOST:-127.0.0.1}"
 GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"
 TIMEOUT="${TIMEOUT:-180}"
-CLEANUP="${1:-}"
+KIND_CONFIG="${KIND_CONFIG:-$GATEWAY_ROOT/scripts/ci/kind-ci-config.yaml}"
+CLEANUP="true"
+BOOTSTRAP="true"
 FAILED=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --no-cleanup)
+            CLEANUP="false"
+            ;;
+        --skip-bootstrap)
+            BOOTSTRAP="false"
+            ;;
+        *)
+            echo "unknown argument: $arg" >&2
+            exit 1
+            ;;
+    esac
+done
 
 red()   { echo -e "\033[31m$*\033[0m"; }
 green() { echo -e "\033[32m$*\033[0m"; }
@@ -30,18 +44,12 @@ fail() {
 }
 
 cleanup_cluster() {
-    if [[ "$CLEANUP" == "--no-cleanup" ]]; then
+    if [[ "$CLEANUP" == "false" ]]; then
         yellow "Skipping cleanup (--no-cleanup)"
         return
     fi
     echo "=== Cleaning up ==="
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
-}
-
-stop_port_forward() {
-    local pid="$1"
-    kill "$pid" 2>/dev/null || true
-    wait "$pid" 2>/dev/null || true
 }
 
 # ── Step 1: ensure kind cluster ──
@@ -51,7 +59,11 @@ ensure_cluster() {
         return
     fi
     echo "=== Creating kind cluster: $CLUSTER_NAME ==="
-    kind create cluster --name "$CLUSTER_NAME" --wait 5m
+    if [[ ! -f "$KIND_CONFIG" ]]; then
+        fail "kind config not found: $KIND_CONFIG"
+        return 1
+    fi
+    kind create cluster --name "$CLUSTER_NAME" --config "$KIND_CONFIG" --wait 5m
     kubectl wait --for=condition=ready node --all --timeout=2m
 }
 
@@ -195,28 +207,38 @@ YAML
     green "  HTTPRoute created"
 }
 
-# ── Step 6: port-forward and send request ──
+wait_for_gateway_programmed() {
+    local gateway_name="${1:-nantian-gw}"
+
+    echo "=== Waiting for Gateway ${gateway_name} to be Programmed ==="
+    local request_deadline=$((SECONDS + TIMEOUT))
+    while (( SECONDS < request_deadline )); do
+        local programmed
+        programmed="$(
+            kubectl get gateway "$gateway_name" -n "$CONTROL_PLANE_NS" \
+                -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || true
+        )"
+        if [[ "$programmed" == "True" ]]; then
+            green "  Gateway ${gateway_name} is Programmed"
+            return 0
+        fi
+        sleep 2
+    done
+
+    fail "Gateway ${gateway_name} did not become Programmed=True within ${TIMEOUT}s"
+    return 1
+}
+
+# ── Step 6: send request through the Kind host port entry ──
 send_request() {
-    local dataplane_target="service/$DATA_PLANE_SVC"
+    local endpoint="http://${GATEWAY_HOST}:${GATEWAY_HTTP_PORT}/echo"
 
-    echo "=== Sending test request (port-forward $dataplane_target ${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}) ==="
-
-    # Start port-forward in background
-    kubectl port-forward -n "$CONTROL_PLANE_NS" "$dataplane_target" "${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}" &>/dev/null &
-    PF_PID=$!
-
+    echo "=== Sending test request (${endpoint}) ==="
     local request_deadline=$((SECONDS + TIMEOUT))
     local response="000"
     while (( SECONDS < request_deadline )); do
-        if ! kill -0 "$PF_PID" 2>/dev/null; then
-            stop_port_forward "$PF_PID"
-            fail "port-forward to $dataplane_target exited before request succeeded"
-            return 1
-        fi
-
-        response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${LOCAL_HTTP_PORT}/echo" 2>/dev/null || echo "000")
+        response=$(curl -s -o /dev/null -w "%{http_code}" "$endpoint" 2>/dev/null || echo "000")
         if [[ "$response" == "200" ]]; then
-            stop_port_forward "$PF_PID"
             green "  PASS: GET /echo -> HTTP $response"
             return 0
         fi
@@ -224,8 +246,7 @@ send_request() {
         sleep 2
     done
 
-    stop_port_forward "$PF_PID"
-    fail "GET /echo -> HTTP $response (expected 200 within ${TIMEOUT}s)"
+    fail "GET /echo via ${endpoint} -> HTTP $response (expected 200 within ${TIMEOUT}s)"
     return 1
 }
 
@@ -233,13 +254,16 @@ send_request() {
 main() {
     trap 'cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi' EXIT
 
-    ensure_cluster
-    install_gateway_api_crds
-    deploy_gateway
+    if [[ "$BOOTSTRAP" == "true" ]]; then
+        ensure_cluster
+        install_gateway_api_crds
+        deploy_gateway
+    fi
     deploy_backend
     create_gateway
     create_reference_grant
     create_route
+    wait_for_gateway_programmed
     send_request
 }
 
