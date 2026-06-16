@@ -210,7 +210,9 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 				)
 				return terminate(streamTerminationInvalidRequest, err)
 			}
-			advertisedFeatures = canonicalizeSupportedFeatures(next.GetSupportedFeatures())
+			if len(next.GetSupportedFeatures()) > 0 {
+				advertisedFeatures = canonicalizeSupportedFeatures(next.GetSupportedFeatures())
+			}
 			switch next.GetResultStatus() {
 			case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK:
 				s.nodes.ObserveAckWithFeatures(
