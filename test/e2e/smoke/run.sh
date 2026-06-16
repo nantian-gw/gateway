@@ -10,12 +10,14 @@ CLUSTER_NAME="${CLUSTER_NAME:-nantian-e2e}"
 CONTROL_PLANE_NS="nantian-gw"
 TEST_NS="nantian-e2e"
 CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"
-DATA_PLANE_SVC="nantian-gw-dataplane"
 DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"
 GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"
+GATEWAY_NAME="${GATEWAY_NAME:-nantian-gw}"
+GATEWAY_SERVICE="nantian-gw-$GATEWAY_NAME"
+SMOKE_CLIENT_POD="smoke-client"
+SMOKE_CLIENT_IMAGE="${SMOKE_CLIENT_IMAGE:-docker.io/busybox:1.36.1}"
+SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"
 ECHO_PORT=8080
-LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"
-GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"
 TIMEOUT="${TIMEOUT:-180}"
 CLEANUP="${1:-}"
 FAILED=false
@@ -36,12 +38,6 @@ cleanup_cluster() {
     fi
     echo "=== Cleaning up ==="
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
-}
-
-stop_port_forward() {
-    local pid="$1"
-    kill "$pid" 2>/dev/null || true
-    wait "$pid" 2>/dev/null || true
 }
 
 # ── Step 1: ensure kind cluster ──
@@ -131,7 +127,7 @@ create_gateway() {
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: nantian-gw
+  name: $GATEWAY_NAME
 spec:
   gatewayClassName: $GATEWAY_CLASS_NAME
   listeners:
@@ -178,7 +174,7 @@ metadata:
   name: echo
 spec:
   parentRefs:
-  - name: nantian-gw
+  - name: $GATEWAY_NAME
   rules:
   - matches:
     - path:
@@ -195,43 +191,59 @@ YAML
     green "  HTTPRoute created"
 }
 
-# ── Step 6: port-forward and send request ──
+ensure_smoke_client() {
+    kubectl apply -n "$TEST_NS" -f - <<YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: $SMOKE_CLIENT_POD
+spec:
+  restartPolicy: Always
+  containers:
+  - name: client
+    image: $SMOKE_CLIENT_IMAGE
+    command:
+    - sh
+    - -c
+    - sleep 3600
+YAML
+
+    kubectl wait --for=condition=ready pod/$SMOKE_CLIENT_POD -n "$TEST_NS" --timeout="${TIMEOUT}s"
+}
+
+# ── Step 6: probe the derived Gateway Service from inside the cluster ──
 send_request() {
-    local dataplane_target="service/$DATA_PLANE_SVC"
+    echo "=== Sending test request via derived Gateway Service ($SMOKE_URL) ==="
 
-    echo "=== Sending test request (port-forward $dataplane_target ${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}) ==="
-
-    # Start port-forward in background
-    kubectl port-forward -n "$CONTROL_PLANE_NS" "$dataplane_target" "${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}" &>/dev/null &
-    PF_PID=$!
+    ensure_smoke_client
 
     local request_deadline=$((SECONDS + TIMEOUT))
-    local response="000"
     while (( SECONDS < request_deadline )); do
-        if ! kill -0 "$PF_PID" 2>/dev/null; then
-            stop_port_forward "$PF_PID"
-            fail "port-forward to $dataplane_target exited before request succeeded"
-            return 1
+        if ! kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE" &>/dev/null; then
+            sleep 2
+            continue
         fi
 
-        response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${LOCAL_HTTP_PORT}/echo" 2>/dev/null || echo "000")
-        if [[ "$response" == "200" ]]; then
-            stop_port_forward "$PF_PID"
-            green "  PASS: GET /echo -> HTTP $response"
+        if kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- wget -q -O - "$SMOKE_URL" >/dev/null 2>&1; then
+            green "  PASS: GET /echo via $GATEWAY_SERVICE -> HTTP 200"
             return 0
         fi
 
         sleep 2
     done
 
-    stop_port_forward "$PF_PID"
-    fail "GET /echo -> HTTP $response (expected 200 within ${TIMEOUT}s)"
+    if ! kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE" &>/dev/null; then
+        fail "derived Gateway Service $GATEWAY_SERVICE was not created within ${TIMEOUT}s"
+        return 1
+    fi
+
+    fail "GET /echo via $GATEWAY_SERVICE did not succeed within ${TIMEOUT}s"
     return 1
 }
 
 # ── Main ──
 main() {
-    trap 'cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi' EXIT
+    trap 'exit_code=$?; if [[ "$exit_code" -ne 0 ]]; then FAILED=true; fi; cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi; exit "$exit_code"' EXIT
 
     ensure_cluster
     install_gateway_api_crds
