@@ -197,17 +197,12 @@ YAML
 
 # ── Step 6: port-forward and send request ──
 send_request() {
-    local dataplane_pod
-    dataplane_pod=$(kubectl get pod -n "$CONTROL_PLANE_NS" -l "$DATA_PLANE_SELECTOR" -o jsonpath='{.items[0].metadata.name}')
-    if [[ -z "$dataplane_pod" ]]; then
-        fail "no data plane pod found"
-        return 1
-    fi
+    local dataplane_target="service/$DATA_PLANE_SVC"
 
-    echo "=== Sending test request (port-forward $dataplane_pod ${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}) ==="
+    echo "=== Sending test request (port-forward $dataplane_target ${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}) ==="
 
     # Start port-forward in background
-    kubectl port-forward -n "$CONTROL_PLANE_NS" "pod/$dataplane_pod" "${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}" &>/dev/null &
+    kubectl port-forward -n "$CONTROL_PLANE_NS" "$dataplane_target" "${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}" &>/dev/null &
     PF_PID=$!
 
     local request_deadline=$((SECONDS + TIMEOUT))
@@ -215,7 +210,7 @@ send_request() {
     while (( SECONDS < request_deadline )); do
         if ! kill -0 "$PF_PID" 2>/dev/null; then
             stop_port_forward "$PF_PID"
-            fail "port-forward to $dataplane_pod exited before request succeeded"
+            fail "port-forward to $dataplane_target exited before request succeeded"
             return 1
         fi
 

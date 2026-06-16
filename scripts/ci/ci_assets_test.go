@@ -163,6 +163,7 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	for _, want := range []string{
 		`LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"`,
 		`GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"`,
+		`service/$DATA_PLANE_SVC`,
 		`"${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}"`,
 		`request_deadline=`,
 	} {
@@ -171,8 +172,15 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 		}
 	}
 
-	if strings.Contains(contents, "10080:10080") {
-		t.Fatalf("smoke script still forwards stale dataplane port 10080 to 10080")
+	for _, unwanted := range []string{
+		`pod/$dataplane_pod`,
+		`dataplane_pod=$(kubectl get pod`,
+		`port-forward to $dataplane_pod exited before request succeeded`,
+		`10080:10080`,
+	} {
+		if strings.Contains(contents, unwanted) {
+			t.Fatalf("smoke script still contains stale pod-forward pattern %q", unwanted)
+		}
 	}
 }
 
