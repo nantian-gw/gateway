@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.vars.outputs.release_tag }}
+      checkout_ref: ${{ steps.vars.outputs.checkout_ref }}
       control_image: ${{ steps.vars.outputs.control_image }}
       control_image_name: ${{ steps.vars.outputs.control_image_name }}
 
@@ -47,21 +48,26 @@ jobs:
           fi
 
           owner_lc="${GITHUB_REPOSITORY_OWNER,,}"
+          checkout_ref="refs/tags/${release_tag}"
           control_image_name="ghcr.io/${owner_lc}/nantian-controlplane"
           control_image="${control_image_name}:${release_tag}"
 
           {
             echo "release_tag=${release_tag}"
+            echo "checkout_ref=${checkout_ref}"
             echo "control_image=${control_image}"
             echo "control_image_name=${control_image_name}"
           } >>"${GITHUB_OUTPUT}"
 
   security-scans:
     name: Security Scans
+    needs: metadata
     permissions:
       contents: read
       security-events: read
     uses: ./.github/workflows/security-scans.yml
+    with:
+      checkout_ref: ${{ needs.metadata.outputs.checkout_ref }}
 
   controlplane:
     name: Controlplane Tests
@@ -72,6 +78,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.metadata.outputs.checkout_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -80,8 +88,7 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Run Go unit tests
-        working-directory: controlplane
-        run: go test ./...
+        run: go test -count=1 -timeout 5m ./...
 
   kind-smoke:
     name: Kind Validation
@@ -90,11 +97,20 @@ jobs:
       - metadata
       - controlplane
     timeout-minutes: 90
+    env:
+      CLUSTER_NAME: release-validation
+      GATEWAY_API_VERSION: v1.5.1
+      CONTROLPLANE_IMAGE: ${{ needs.metadata.outputs.control_image }}
+      DATAPLANE_IMAGE: ghcr.io/nantian-gw/dataplane:latest
+      DASHBOARD_IMAGE: ghcr.io/nantian-gw/dashboard:latest
+      CONFORMANCE_EXPERIMENTAL: "true"
+      ALL_FEATURES: "true"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          ref: ${{ needs.metadata.outputs.checkout_ref }}
           fetch-depth: 0
 
       - name: Set up Go
@@ -103,82 +119,73 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
-      - name: Install release validation dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends protobuf-compiler libprotobuf-dev jq socat
-          go install sigs.k8s.io/kind@v0.27.0
-          sudo curl -fsSL "https://dl.k8s.io/release/v1.32.2/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl
-          sudo chmod +x /usr/local/bin/kubectl
-          echo "$(go env GOPATH)/bin" >>"${GITHUB_PATH}"
+      - name: Install Kind tooling
+        run: scripts/ci/install-kind-tools.sh
 
-      - name: Run Kind smoke test with release tag
-        env:
-          IMAGE_TAG: ${{ needs.metadata.outputs.release_tag }}
-        run: ./tests/e2e/run-kind.sh
+      - name: Create kind cluster
+        run: scripts/ci/create-kind-cluster.sh
+
+      - name: Install Gateway API CRDs
+        run: scripts/ci/install-gateway-api-crds.sh
+
+      - name: Build current control-plane image
+        run: scripts/ci/build-controlplane-image.sh
+
+      - name: Load images into kind
+        run: scripts/ci/load-kind-images.sh
+
+      - name: Deploy Nantian Gateway
+        run: scripts/ci/deploy-kind-conformance.sh
+
+      - name: Record image versions
+        run: |
+          echo "=== Images under test ==="
+          kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .spec.containers[] | "  \(.name): \(.image)"'
+          echo "=== Image digests ==="
+          kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .status.containerStatuses[] | "  \(.name): \(.imageID)"'
+
+      - name: Run smoke test
+        run: CLUSTER_NAME="$CLUSTER_NAME" ./test/e2e/smoke/run.sh --no-cleanup
 
       - name: Run full Gateway API conformance
         id: conformance
         env:
           RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
-          REPORT_PATH: ${{ github.workspace }}/dist/conformance/report.yaml
-          LOG_PATH: ${{ github.workspace }}/dist/conformance/run.log
         run: |
           mkdir -p dist/conformance
+          report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
           set +e
-          ALL_FEATURES=true \
-          IMPLEMENTATION_VERSION="${RELEASE_TAG}" \
-          REPORT_OUTPUT="${REPORT_PATH}" \
-          ./tests/conformance/run.sh 2>&1 | tee "${LOG_PATH}"
+          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
+            -args \
+            -gateway-class nantian-gw \
+            -report-output "$report_path" \
+            -organization "Nantian Gateway" \
+            -project "Nantian Gateway" \
+            -url "https://github.com/nantian-gw/gateway" \
+            -version "${RELEASE_TAG}" \
+            -contact "https://github.com/nantian-gw/gateway/issues" 2>&1 \
+            | tee dist/conformance/run.log
           status=${PIPESTATUS[0]}
           echo "exit_code=${status}" >>"${GITHUB_OUTPUT}"
           exit "${status}"
 
-      - name: Archive conformance report into repository layout
-        if: always()
-        env:
-          RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
-          SOURCE_COMMAND: ALL_FEATURES=true IMPLEMENTATION_VERSION=${{ needs.metadata.outputs.release_tag }} REPORT_OUTPUT=${{ github.workspace }}/dist/conformance/report.yaml ./tests/conformance/run.sh
-          SOURCE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          if [[ ! -f dist/conformance/report.yaml ]]; then
-            echo "no report produced; skipping archival"
-            exit 0
-          fi
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: ARTIFACT_DIR=tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh
 
-          if [[ "${{ steps.conformance.outputs.exit_code }}" == "0" ]]; then
-            export RESULT_STATUS=passed
-          else
-            export RESULT_STATUS=failed
-          fi
-          export REPORT_SCOPE=releases
-
-          scripts/archive-conformance-report.sh \
-            "${RELEASE_TAG}" \
-            "${GITHUB_WORKSPACE}/dist/conformance/report.yaml" \
-            "${GITHUB_WORKSPACE}/dist/conformance/run.log"
-
-          cp "reports/conformance/releases/${RELEASE_TAG}/metadata.yaml" "dist/conformance/metadata.yaml"
-
-      - name: Upload conformance artifact
+      - name: Upload conformance artifacts
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: conformance-${{ needs.metadata.outputs.release_tag }}
-          path: dist/conformance/
+          path: |
+            dist/conformance/
+            tmp/conformance-diagnostics/
           if-no-files-found: warn
 
-      - name: Publish conformance reports branch
+      - name: Cleanup
         if: always()
-        env:
-          COMMIT_MESSAGE: "conformance: archive ${{ needs.metadata.outputs.release_tag }}"
-        run: |
-          if [[ ! -f reports/conformance/latest/report.yaml ]]; then
-            echo "no archived report available; skipping branch publish"
-            exit 0
-          fi
-
-          scripts/publish-conformance-reports.sh conformance-reports
+        run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "$CLUSTER_NAME" || true
 
   publish:
     name: Publish Release Images
@@ -194,6 +201,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.metadata.outputs.checkout_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v6

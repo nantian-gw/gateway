@@ -2,7 +2,17 @@ name: Security Scans
 
 "on":
   workflow_call:
+    inputs:
+      checkout_ref:
+        description: "Git ref to scan"
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      checkout_ref:
+        description: "Git ref to scan"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.checkout_ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -58,7 +70,7 @@ jobs:
           echo "${RUNNER_TEMP:-/tmp}/bin" >>"${GITHUB_PATH}"
 
       - name: Run security scan bundle
-        run: scripts/run-security-scans.sh
+        run: scripts/ci/run-security-scans.sh
 
       - name: Upload security scan artifacts
         if: always()
