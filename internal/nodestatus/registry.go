@@ -99,12 +99,22 @@ func NewRegistry(local *ir.NodeStatusStore, repository Repository, logger *slog.
 }
 
 func (r *Registry) Connect(ctx context.Context, nodeID, cluster string, subscriptions []string, now time.Time) {
+	r.ConnectWithFeatures(ctx, nodeID, cluster, subscriptions, nil, now)
+}
+
+func (r *Registry) ConnectWithFeatures(
+	ctx context.Context,
+	nodeID, cluster string,
+	subscriptions []string,
+	supportedFeatures []string,
+	now time.Time,
+) {
 	ctx, cancel := r.operationContext(ctx)
 	defer cancel()
 
 	r.seedNode(ctx, nodeID)
 	previous, _ := r.local.Get(nodeID)
-	status := r.local.Connect(nodeID, cluster, subscriptions, now.UTC())
+	status := r.local.ConnectWithFeatures(nodeID, cluster, subscriptions, supportedFeatures, now.UTC())
 	r.clearPublishObservation(nodeID)
 	r.persistUpdatedStatus(previous, status)
 	r.notifyIfRoutingStateChanged(previous, status)
@@ -139,12 +149,22 @@ func (r *Registry) ObserveAck(
 	subscriptions []string,
 	now time.Time,
 ) {
+	r.ObserveAckWithFeatures(ctx, nodeID, cluster, version, nonce, subscriptions, nil, now)
+}
+
+func (r *Registry) ObserveAckWithFeatures(
+	ctx context.Context,
+	nodeID, cluster, version, nonce string,
+	subscriptions []string,
+	supportedFeatures []string,
+	now time.Time,
+) {
 	ctx, cancel := r.operationContext(ctx)
 	defer cancel()
 
 	r.seedNode(ctx, nodeID)
 	previous, _ := r.local.Get(nodeID)
-	status := r.local.ObserveAck(nodeID, cluster, version, nonce, subscriptions, now.UTC())
+	status := r.local.ObserveAckWithFeatures(nodeID, cluster, version, nonce, subscriptions, supportedFeatures, now.UTC())
 	r.observePublishAckLag(nodeID, version, now.UTC())
 	r.persistUpdatedStatus(previous, status)
 	r.notifyIfRoutingStateChanged(previous, status)
@@ -156,12 +176,31 @@ func (r *Registry) ObserveNack(
 	subscriptions []string,
 	now time.Time,
 ) {
+	r.ObserveNackWithFeatures(ctx, nodeID, cluster, version, nonce, message, subscriptions, nil, now)
+}
+
+func (r *Registry) ObserveNackWithFeatures(
+	ctx context.Context,
+	nodeID, cluster, version, nonce, message string,
+	subscriptions []string,
+	supportedFeatures []string,
+	now time.Time,
+) {
 	ctx, cancel := r.operationContext(ctx)
 	defer cancel()
 
 	r.seedNode(ctx, nodeID)
 	previous, _ := r.local.Get(nodeID)
-	status := r.local.ObserveNack(nodeID, cluster, version, nonce, message, subscriptions, now.UTC())
+	status := r.local.ObserveNackWithFeatures(
+		nodeID,
+		cluster,
+		version,
+		nonce,
+		message,
+		subscriptions,
+		supportedFeatures,
+		now.UTC(),
+	)
 	r.observePublishNackLag(nodeID, version, now.UTC())
 	r.persistUpdatedStatus(previous, status)
 	r.notifyIfRoutingStateChanged(previous, status)
@@ -643,7 +682,8 @@ func routingStateChanged(previous, current ir.NodeStatus) bool {
 		previous.Ready != current.Ready ||
 		previous.LastAckVersion != current.LastAckVersion ||
 		previous.LastConfigStatus != current.LastConfigStatus ||
-		previous.LastNackVersion != current.LastNackVersion
+		previous.LastNackVersion != current.LastNackVersion ||
+		!stringSlicesEqual(previous.SupportedFeatures, current.SupportedFeatures)
 }
 
 func prefer(current, candidate ir.NodeStatus) ir.NodeStatus {
@@ -704,12 +744,26 @@ func completenessScore(status ir.NodeStatus) int {
 		score++
 	}
 	score += len(status.Subscriptions)
+	score += len(status.SupportedFeatures)
 	return score
 }
 
 func clone(status ir.NodeStatus) ir.NodeStatus {
 	status.Subscriptions = append([]string(nil), status.Subscriptions...)
+	status.SupportedFeatures = append([]string(nil), status.SupportedFeatures...)
 	return status
+}
+
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func mergeSharedAuthoritative(shared []ir.NodeStatus, local []ir.NodeStatus) []ir.NodeStatus {

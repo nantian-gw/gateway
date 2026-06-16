@@ -33,11 +33,19 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 	}
 
 	nodeID := req.GetNodeId()
+	advertisedFeatures := canonicalizeSupportedFeatures(req.GetSupportedFeatures())
 	registration := s.registerStream(nodeID)
 	defer s.unregisterStream(registration)
 	s.logger.Info("dataplane connected", "node_id", nodeID, "version", req.GetVersion())
 	if s.isActiveStream(registration) {
-		s.nodes.Connect(stream.Context(), nodeID, req.GetCluster(), req.GetSubscriptions(), time.Now().UTC())
+		s.nodes.ConnectWithFeatures(
+			stream.Context(),
+			nodeID,
+			req.GetCluster(),
+			req.GetSubscriptions(),
+			advertisedFeatures,
+			time.Now().UTC(),
+		)
 	}
 
 	sub, unsubscribe := s.store.Subscribe()
@@ -202,20 +210,22 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 				)
 				return terminate(streamTerminationInvalidRequest, err)
 			}
+			advertisedFeatures = canonicalizeSupportedFeatures(next.GetSupportedFeatures())
 			switch next.GetResultStatus() {
 			case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK:
-				s.nodes.ObserveAck(
+				s.nodes.ObserveAckWithFeatures(
 					stream.Context(),
 					nodeID,
 					next.GetCluster(),
 					next.GetVersion(),
 					next.GetNonce(),
 					next.GetSubscriptions(),
+					advertisedFeatures,
 					now,
 				)
 				clearAckTimer(next.GetVersion())
 			case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_NACK:
-				s.nodes.ObserveNack(
+				s.nodes.ObserveNackWithFeatures(
 					stream.Context(),
 					nodeID,
 					next.GetCluster(),
@@ -223,11 +233,19 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 					next.GetNonce(),
 					next.GetErrorDetail(),
 					next.GetSubscriptions(),
+					advertisedFeatures,
 					now,
 				)
 				clearAckTimer(next.GetVersion())
 			default:
-				s.nodes.Connect(stream.Context(), nodeID, next.GetCluster(), next.GetSubscriptions(), now)
+				s.nodes.ConnectWithFeatures(
+					stream.Context(),
+					nodeID,
+					next.GetCluster(),
+					next.GetSubscriptions(),
+					advertisedFeatures,
+					now,
+				)
 			}
 		case <-idleHeartbeat.C:
 			if !s.isActiveStream(registration) {

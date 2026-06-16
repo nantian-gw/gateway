@@ -8,23 +8,24 @@ import (
 )
 
 type NodeStatus struct {
-	NodeID           string    `json:"nodeId"`
-	Cluster          string    `json:"cluster"`
-	Connected        bool      `json:"connected"`
-	ConnectedAt      time.Time `json:"connectedAt,omitempty"`
-	DisconnectedAt   time.Time `json:"disconnectedAt,omitempty"`
-	DisconnectReason string    `json:"disconnectReason,omitempty"`
-	LastSeenAt       time.Time `json:"lastSeenAt,omitempty"`
-	LastSentVersion  string    `json:"lastSentVersion,omitempty"`
-	LastAckVersion   string    `json:"lastAckVersion,omitempty"`
-	LastNonce        string    `json:"lastNonce,omitempty"`
-	LastConfigStatus string    `json:"lastConfigStatus,omitempty"`
-	LastNackVersion  string    `json:"lastNackVersion,omitempty"`
-	LastNackNonce    string    `json:"lastNackNonce,omitempty"`
-	LastNackMessage  string    `json:"lastNackMessage,omitempty"`
-	Ready            bool      `json:"ready"`
-	Message          string    `json:"message,omitempty"`
-	Subscriptions    []string  `json:"subscriptions,omitempty"`
+	NodeID            string    `json:"nodeId"`
+	Cluster           string    `json:"cluster"`
+	Connected         bool      `json:"connected"`
+	ConnectedAt       time.Time `json:"connectedAt,omitempty"`
+	DisconnectedAt    time.Time `json:"disconnectedAt,omitempty"`
+	DisconnectReason  string    `json:"disconnectReason,omitempty"`
+	LastSeenAt        time.Time `json:"lastSeenAt,omitempty"`
+	LastSentVersion   string    `json:"lastSentVersion,omitempty"`
+	LastAckVersion    string    `json:"lastAckVersion,omitempty"`
+	LastNonce         string    `json:"lastNonce,omitempty"`
+	LastConfigStatus  string    `json:"lastConfigStatus,omitempty"`
+	LastNackVersion   string    `json:"lastNackVersion,omitempty"`
+	LastNackNonce     string    `json:"lastNackNonce,omitempty"`
+	LastNackMessage   string    `json:"lastNackMessage,omitempty"`
+	Ready             bool      `json:"ready"`
+	Message           string    `json:"message,omitempty"`
+	Subscriptions     []string  `json:"subscriptions,omitempty"`
+	SupportedFeatures []string  `json:"supportedFeatures,omitempty"`
 }
 
 func (n NodeStatus) RejectsVersion(version string) bool {
@@ -46,6 +47,15 @@ func NewNodeStatusStore() *NodeStatusStore {
 }
 
 func (s *NodeStatusStore) Connect(nodeID, cluster string, subscriptions []string, now time.Time) NodeStatus {
+	return s.ConnectWithFeatures(nodeID, cluster, subscriptions, nil, now)
+}
+
+func (s *NodeStatusStore) ConnectWithFeatures(
+	nodeID, cluster string,
+	subscriptions []string,
+	supportedFeatures []string,
+	now time.Time,
+) NodeStatus {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -64,6 +74,7 @@ func (s *NodeStatusStore) Connect(nodeID, cluster string, subscriptions []string
 	}
 	node.LastSeenAt = now
 	node.Subscriptions = cloneStrings(subscriptions)
+	node.SupportedFeatures = cloneStrings(supportedFeatures)
 	s.nodes[nodeID] = node
 
 	return cloneNodeStatus(node)
@@ -101,6 +112,15 @@ func (s *NodeStatusStore) DisconnectWithReason(nodeID string, now time.Time, rea
 }
 
 func (s *NodeStatusStore) ObserveAck(nodeID, cluster, version, nonce string, subscriptions []string, now time.Time) NodeStatus {
+	return s.ObserveAckWithFeatures(nodeID, cluster, version, nonce, subscriptions, nil, now)
+}
+
+func (s *NodeStatusStore) ObserveAckWithFeatures(
+	nodeID, cluster, version, nonce string,
+	subscriptions []string,
+	supportedFeatures []string,
+	now time.Time,
+) NodeStatus {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -117,6 +137,7 @@ func (s *NodeStatusStore) ObserveAck(nodeID, cluster, version, nonce string, sub
 	if len(subscriptions) > 0 {
 		node.Subscriptions = cloneStrings(subscriptions)
 	}
+	node.SupportedFeatures = cloneStrings(supportedFeatures)
 	s.nodes[nodeID] = node
 
 	return cloneNodeStatus(node)
@@ -125,6 +146,15 @@ func (s *NodeStatusStore) ObserveAck(nodeID, cluster, version, nonce string, sub
 func (s *NodeStatusStore) ObserveNack(
 	nodeID, cluster, version, nonce, message string,
 	subscriptions []string,
+	now time.Time,
+) NodeStatus {
+	return s.ObserveNackWithFeatures(nodeID, cluster, version, nonce, message, subscriptions, nil, now)
+}
+
+func (s *NodeStatusStore) ObserveNackWithFeatures(
+	nodeID, cluster, version, nonce, message string,
+	subscriptions []string,
+	supportedFeatures []string,
 	now time.Time,
 ) NodeStatus {
 	s.mu.Lock()
@@ -144,6 +174,7 @@ func (s *NodeStatusStore) ObserveNack(
 	if len(subscriptions) > 0 {
 		node.Subscriptions = cloneStrings(subscriptions)
 	}
+	node.SupportedFeatures = cloneStrings(supportedFeatures)
 	s.nodes[nodeID] = node
 
 	return cloneNodeStatus(node)
@@ -245,6 +276,7 @@ func (s *NodeStatusStore) List() []NodeStatus {
 
 func cloneNodeStatus(node NodeStatus) NodeStatus {
 	node.Subscriptions = cloneStrings(node.Subscriptions)
+	node.SupportedFeatures = cloneStrings(node.SupportedFeatures)
 	return node
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -101,6 +102,10 @@ func TestLeaseRepositoryRoundTripsNodeStatus(t *testing.T) {
 		Ready:           true,
 		Message:         "snapshot applied",
 		Subscriptions:   []string{"*"},
+		SupportedFeatures: []string{
+			"core.v1",
+			"route.labels.v1",
+		},
 	}
 
 	if err := repository.Upsert(context.Background(), status); err != nil {
@@ -117,6 +122,9 @@ func TestLeaseRepositoryRoundTripsNodeStatus(t *testing.T) {
 	if got.NodeID != "dp-2" || got.LastAckVersion != "v2" || !got.Ready {
 		t.Fatalf("unexpected status: %+v", got)
 	}
+	if !reflect.DeepEqual(got.SupportedFeatures, status.SupportedFeatures) {
+		t.Fatalf("supported features = %#v, want %#v", got.SupportedFeatures, status.SupportedFeatures)
+	}
 
 	items, err := repository.List(context.Background())
 	if err != nil {
@@ -130,6 +138,85 @@ func TestLeaseRepositoryRoundTripsNodeStatus(t *testing.T) {
 	}
 	if repository.Prefix() != "node-status" {
 		t.Fatalf("unexpected prefix: %s", repository.Prefix())
+	}
+}
+
+func TestRegistryRoutingStateChangedIncludesSupportedFeatures(t *testing.T) {
+	t.Parallel()
+
+	repository := newTrackingRepository()
+	registry := NewRegistry(
+		ir.NewNodeStatusStore(),
+		repository,
+		testLogger(),
+		Options{
+			PersistTimeout:  time.Second,
+			PersistDebounce: time.Minute,
+		},
+	)
+	t.Cleanup(registry.Close)
+
+	triggered := 0
+	registry.SetOnChange(func() {
+		triggered++
+	})
+
+	now := time.Now().UTC()
+	registry.ConnectWithFeatures(context.Background(), "dp-features", "kind", []string{"*"}, []string{"core.v1"}, now)
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
+		t.Fatal("expected connect to persist immediately")
+	}
+	if triggered != 1 {
+		t.Fatalf("expected connect to trigger once, got %d", triggered)
+	}
+	repository.reset()
+
+	registry.ObserveAckWithFeatures(
+		context.Background(),
+		"dp-features",
+		"kind",
+		"v1",
+		"nonce-1",
+		[]string{"*"},
+		[]string{"core.v1"},
+		now.Add(time.Second),
+	)
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
+		t.Fatal("expected initial ack to persist immediately")
+	}
+	if triggered != 2 {
+		t.Fatalf("expected ack version change to trigger once, got %d", triggered)
+	}
+	repository.reset()
+
+	registry.ObserveAckWithFeatures(
+		context.Background(),
+		"dp-features",
+		"kind",
+		"v1",
+		"nonce-2",
+		[]string{"*"},
+		[]string{"core.v1", "route.labels.v1"},
+		now.Add(2*time.Second),
+	)
+
+	items, ok := repository.waitForUpserts(1, time.Second)
+	if !ok {
+		t.Fatal("expected supported feature change to persist immediately")
+	}
+	if triggered != 3 {
+		t.Fatalf("expected supported feature change to trigger routing state change, got %d", triggered)
+	}
+	if !reflect.DeepEqual(items[0].SupportedFeatures, []string{"core.v1", "route.labels.v1"}) {
+		t.Fatalf("persisted supported features = %#v, want %#v", items[0].SupportedFeatures, []string{"core.v1", "route.labels.v1"})
+	}
+
+	status, found := registry.Get(context.Background(), "dp-features")
+	if !found {
+		t.Fatal("expected node to remain readable from registry")
+	}
+	if !reflect.DeepEqual(status.SupportedFeatures, []string{"core.v1", "route.labels.v1"}) {
+		t.Fatalf("registry supported features = %#v, want %#v", status.SupportedFeatures, []string{"core.v1", "route.labels.v1"})
 	}
 }
 

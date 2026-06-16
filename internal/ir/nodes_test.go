@@ -1,6 +1,7 @@
 package ir
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
@@ -264,5 +265,66 @@ func TestNodeStatusStoreTracksNackWithoutOverwritingAckVersion(t *testing.T) {
 	}
 	if node.LastNackMessage != "listener reload failed" || node.Message != "listener reload failed" {
 		t.Fatalf("expected nack message to be retained, got %+v", node)
+	}
+}
+
+func TestNodeStatusStorePersistsSupportedFeaturesAcrossConnectAckAndNack(t *testing.T) {
+	store := NewNodeStatusStore()
+	now := time.Unix(1_700_000_350, 0).UTC()
+
+	store.ConnectWithFeatures("dp-5", "kind", []string{"*"}, []string{"core.v1"}, now)
+
+	node, ok := store.Get("dp-5")
+	if !ok {
+		t.Fatal("expected connected node to exist")
+	}
+	if !reflect.DeepEqual(node.SupportedFeatures, []string{"core.v1"}) {
+		t.Fatalf("supported features after connect = %#v, want %#v", node.SupportedFeatures, []string{"core.v1"})
+	}
+
+	node.SupportedFeatures[0] = "mutated"
+	fresh, ok := store.Get("dp-5")
+	if !ok {
+		t.Fatal("expected connected node to remain readable")
+	}
+	if !reflect.DeepEqual(fresh.SupportedFeatures, []string{"core.v1"}) {
+		t.Fatalf("supported features should be cloned on read, got %#v", fresh.SupportedFeatures)
+	}
+
+	store.ObserveAckWithFeatures(
+		"dp-5",
+		"kind",
+		"v1",
+		"nonce-1",
+		[]string{"*"},
+		[]string{"core.v1", "route.labels.v1"},
+		now.Add(time.Second),
+	)
+
+	fresh, ok = store.Get("dp-5")
+	if !ok {
+		t.Fatal("expected acked node to exist")
+	}
+	if !reflect.DeepEqual(fresh.SupportedFeatures, []string{"core.v1", "route.labels.v1"}) {
+		t.Fatalf("supported features after ack = %#v, want %#v", fresh.SupportedFeatures, []string{"core.v1", "route.labels.v1"})
+	}
+
+	store.ObserveNackWithFeatures(
+		"dp-5",
+		"kind",
+		"v2",
+		"nonce-2",
+		"listener reload failed",
+		[]string{"*"},
+		[]string{"core.v1"},
+		now.Add(2*time.Second),
+	)
+
+	fresh, ok = store.Get("dp-5")
+	if !ok {
+		t.Fatal("expected nacked node to exist")
+	}
+	if !reflect.DeepEqual(fresh.SupportedFeatures, []string{"core.v1"}) {
+		t.Fatalf("supported features after nack = %#v, want %#v", fresh.SupportedFeatures, []string{"core.v1"})
 	}
 }
