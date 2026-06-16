@@ -152,7 +152,7 @@ func filterRoutes(snapshot *ir.Snapshot, query url.Values, maxListItems int) (ro
 	return response, pageMetadata{}, nil
 }
 
-func filterBackends(snapshot *ir.Snapshot, query url.Values, maxListItems int) ([]ir.BackendCluster, pageMetadata, error) {
+func filterBackends(allBackends, visible []ir.BackendCluster, query url.Values, maxListItems int) ([]ir.BackendCluster, pageMetadata, error) {
 	out := make([]ir.BackendCluster, 0)
 
 	sortField, err := parseBackendSortField(query.Get("sort"))
@@ -181,7 +181,12 @@ func filterBackends(snapshot *ir.Snapshot, query url.Values, maxListItems int) (
 	}
 	service := strings.TrimSpace(query.Get("service"))
 
-	for _, backend := range visibleBackends(snapshot, includeAll) {
+	source := visible
+	if includeAll {
+		source = allBackends
+	}
+
+	for _, backend := range source {
 		if namespace != "" && backend.Namespace != namespace {
 			continue
 		}

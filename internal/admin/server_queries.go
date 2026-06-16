@@ -79,7 +79,8 @@ func (s *Server) handleBackends(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, meta, err := filterBackends(snapshot, r.URL.Query(), s.maxListItems)
+	index := s.snapshotDetailIndex(snapshot)
+	items, meta, err := filterBackends(snapshot.Backends, index.visibleBackendList(), r.URL.Query(), s.maxListItems)
 	if err != nil {
 		s.respondQueryError(w, err)
 		return

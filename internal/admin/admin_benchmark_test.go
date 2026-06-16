@@ -55,6 +55,7 @@ func BenchmarkFilterBackendsQueryRouteFanout(b *testing.B) {
 			b.ReportAllocs()
 
 			snapshot := adminBenchmarkSnapshot(routeCount)
+			index := buildSnapshotDetailIndex(snapshot)
 			query := url.Values{
 				"sort":   []string{"protocol"},
 				"order":  []string{"desc"},
@@ -64,7 +65,7 @@ func BenchmarkFilterBackendsQueryRouteFanout(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				backends, _, err := filterBackends(snapshot, query, 0)
+				backends, _, err := filterBackends(snapshot.Backends, index.visibleBackendList(), query, 0)
 				if err != nil {
 					b.Fatalf("filterBackends returned error: %v", err)
 				}

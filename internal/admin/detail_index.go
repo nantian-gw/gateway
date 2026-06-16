@@ -12,10 +12,11 @@ type snapshotDetailIndexCache struct {
 }
 
 type snapshotDetailIndex struct {
-	snapshot  *ir.Snapshot
-	listeners map[string]ir.Listener
-	backends  map[detailBackendKey]ir.BackendCluster
-	routes    map[detailRouteKey]any
+	snapshot        *ir.Snapshot
+	visibleBackends []ir.BackendCluster
+	listeners       map[string]ir.Listener
+	backends        map[detailBackendKey]ir.BackendCluster
+	routes          map[detailRouteKey]any
 }
 
 type detailBackendKey struct {
@@ -61,11 +62,13 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 		return nil
 	}
 
+	visible := visibleBackends(snapshot, false)
 	index := &snapshotDetailIndex{
-		snapshot:  snapshot,
-		listeners: make(map[string]ir.Listener, len(snapshot.Listeners)),
-		backends:  make(map[detailBackendKey]ir.BackendCluster),
-		routes:    make(map[detailRouteKey]any, len(snapshot.HTTPRoutes)+len(snapshot.GRPCRoutes)+len(snapshot.StreamRoutes)),
+		snapshot:        snapshot,
+		visibleBackends: append([]ir.BackendCluster(nil), visible...),
+		listeners:       make(map[string]ir.Listener, len(snapshot.Listeners)),
+		backends:        make(map[detailBackendKey]ir.BackendCluster, len(visible)),
+		routes:          make(map[detailRouteKey]any, len(snapshot.HTTPRoutes)+len(snapshot.GRPCRoutes)+len(snapshot.StreamRoutes)),
 	}
 
 	for _, listener := range displayListeners(snapshot.Listeners) {
@@ -75,7 +78,7 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 		index.listeners[listener.Name] = listener
 	}
 
-	for _, backend := range visibleBackends(snapshot, false) {
+	for _, backend := range index.visibleBackends {
 		if backend.Namespace == "" || backend.Name == "" {
 			continue
 		}
@@ -123,6 +126,13 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 	}
 
 	return index
+}
+
+func (i *snapshotDetailIndex) visibleBackendList() []ir.BackendCluster {
+	if i == nil {
+		return nil
+	}
+	return i.visibleBackends
 }
 
 func (i *snapshotDetailIndex) listener(name string) (ir.Listener, bool) {

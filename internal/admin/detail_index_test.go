@@ -77,3 +77,76 @@ func TestSnapshotDetailIndexCacheReusesSnapshotAndRefreshesOnPublish(t *testing.
 		t.Fatalf("unexpected refreshed listener lookup: %+v ok=%v", listener, ok)
 	}
 }
+
+func TestSnapshotDetailIndexVisibleBackendsRefreshWithSnapshot(t *testing.T) {
+	t.Parallel()
+
+	server := newTestServer(t)
+	current := server.store.Current()
+
+	first := server.snapshotDetailIndex(current)
+	if first == nil {
+		t.Fatal("expected snapshot detail index")
+	}
+	if got := len(first.visibleBackendList()); got != 1 {
+		t.Fatalf("visible backend count = %d, want 1", got)
+	}
+	if got := first.visibleBackendList()[0].Name; got != "api:80" {
+		t.Fatalf("unexpected initial visible backend: %q", got)
+	}
+
+	server.store.Publish(&ir.Snapshot{
+		ID:          "v-visible-next",
+		GeneratedAt: time.Now().UTC(),
+		HTTPRoutes: []ir.HTTPRoute{
+			{
+				Name:      "web",
+				Namespace: "default",
+				Rules: []ir.HTTPRule{{
+					BackendRefs: []ir.BackendRef{{
+						Name: "api",
+						Port: 80,
+					}},
+				}},
+			},
+			{
+				Name:      "metrics",
+				Namespace: "ops",
+				Rules: []ir.HTTPRule{{
+					BackendRefs: []ir.BackendRef{{
+						Name: "metrics",
+						Port: 9090,
+					}},
+				}},
+			},
+		},
+		Backends: []ir.BackendCluster{
+			{
+				Name:      "api:80",
+				Namespace: "default",
+				Protocol:  "HTTP",
+				Metadata:  map[string]string{"service": "api"},
+			},
+			{
+				Name:      "metrics:9090",
+				Namespace: "ops",
+				Protocol:  "TCP",
+				Metadata:  map[string]string{"service": "metrics"},
+			},
+		},
+	})
+
+	refreshed := server.snapshotDetailIndex(server.store.Current())
+	if refreshed == nil {
+		t.Fatal("expected refreshed snapshot detail index")
+	}
+	if refreshed == first {
+		t.Fatal("expected new snapshot pointer to rebuild detail index")
+	}
+	if got := len(refreshed.visibleBackendList()); got != 2 {
+		t.Fatalf("visible backend count after publish = %d, want 2", got)
+	}
+	if _, ok := refreshed.backend("ops", "metrics:9090"); !ok {
+		t.Fatal("expected refreshed visible backend lookup to include ops/metrics:9090")
+	}
+}
