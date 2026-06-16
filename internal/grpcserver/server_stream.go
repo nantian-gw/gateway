@@ -293,11 +293,24 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 			if !s.isActiveStream(registration) {
 				return terminate(streamTerminationSuperseded, supersededStreamError())
 			}
+			profile := effectiveProjectionProfile(advertisedFeatures)
+			variant := s.protoCache.get(snapshot, profile, s.logger)
+			s.logger.Info(
+				"publishing projected snapshot",
+				"node_id",
+				nodeID,
+				"version",
+				snapshot.ID,
+				"compatibility_profile",
+				variant.GetCompatibilityProfile(),
+				"required_features",
+				variant.GetRequiredFeatures(),
+			)
 
 			response := &controlv1.DiscoveryResponse{
 				Version:  snapshot.ID,
 				Nonce:    snapshot.ID,
-				Snapshot: s.protoCache.get(snapshot, s.logger),
+				Snapshot: variant,
 			}
 
 			if err := s.sendDiscoveryResponse(sender, stream, nodeID, response, supersededCh); err != nil {

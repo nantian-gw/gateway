@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -20,10 +21,10 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/nantian-gw/gateway/internal/config"
-	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/nodestatus"
 	"github.com/nantian-gw/gateway/internal/observability"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
 func TestToListenerProtocolMapsTLS(t *testing.T) {
@@ -1016,6 +1017,133 @@ func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testi
 		}
 	case <-time.After(time.Second):
 		t.Fatal("StreamConfiguration did not return after stream release")
+	}
+}
+
+func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfile(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	store := ir.NewSnapshotStore(logger)
+	metrics := observability.NewMetrics()
+	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodestatus.Options{Metrics: metrics})
+	defer nodes.Close()
+
+	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
+	if err != nil {
+		t.Fatalf("New returned error: %v", err)
+	}
+
+	fullStream := newFakeConfigStream()
+	fullStream.initialRecv <- &controlv1.DiscoveryRequest{
+		NodeId:        "dp-full",
+		Cluster:       "default",
+		Subscriptions: []string{"*"},
+		SupportedFeatures: []string{
+			featureCoreV1,
+			featureRouteLabelsV1,
+			featureBackendAIServiceV1,
+			featureBackendTokenPolicyV1,
+			featureBackendWasmPluginV1,
+		},
+	}
+	coreOnlyStream := newFakeConfigStream()
+	coreOnlyStream.initialRecv <- &controlv1.DiscoveryRequest{
+		NodeId:            "dp-core",
+		Cluster:           "default",
+		Subscriptions:     []string{"*"},
+		SupportedFeatures: []string{featureCoreV1},
+	}
+
+	fullResult := make(chan error, 1)
+	go func() {
+		fullResult <- server.StreamConfiguration(fullStream)
+	}()
+	coreOnlyResult := make(chan error, 1)
+	go func() {
+		coreOnlyResult <- server.StreamConfiguration(coreOnlyStream)
+	}()
+
+	waitForNodeConnection(t, nodes, "dp-full")
+	waitForNodeConnection(t, nodes, "dp-core")
+
+	store.Publish(projectionTestSnapshot())
+
+	fullStream.waitForSendCount(t, 1, time.Second)
+	coreOnlyStream.waitForSendCount(t, 1, time.Second)
+
+	fullResponses := fullStream.snapshotSentResponses()
+	coreOnlyResponses := coreOnlyStream.snapshotSentResponses()
+	if len(fullResponses) != 1 || len(coreOnlyResponses) != 1 {
+		t.Fatalf("unexpected send counts: full=%d core-only=%d", len(fullResponses), len(coreOnlyResponses))
+	}
+
+	fullSnapshot := fullResponses[0].GetSnapshot()
+	coreOnlySnapshot := coreOnlyResponses[0].GetSnapshot()
+
+	if got, want := fullSnapshot.GetCompatibilityProfile(), compatibilityProfileFullV1; got != want {
+		t.Fatalf("full stream compatibility profile = %q, want %q", got, want)
+	}
+	wantCoreOnlyProfile := buildCompatibilityProfile([]string{featureCoreV1})
+	if got := coreOnlySnapshot.GetCompatibilityProfile(); got != wantCoreOnlyProfile {
+		t.Fatalf("core-only stream compatibility profile = %q, want %q", got, wantCoreOnlyProfile)
+	}
+
+	if got := findProjectedHTTPRoute(t, fullSnapshot, "http-labeled").GetLabels()["env"]; got != "prod" {
+		t.Fatalf("full stream http labels = %#v, want env=prod", findProjectedHTTPRoute(t, fullSnapshot, "http-labeled").GetLabels())
+	}
+	if got := findProjectedHTTPRoute(t, coreOnlySnapshot, "http-labeled").GetLabels(); got != nil {
+		t.Fatalf("core-only stream http labels = %#v, want nil", got)
+	}
+
+	if len(fullSnapshot.GetBackends()) != 4 {
+		t.Fatalf("full stream backend count = %d, want 4", len(fullSnapshot.GetBackends()))
+	}
+	if len(coreOnlySnapshot.GetBackends()) != 1 {
+		t.Fatalf("core-only stream backend count = %d, want 1", len(coreOnlySnapshot.GetBackends()))
+	}
+	if findProjectedBackend(t, fullSnapshot, "ai-backend").GetAiService() == nil {
+		t.Fatal("expected full stream to preserve ai service backend")
+	}
+	if len(coreOnlySnapshot.GetListeners()) != 1 {
+		t.Fatalf("core-only stream listener count = %d, want 1", len(coreOnlySnapshot.GetListeners()))
+	}
+	if got := coreOnlySnapshot.GetListeners()[0].GetAttachedRoutes(); !reflect.DeepEqual(got, []string{"http-direct-response", "http-labeled"}) {
+		t.Fatalf("core-only attached routes = %#v, want %#v", got, []string{"http-direct-response", "http-labeled"})
+	}
+	if len(coreOnlySnapshot.GetGrpcRoutes()) != 0 {
+		t.Fatalf("core-only grpc routes = %#v, want none", coreOnlySnapshot.GetGrpcRoutes())
+	}
+	if len(coreOnlySnapshot.GetStreamRoutes()) != 0 {
+		t.Fatalf("core-only stream routes = %#v, want none", coreOnlySnapshot.GetStreamRoutes())
+	}
+	httpDirectResponse := findProjectedHTTPRoute(t, coreOnlySnapshot, "http-direct-response")
+	if len(httpDirectResponse.GetRules()) != 1 {
+		t.Fatalf("core-only direct-response route rules = %#v, want one rule", httpDirectResponse.GetRules())
+	}
+	if got := httpDirectResponse.GetRules()[0].GetBackendRefs(); len(got) != 0 {
+		t.Fatalf("core-only direct-response backends = %#v, want none", got)
+	}
+	if hasProjectedHTTPRoute(coreOnlySnapshot, "http-ai-only") {
+		t.Fatal("expected core-only stream to prune http-ai-only route")
+	}
+
+	fullStream.release()
+	coreOnlyStream.release()
+
+	select {
+	case err := <-fullResult:
+		if err != nil {
+			t.Fatalf("expected full stream to exit cleanly after release, got %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("full stream did not return after release")
+	}
+	select {
+	case err := <-coreOnlyResult:
+		if err != nil {
+			t.Fatalf("expected core-only stream to exit cleanly after release, got %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("core-only stream did not return after release")
 	}
 }
 

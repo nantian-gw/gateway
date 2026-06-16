@@ -8,15 +8,15 @@ import (
 	"testing"
 	"time"
 
-	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 	"github.com/nantian-gw/gateway/internal/ir"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
 func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
 	t.Parallel()
 
 	builds := 0
-	cache := newSnapshotProtoCache(func(snapshot *ir.Snapshot, _ *slog.Logger) *controlv1.ConfigSnapshot {
+	cache := newSnapshotProtoCache(func(snapshot *ir.Snapshot, _ projectionProfile, _ *slog.Logger) *controlv1.ConfigSnapshot {
 		builds++
 		return &controlv1.ConfigSnapshot{
 			Id: snapshot.ID,
@@ -27,8 +27,9 @@ func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
 	})
 
 	snapshot := &ir.Snapshot{ID: "v1", GeneratedAt: time.Now().UTC()}
-	first := cache.get(snapshot, nil)
-	second := cache.get(snapshot, nil)
+	full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
+	first := cache.get(snapshot, full, nil)
+	second := cache.get(snapshot, full, nil)
 	if builds != 1 {
 		t.Fatalf("expected one proto build for repeated snapshot ID, got %d", builds)
 	}
@@ -36,9 +37,47 @@ func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
 		t.Fatal("expected repeated snapshot ID to reuse cached proto object")
 	}
 
-	cache.get(&ir.Snapshot{ID: "v2", GeneratedAt: time.Now().UTC()}, nil)
+	cache.get(&ir.Snapshot{ID: "v2", GeneratedAt: time.Now().UTC()}, full, nil)
 	if builds != 2 {
 		t.Fatalf("expected cache miss for a new snapshot ID, got %d builds", builds)
+	}
+}
+
+func TestSnapshotProtoCacheSeparatesProjectionKeys(t *testing.T) {
+	t.Parallel()
+
+	builds := 0
+	cache := newSnapshotProtoCache(func(snapshot *ir.Snapshot, profile projectionProfile, _ *slog.Logger) *controlv1.ConfigSnapshot {
+		builds++
+		return &controlv1.ConfigSnapshot{
+			Id:                   snapshot.ID,
+			CompatibilityProfile: profile.compatibilityProfile,
+		}
+	})
+
+	snapshot := &ir.Snapshot{ID: "v1", GeneratedAt: time.Now().UTC()}
+	full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
+	coreOnly := effectiveProjectionProfile([]string{featureCoreV1})
+
+	first := cache.get(snapshot, full, nil)
+	second := cache.get(snapshot, full, nil)
+	third := cache.get(snapshot, coreOnly, nil)
+	fourth := cache.get(snapshot, coreOnly, nil)
+
+	if builds != 2 {
+		t.Fatalf("expected one build per projection key, got %d", builds)
+	}
+	if first != second {
+		t.Fatal("expected repeated full-profile lookups to reuse the cached object")
+	}
+	if third != fourth {
+		t.Fatal("expected repeated core-only lookups to reuse the cached object")
+	}
+	if first == third {
+		t.Fatal("expected different projection keys to return different cached objects")
+	}
+	if first.GetCompatibilityProfile() == third.GetCompatibilityProfile() {
+		t.Fatalf("expected distinct compatibility profiles, got %q and %q", first.GetCompatibilityProfile(), third.GetCompatibilityProfile())
 	}
 }
 
@@ -46,12 +85,13 @@ func TestSnapshotProtoCacheBuildsOnceForConcurrentReaders(t *testing.T) {
 	t.Parallel()
 
 	var builds atomic.Int32
-	cache := newSnapshotProtoCache(func(snapshot *ir.Snapshot, _ *slog.Logger) *controlv1.ConfigSnapshot {
+	cache := newSnapshotProtoCache(func(snapshot *ir.Snapshot, _ projectionProfile, _ *slog.Logger) *controlv1.ConfigSnapshot {
 		builds.Add(1)
 		time.Sleep(10 * time.Millisecond)
 		return &controlv1.ConfigSnapshot{Id: snapshot.ID}
 	})
 	snapshot := &ir.Snapshot{ID: "v-concurrent", GeneratedAt: time.Now().UTC()}
+	full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
 
 	const readers = 32
 	results := make(chan *controlv1.ConfigSnapshot, readers)
@@ -60,7 +100,7 @@ func TestSnapshotProtoCacheBuildsOnceForConcurrentReaders(t *testing.T) {
 	for i := 0; i < readers; i++ {
 		go func() {
 			defer wg.Done()
-			results <- cache.get(snapshot, nil)
+			results <- cache.get(snapshot, full, nil)
 		}()
 	}
 	wg.Wait()
@@ -99,10 +139,11 @@ func BenchmarkToProtoSnapshotFanout(b *testing.B) {
 
 		b.Run(fmt.Sprintf("cached/nodes_%d", nodes), func(b *testing.B) {
 			cache := newSnapshotProtoCache(nil)
+			full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
 				for node := 0; node < nodes; node++ {
-					_ = cache.get(snapshot, nil)
+					_ = cache.get(snapshot, full, nil)
 				}
 			}
 		})

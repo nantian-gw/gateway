@@ -8,8 +8,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 	"github.com/nantian-gw/gateway/internal/ir"
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
 var newStructPB = structpb.NewStruct
@@ -166,22 +166,9 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 			})
 		}
 
-		if item.WasmPlugin != nil {
-			cluster.WasmPlugin = &controlv1.WasmPluginConfig{
-				Name:       item.WasmPlugin.Name,
-				Namespace:  item.WasmPlugin.Namespace,
-				WasmBytes:  item.WasmPlugin.WasmBytes,
-				Sha256:     item.WasmPlugin.SHA256,
-				Hooks:      item.WasmPlugin.Hooks,
-				ConfigJson: item.WasmPlugin.ConfigJSON,
-				Sandbox: &controlv1.WasmSandboxConfig{
-					MaxMemoryBytes:     item.WasmPlugin.Sandbox.MaxMemoryBytes,
-					MaxExecutionTimeMs: item.WasmPlugin.Sandbox.MaxExecutionTimeMs,
-					AllowNetwork:       item.WasmPlugin.Sandbox.AllowNetwork,
-					AllowFileSystem:    item.WasmPlugin.Sandbox.AllowFileSystem,
-				},
-			}
-		}
+		cluster.AiService = toProtoAIService(item.AIService)
+		cluster.TokenPolicy = toProtoTokenPolicy(item.TokenPolicy)
+		cluster.WasmPlugin = toProtoWasmPlugin(item.WasmPlugin)
 
 		out.Backends = append(out.Backends, cluster)
 	}
@@ -196,6 +183,60 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 	}
 
 	return out
+}
+
+func toProtoAIService(item *ir.AIServiceConfig) *controlv1.AIServiceConfig {
+	if item == nil {
+		return nil
+	}
+
+	return &controlv1.AIServiceConfig{
+		Provider: item.Provider,
+		Format:   item.Format,
+		Model:    item.Model,
+		Auth: &controlv1.AIServiceAuthConfig{
+			Type:      item.Auth.Type,
+			SecretRef: item.Auth.SecretRef,
+			Header:    item.Auth.Header,
+		},
+		Timeout: nonZeroDurationOrNil(item.Timeout),
+	}
+}
+
+func toProtoTokenPolicy(item *ir.TokenPolicyConfig) *controlv1.TokenPolicyConfig {
+	if item == nil {
+		return nil
+	}
+
+	return &controlv1.TokenPolicyConfig{
+		TokensPerMinute:   item.TokensPerMinute,
+		TokensPerHour:     item.TokensPerHour,
+		RequestsPerMinute: item.RequestsPerMinute,
+		Scope:             item.Scope,
+		Burst:             item.Burst,
+		OnLimit:           item.OnLimit,
+	}
+}
+
+func toProtoWasmPlugin(item *ir.WasmPluginConfig) *controlv1.WasmPluginConfig {
+	if item == nil {
+		return nil
+	}
+
+	return &controlv1.WasmPluginConfig{
+		Name:       item.Name,
+		Namespace:  item.Namespace,
+		WasmBytes:  item.WasmBytes,
+		Sha256:     item.SHA256,
+		Hooks:      item.Hooks,
+		ConfigJson: item.ConfigJSON,
+		Sandbox: &controlv1.WasmSandboxConfig{
+			MaxMemoryBytes:     item.Sandbox.MaxMemoryBytes,
+			MaxExecutionTimeMs: item.Sandbox.MaxExecutionTimeMs,
+			AllowNetwork:       item.Sandbox.AllowNetwork,
+			AllowFileSystem:    item.Sandbox.AllowFileSystem,
+		},
+	}
 }
 
 func snapshotExtensions(snapshot *ir.Snapshot) *structpb.Struct {
