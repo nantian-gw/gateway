@@ -59,7 +59,7 @@ func (c *adminListCache) getManagedResources(key string) ([]ManagedResource, boo
 		delete(c.resourceLists, key)
 		return nil, false
 	}
-	return cloneManagedResourceList(entry.items), true
+	return entry.items, true
 }
 
 func (c *adminListCache) putManagedResources(key string, items []ManagedResource) {
@@ -92,7 +92,7 @@ func (c *adminListCache) getServiceCatalogEntries(key string) ([]ServiceCatalogE
 		delete(c.serviceCatalogs, key)
 		return nil, false
 	}
-	return cloneServiceCatalogEntries(entry.items), true
+	return entry.items, true
 }
 
 func (c *adminListCache) putServiceCatalogEntries(key string, items []ServiceCatalogEntry) {

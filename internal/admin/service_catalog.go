@@ -112,13 +112,13 @@ func (m *ResourceManager) ListServiceCatalog(
 		if err != nil {
 			return nil, pageMetadata{}, err
 		}
-		paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+		paged, meta := paginateServiceCatalogEntries(items, filter, maxListItems)
 		return paged, meta, nil
 	}
 
 	cacheKey := serviceCatalogCacheKey(filter)
 	if items, ok := m.listCache.getServiceCatalogEntries(cacheKey); ok {
-		paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+		paged, meta := paginateServiceCatalogEntries(items, filter, maxListItems)
 		return paged, meta, nil
 	}
 
@@ -142,7 +142,7 @@ func (m *ResourceManager) ListServiceCatalog(
 
 	sortServiceCatalogEntries(items, filter.Sort, filter.Order)
 	m.listCache.putServiceCatalogEntries(cacheKey, items)
-	paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+	paged, meta := paginateServiceCatalogEntries(items, filter, maxListItems)
 	return paged, meta, nil
 }
 
@@ -168,6 +168,15 @@ func serviceCatalogPagination(filter ServiceCatalogFilter) listPagination {
 		limit:    filter.Limit,
 		hasLimit: filter.HasLimit,
 	}
+}
+
+func paginateServiceCatalogEntries(
+	items []ServiceCatalogEntry,
+	filter ServiceCatalogFilter,
+	maxListItems int,
+) ([]ServiceCatalogEntry, pageMetadata) {
+	paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+	return cloneServiceCatalogEntries(paged), meta
 }
 
 func buildServiceCatalogEntry(service corev1.Service, filter ServiceCatalogFilter) (ServiceCatalogEntry, bool) {

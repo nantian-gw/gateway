@@ -155,7 +155,8 @@ func paginateManagedResources(
 	filter ResourceListFilter,
 	maxListItems int,
 ) ([]ManagedResource, pageMetadata) {
-	return paginateSliceWithMetadata(out, resourceListPagination(filter), maxListItems)
+	paged, meta := paginateSliceWithMetadata(out, resourceListPagination(filter), maxListItems)
+	return cloneManagedResourceList(paged), meta
 }
 
 func (m *ResourceManager) Get(ctx context.Context, kind, namespace, name string) (ManagedResource, bool, error) {
