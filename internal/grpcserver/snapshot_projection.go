@@ -134,23 +134,27 @@ func projectStreamRoutes(
 }
 
 func projectListeners(listeners []ir.Listener, snapshot *ir.Snapshot) []ir.Listener {
+	// Translator-produced listener attachments are namespace/name route keys.
+	// The IR does not retain route kind in AttachedRoutes, so projection can
+	// only preserve or drop those exact keys, not disambiguate same-key
+	// collisions across HTTP/GRPC/stream route inventories.
 	survivingRoutes := make(map[string]struct{}, len(snapshot.HTTPRoutes)+len(snapshot.GRPCRoutes)+len(snapshot.StreamRoutes))
 	for _, route := range snapshot.HTTPRoutes {
-		survivingRoutes[route.Name] = struct{}{}
+		survivingRoutes[backendProjectionKey(route.Namespace, route.Name)] = struct{}{}
 	}
 	for _, route := range snapshot.GRPCRoutes {
-		survivingRoutes[route.Name] = struct{}{}
+		survivingRoutes[backendProjectionKey(route.Namespace, route.Name)] = struct{}{}
 	}
 	for _, route := range snapshot.StreamRoutes {
-		survivingRoutes[route.Name] = struct{}{}
+		survivingRoutes[backendProjectionKey(route.Namespace, route.Name)] = struct{}{}
 	}
 
 	out := make([]ir.Listener, 0, len(listeners))
 	for _, listener := range listeners {
 		attachedRoutes := make([]string, 0, len(listener.AttachedRoutes))
-		for _, routeName := range listener.AttachedRoutes {
-			if _, ok := survivingRoutes[routeName]; ok {
-				attachedRoutes = append(attachedRoutes, routeName)
+		for _, routeKey := range listener.AttachedRoutes {
+			if _, ok := survivingRoutes[routeKey]; ok {
+				attachedRoutes = append(attachedRoutes, routeKey)
 			}
 		}
 		if len(attachedRoutes) == 0 {

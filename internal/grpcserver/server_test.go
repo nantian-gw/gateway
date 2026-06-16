@@ -1106,8 +1106,8 @@ func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfi
 	if len(coreOnlySnapshot.GetListeners()) != 1 {
 		t.Fatalf("core-only stream listener count = %d, want 1", len(coreOnlySnapshot.GetListeners()))
 	}
-	if got := coreOnlySnapshot.GetListeners()[0].GetAttachedRoutes(); !reflect.DeepEqual(got, []string{"http-direct-response", "http-labeled"}) {
-		t.Fatalf("core-only attached routes = %#v, want %#v", got, []string{"http-direct-response", "http-labeled"})
+	if got := coreOnlySnapshot.GetListeners()[0].GetAttachedRoutes(); !reflect.DeepEqual(got, []string{"default/http-direct-response", "default/http-labeled"}) {
+		t.Fatalf("core-only attached routes = %#v, want %#v", got, []string{"default/http-direct-response", "default/http-labeled"})
 	}
 	if len(coreOnlySnapshot.GetGrpcRoutes()) != 0 {
 		t.Fatalf("core-only grpc routes = %#v, want none", coreOnlySnapshot.GetGrpcRoutes())

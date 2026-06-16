@@ -46,6 +46,15 @@ func TestProjectedSnapshotLegacyFallbackRemovesUnsupportedHardSemantics(t *testi
 	if projected.GetStreamRoutes()[0].GetLabels() != nil {
 		t.Fatalf("expected legacy projection to strip stream route labels, got %#v", projected.GetStreamRoutes()[0].GetLabels())
 	}
+	listener := findProjectedListener(t, projected, "listener-main")
+	if got, want := listener.GetAttachedRoutes(), []string{
+		"default/grpc-token",
+		"default/http-direct-response",
+		"default/http-labeled",
+		"default/stream-wasm",
+	}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("legacy projection attached routes = %#v, want %#v", got, want)
+	}
 
 	aiBackend := findProjectedBackend(t, projected, "ai-backend")
 	if aiBackend.GetAiService() == nil {
@@ -89,6 +98,15 @@ func TestProjectedSnapshotFullProfilePreservesAIServiceTokenPolicyWasmAndLabels(
 	if got, want := projected.GetCompatibilityProfile(), compatibilityProfileFullV1; got != want {
 		t.Fatalf("compatibility profile = %q, want %q", got, want)
 	}
+	listener := findProjectedListener(t, projected, "listener-main")
+	if got, want := listener.GetAttachedRoutes(), []string{
+		"default/grpc-token",
+		"default/http-direct-response",
+		"default/http-labeled",
+		"default/stream-wasm",
+	}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("full projection attached routes = %#v, want %#v", got, want)
+	}
 
 	httpRoute := findProjectedHTTPRoute(t, projected, "http-labeled")
 	if got := httpRoute.GetLabels()["env"]; got != "prod" {
@@ -123,18 +141,23 @@ func projectionTestSnapshot() *ir.Snapshot {
 		GeneratedAt: time.Unix(1_700_000_000, 0).UTC(),
 		Listeners: []ir.Listener{
 			{
-				Name:           "listener-main",
-				Address:        "0.0.0.0",
-				Port:           8443,
-				Protocol:       "HTTP",
-				AttachedRoutes: []string{"http-labeled", "http-direct-response", "grpc-token", "stream-wasm"},
+				Name:     "listener-main",
+				Address:  "0.0.0.0",
+				Port:     8443,
+				Protocol: "HTTP",
+				AttachedRoutes: []string{
+					"default/grpc-token",
+					"default/http-direct-response",
+					"default/http-labeled",
+					"default/stream-wasm",
+				},
 			},
 			{
 				Name:           "listener-pruned",
 				Address:        "0.0.0.0",
 				Port:           9443,
 				Protocol:       "HTTP",
-				AttachedRoutes: []string{"http-ai-only"},
+				AttachedRoutes: []string{"default/http-ai-only"},
 			},
 		},
 		HTTPRoutes: []ir.HTTPRoute{
@@ -300,6 +323,18 @@ func findProjectedBackend(t *testing.T, snapshot *controlv1.ConfigSnapshot, name
 		}
 	}
 	t.Fatalf("backend %q not found in snapshot", name)
+	return nil
+}
+
+func findProjectedListener(t *testing.T, snapshot *controlv1.ConfigSnapshot, name string) *controlv1.Listener {
+	t.Helper()
+
+	for _, listener := range snapshot.GetListeners() {
+		if listener.GetName() == name {
+			return listener
+		}
+	}
+	t.Fatalf("listener %q not found in snapshot", name)
 	return nil
 }
 
