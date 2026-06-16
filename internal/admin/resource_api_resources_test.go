@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -394,14 +395,41 @@ func TestNamespaceListInvalidationClearsStringCache(t *testing.T) {
 	counting := &countingResourceClient{Client: manager.client}
 	manager.client = counting
 
-	if _, err := manager.ListNamespaces(context.Background()); err != nil {
+	initial, err := manager.ListNamespaces(context.Background())
+	if err != nil {
 		t.Fatalf("initial namespace list: %v", err)
 	}
-	if _, err := manager.ListNamespaces(context.Background()); err != nil {
+	if len(initial) != 1 || initial[0] != "backend" {
+		t.Fatalf("unexpected initial namespace list: %+v", initial)
+	}
+
+	cached, err := manager.ListNamespaces(context.Background())
+	if err != nil {
 		t.Fatalf("cached namespace list: %v", err)
+	}
+	if len(cached) != len(initial) || cached[0] != initial[0] {
+		t.Fatalf("unexpected cached namespace list: initial=%+v cached=%+v", initial, cached)
 	}
 	if got := counting.ListCalls(); got != 1 {
 		t.Fatalf("namespace list call count before invalidation = %d, want 1", got)
+	}
+
+	if err := manager.client.Delete(context.Background(), &corev1.Namespace{
+		TypeMeta:   metav1TypeMeta("v1", "Namespace"),
+		ObjectMeta: metav1ObjectMeta("", "backend"),
+	}); err != nil {
+		t.Fatalf("delete namespace directly: %v", err)
+	}
+
+	stale, err := manager.ListNamespaces(context.Background())
+	if err != nil {
+		t.Fatalf("namespace list before invalidation: %v", err)
+	}
+	if len(stale) != len(initial) || stale[0] != initial[0] {
+		t.Fatalf("expected cached namespace list before invalidation: initial=%+v stale=%+v", initial, stale)
+	}
+	if got := counting.ListCalls(); got != 1 {
+		t.Fatalf("namespace list call count before cache invalidation trigger = %d, want 1", got)
 	}
 
 	if deleted, err := manager.Delete(context.Background(), "Gateway", "default", "edge"); err != nil {
@@ -410,8 +438,12 @@ func TestNamespaceListInvalidationClearsStringCache(t *testing.T) {
 		t.Fatal("expected gateway delete to report deleted=true")
 	}
 
-	if _, err := manager.ListNamespaces(context.Background()); err != nil {
+	namespaces, err := manager.ListNamespaces(context.Background())
+	if err != nil {
 		t.Fatalf("namespace list after invalidation: %v", err)
+	}
+	if len(namespaces) != 0 {
+		t.Fatalf("expected empty namespace list after delete, got %+v", namespaces)
 	}
 	if got := counting.ListCalls(); got != 2 {
 		t.Fatalf("namespace list call count after invalidation = %d, want 2", got)
