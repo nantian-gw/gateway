@@ -226,11 +226,24 @@ func TestServiceCatalogListCachesRepeatedNamespaceList(t *testing.T) {
 	}
 }
 
-func TestServiceCatalogListCacheSeparatesPagination(t *testing.T) {
+func TestServiceCatalogListCacheReusesPagination(t *testing.T) {
 	t.Parallel()
 
 	manager := resourceManagerForTest(t)
 	manager.listCache.ttl = time.Minute
+	createServiceForTest(t, manager, &corev1.Service{
+		TypeMeta:   metav1TypeMeta("v1", "Service"),
+		ObjectMeta: metav1ObjectMeta("default", "payments"),
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:       "http",
+				Port:       8081,
+				Protocol:   corev1.ProtocolTCP,
+				TargetPort: intstr.FromInt(8081),
+			}},
+		},
+	})
+
 	counting := &countingResourceClient{Client: manager.client}
 	manager.client = counting
 
@@ -244,13 +257,29 @@ func TestServiceCatalogListCacheSeparatesPagination(t *testing.T) {
 	second := first
 	second.Offset = 1
 
-	if _, _, err := manager.ListServiceCatalog(context.Background(), first, 0); err != nil {
+	items, meta, err := manager.ListServiceCatalog(context.Background(), first, 0)
+	if err != nil {
 		t.Fatalf("list first service catalog page: %v", err)
 	}
-	if _, _, err := manager.ListServiceCatalog(context.Background(), second, 0); err != nil {
+	if len(items) != 1 || items[0].Name != "orders" {
+		t.Fatalf("unexpected first service catalog page: %+v", items)
+	}
+	if meta.TotalCount != 2 || !meta.HasNext {
+		t.Fatalf("unexpected first service catalog metadata: %+v", meta)
+	}
+
+	items, meta, err = manager.ListServiceCatalog(context.Background(), second, 0)
+	if err != nil {
 		t.Fatalf("list second service catalog page: %v", err)
 	}
-	if got := counting.ListCalls(); got != 2 {
-		t.Fatalf("list call count for distinct pagination keys = %d, want 2", got)
+	if len(items) != 1 || items[0].Name != "payments" {
+		t.Fatalf("unexpected second service catalog page: %+v", items)
+	}
+	if meta.TotalCount != 2 || meta.HasNext {
+		t.Fatalf("unexpected second service catalog metadata: %+v", meta)
+	}
+
+	if got := counting.ListCalls(); got != 1 {
+		t.Fatalf("service catalog list call count across pagination = %d, want 1", got)
 	}
 }

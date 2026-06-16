@@ -121,8 +121,9 @@ func (m *ResourceManager) List(
 	}
 
 	cacheKey := resourceListCacheKey(filter, canonicalKind)
-	if items, meta, ok := m.listCache.getManagedResources(cacheKey); ok {
-		return items, meta, nil
+	if items, ok := m.listCache.getManagedResources(cacheKey); ok {
+		paged, meta := paginateManagedResources(items, filter, maxListItems)
+		return paged, meta, nil
 	}
 
 	out := make([]ManagedResource, 0)
@@ -134,16 +135,6 @@ func (m *ResourceManager) List(
 		out = append(out, items...)
 	}
 
-	paged, meta := paginateManagedResources(out, filter, maxListItems)
-	m.listCache.putManagedResources(cacheKey, paged, meta)
-	return paged, meta, nil
-}
-
-func paginateManagedResources(
-	out []ManagedResource,
-	filter ResourceListFilter,
-	maxListItems int,
-) ([]ManagedResource, pageMetadata) {
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Kind != out[j].Kind {
 			return out[i].Kind < out[j].Kind
@@ -154,6 +145,16 @@ func paginateManagedResources(
 		return out[i].Name < out[j].Name
 	})
 
+	m.listCache.putManagedResources(cacheKey, out)
+	paged, meta := paginateManagedResources(out, filter, maxListItems)
+	return paged, meta, nil
+}
+
+func paginateManagedResources(
+	out []ManagedResource,
+	filter ResourceListFilter,
+	maxListItems int,
+) ([]ManagedResource, pageMetadata) {
 	return paginateSliceWithMetadata(out, resourceListPagination(filter), maxListItems)
 }
 

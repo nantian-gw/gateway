@@ -117,8 +117,9 @@ func (m *ResourceManager) ListServiceCatalog(
 	}
 
 	cacheKey := serviceCatalogCacheKey(filter)
-	if items, meta, ok := m.listCache.getServiceCatalogEntries(cacheKey); ok {
-		return items, meta, nil
+	if items, ok := m.listCache.getServiceCatalogEntries(cacheKey); ok {
+		paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
+		return paged, meta, nil
 	}
 
 	var services corev1.ServiceList
@@ -140,8 +141,8 @@ func (m *ResourceManager) ListServiceCatalog(
 	}
 
 	sortServiceCatalogEntries(items, filter.Sort, filter.Order)
+	m.listCache.putServiceCatalogEntries(cacheKey, items)
 	paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
-	m.listCache.putServiceCatalogEntries(cacheKey, paged, meta)
 	return paged, meta, nil
 }
 

@@ -21,13 +21,11 @@ type adminListCache struct {
 type cachedManagedResources struct {
 	expiresAt time.Time
 	items     []ManagedResource
-	meta      pageMetadata
 }
 
 type cachedServiceCatalogEntries struct {
 	expiresAt time.Time
 	items     []ServiceCatalogEntry
-	meta      pageMetadata
 }
 
 type cachedStrings struct {
@@ -45,9 +43,9 @@ func newAdminListCache(ttl time.Duration) *adminListCache {
 	}
 }
 
-func (c *adminListCache) getManagedResources(key string) ([]ManagedResource, pageMetadata, bool) {
+func (c *adminListCache) getManagedResources(key string) ([]ManagedResource, bool) {
 	if c == nil || c.ttl <= 0 {
-		return nil, pageMetadata{}, false
+		return nil, false
 	}
 
 	c.mu.Lock()
@@ -55,16 +53,16 @@ func (c *adminListCache) getManagedResources(key string) ([]ManagedResource, pag
 
 	entry, ok := c.resourceLists[key]
 	if !ok {
-		return nil, pageMetadata{}, false
+		return nil, false
 	}
 	if !c.now().Before(entry.expiresAt) {
 		delete(c.resourceLists, key)
-		return nil, pageMetadata{}, false
+		return nil, false
 	}
-	return cloneManagedResourceList(entry.items), entry.meta, true
+	return cloneManagedResourceList(entry.items), true
 }
 
-func (c *adminListCache) putManagedResources(key string, items []ManagedResource, meta pageMetadata) {
+func (c *adminListCache) putManagedResources(key string, items []ManagedResource) {
 	if c == nil || c.ttl <= 0 {
 		return
 	}
@@ -75,13 +73,12 @@ func (c *adminListCache) putManagedResources(key string, items []ManagedResource
 	c.resourceLists[key] = cachedManagedResources{
 		expiresAt: c.now().Add(c.ttl),
 		items:     cloneManagedResourceList(items),
-		meta:      meta,
 	}
 }
 
-func (c *adminListCache) getServiceCatalogEntries(key string) ([]ServiceCatalogEntry, pageMetadata, bool) {
+func (c *adminListCache) getServiceCatalogEntries(key string) ([]ServiceCatalogEntry, bool) {
 	if c == nil || c.ttl <= 0 {
-		return nil, pageMetadata{}, false
+		return nil, false
 	}
 
 	c.mu.Lock()
@@ -89,16 +86,16 @@ func (c *adminListCache) getServiceCatalogEntries(key string) ([]ServiceCatalogE
 
 	entry, ok := c.serviceCatalogs[key]
 	if !ok {
-		return nil, pageMetadata{}, false
+		return nil, false
 	}
 	if !c.now().Before(entry.expiresAt) {
 		delete(c.serviceCatalogs, key)
-		return nil, pageMetadata{}, false
+		return nil, false
 	}
-	return cloneServiceCatalogEntries(entry.items), entry.meta, true
+	return cloneServiceCatalogEntries(entry.items), true
 }
 
-func (c *adminListCache) putServiceCatalogEntries(key string, items []ServiceCatalogEntry, meta pageMetadata) {
+func (c *adminListCache) putServiceCatalogEntries(key string, items []ServiceCatalogEntry) {
 	if c == nil || c.ttl <= 0 {
 		return
 	}
@@ -109,7 +106,6 @@ func (c *adminListCache) putServiceCatalogEntries(key string, items []ServiceCat
 	c.serviceCatalogs[key] = cachedServiceCatalogEntries{
 		expiresAt: c.now().Add(c.ttl),
 		items:     cloneServiceCatalogEntries(items),
-		meta:      meta,
 	}
 }
 
@@ -164,9 +160,6 @@ func resourceListCacheKey(filter ResourceListFilter, canonicalKind string) strin
 		canonicalKind,
 		strings.TrimSpace(filter.Namespace),
 		strings.TrimSpace(filter.Name),
-		strconv.Itoa(filter.Offset),
-		strconv.Itoa(cacheKeyLimit(filter.Limit, filter.HasLimit)),
-		strconv.FormatBool(filter.HasLimit),
 	}, "\x00")
 }
 
@@ -179,17 +172,7 @@ func serviceCatalogCacheKey(filter ServiceCatalogFilter) string {
 		strconv.FormatBool(filter.HasPort),
 		string(filter.Sort),
 		strconv.Itoa(int(filter.Order)),
-		strconv.Itoa(filter.Offset),
-		strconv.Itoa(cacheKeyLimit(filter.Limit, filter.HasLimit)),
-		strconv.FormatBool(filter.HasLimit),
 	}, "\x00")
-}
-
-func cacheKeyLimit(limit int, hasLimit bool) int {
-	if !hasLimit {
-		return 0
-	}
-	return limit
 }
 
 func cacheKeyPort(port int, hasPort bool) int {

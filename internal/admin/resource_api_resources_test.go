@@ -323,6 +323,60 @@ func TestResourceListCachesRepeatedKindList(t *testing.T) {
 	}
 }
 
+func TestResourceListCacheReusesPagination(t *testing.T) {
+	t.Parallel()
+
+	manager := resourceManagerForTest(t)
+	manager.listCache.ttl = time.Minute
+
+	for _, name := range []string{"api", "worker"} {
+		if err := manager.client.Create(context.Background(), &gatewayv1.HTTPRoute{
+			TypeMeta:   metav1TypeMeta("gateway.networking.k8s.io/v1", "HTTPRoute"),
+			ObjectMeta: metav1ObjectMeta("default", name),
+		}); err != nil {
+			t.Fatalf("create route %s: %v", name, err)
+		}
+	}
+
+	counting := &countingResourceClient{Client: manager.client}
+	manager.client = counting
+
+	first := ResourceListFilter{
+		Kind:      "HTTPRoute",
+		Namespace: "default",
+		Limit:     1,
+		HasLimit:  true,
+	}
+	second := first
+	second.Offset = 1
+
+	items, meta, err := manager.List(context.Background(), first, 0)
+	if err != nil {
+		t.Fatalf("list first resource page: %v", err)
+	}
+	if len(items) != 1 || items[0].Name != "api" {
+		t.Fatalf("unexpected first resource page: %+v", items)
+	}
+	if meta.TotalCount != 3 || !meta.HasNext {
+		t.Fatalf("unexpected first resource metadata: %+v", meta)
+	}
+
+	items, meta, err = manager.List(context.Background(), second, 0)
+	if err != nil {
+		t.Fatalf("list second resource page: %v", err)
+	}
+	if len(items) != 1 || items[0].Name != "web" {
+		t.Fatalf("unexpected second resource page: %+v", items)
+	}
+	if meta.TotalCount != 3 || !meta.HasNext {
+		t.Fatalf("unexpected second resource metadata: %+v", meta)
+	}
+
+	if got := counting.ListCalls(); got != 1 {
+		t.Fatalf("resource list call count across pagination = %d, want 1", got)
+	}
+}
+
 func TestResourceListCacheExpires(t *testing.T) {
 	t.Parallel()
 
