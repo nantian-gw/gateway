@@ -31,6 +31,8 @@ jobs:
       checkout_ref: ${{ steps.vars.outputs.checkout_ref }}
       control_image: ${{ steps.vars.outputs.control_image }}
       control_image_name: ${{ steps.vars.outputs.control_image_name }}
+      dataplane_image: ${{ steps.vars.outputs.dataplane_image }}
+      dashboard_image: ${{ steps.vars.outputs.dashboard_image }}
 
     steps:
       - name: Compute release metadata
@@ -51,12 +53,16 @@ jobs:
           checkout_ref="refs/tags/${release_tag}"
           control_image_name="ghcr.io/${owner_lc}/nantian-controlplane"
           control_image="${control_image_name}:${release_tag}"
+          dataplane_image="ghcr.io/${owner_lc}/dataplane:${release_tag}"
+          dashboard_image="ghcr.io/${owner_lc}/dashboard:${release_tag}"
 
           {
             echo "release_tag=${release_tag}"
             echo "checkout_ref=${checkout_ref}"
             echo "control_image=${control_image}"
             echo "control_image_name=${control_image_name}"
+            echo "dataplane_image=${dataplane_image}"
+            echo "dashboard_image=${dashboard_image}"
           } >>"${GITHUB_OUTPUT}"
 
   security-scans:
@@ -106,8 +112,8 @@ jobs:
       CLUSTER_NAME: release-validation
       GATEWAY_API_VERSION: v1.5.1
       CONTROLPLANE_IMAGE: ${{ needs.metadata.outputs.control_image }}
-      DATAPLANE_IMAGE: ghcr.io/nantian-gw/dataplane:latest
-      DASHBOARD_IMAGE: ghcr.io/nantian-gw/dashboard:latest
+      DATAPLANE_IMAGE: ${{ needs.metadata.outputs.dataplane_image }}
+      DASHBOARD_IMAGE: ${{ needs.metadata.outputs.dashboard_image }}
       CONFORMANCE_EXPERIMENTAL: "true"
       ALL_FEATURES: "true"
 

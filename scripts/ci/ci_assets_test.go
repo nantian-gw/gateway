@@ -193,6 +193,30 @@ func TestReleaseWorkflowUsesCurrentCIEntrypoints(t *testing.T) {
 	}
 }
 
+func TestReleaseWorkflowUsesReleaseTaggedDependencyImages(t *testing.T) {
+	contents := string(readFile(t, repoPath(".github", "workflows", "release.yml")))
+
+	for _, want := range []string{
+		`dataplane_image: ${{ steps.vars.outputs.dataplane_image }}`,
+		`dashboard_image: ${{ steps.vars.outputs.dashboard_image }}`,
+		`DATAPLANE_IMAGE: ${{ needs.metadata.outputs.dataplane_image }}`,
+		`DASHBOARD_IMAGE: ${{ needs.metadata.outputs.dashboard_image }}`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("release workflow missing %q", want)
+		}
+	}
+
+	for _, unwanted := range []string{
+		`DATAPLANE_IMAGE: ghcr.io/nantian-gw/dataplane:latest`,
+		`DASHBOARD_IMAGE: ghcr.io/nantian-gw/dashboard:latest`,
+	} {
+		if strings.Contains(contents, unwanted) {
+			t.Fatalf("release workflow must not pin dependency image to %q", unwanted)
+		}
+	}
+}
+
 func TestSecurityScanWorkflowUsesExistingHelper(t *testing.T) {
 	contents := string(readFile(t, repoPath(".github", "workflows", "security-scans.yml")))
 	helperPath := repoPath("scripts", "ci", "run-security-scans.sh")
