@@ -165,7 +165,10 @@ func TestSmokeScriptProbesDerivedGatewayServiceFromInsideCluster(t *testing.T) {
 		`SMOKE_CLIENT_POD="smoke-client"`,
 		`SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"`,
 		`kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE"`,
-		`kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- wget -q -O - "$SMOKE_URL"`,
+		`kubectl get endpointslice -n "$CONTROL_PLANE_NS"`,
+		`kubernetes.io/service-name=$GATEWAY_SERVICE`,
+		`wget -q -T "$request_timeout" -O - "$SMOKE_URL"`,
+		`last_request_error`,
 		`request_deadline=`,
 	} {
 		if !strings.Contains(contents, want) {
@@ -179,6 +182,7 @@ func TestSmokeScriptProbesDerivedGatewayServiceFromInsideCluster(t *testing.T) {
 		`pod/$dataplane_pod`,
 		`dataplane_pod=$(kubectl get pod`,
 		`curl -s -o /dev/null -w "%{http_code}"`,
+		`wget -q -O - "$SMOKE_URL" >/dev/null 2>&1`,
 	} {
 		if strings.Contains(contents, unwanted) {
 			t.Fatalf("smoke script still contains stale host-probe pattern %q", unwanted)

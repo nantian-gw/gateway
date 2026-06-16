@@ -211,6 +211,37 @@ YAML
     kubectl wait --for=condition=ready pod/$SMOKE_CLIENT_POD -n "$TEST_NS" --timeout="${TIMEOUT}s"
 }
 
+gateway_service_exists() {
+    kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE" >/dev/null 2>&1
+}
+
+gateway_frontend_endpoints_ready() {
+    kubectl get endpointslice -n "$CONTROL_PLANE_NS" \
+        -l "kubernetes.io/service-name=$GATEWAY_SERVICE" \
+        -o jsonpath='{range .items[*].endpoints[*]}{range .addresses[*]}{.}{" "}{end}{.conditions.ready}{"\n"}{end}' \
+        2>/dev/null \
+        | awk 'NF >= 1 && $NF != "false" {found=1} END {exit(found ? 0 : 1)}'
+}
+
+wait_for_gateway_frontend_endpoints() {
+    local deadline="$1"
+
+    while (( SECONDS < deadline )); do
+        if ! gateway_service_exists; then
+            sleep 2
+            continue
+        fi
+
+        if gateway_frontend_endpoints_ready; then
+            return 0
+        fi
+
+        sleep 2
+    done
+
+    return 1
+}
+
 # ── Step 6: probe the derived Gateway Service from inside the cluster ──
 send_request() {
     echo "=== Sending test request via derived Gateway Service ($SMOKE_URL) ==="
@@ -218,26 +249,37 @@ send_request() {
     ensure_smoke_client
 
     local request_deadline=$((SECONDS + TIMEOUT))
-    while (( SECONDS < request_deadline )); do
-        if ! kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE" &>/dev/null; then
-            sleep 2
-            continue
+    local request_timeout="${SMOKE_REQUEST_TIMEOUT_SEC:-5}"
+    local last_request_error=""
+    local output=""
+
+    if ! wait_for_gateway_frontend_endpoints "$request_deadline"; then
+        if ! gateway_service_exists; then
+            fail "derived Gateway Service $GATEWAY_SERVICE was not created within ${TIMEOUT}s"
+            return 1
         fi
 
-        if kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- wget -q -O - "$SMOKE_URL" >/dev/null 2>&1; then
+        fail "derived Gateway Service $GATEWAY_SERVICE did not expose ready frontend endpoints within ${TIMEOUT}s"
+        return 1
+    fi
+
+    while (( SECONDS < request_deadline )); do
+        if output="$(kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- \
+            wget -q -T "$request_timeout" -O - "$SMOKE_URL" 2>&1)"; then
             green "  PASS: GET /echo via $GATEWAY_SERVICE -> HTTP 200"
             return 0
         fi
 
+        last_request_error="$output"
         sleep 2
     done
 
-    if ! kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE" &>/dev/null; then
-        fail "derived Gateway Service $GATEWAY_SERVICE was not created within ${TIMEOUT}s"
-        return 1
+    local detail=""
+    if [[ -n "$last_request_error" ]]; then
+        detail=$'\nlast request error: '"$last_request_error"
     fi
 
-    fail "GET /echo via $GATEWAY_SERVICE did not succeed within ${TIMEOUT}s"
+    fail "GET /echo via $GATEWAY_SERVICE did not succeed within ${TIMEOUT}s${detail}"
     return 1
 }
 
