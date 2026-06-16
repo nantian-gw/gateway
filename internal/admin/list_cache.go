@@ -156,6 +156,7 @@ func (c *adminListCache) clear() {
 
 	c.resourceLists = make(map[string]cachedManagedResources)
 	c.serviceCatalogs = make(map[string]cachedServiceCatalogEntries)
+	c.strings = make(map[string]cachedStrings)
 }
 
 func resourceListCacheKey(filter ResourceListFilter, canonicalKind string) string {

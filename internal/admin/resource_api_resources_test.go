@@ -386,6 +386,38 @@ func TestResourceMutationInvalidatesListCache(t *testing.T) {
 	}
 }
 
+func TestNamespaceListInvalidationClearsStringCache(t *testing.T) {
+	t.Parallel()
+
+	manager := resourceManagerForTest(t)
+	manager.listCache.ttl = time.Minute
+	counting := &countingResourceClient{Client: manager.client}
+	manager.client = counting
+
+	if _, err := manager.ListNamespaces(context.Background()); err != nil {
+		t.Fatalf("initial namespace list: %v", err)
+	}
+	if _, err := manager.ListNamespaces(context.Background()); err != nil {
+		t.Fatalf("cached namespace list: %v", err)
+	}
+	if got := counting.ListCalls(); got != 1 {
+		t.Fatalf("namespace list call count before invalidation = %d, want 1", got)
+	}
+
+	if deleted, err := manager.Delete(context.Background(), "Gateway", "default", "edge"); err != nil {
+		t.Fatalf("delete gateway: %v", err)
+	} else if !deleted {
+		t.Fatal("expected gateway delete to report deleted=true")
+	}
+
+	if _, err := manager.ListNamespaces(context.Background()); err != nil {
+		t.Fatalf("namespace list after invalidation: %v", err)
+	}
+	if got := counting.ListCalls(); got != 2 {
+		t.Fatalf("namespace list call count after invalidation = %d, want 2", got)
+	}
+}
+
 func TestResourceEndpointRejectsInvalidPagination(t *testing.T) {
 	t.Parallel()
 
