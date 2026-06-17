@@ -179,6 +179,21 @@ func TestKindDependencyImageHelperPinsDigestReferences(t *testing.T) {
 	}
 }
 
+func TestKindDependencyImageHelperExposesLocalRuntimeTags(t *testing.T) {
+	contents := string(readFile(t, repoPath("scripts", "ci", "dependency-images.sh")))
+
+	for _, want := range []string{
+		`kind_runtime_image_ref()`,
+		`DEFAULT_KIND_DATAPLANE_IMAGE="$(kind_runtime_image_ref "$DEFAULT_DATAPLANE_IMAGE")"`,
+		`DEFAULT_KIND_DASHBOARD_IMAGE="$(kind_runtime_image_ref "$DEFAULT_DASHBOARD_IMAGE")"`,
+		`:kind-`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("dependency image helper missing %q", want)
+		}
+	}
+}
+
 func TestKindValidationEntrypointsResolvePinnedDependencyImages(t *testing.T) {
 	for _, path := range []string{
 		repoPath("scripts", "ci", "load-kind-images.sh"),
@@ -208,6 +223,34 @@ func TestKindValidationEntrypointsResolvePinnedDependencyImages(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestKindLoadHelpersResolveLocalRuntimeTags(t *testing.T) {
+	loadContents := string(readFile(t, repoPath("scripts", "ci", "load-kind-images.sh")))
+	for _, want := range []string{
+		`KIND_DATAPLANE_IMAGE="${KIND_DATAPLANE_IMAGE:-$(kind_runtime_image_ref "$DATAPLANE_IMAGE")}"`,
+		`KIND_DASHBOARD_IMAGE="${KIND_DASHBOARD_IMAGE:-$(kind_runtime_image_ref "$DASHBOARD_IMAGE")}"`,
+		`docker tag "$dataplane_image_id" "$KIND_DATAPLANE_IMAGE"`,
+		`docker tag "$dashboard_image_id" "$KIND_DASHBOARD_IMAGE"`,
+		`kind load docker-image "$KIND_DATAPLANE_IMAGE" --name "$CLUSTER_NAME"`,
+		`kind load docker-image "$KIND_DASHBOARD_IMAGE" --name "$CLUSTER_NAME"`,
+	} {
+		if !strings.Contains(loadContents, want) {
+			t.Fatalf("load-kind-images.sh missing %q", want)
+		}
+	}
+
+	deployContents := string(readFile(t, repoPath("scripts", "ci", "deploy-kind-conformance.sh")))
+	for _, want := range []string{
+		`KIND_DATAPLANE_IMAGE="${KIND_DATAPLANE_IMAGE:-$(kind_runtime_image_ref "$DATAPLANE_IMAGE")}"`,
+		`KIND_DASHBOARD_IMAGE="${KIND_DASHBOARD_IMAGE:-$(kind_runtime_image_ref "$DASHBOARD_IMAGE")}"`,
+		`kustomize edit set image "nantian-dataplane=$KIND_DATAPLANE_IMAGE"`,
+		`kustomize edit set image "nantian-gw-dashboard=$KIND_DASHBOARD_IMAGE"`,
+	} {
+		if !strings.Contains(deployContents, want) {
+			t.Fatalf("deploy-kind-conformance.sh missing %q", want)
+		}
 	}
 }
 
