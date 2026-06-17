@@ -18,8 +18,6 @@ env:
   CLUSTER_NAME: e2e
   GATEWAY_API_VERSION: v1.5.1
   CONTROLPLANE_IMAGE: ghcr.io/nantian-gw/nantian-controlplane:ci-${{ github.sha }}
-  DATAPLANE_IMAGE: ghcr.io/nantian-gw/dataplane:latest
-  DASHBOARD_IMAGE: ghcr.io/nantian-gw/dashboard:latest
 
 jobs:
   smoke:
@@ -28,6 +26,14 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
+
+      - name: Resolve dependency images
+        run: |
+          source scripts/ci/dependency-images.sh
+          {
+            echo "DATAPLANE_IMAGE=${DATAPLANE_IMAGE:-$DEFAULT_DATAPLANE_IMAGE}"
+            echo "DASHBOARD_IMAGE=${DASHBOARD_IMAGE:-$DEFAULT_DASHBOARD_IMAGE}"
+          } >>"${GITHUB_ENV}"
 
       - name: Install Kind tooling
         run: scripts/ci/install-kind-tools.sh

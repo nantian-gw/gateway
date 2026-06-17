@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=./dependency-images.sh
+source "$SCRIPT_DIR/dependency-images.sh"
+
 CLUSTER_NAME="${CLUSTER_NAME:?CLUSTER_NAME is required}"
 CONTROLPLANE_IMAGE="${CONTROLPLANE_IMAGE:?CONTROLPLANE_IMAGE is required}"
-DATAPLANE_IMAGE="${DATAPLANE_IMAGE:-ghcr.io/nantian-gw/dataplane:latest}"
-DASHBOARD_IMAGE="${DASHBOARD_IMAGE:-ghcr.io/nantian-gw/dashboard:latest}"
+DATAPLANE_IMAGE="${DATAPLANE_IMAGE:-$DEFAULT_DATAPLANE_IMAGE}"
+DASHBOARD_IMAGE="${DASHBOARD_IMAGE:-$DEFAULT_DASHBOARD_IMAGE}"
 
 docker pull "$DATAPLANE_IMAGE"
 docker pull "$DASHBOARD_IMAGE"

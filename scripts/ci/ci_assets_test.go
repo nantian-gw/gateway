@@ -157,6 +157,60 @@ func TestWorkflowsUseSharedKindClusterHelper(t *testing.T) {
 	}
 }
 
+func TestKindDependencyImageHelperPinsDigestReferences(t *testing.T) {
+	contents := string(readFile(t, repoPath("scripts", "ci", "dependency-images.sh")))
+
+	for _, want := range []string{
+		`DEFAULT_DATAPLANE_IMAGE="ghcr.io/nantian-gw/dataplane@sha256:bacc962711a95fd8fa75e3f9206319a42490b6eaf94257d57fc48f998444ea0e"`,
+		`DEFAULT_DASHBOARD_IMAGE="ghcr.io/nantian-gw/dashboard@sha256:74f4c0f4afbf3f8c0ec26110a31d2327ca45d97d0ebd0ce73a765b051d6c208a"`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("dependency image helper missing %q", want)
+		}
+	}
+
+	for _, unwanted := range []string{
+		`ghcr.io/nantian-gw/dataplane:latest`,
+		`ghcr.io/nantian-gw/dashboard:latest`,
+	} {
+		if strings.Contains(contents, unwanted) {
+			t.Fatalf("dependency image helper must not reference %q", unwanted)
+		}
+	}
+}
+
+func TestKindValidationEntrypointsResolvePinnedDependencyImages(t *testing.T) {
+	for _, path := range []string{
+		repoPath("scripts", "ci", "load-kind-images.sh"),
+		repoPath("scripts", "ci", "deploy-kind-conformance.sh"),
+		repoPath(".github", "workflows", "e2e.yml"),
+		repoPath(".github", "workflows", "conformance.yml"),
+	} {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			contents := string(readFile(t, path))
+
+			for _, want := range []string{
+				`dependency-images.sh`,
+				`DEFAULT_DATAPLANE_IMAGE`,
+				`DEFAULT_DASHBOARD_IMAGE`,
+			} {
+				if !strings.Contains(contents, want) {
+					t.Fatalf("%s missing %q", path, want)
+				}
+			}
+
+			for _, unwanted := range []string{
+				`ghcr.io/nantian-gw/dataplane:latest`,
+				`ghcr.io/nantian-gw/dashboard:latest`,
+			} {
+				if strings.Contains(contents, unwanted) {
+					t.Fatalf("%s still references mutable image %q", path, unwanted)
+				}
+			}
+		})
+	}
+}
+
 func TestReleaseWorkflowUsesCurrentCIEntrypoints(t *testing.T) {
 	contents := string(readFile(t, repoPath(".github", "workflows", "release.yml")))
 
