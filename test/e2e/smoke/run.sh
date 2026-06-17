@@ -124,6 +124,24 @@ cleanup_cluster() {
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
 }
 
+finish_smoke() {
+    local exit_code=$?
+    set +e
+
+    if [[ "$exit_code" -ne 0 ]]; then
+        FAILED=true
+    fi
+
+    cleanup_cluster
+    if $FAILED; then
+        red "✗ Smoke test FAILED"
+    else
+        green "✓ Smoke test PASSED"
+    fi
+
+    exit "$exit_code"
+}
+
 # ── Step 1: ensure kind cluster ──
 ensure_cluster() {
     if kind get clusters 2>/dev/null | grep -q "^$CLUSTER_NAME$"; then
@@ -444,7 +462,7 @@ send_request() {
 
 # ── Main ──
 main() {
-    trap 'exit_code=$?; if [[ "$exit_code" -ne 0 ]]; then FAILED=true; fi; cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi; exit "$exit_code"' EXIT
+    trap finish_smoke EXIT
 
     if [[ "$BOOTSTRAP" == "true" ]]; then
         ensure_cluster
