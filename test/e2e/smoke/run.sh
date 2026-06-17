@@ -2,7 +2,7 @@
 # e2e smoke test — deploy, route, request, verify, cleanup.
 # Usage: ./run.sh              # full cycle (deploy → test → cleanup)
 #        ./run.sh --no-cleanup # keep cluster running for debugging
-set -euo pipefail
+set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 GATEWAY_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
@@ -252,6 +252,7 @@ send_request() {
 
 # ── Main ──
 main() {
+    trap 'FAILED=true' ERR
     trap 'cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi' EXIT
 
     if [[ "$BOOTSTRAP" == "true" ]]; then

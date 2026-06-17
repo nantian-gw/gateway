@@ -240,6 +240,18 @@ func TestSecurityScanWorkflowUsesExistingHelper(t *testing.T) {
 	}
 }
 
+func TestCollectKindDiagnosticsCapturesFrontendTopology(t *testing.T) {
+	contents := string(readFile(t, repoPath("scripts", "ci", "collect-kind-diagnostics.sh")))
+
+	for _, want := range []string{
+		`run_capture service-topology kubectl get svc,endpoints,endpointslice -A -o yaml`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("kind diagnostics helper missing %q", want)
+		}
+	}
+}
+
 func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	contents := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
 

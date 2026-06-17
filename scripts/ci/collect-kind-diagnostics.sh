@@ -17,6 +17,7 @@ run_capture pods-all kubectl get pods -A -o wide
 run_capture events-all kubectl get events -A --sort-by=.lastTimestamp
 run_capture nantian-pods kubectl describe pods -n nantian-gw
 run_capture nantian-logs kubectl logs -n nantian-gw -l app.kubernetes.io/part-of=nantian-gw --all-containers=true --tail=300 --prefix=true
+run_capture service-topology kubectl get svc,endpoints,endpointslice -A -o yaml
 run_capture gateway-resources kubectl get gateway,httproute -A -o yaml
 run_capture nantian-images kubectl get pods -n nantian-gw -o json
 
