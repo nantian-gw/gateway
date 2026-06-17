@@ -5,8 +5,11 @@ import (
 	"strconv"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/mesh"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
+
+const backendRefValidityMetadataKey = "nantian.dev/backend-ref-valid"
 
 func buildProjectedProtoSnapshot(source *ir.Snapshot, profile projectionProfile, logger *slog.Logger) *controlv1.ConfigSnapshot {
 	if source == nil {
@@ -158,13 +161,17 @@ func projectListeners(listeners []ir.Listener, snapshot *ir.Snapshot) []ir.Liste
 				attachedRoutes = append(attachedRoutes, routeKey)
 			}
 		}
-		if len(attachedRoutes) == 0 && !isGatewayProjectedListener(listener) {
+		if len(attachedRoutes) == 0 && !isProjectedFrontendListener(listener) {
 			continue
 		}
 		listener.AttachedRoutes = attachedRoutes
 		out = append(out, listener)
 	}
 	return out
+}
+
+func isProjectedFrontendListener(listener ir.Listener) bool {
+	return isGatewayProjectedListener(listener) || isMeshProjectedListener(listener)
 }
 
 func isGatewayProjectedListener(listener ir.Listener) bool {
@@ -174,9 +181,21 @@ func isGatewayProjectedListener(listener ir.Listener) bool {
 	return listener.Metadata["gateway"] != "" && listener.Metadata["namespace"] != ""
 }
 
+func isMeshProjectedListener(listener ir.Listener) bool {
+	if listener.Metadata == nil {
+		return false
+	}
+	return listener.Metadata[mesh.FrontendKindMetadataKey] != ""
+}
+
 func filterBackendRefs(routeNamespace string, refs []ir.BackendRef, survivingBackends map[string]struct{}) []ir.BackendRef {
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
+		if backendRefMarkedInvalid(ref) {
+			out = append(out, ref)
+			continue
+		}
+
 		namespace := ref.Namespace
 		if namespace == "" {
 			namespace = routeNamespace
@@ -192,6 +211,10 @@ func filterBackendRefs(routeNamespace string, refs []ir.BackendRef, survivingBac
 		}
 	}
 	return out
+}
+
+func backendRefMarkedInvalid(ref ir.BackendRef) bool {
+	return ref.Metadata[backendRefValidityMetadataKey] == "false"
 }
 
 func backendRequiresUnsupportedHardFeature(backend ir.BackendCluster, supported map[string]struct{}) bool {

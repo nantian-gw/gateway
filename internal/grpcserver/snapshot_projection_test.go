@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/mesh"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
@@ -297,6 +298,84 @@ func TestProjectedSnapshotKeepsStreamRouteWithPortQualifiedBackendName(t *testin
 	}
 	if got := len(route.GetRules()[0].GetBackendRefs()); got != 1 {
 		t.Fatalf("stream route backend ref count = %d, want 1", got)
+	}
+}
+
+func TestProjectedSnapshotKeepsHTTPRouteWithInvalidBackendRef(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			HTTPRoutes: []ir.HTTPRoute{{
+				Name:      "invalid-route",
+				Namespace: "default",
+				Rules: []ir.HTTPRule{{
+					Name: "invalid-backend",
+					BackendRefs: []ir.BackendRef{{
+						Name:      "missing-backend",
+						Namespace: "default",
+						Port:      8080,
+						Metadata: map[string]string{
+							"nantian.dev/backend-ref-valid":  "false",
+							"nantian.dev/backend-ref-reason": "BackendNotFound",
+						},
+					}},
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	route := findProjectedHTTPRoute(t, projected, "invalid-route")
+	if got := len(route.GetRules()); got != 1 {
+		t.Fatalf("http route rule count = %d, want 1", got)
+	}
+	if got := len(route.GetRules()[0].GetBackendRefs()); got != 1 {
+		t.Fatalf("http route backend ref count = %d, want 1", got)
+	}
+	if got := route.GetRules()[0].GetBackendRefs()[0].GetMetadata()["nantian.dev/backend-ref-valid"]; got != "false" {
+		t.Fatalf("backend ref validity metadata = %q, want false", got)
+	}
+}
+
+func TestProjectedSnapshotPreservesMeshListenerWhenAllAttachedRoutesArePruned(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			Listeners: []ir.Listener{{
+				Name:           "mesh/apps/orders/25001",
+				Address:        "0.0.0.0",
+				Port:           25001,
+				Protocol:       "HTTP",
+				AttachedRoutes: []string{"apps/orders-port-80"},
+				Metadata: map[string]string{
+					mesh.FrontendKindMetadataKey:      mesh.FrontendKindService,
+					mesh.FrontendNamespaceMetadataKey: "apps",
+					mesh.FrontendNameMetadataKey:      "orders",
+					mesh.FrontendPortMetadataKey:      "8080",
+				},
+			}},
+			HTTPRoutes: []ir.HTTPRoute{{
+				Name:      "orders-port-80",
+				Namespace: "apps",
+				Rules: []ir.HTTPRule{{
+					BackendRefs: []ir.BackendRef{{
+						Name:      "missing-backend",
+						Namespace: "apps",
+						Port:      80,
+					}},
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	listener := findProjectedListener(t, projected, "mesh/apps/orders/25001")
+	if got := listener.GetAttachedRoutes(); len(got) != 0 {
+		t.Fatalf("mesh listener attached routes = %#v, want empty list", got)
 	}
 }
 
