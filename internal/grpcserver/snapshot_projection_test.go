@@ -216,6 +216,110 @@ func TestProjectedSnapshotKeepsHTTPRouteWithPortQualifiedBackendName(t *testing.
 	}
 }
 
+func TestProjectedSnapshotFiltersRouteLocalPortQualifiedBackendRefs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		backendRef    ir.BackendRef
+		backends      []ir.BackendCluster
+		wantRoute     bool
+		wantValidFlag string
+	}{
+		{
+			name: "route-local port-qualified backend survives",
+			backendRef: ir.BackendRef{
+				Name: "orders",
+				Port: 8080,
+			},
+			backends: []ir.BackendCluster{{
+				Name:           "orders:8080",
+				Namespace:      "apps",
+				Protocol:       "HTTP",
+				ConnectTimeout: 5 * time.Second,
+				Endpoints: []ir.BackendEndpoint{{
+					Address: "10.0.0.20",
+					Port:    8080,
+					Healthy: true,
+				}},
+			}},
+			wantRoute: true,
+		},
+		{
+			name: "wrong port is pruned",
+			backendRef: ir.BackendRef{
+				Name: "orders",
+				Port: 8081,
+			},
+			backends: []ir.BackendCluster{{
+				Name:           "orders:8080",
+				Namespace:      "apps",
+				Protocol:       "HTTP",
+				ConnectTimeout: 5 * time.Second,
+				Endpoints: []ir.BackendEndpoint{{
+					Address: "10.0.0.20",
+					Port:    8080,
+					Healthy: true,
+				}},
+			}},
+			wantRoute: false,
+		},
+		{
+			name: "invalid route-local backend ref is preserved",
+			backendRef: ir.BackendRef{
+				Name: "missing",
+				Port: 8080,
+				Metadata: map[string]string{
+					backendRefValidityMetadataKey: "false",
+				},
+			},
+			wantRoute:     true,
+			wantValidFlag: "false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			projected := buildProjectedProtoSnapshot(
+				&ir.Snapshot{
+					HTTPRoutes: []ir.HTTPRoute{{
+						Name:      "orders-route",
+						Namespace: "apps",
+						Rules: []ir.HTTPRule{{
+							Name:        "orders",
+							BackendRefs: []ir.BackendRef{tt.backendRef},
+						}},
+					}},
+					Backends: tt.backends,
+				},
+				effectiveProjectionProfile([]string{featureCoreV1}),
+				slog.New(slog.NewTextHandler(io.Discard, nil)),
+			)
+
+			if !tt.wantRoute {
+				if hasProjectedHTTPRoute(projected, "orders-route") {
+					t.Fatalf("projected route unexpectedly survived: %#v", projected.GetHttpRoutes())
+				}
+				return
+			}
+
+			route := findProjectedHTTPRoute(t, projected, "orders-route")
+			if got := len(route.GetRules()); got != 1 {
+				t.Fatalf("http route rule count = %d, want 1", got)
+			}
+			refs := route.GetRules()[0].GetBackendRefs()
+			if got := len(refs); got != 1 {
+				t.Fatalf("http route backend ref count = %d, want 1", got)
+			}
+			if got := refs[0].GetMetadata()[backendRefValidityMetadataKey]; got != tt.wantValidFlag {
+				t.Fatalf("backend ref validity metadata = %q, want %q", got, tt.wantValidFlag)
+			}
+		})
+	}
+}
+
 func TestProjectedSnapshotKeepsSecondListenerSetHTTPRoutingRoutes(t *testing.T) {
 	t.Parallel()
 
