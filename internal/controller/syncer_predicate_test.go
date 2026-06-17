@@ -139,3 +139,85 @@ func TestSnapshotInputMutationPredicateSkipsIrrelevantGatewayAnnotationUpdates(t
 		t.Fatal("expected irrelevant Gateway annotation-only update to be ignored")
 	}
 }
+
+func TestSnapshotListenerSetMutationPredicateAllowsAcceptedStatusUpdates(t *testing.T) {
+	predicate := snapshotListenerSetMutationPredicate()
+	oldSet := &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+		Status: gatewayv1.ListenerSetStatus{
+			Conditions: []metav1.Condition{{
+				Type:               string(gatewayv1.ListenerSetConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: 1,
+			}},
+		},
+	}
+	newSet := oldSet.DeepCopy()
+	newSet.Status.Conditions[0].Status = metav1.ConditionTrue
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
+		t.Fatal("expected ListenerSet Accepted status update to trigger snapshot rebuild")
+	}
+}
+
+func TestSnapshotListenerSetMutationPredicateAllowsAcceptedObservedGenerationUpdates(t *testing.T) {
+	predicate := snapshotListenerSetMutationPredicate()
+	oldSet := &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 2},
+		Status: gatewayv1.ListenerSetStatus{
+			Conditions: []metav1.Condition{{
+				Type:               string(gatewayv1.ListenerSetConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: 1,
+			}},
+		},
+	}
+	newSet := oldSet.DeepCopy()
+	newSet.Status.Conditions[0].ObservedGeneration = 2
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
+		t.Fatal("expected ListenerSet Accepted observedGeneration update to trigger snapshot rebuild")
+	}
+}
+
+func TestSnapshotListenerSetMutationPredicateAllowsListenerAcceptedStatusUpdates(t *testing.T) {
+	predicate := snapshotListenerSetMutationPredicate()
+	oldSet := &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+		Status: gatewayv1.ListenerSetStatus{
+			Listeners: []gatewayv1.ListenerEntryStatus{{
+				Name: "http",
+				Conditions: []metav1.Condition{{
+					Type:               string(gatewayv1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: 1,
+				}},
+			}},
+		},
+	}
+	newSet := oldSet.DeepCopy()
+	newSet.Status.Listeners[0].Conditions[0].Status = metav1.ConditionTrue
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
+		t.Fatal("expected ListenerSet listener Accepted status update to trigger snapshot rebuild")
+	}
+}
+
+func TestSnapshotListenerSetMutationPredicateSkipsAttachedRouteStatusUpdates(t *testing.T) {
+	predicate := snapshotListenerSetMutationPredicate()
+	oldSet := &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+		Status: gatewayv1.ListenerSetStatus{
+			Listeners: []gatewayv1.ListenerEntryStatus{{
+				Name:           "http",
+				AttachedRoutes: 1,
+			}},
+		},
+	}
+	newSet := oldSet.DeepCopy()
+	newSet.Status.Listeners[0].AttachedRoutes = 2
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
+		t.Fatal("expected attached-route-only ListenerSet status update to be ignored")
+	}
+}

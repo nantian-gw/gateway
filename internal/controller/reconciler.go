@@ -65,6 +65,7 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	snapshotMutationPredicate := builder.WithPredicates(snapshotInputMutationPredicate())
+	listenerSetMutationPredicate := builder.WithPredicates(snapshotListenerSetMutationPredicate())
 	snapshotInputPredicate := builder.WithPredicates(
 		predicate.NewPredicateFuncs(managedresources.ShouldAffectSnapshot),
 	)
@@ -116,7 +117,7 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 		controllerBuilder = controllerBuilder.Watches(
 			&gatewayv1.ListenerSet{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			listenerSetMutationPredicate,
 		)
 	}
 
