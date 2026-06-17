@@ -15,7 +15,7 @@ GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"
 GATEWAY_NAME="${GATEWAY_NAME:-nantian-gw}"
 GATEWAY_SERVICE="nantian-gw-$GATEWAY_NAME"
 SMOKE_CLIENT_POD="smoke-client"
-SMOKE_CLIENT_IMAGE="${SMOKE_CLIENT_IMAGE:-docker.io/busybox:1.36.1}"
+SMOKE_CLIENT_IMAGE="${SMOKE_CLIENT_IMAGE:-curlimages/curl:8.16.0}"
 SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"
 ECHO_PORT=8080
 TIMEOUT="${TIMEOUT:-180}"
@@ -42,6 +42,13 @@ done
 red()   { echo -e "\033[31m$*\033[0m"; }
 green() { echo -e "\033[32m$*\033[0m"; }
 yellow(){ echo -e "\033[33m$*\033[0m"; }
+
+trim_response_detail() {
+    local value="$1"
+    value="${value//$'\r'/}"
+    value="$(printf '%s' "$value" | sed 's/[[:space:]]\+/ /g')"
+    printf '%.240s' "$value"
+}
 
 fail() {
     red "FAIL: $*"
@@ -272,7 +279,11 @@ send_request() {
     local request_deadline=$((SECONDS + TIMEOUT))
     local request_timeout="${SMOKE_REQUEST_TIMEOUT_SEC:-5}"
     local last_request_error=""
+    local last_response_code=""
+    local last_response_body=""
     local output=""
+    local response_code=""
+    local response_body=""
 
     if ! wait_for_gateway_frontend_endpoints "$request_deadline"; then
         if ! gateway_service_exists; then
@@ -285,19 +296,44 @@ send_request() {
     fi
 
     while (( SECONDS < request_deadline )); do
-        if output="$(kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- \
-            wget -q -T "$request_timeout" -O - "$SMOKE_URL" 2>&1)"; then
+        output="$(kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- \
+            sh -c '
+                body_file=/tmp/smoke-response-body.txt
+                rm -f "$body_file"
+                status="$(curl -sS --connect-timeout "$1" --max-time "$1" \
+                    -o "$body_file" -w "%{http_code}" "$2")"
+                printf "__STATUS__%s\n" "$status"
+                cat "$body_file"
+            ' sh "$request_timeout" "$SMOKE_URL" 2>&1)" || {
+            last_request_error="$output"
+            sleep 2
+            continue
+        }
+
+        response_code="$(printf '%s\n' "$output" | awk 'NR == 1 {sub(/^__STATUS__/, "", $0); print; exit}')"
+        response_body="$(printf '%s\n' "$output" | tail -n +2)"
+
+        last_response_code="$response_code"
+        last_response_body="$response_body"
+
+        if [[ "$response_code" == "200" ]]; then
             green "  PASS: GET /echo via $GATEWAY_SERVICE -> HTTP 200"
             return 0
         fi
 
-        last_request_error="$output"
+        last_request_error="HTTP ${response_code}"
         sleep 2
     done
 
     local detail=""
     if [[ -n "$last_request_error" ]]; then
         detail=$'\nlast request error: '"$last_request_error"
+    fi
+    if [[ -n "$last_response_code" ]]; then
+        detail+=$'\nlast response code: '"$last_response_code"
+    fi
+    if [[ -n "$last_response_body" ]]; then
+        detail+=$'\nlast response body: '"$(trim_response_detail "$last_response_body")"
     fi
 
     fail "GET /echo via $GATEWAY_SERVICE did not succeed within ${TIMEOUT}s${detail}"

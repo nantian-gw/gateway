@@ -217,6 +217,27 @@ func TestReleaseWorkflowUsesReleaseTaggedDependencyImages(t *testing.T) {
 	}
 }
 
+func TestReleaseWorkflowCollectsDiagnosticsWithCurrentHelper(t *testing.T) {
+	contents := string(readFile(t, repoPath(".github", "workflows", "release.yml")))
+
+	for _, want := range []string{
+		`run: ARTIFACT_DIR=release-src/tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("release workflow missing %q", want)
+		}
+	}
+
+	for _, unwanted := range []string{
+		`working-directory: release-src
+        run: ARTIFACT_DIR=tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh`,
+	} {
+		if strings.Contains(contents, unwanted) {
+			t.Fatalf("release workflow still contains stale diagnostics path %q", unwanted)
+		}
+	}
+}
+
 func TestSecurityScanWorkflowUsesExistingHelper(t *testing.T) {
 	contents := string(readFile(t, repoPath(".github", "workflows", "security-scans.yml")))
 	helperPath := repoPath("scripts", "ci", "run-security-scans.sh")
@@ -252,18 +273,20 @@ func TestCollectKindDiagnosticsCapturesFrontendTopology(t *testing.T) {
 	}
 }
 
-func TestSmokeScriptProbesDerivedGatewayServiceFromInsideCluster(t *testing.T) {
+func TestSmokeScriptUsesCurlBasedInClusterProbe(t *testing.T) {
 	contents := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
 
 	for _, want := range []string{
 		`GATEWAY_SERVICE="nantian-gw-$GATEWAY_NAME"`,
 		`SMOKE_CLIENT_POD="smoke-client"`,
+		`SMOKE_CLIENT_IMAGE="${SMOKE_CLIENT_IMAGE:-curlimages/curl:`,
 		`SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"`,
 		`kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE"`,
 		`kubectl get endpointslice -n "$CONTROL_PLANE_NS"`,
 		`kubernetes.io/service-name=$GATEWAY_SERVICE`,
-		`wget -q -T "$request_timeout" -O - "$SMOKE_URL"`,
-		`last_request_error`,
+		`curl -sS`,
+		`last_response_code`,
+		`last_response_body`,
 		`request_deadline=`,
 	} {
 		if !strings.Contains(contents, want) {
@@ -276,11 +299,33 @@ func TestSmokeScriptProbesDerivedGatewayServiceFromInsideCluster(t *testing.T) {
 		`service/$DATA_PLANE_SVC`,
 		`pod/$dataplane_pod`,
 		`dataplane_pod=$(kubectl get pod`,
-		`curl -s -o /dev/null -w "%{http_code}"`,
-		`wget -q -O - "$SMOKE_URL" >/dev/null 2>&1`,
+		`docker.io/busybox:1.36.1`,
+		`wget -q -T "$request_timeout" -O - "$SMOKE_URL"`,
 	} {
 		if strings.Contains(contents, unwanted) {
-			t.Fatalf("smoke script still contains stale host-probe pattern %q", unwanted)
+			t.Fatalf("smoke script still contains stale probe pattern %q", unwanted)
+		}
+	}
+}
+
+func TestEmbeddedProtoGoModuleAvoidsKnownVulnerableIndirectDeps(t *testing.T) {
+	contents := string(readFile(t, repoPath("gen", "go", "go.mod")))
+
+	for _, want := range []string{
+		`golang.org/x/net v0.55.0`,
+		`golang.org/x/sys v0.45.0`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("embedded proto go.mod missing %q", want)
+		}
+	}
+
+	for _, unwanted := range []string{
+		`golang.org/x/net v0.49.0`,
+		`golang.org/x/sys v0.40.0`,
+	} {
+		if strings.Contains(contents, unwanted) {
+			t.Fatalf("embedded proto go.mod still contains vulnerable dep %q", unwanted)
 		}
 	}
 }

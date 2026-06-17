@@ -193,8 +193,7 @@ jobs:
 
       - name: Collect diagnostics on failure
         if: failure()
-        working-directory: release-src
-        run: ARTIFACT_DIR=tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh
+        run: ARTIFACT_DIR=release-src/tmp/conformance-diagnostics scripts/ci/collect-kind-diagnostics.sh
 
       - name: Upload conformance artifacts
         if: always()
