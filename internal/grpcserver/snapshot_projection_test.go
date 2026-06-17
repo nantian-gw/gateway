@@ -135,6 +135,44 @@ func TestProjectedSnapshotFullProfilePreservesAIServiceTokenPolicyWasmAndLabels(
 	}
 }
 
+func TestProjectedSnapshotPreservesListenerWhenAllAttachedRoutesArePruned(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			Listeners: []ir.Listener{{
+				Name:           "listener-empty-after-projection",
+				Address:        "0.0.0.0",
+				Port:           80,
+				Protocol:       "HTTP",
+				AttachedRoutes: []string{"default/http-missing"},
+				Metadata: map[string]string{
+					"gateway":   "edge",
+					"namespace": "default",
+				},
+			}},
+			HTTPRoutes: []ir.HTTPRoute{{
+				Name:      "http-missing",
+				Namespace: "default",
+				Rules: []ir.HTTPRule{{
+					BackendRefs: []ir.BackendRef{{
+						Name:      "missing-backend",
+						Namespace: "default",
+						Port:      8080,
+					}},
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	listener := findProjectedListener(t, projected, "listener-empty-after-projection")
+	if got := listener.GetAttachedRoutes(); len(got) != 0 {
+		t.Fatalf("attached routes = %#v, want empty list", got)
+	}
+}
+
 func projectionTestSnapshot() *ir.Snapshot {
 	return &ir.Snapshot{
 		ID:          "projection-snapshot",
