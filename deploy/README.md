@@ -145,10 +145,11 @@ The two most important dynamic Services currently are:
 
 Notes:
 
-- `nantian-gw-dataplane` is the shared frontend entry; current Kind smoke defaults to using it.
+- `nantian-gw-dataplane` is the shared frontend entry, mainly useful for shared-node exposure patterns such as Kind NodePort access.
 - `nantian-gw-<gatewayName>` is a dedicated Service derived from the Gateway name; for example, if the `Gateway` is named `edge`, the corresponding Service is typically `nantian-gw-edge`.
 - per-Gateway Services default to `ClusterIP`, but can be lowered to `NodePort` or `LoadBalancer` via `Gateway.spec.infrastructure.parametersRef`, making them the more natural north-south exposure point in long-term environments.
 - These objects are maintained by the control plane reconcile loop and are not static install assets from `deploy/kubernetes/base/`.
+- Because these derived frontend Services are backed by controller-managed EndpointSlices rather than a pod selector, `kubectl port-forward service/...` is not the right validation path for smoke tests; use real Service traffic from inside the cluster or a normal client entry point instead.
 
 ## Traffic Entry Relationships
 
@@ -179,7 +180,8 @@ The most easily confused aspect of the current repository is that the entries se
 
 | Scenario | Default Entry | Notes |
 | --- | --- | --- |
-| Kind / smoke | `nantian-gw-dataplane` | Shared dataplane Service uses `NodePort`; Kind overlay maps HTTP `18080`, HTTPS/TLS `18443`, UDP `5300` / `5301`, TCPRoute `19000` / `19001` by default |
+| Kind shared-node access | `nantian-gw-dataplane` | Shared dataplane Service uses `NodePort`; Kind overlay maps HTTP `18080`, HTTPS/TLS `18443`, UDP `5300` / `5301`, TCPRoute `19000` / `19001` by default |
+| Smoke validation | `nantian-gw-<gatewayName>` | Current smoke validates the derived per-Gateway Service from inside the cluster so selectorless frontend Services are exercised through normal Service routing |
 | Long-term / production | `nantian-gw-<gatewayName>` | Better to expose per Gateway individually, then control `ClusterIP` / `NodePort` / `LoadBalancer` via `parametersRef` |
 
 So if you see locally:

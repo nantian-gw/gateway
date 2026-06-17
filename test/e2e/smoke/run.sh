@@ -10,9 +10,14 @@ CLUSTER_NAME="${CLUSTER_NAME:-nantian-e2e}"
 CONTROL_PLANE_NS="nantian-gw"
 TEST_NS="nantian-e2e"
 CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"
+DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"
 GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"
-GATEWAY_HOST="${GATEWAY_HOST:-127.0.0.1}"
-GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"
+GATEWAY_NAME="${GATEWAY_NAME:-nantian-gw}"
+GATEWAY_SERVICE="nantian-gw-$GATEWAY_NAME"
+SMOKE_CLIENT_POD="smoke-client"
+SMOKE_CLIENT_IMAGE="${SMOKE_CLIENT_IMAGE:-docker.io/busybox:1.36.1}"
+SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"
+ECHO_PORT=8080
 TIMEOUT="${TIMEOUT:-180}"
 KIND_CONFIG="${KIND_CONFIG:-$GATEWAY_ROOT/scripts/ci/kind-ci-config.yaml}"
 CLEANUP="true"
@@ -143,7 +148,7 @@ create_gateway() {
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: nantian-gw
+  name: $GATEWAY_NAME
 spec:
   gatewayClassName: $GATEWAY_CLASS_NAME
   listeners:
@@ -190,7 +195,7 @@ metadata:
   name: echo
 spec:
   parentRefs:
-  - name: nantian-gw
+  - name: $GATEWAY_NAME
   rules:
   - matches:
     - path:
@@ -207,53 +212,101 @@ YAML
     green "  HTTPRoute created"
 }
 
-wait_for_gateway_programmed() {
-    local gateway_name="${1:-nantian-gw}"
+ensure_smoke_client() {
+    kubectl apply -n "$TEST_NS" -f - <<YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: $SMOKE_CLIENT_POD
+spec:
+  restartPolicy: Always
+  containers:
+  - name: client
+    image: $SMOKE_CLIENT_IMAGE
+    command:
+    - sh
+    - -c
+    - sleep 3600
+YAML
 
-    echo "=== Waiting for Gateway ${gateway_name} to be Programmed ==="
-    local request_deadline=$((SECONDS + TIMEOUT))
-    while (( SECONDS < request_deadline )); do
-        local programmed
-        programmed="$(
-            kubectl get gateway "$gateway_name" -n "$CONTROL_PLANE_NS" \
-                -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || true
-        )"
-        if [[ "$programmed" == "True" ]]; then
-            green "  Gateway ${gateway_name} is Programmed"
+    kubectl wait --for=condition=ready pod/$SMOKE_CLIENT_POD -n "$TEST_NS" --timeout="${TIMEOUT}s"
+}
+
+gateway_service_exists() {
+    kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE" >/dev/null 2>&1
+}
+
+gateway_frontend_endpoints_ready() {
+    kubectl get endpointslice -n "$CONTROL_PLANE_NS" \
+        -l "kubernetes.io/service-name=$GATEWAY_SERVICE" \
+        -o jsonpath='{range .items[*].endpoints[*]}{range .addresses[*]}{.}{" "}{end}{.conditions.ready}{"\n"}{end}' \
+        2>/dev/null \
+        | awk 'NF >= 1 && $NF != "false" {found=1} END {exit(found ? 0 : 1)}'
+}
+
+wait_for_gateway_frontend_endpoints() {
+    local deadline="$1"
+
+    while (( SECONDS < deadline )); do
+        if ! gateway_service_exists; then
+            sleep 2
+            continue
+        fi
+
+        if gateway_frontend_endpoints_ready; then
             return 0
         fi
+
         sleep 2
     done
 
-    fail "Gateway ${gateway_name} did not become Programmed=True within ${TIMEOUT}s"
     return 1
 }
 
-# ── Step 6: send request through the Kind host port entry ──
+# ── Step 6: probe the derived Gateway Service from inside the cluster ──
 send_request() {
-    local endpoint="http://${GATEWAY_HOST}:${GATEWAY_HTTP_PORT}/echo"
+    echo "=== Sending test request via derived Gateway Service ($SMOKE_URL) ==="
 
-    echo "=== Sending test request (${endpoint}) ==="
+    ensure_smoke_client
+
     local request_deadline=$((SECONDS + TIMEOUT))
-    local response="000"
+    local request_timeout="${SMOKE_REQUEST_TIMEOUT_SEC:-5}"
+    local last_request_error=""
+    local output=""
+
+    if ! wait_for_gateway_frontend_endpoints "$request_deadline"; then
+        if ! gateway_service_exists; then
+            fail "derived Gateway Service $GATEWAY_SERVICE was not created within ${TIMEOUT}s"
+            return 1
+        fi
+
+        fail "derived Gateway Service $GATEWAY_SERVICE did not expose ready frontend endpoints within ${TIMEOUT}s"
+        return 1
+    fi
+
     while (( SECONDS < request_deadline )); do
-        response=$(curl -s -o /dev/null -w "%{http_code}" "$endpoint" 2>/dev/null || echo "000")
-        if [[ "$response" == "200" ]]; then
-            green "  PASS: GET /echo -> HTTP $response"
+        if output="$(kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- \
+            wget -q -T "$request_timeout" -O - "$SMOKE_URL" 2>&1)"; then
+            green "  PASS: GET /echo via $GATEWAY_SERVICE -> HTTP 200"
             return 0
         fi
 
+        last_request_error="$output"
         sleep 2
     done
 
-    fail "GET /echo via ${endpoint} -> HTTP $response (expected 200 within ${TIMEOUT}s)"
+    local detail=""
+    if [[ -n "$last_request_error" ]]; then
+        detail=$'\nlast request error: '"$last_request_error"
+    fi
+
+    fail "GET /echo via $GATEWAY_SERVICE did not succeed within ${TIMEOUT}s${detail}"
     return 1
 }
 
 # ── Main ──
 main() {
-    trap 'FAILED=true' ERR
-    trap 'cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi' EXIT
+    trap 'exit_code=$?; if [[ "$exit_code" -ne 0 ]]; then FAILED=true; fi; cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi; exit "$exit_code"' EXIT
 
     if [[ "$BOOTSTRAP" == "true" ]]; then
         ensure_cluster
@@ -264,7 +317,6 @@ main() {
     create_gateway
     create_reference_grant
     create_route
-    wait_for_gateway_programmed
     send_request
 }
 

@@ -252,14 +252,18 @@ func TestCollectKindDiagnosticsCapturesFrontendTopology(t *testing.T) {
 	}
 }
 
-func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
+func TestSmokeScriptProbesDerivedGatewayServiceFromInsideCluster(t *testing.T) {
 	contents := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
 
 	for _, want := range []string{
-		`GATEWAY_HOST="${GATEWAY_HOST:-127.0.0.1}"`,
-		`GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"`,
-		`wait_for_gateway_programmed`,
-		`http://${GATEWAY_HOST}:${GATEWAY_HTTP_PORT}/echo`,
+		`GATEWAY_SERVICE="nantian-gw-$GATEWAY_NAME"`,
+		`SMOKE_CLIENT_POD="smoke-client"`,
+		`SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"`,
+		`kubectl get service -n "$CONTROL_PLANE_NS" "$GATEWAY_SERVICE"`,
+		`kubectl get endpointslice -n "$CONTROL_PLANE_NS"`,
+		`kubernetes.io/service-name=$GATEWAY_SERVICE`,
+		`wget -q -T "$request_timeout" -O - "$SMOKE_URL"`,
+		`last_request_error`,
 		`request_deadline=`,
 	} {
 		if !strings.Contains(contents, want) {
@@ -268,16 +272,15 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	}
 
 	for _, unwanted := range []string{
-		`LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"`,
-		`service/$DATA_PLANE_SVC`,
 		`kubectl port-forward`,
+		`service/$DATA_PLANE_SVC`,
 		`pod/$dataplane_pod`,
 		`dataplane_pod=$(kubectl get pod`,
-		`port-forward to $dataplane_pod exited before request succeeded`,
-		`10080:10080`,
+		`curl -s -o /dev/null -w "%{http_code}"`,
+		`wget -q -O - "$SMOKE_URL" >/dev/null 2>&1`,
 	} {
 		if strings.Contains(contents, unwanted) {
-			t.Fatalf("smoke script still contains stale pod-forward pattern %q", unwanted)
+			t.Fatalf("smoke script still contains stale host-probe pattern %q", unwanted)
 		}
 	}
 }
@@ -295,6 +298,7 @@ func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 	for _, want := range []string{
 		`GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"`,
 		`CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"`,
+		`DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"`,
 		`gatewayClassName: $GATEWAY_CLASS_NAME`,
 	} {
 		if !strings.Contains(smokeScript, want) {

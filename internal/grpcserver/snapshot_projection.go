@@ -157,13 +157,20 @@ func projectListeners(listeners []ir.Listener, snapshot *ir.Snapshot) []ir.Liste
 				attachedRoutes = append(attachedRoutes, routeKey)
 			}
 		}
-		if len(attachedRoutes) == 0 {
+		if len(attachedRoutes) == 0 && !isGatewayProjectedListener(listener) {
 			continue
 		}
 		listener.AttachedRoutes = attachedRoutes
 		out = append(out, listener)
 	}
 	return out
+}
+
+func isGatewayProjectedListener(listener ir.Listener) bool {
+	if listener.Metadata == nil {
+		return false
+	}
+	return listener.Metadata["gateway"] != "" && listener.Metadata["namespace"] != ""
 }
 
 func filterBackendRefs(routeNamespace string, refs []ir.BackendRef, survivingBackends map[string]struct{}) []ir.BackendRef {
