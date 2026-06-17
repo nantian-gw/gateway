@@ -445,6 +445,294 @@ func TestBuildSnapshotAttachesListenerSetParentToAllDerivedListeners(t *testing.
 	}
 }
 
+func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *testing.T) {
+	scheme := runtime.NewScheme()
+	must(gatewayv1.Install(scheme), t)
+	must(gatewayv1alpha2.Install(scheme), t)
+	must(gatewayv1beta1.Install(scheme), t)
+	must(corev1.AddToScheme(scheme), t)
+	must(discoveryv1.AddToScheme(scheme), t)
+
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	allNamespaces := gatewayv1.NamespacesFromAll
+	servicePort := gatewayv1.PortNumber(8080)
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	listenerSetKind := gatewayv1.Kind("ListenerSet")
+	gatewayNamespace := gatewayv1.Namespace("gateway-conformance-infra")
+	gatewayHostnameOne := gatewayv1.Hostname("gateway-listener-1.com")
+	gatewayHostnameTwo := gatewayv1.Hostname("gateway-listener-2.com")
+	ls1HostnameOne := gatewayv1.Hostname("listener-set-http-routing-1-listener-1.com")
+	ls1HostnameTwo := gatewayv1.Hostname("listener-set-http-routing-1-listener-2.com")
+	ls2HostnameOne := gatewayv1.Hostname("listener-set-http-routing-2-listener-1.com")
+	ls2HostnameTwo := gatewayv1.Hostname("listener-set-http-routing-2-listener-2.com")
+
+	client := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "gateway-conformance-infra",
+					Labels: map[string]string{
+						"kubernetes.io/metadata.name": "gateway-conformance-infra",
+					},
+				},
+			},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gateway-with-listener-sets-http-routing",
+					Namespace: "gateway-conformance-infra",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: &allNamespaces,
+						},
+					},
+					Listeners: []gatewayv1.Listener{
+						{
+							Name:     "gateway-listener-1",
+							Port:     80,
+							Protocol: gatewayv1.HTTPProtocolType,
+							Hostname: &gatewayHostnameOne,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+						{
+							Name:     "gateway-listener-2",
+							Port:     80,
+							Protocol: gatewayv1.HTTPProtocolType,
+							Hostname: &gatewayHostnameTwo,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "listener-set-http-routing-1", Namespace: "gateway-conformance-infra"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Group:     ptr(parentGroup),
+						Kind:      ptr(gatewayv1.Kind("Gateway")),
+						Name:      "gateway-with-listener-sets-http-routing",
+						Namespace: &gatewayNamespace,
+					},
+					Listeners: []gatewayv1.ListenerEntry{
+						{
+							Name:     "listener-set-http-routing-1-listener-1",
+							Port:     80,
+							Protocol: gatewayv1.HTTPProtocolType,
+							Hostname: &ls1HostnameOne,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+						{
+							Name:     "listener-set-http-routing-1-listener-2",
+							Port:     80,
+							Protocol: gatewayv1.HTTPProtocolType,
+							Hostname: &ls1HostnameTwo,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "listener-set-http-routing-2", Namespace: "gateway-conformance-infra"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{
+						Group:     ptr(parentGroup),
+						Kind:      ptr(gatewayv1.Kind("Gateway")),
+						Name:      "gateway-with-listener-sets-http-routing",
+						Namespace: &gatewayNamespace,
+					},
+					Listeners: []gatewayv1.ListenerEntry{
+						{
+							Name:     "listener-set-http-routing-2-listener-1",
+							Port:     80,
+							Protocol: gatewayv1.HTTPProtocolType,
+							Hostname: &ls2HostnameOne,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+						{
+							Name:     "listener-set-http-routing-2-listener-2",
+							Port:     80,
+							Protocol: gatewayv1.HTTPProtocolType,
+							Hostname: &ls2HostnameTwo,
+							AllowedRoutes: &gatewayv1.AllowedRoutes{
+								Namespaces: &gatewayv1.RouteNamespaces{From: &allNamespaces},
+							},
+						},
+					},
+				},
+			},
+			httpRouteForListenerSetHTTPRouting(
+				"attaches-to-all-listeners",
+				[]gatewayv1.ParentReference{
+					{Name: "gateway-with-listener-sets-http-routing", Namespace: &gatewayNamespace},
+					{Group: &parentGroup, Kind: &listenerSetKind, Name: "listener-set-http-routing-1", Namespace: &gatewayNamespace},
+					{Group: &parentGroup, Kind: &listenerSetKind, Name: "listener-set-http-routing-2", Namespace: &gatewayNamespace},
+				},
+				"/route",
+				"infra-backend-v1",
+				servicePort,
+			),
+			httpRouteForListenerSetHTTPRouting(
+				"gateway-route",
+				[]gatewayv1.ParentReference{{Name: "gateway-with-listener-sets-http-routing", Namespace: &gatewayNamespace}},
+				"/gateway-route",
+				"infra-backend-v2",
+				servicePort,
+			),
+			httpRouteForListenerSetHTTPRouting(
+				"gateway-section-route",
+				[]gatewayv1.ParentReference{{
+					Name:        "gateway-with-listener-sets-http-routing",
+					Namespace:   &gatewayNamespace,
+					SectionName: ptr(gatewayv1.SectionName("gateway-listener-1")),
+				}},
+				"/gateway-section-route",
+				"infra-backend-v3",
+				servicePort,
+			),
+			httpRouteForListenerSetHTTPRouting(
+				"listener-set-http-routing-1-route",
+				[]gatewayv1.ParentReference{{Group: &parentGroup, Kind: &listenerSetKind, Name: "listener-set-http-routing-1", Namespace: &gatewayNamespace}},
+				"/listener-set-http-routing-1-route",
+				"infra-backend-v2",
+				servicePort,
+			),
+			httpRouteForListenerSetHTTPRouting(
+				"listener-set-http-routing-1-section-route",
+				[]gatewayv1.ParentReference{{
+					Group:       &parentGroup,
+					Kind:        &listenerSetKind,
+					Name:        "listener-set-http-routing-1",
+					Namespace:   &gatewayNamespace,
+					SectionName: ptr(gatewayv1.SectionName("listener-set-http-routing-1-listener-1")),
+				}},
+				"/listener-set-http-routing-1-section-route",
+				"infra-backend-v3",
+				servicePort,
+			),
+			httpRouteForListenerSetHTTPRouting(
+				"listener-set-http-routing-2-route",
+				[]gatewayv1.ParentReference{{Group: &parentGroup, Kind: &listenerSetKind, Name: "listener-set-http-routing-2", Namespace: &gatewayNamespace}},
+				"/listener-set-http-routing-2-route",
+				"infra-backend-v2",
+				servicePort,
+			),
+			serviceForListenerSetHTTPRouting("infra-backend-v1"),
+			serviceForListenerSetHTTPRouting("infra-backend-v2"),
+			serviceForListenerSetHTTPRouting("infra-backend-v3"),
+			endpointSliceForListenerSetHTTPRouting("infra-backend-v1", "10.0.0.1"),
+			endpointSliceForListenerSetHTTPRouting("infra-backend-v2", "10.0.0.2"),
+			endpointSliceForListenerSetHTTPRouting("infra-backend-v3", "10.0.0.3"),
+		).
+		Build()
+
+	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	snapshot, err := xlator.Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	listeners := make(map[string][]string, len(snapshot.Listeners))
+	for _, listener := range snapshot.Listeners {
+		listeners[listener.Name] = listener.AttachedRoutes
+	}
+
+	for _, listenerName := range []string{
+		"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-2/listener-set-http-routing-2-listener-1",
+		"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-2/listener-set-http-routing-2-listener-2",
+	} {
+		got := listeners[listenerName]
+		want := []string{
+			"gateway-conformance-infra/attaches-to-all-listeners",
+			"gateway-conformance-infra/listener-set-http-routing-2-route",
+		}
+		if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+			t.Fatalf("second ListenerSet listener %s attached routes = %#v, want %#v", listenerName, got, want)
+		}
+	}
+}
+
+func httpRouteForListenerSetHTTPRouting(
+	name string,
+	parentRefs []gatewayv1.ParentReference,
+	path string,
+	backendName gatewayv1.ObjectName,
+	servicePort gatewayv1.PortNumber,
+) *gatewayv1.HTTPRoute {
+	pathType := gatewayv1.PathMatchPathPrefix
+	return &gatewayv1.HTTPRoute{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "gateway-conformance-infra"},
+		Spec: gatewayv1.HTTPRouteSpec{
+			CommonRouteSpec: gatewayv1.CommonRouteSpec{
+				ParentRefs: parentRefs,
+			},
+			Rules: []gatewayv1.HTTPRouteRule{{
+				Matches: []gatewayv1.HTTPRouteMatch{{
+					Path: &gatewayv1.HTTPPathMatch{
+						Type:  &pathType,
+						Value: ptr(path),
+					},
+				}},
+				BackendRefs: []gatewayv1.HTTPBackendRef{{
+					BackendRef: gatewayv1.BackendRef{
+						BackendObjectReference: gatewayv1.BackendObjectReference{
+							Name: backendName,
+							Port: &servicePort,
+						},
+					},
+				}},
+			}},
+		},
+	}
+}
+
+func serviceForListenerSetHTTPRouting(name string) *corev1.Service {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "gateway-conformance-infra"},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:       "http",
+				Port:       8080,
+				TargetPort: intstr.FromInt(8080),
+				Protocol:   corev1.ProtocolTCP,
+			}},
+		},
+	}
+}
+
+func endpointSliceForListenerSetHTTPRouting(serviceName, address string) *discoveryv1.EndpointSlice {
+	return &discoveryv1.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName + "-1",
+			Namespace: "gateway-conformance-infra",
+			Labels: map[string]string{
+				discoveryv1.LabelServiceName: serviceName,
+			},
+		},
+		Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+		Endpoints: []discoveryv1.Endpoint{{
+			Addresses: []string{address},
+		}},
+	}
+}
+
 func TestBuildSnapshotAttachesDefaultGatewayRoute(t *testing.T) {
 	scheme := runtime.NewScheme()
 	must(gatewayv1.Install(scheme), t)

@@ -216,6 +216,111 @@ func TestProjectedSnapshotKeepsHTTPRouteWithPortQualifiedBackendName(t *testing.
 	}
 }
 
+func TestProjectedSnapshotKeepsSecondListenerSetHTTPRoutingRoutes(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			Listeners: []ir.Listener{
+				listenerSetHTTPRoutingProjectedListener(
+					"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-listener-1",
+					"gateway-listener-1.com",
+					[]string{
+						"gateway-conformance-infra/attaches-to-all-listeners",
+						"gateway-conformance-infra/gateway-route",
+						"gateway-conformance-infra/gateway-section-route",
+					},
+				),
+				listenerSetHTTPRoutingProjectedListener(
+					"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-listener-2",
+					"gateway-listener-2.com",
+					[]string{
+						"gateway-conformance-infra/attaches-to-all-listeners",
+						"gateway-conformance-infra/gateway-route",
+					},
+				),
+				listenerSetHTTPRoutingProjectedListener(
+					"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-1/listener-set-http-routing-1-listener-1",
+					"listener-set-http-routing-1-listener-1.com",
+					[]string{
+						"gateway-conformance-infra/attaches-to-all-listeners",
+						"gateway-conformance-infra/listener-set-http-routing-1-route",
+						"gateway-conformance-infra/listener-set-http-routing-1-section-route",
+					},
+				),
+				listenerSetHTTPRoutingProjectedListener(
+					"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-1/listener-set-http-routing-1-listener-2",
+					"listener-set-http-routing-1-listener-2.com",
+					[]string{
+						"gateway-conformance-infra/attaches-to-all-listeners",
+						"gateway-conformance-infra/listener-set-http-routing-1-route",
+					},
+				),
+				listenerSetHTTPRoutingProjectedListener(
+					"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-2/listener-set-http-routing-2-listener-1",
+					"listener-set-http-routing-2-listener-1.com",
+					[]string{
+						"gateway-conformance-infra/attaches-to-all-listeners",
+						"gateway-conformance-infra/listener-set-http-routing-2-route",
+					},
+				),
+				listenerSetHTTPRoutingProjectedListener(
+					"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-2/listener-set-http-routing-2-listener-2",
+					"listener-set-http-routing-2-listener-2.com",
+					[]string{
+						"gateway-conformance-infra/attaches-to-all-listeners",
+						"gateway-conformance-infra/listener-set-http-routing-2-route",
+					},
+				),
+			},
+			HTTPRoutes: []ir.HTTPRoute{
+				listenerSetHTTPRoutingProjectedRoute("attaches-to-all-listeners", "/route", "infra-backend-v1"),
+				listenerSetHTTPRoutingProjectedRoute("gateway-route", "/gateway-route", "infra-backend-v2"),
+				listenerSetHTTPRoutingProjectedRoute("gateway-section-route", "/gateway-section-route", "infra-backend-v3"),
+				listenerSetHTTPRoutingProjectedRoute("listener-set-http-routing-1-route", "/listener-set-http-routing-1-route", "infra-backend-v2"),
+				listenerSetHTTPRoutingProjectedRoute("listener-set-http-routing-1-section-route", "/listener-set-http-routing-1-section-route", "infra-backend-v3"),
+				listenerSetHTTPRoutingProjectedRoute("listener-set-http-routing-2-route", "/listener-set-http-routing-2-route", "infra-backend-v2"),
+			},
+			Backends: []ir.BackendCluster{
+				listenerSetHTTPRoutingProjectedBackend("infra-backend-v1", "10.0.0.1"),
+				listenerSetHTTPRoutingProjectedBackend("infra-backend-v2", "10.0.0.2"),
+				listenerSetHTTPRoutingProjectedBackend("infra-backend-v3", "10.0.0.3"),
+			},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	for _, name := range []string{
+		"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-2/listener-set-http-routing-2-listener-1",
+		"gateway-conformance-infra/gateway-with-listener-sets-http-routing/gateway-conformance-infra/listener-set-http-routing-2/listener-set-http-routing-2-listener-2",
+	} {
+		listener := findProjectedListener(t, projected, name)
+		want := []string{
+			"gateway-conformance-infra/attaches-to-all-listeners",
+			"gateway-conformance-infra/listener-set-http-routing-2-route",
+		}
+		if got := listener.GetAttachedRoutes(); !reflect.DeepEqual(got, want) {
+			t.Fatalf("projected LS2 listener %s attached routes = %#v, want %#v", name, got, want)
+		}
+	}
+
+	for _, name := range []string{
+		"attaches-to-all-listeners",
+		"listener-set-http-routing-2-route",
+	} {
+		route := findProjectedHTTPRoute(t, projected, name)
+		if got := len(route.GetRules()); got != 1 {
+			t.Fatalf("projected route %s rule count = %d, want 1", name, got)
+		}
+		if got := len(route.GetRules()[0].GetBackendRefs()); got != 1 {
+			t.Fatalf("projected route %s backend ref count = %d, want 1", name, got)
+		}
+	}
+	findProjectedBackend(t, projected, "infra-backend-v1:8080")
+	findProjectedBackend(t, projected, "infra-backend-v2:8080")
+}
+
 func TestProjectedSnapshotKeepsGRPCRouteWithPortQualifiedBackendName(t *testing.T) {
 	t.Parallel()
 
@@ -336,6 +441,54 @@ func TestProjectedSnapshotKeepsHTTPRouteWithInvalidBackendRef(t *testing.T) {
 	}
 	if got := route.GetRules()[0].GetBackendRefs()[0].GetMetadata()["nantian.dev/backend-ref-valid"]; got != "false" {
 		t.Fatalf("backend ref validity metadata = %q, want false", got)
+	}
+}
+
+func listenerSetHTTPRoutingProjectedListener(name, hostname string, attachedRoutes []string) ir.Listener {
+	return ir.Listener{
+		Name:           name,
+		Address:        "0.0.0.0",
+		Port:           80,
+		Protocol:       "HTTP",
+		Hostnames:      []string{hostname},
+		AttachedRoutes: attachedRoutes,
+		Metadata: map[string]string{
+			"gateway":   "gateway-with-listener-sets-http-routing",
+			"namespace": "gateway-conformance-infra",
+		},
+	}
+}
+
+func listenerSetHTTPRoutingProjectedRoute(name, path, backend string) ir.HTTPRoute {
+	return ir.HTTPRoute{
+		Name:      name,
+		Namespace: "gateway-conformance-infra",
+		Rules: []ir.HTTPRule{{
+			Name: "rule-0",
+			Matches: []ir.HTTPMatch{{
+				Path:     path,
+				PathType: "PathPrefix",
+			}},
+			BackendRefs: []ir.BackendRef{{
+				Name:      backend,
+				Namespace: "gateway-conformance-infra",
+				Port:      8080,
+			}},
+		}},
+	}
+}
+
+func listenerSetHTTPRoutingProjectedBackend(name, address string) ir.BackendCluster {
+	return ir.BackendCluster{
+		Name:           name + ":8080",
+		Namespace:      "gateway-conformance-infra",
+		Protocol:       "HTTP",
+		ConnectTimeout: 5 * time.Second,
+		Endpoints: []ir.BackendEndpoint{{
+			Address: address,
+			Port:    8080,
+			Healthy: true,
+		}},
 	}
 }
 

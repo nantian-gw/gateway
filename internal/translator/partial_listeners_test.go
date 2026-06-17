@@ -78,6 +78,98 @@ func TestBuildGatewayListenersForSnapshotIncludesListenerSets(t *testing.T) {
 	}
 }
 
+func TestBuildGatewayListenersForSnapshotAddsSecondListenerSetToExistingSnapshot(t *testing.T) {
+	scheme := buildSupportScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	ls1Hostname := gatewayv1.Hostname("listener-set-1.example.com")
+	ls2Hostname := gatewayv1.Hostname("listener-set-2.example.com")
+
+	cl := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+					Listeners: []gatewayv1.Listener{{
+						Name:     "gateway-listener",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+					}},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls-1", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "listener-1",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: &ls1Hostname,
+					}},
+				},
+			},
+		).
+		Build()
+
+	translator := New(
+		string(controllerName),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+	current, err := translator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	if err := cl.Create(context.Background(), &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls-2", Namespace: "default"},
+		Spec: gatewayv1.ListenerSetSpec{
+			ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+			Listeners: []gatewayv1.ListenerEntry{{
+				Name:     "listener-2",
+				Protocol: gatewayv1.HTTPProtocolType,
+				Port:     80,
+				Hostname: &ls2Hostname,
+			}},
+		},
+	}); err != nil {
+		t.Fatalf("create second listenerset: %v", err)
+	}
+
+	next, err := translator.BuildGatewayListenersForSnapshot(
+		context.Background(),
+		cl,
+		current,
+		[]client.ObjectKey{{Namespace: "default", Name: "gw"}},
+	)
+	if err != nil {
+		t.Fatalf("BuildGatewayListenersForSnapshot returned error: %v", err)
+	}
+
+	found := make(map[string]bool, len(next.Listeners))
+	for _, listener := range next.Listeners {
+		found[listener.Name] = true
+	}
+	if !found["default/gw/default/ls-1/listener-1"] {
+		t.Fatalf("expected first ListenerSet listener to remain, got %#v", next.Listeners)
+	}
+	if !found["default/gw/default/ls-2/listener-2"] {
+		t.Fatalf("expected second ListenerSet listener to be added, got %#v", next.Listeners)
+	}
+}
+
 func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGateway(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

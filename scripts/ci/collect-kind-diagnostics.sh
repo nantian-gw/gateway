@@ -45,7 +45,7 @@ capture_admin_endpoint() {
   shift 5
 
   local port_forward_log="$ARTIFACT_DIR/${prefix}-admin-port-forward.txt"
-  kubectl -n nantian-gw port-forward "svc/${service_name}" "127.0.0.1:${local_port}:${service_port}" >"$port_forward_log" 2>&1 &
+  kubectl -n nantian-gw port-forward --address 127.0.0.1 "svc/${service_name}" "${local_port}:${service_port}" >"$port_forward_log" 2>&1 &
   local port_forward_pid=$!
 
   local ready=false

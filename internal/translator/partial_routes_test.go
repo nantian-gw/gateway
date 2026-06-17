@@ -948,6 +948,219 @@ func TestBuildRoutesForSnapshotUsesDirectParentListenerSetWhenGatewayListIsStale
 	}
 }
 
+func TestBuildRoutesForSnapshotRebuildsSecondListenerSetForSharedAndSpecificRoutes(t *testing.T) {
+	scheme := buildSupportScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	servicePort := gatewayv1.PortNumber(80)
+	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
+	parentKind := gatewayv1.Kind("ListenerSet")
+	gatewayHostnameOne := gatewayv1.Hostname("gateway-listener-1.example.com")
+	gatewayHostnameTwo := gatewayv1.Hostname("gateway-listener-2.example.com")
+	ls1Hostname := gatewayv1.Hostname("listener-set-1.example.com")
+	ls2Hostname := gatewayv1.Hostname("listener-set-2.example.com")
+
+	cl := newTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "default",
+					Labels: map[string]string{
+						"kubernetes.io/metadata.name": "default",
+					},
+				},
+			},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					AllowedListeners: &gatewayv1.AllowedListeners{
+						Namespaces: &gatewayv1.ListenerNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+					Listeners: []gatewayv1.Listener{
+						{
+							Name:     "gateway-listener-1",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: &gatewayHostnameOne,
+						},
+						{
+							Name:     "gateway-listener-2",
+							Protocol: gatewayv1.HTTPProtocolType,
+							Port:     80,
+							Hostname: &gatewayHostnameTwo,
+						},
+					},
+				},
+			},
+			&gatewayv1.ListenerSet{
+				ObjectMeta: metav1.ObjectMeta{Name: "ls-1", Namespace: "default"},
+				Spec: gatewayv1.ListenerSetSpec{
+					ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+					Listeners: []gatewayv1.ListenerEntry{{
+						Name:     "listener-1",
+						Protocol: gatewayv1.HTTPProtocolType,
+						Port:     80,
+						Hostname: &ls1Hostname,
+						AllowedRoutes: &gatewayv1.AllowedRoutes{
+							Namespaces: &gatewayv1.RouteNamespaces{
+								From: ptr(gatewayv1.NamespacesFromAll),
+							},
+						},
+					}},
+				},
+			},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name:       "http",
+						Port:       80,
+						TargetPort: intstr.FromInt(8080),
+						Protocol:   corev1.ProtocolTCP,
+					}},
+				},
+			},
+			&discoveryv1.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "echo-1",
+					Namespace: "default",
+					Labels: map[string]string{
+						discoveryv1.LabelServiceName: "echo",
+					},
+				},
+				Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+				Endpoints: []discoveryv1.Endpoint{{
+					Addresses: []string{"10.0.0.10"},
+				}},
+			},
+		).
+		Build()
+
+	translator := New(
+		string(controllerName),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+	current, err := translator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	if got := listenerAttachedRoutes(current.Listeners, "default/gw/default/ls-2/listener-2"); len(got) != 0 {
+		t.Fatalf("expected baseline snapshot to omit second ListenerSet listener attachments, got %#v", got)
+	}
+
+	for _, object := range []client.Object{
+		&gatewayv1.ListenerSet{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls-2", Namespace: "default"},
+			Spec: gatewayv1.ListenerSetSpec{
+				ParentRef: gatewayv1.ParentGatewayReference{Name: "gw"},
+				Listeners: []gatewayv1.ListenerEntry{{
+					Name:     "listener-2",
+					Protocol: gatewayv1.HTTPProtocolType,
+					Port:     80,
+					Hostname: &ls2Hostname,
+					AllowedRoutes: &gatewayv1.AllowedRoutes{
+						Namespaces: &gatewayv1.RouteNamespaces{
+							From: ptr(gatewayv1.NamespacesFromAll),
+						},
+					},
+				}},
+			},
+		},
+		&gatewayv1.HTTPRoute{
+			ObjectMeta: metav1.ObjectMeta{Name: "all-listeners-route", Namespace: "default"},
+			Spec: gatewayv1.HTTPRouteSpec{
+				CommonRouteSpec: gatewayv1.CommonRouteSpec{
+					ParentRefs: []gatewayv1.ParentReference{
+						{Name: "gw"},
+						{
+							Group: &parentGroup,
+							Kind:  &parentKind,
+							Name:  "ls-1",
+						},
+						{
+							Group: &parentGroup,
+							Kind:  &parentKind,
+							Name:  "ls-2",
+						},
+					},
+				},
+				Rules: []gatewayv1.HTTPRouteRule{{
+					BackendRefs: []gatewayv1.HTTPBackendRef{{
+						BackendRef: gatewayv1.BackendRef{
+							BackendObjectReference: gatewayv1.BackendObjectReference{
+								Name: "echo",
+								Port: &servicePort,
+							},
+						},
+					}},
+				}},
+			},
+		},
+		&gatewayv1.HTTPRoute{
+			ObjectMeta: metav1.ObjectMeta{Name: "ls-2-route", Namespace: "default"},
+			Spec: gatewayv1.HTTPRouteSpec{
+				CommonRouteSpec: gatewayv1.CommonRouteSpec{
+					ParentRefs: []gatewayv1.ParentReference{{
+						Group: &parentGroup,
+						Kind:  &parentKind,
+						Name:  "ls-2",
+					}},
+				},
+				Hostnames: []gatewayv1.Hostname{ls2Hostname},
+				Rules: []gatewayv1.HTTPRouteRule{{
+					BackendRefs: []gatewayv1.HTTPBackendRef{{
+						BackendRef: gatewayv1.BackendRef{
+							BackendObjectReference: gatewayv1.BackendObjectReference{
+								Name: "echo",
+								Port: &servicePort,
+							},
+						},
+					}},
+				}},
+			},
+		},
+	} {
+		if err := cl.Create(context.Background(), object); err != nil {
+			t.Fatalf("create %T: %v", object, err)
+		}
+	}
+
+	next, err := translator.BuildRoutesForSnapshot(
+		context.Background(),
+		cl,
+		current,
+		[]client.ObjectKey{
+			{Namespace: "default", Name: "all-listeners-route"},
+			{Namespace: "default", Name: "ls-2-route"},
+		},
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("BuildRoutesForSnapshot returned error: %v", err)
+	}
+
+	if got := listenerAttachedRoutes(next.Listeners, "default/gw/gateway-listener-1"); len(got) != 1 || got[0] != "default/all-listeners-route" {
+		t.Fatalf("gateway listener attached routes = %#v, want only default/all-listeners-route", got)
+	}
+	if got := listenerAttachedRoutes(next.Listeners, "default/gw/default/ls-1/listener-1"); len(got) != 1 || got[0] != "default/all-listeners-route" {
+		t.Fatalf("first ListenerSet attached routes = %#v, want only default/all-listeners-route", got)
+	}
+	if got := listenerAttachedRoutes(next.Listeners, "default/gw/default/ls-2/listener-2"); len(got) != 2 || got[0] != "default/all-listeners-route" || got[1] != "default/ls-2-route" {
+		t.Fatalf("second ListenerSet attached routes = %#v, want shared and ListenerSet-specific routes", got)
+	}
+}
+
 type staleListenerSetListClient struct {
 	client.Client
 	staleByGateway map[string][]gatewayv1.ListenerSet

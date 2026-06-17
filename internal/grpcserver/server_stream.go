@@ -346,6 +346,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 				"required_features",
 				variant.GetRequiredFeatures(),
 			)
+			logListenerSetHTTPRoutingSnapshotShape(s.logger, nodeID, snapshot.ID, variant)
 			if !s.isActiveStream(registration) {
 				return terminate(streamTerminationSuperseded, supersededStreamError())
 			}

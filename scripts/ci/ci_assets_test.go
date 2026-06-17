@@ -363,10 +363,14 @@ func TestCollectKindDiagnosticsCapturesFrontendTopology(t *testing.T) {
 
 	for _, want := range []string{
 		`run_capture service-topology kubectl get svc,endpoints,endpointslice -A -o yaml`,
+		`kubectl -n nantian-gw port-forward --address 127.0.0.1 "svc/${service_name}" "${local_port}:${service_port}"`,
 	} {
 		if !strings.Contains(contents, want) {
 			t.Fatalf("kind diagnostics helper missing %q", want)
 		}
+	}
+	if strings.Contains(contents, `"127.0.0.1:${local_port}:${service_port}"`) {
+		t.Fatalf("kind diagnostics helper still passes the bind address as a port mapping")
 	}
 }
 
