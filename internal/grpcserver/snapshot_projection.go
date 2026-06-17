@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"log/slog"
+	"strconv"
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
@@ -182,6 +183,12 @@ func filterBackendRefs(routeNamespace string, refs []ir.BackendRef, survivingBac
 		}
 		if _, ok := survivingBackends[backendProjectionKey(namespace, ref.Name)]; ok {
 			out = append(out, ref)
+			continue
+		}
+		if ref.Port != 0 {
+			if _, ok := survivingBackends[backendProjectionKey(namespace, portQualifiedBackendName(ref.Name, ref.Port))]; ok {
+				out = append(out, ref)
+			}
 		}
 	}
 	return out
@@ -280,6 +287,10 @@ func snapshotRequiresWasmPlugin(snapshot *ir.Snapshot) bool {
 
 func backendProjectionKey(namespace, name string) string {
 	return namespace + "/" + name
+}
+
+func portQualifiedBackendName(name string, port uint32) string {
+	return name + ":" + strconv.Itoa(int(port))
 }
 
 func supportsFeature(supported map[string]struct{}, feature string) bool {

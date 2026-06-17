@@ -173,6 +173,133 @@ func TestProjectedSnapshotPreservesListenerWhenAllAttachedRoutesArePruned(t *tes
 	}
 }
 
+func TestProjectedSnapshotKeepsHTTPRouteWithPortQualifiedBackendName(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			HTTPRoutes: []ir.HTTPRoute{{
+				Name:      "echo-route",
+				Namespace: "default",
+				Rules: []ir.HTTPRule{{
+					Name: "echo",
+					BackendRefs: []ir.BackendRef{{
+						Name:      "echo",
+						Namespace: "default",
+						Port:      80,
+					}},
+				}},
+			}},
+			Backends: []ir.BackendCluster{{
+				Name:           "echo:80",
+				Namespace:      "default",
+				Protocol:       "HTTP",
+				ConnectTimeout: 5 * time.Second,
+				Endpoints: []ir.BackendEndpoint{{
+					Address: "10.0.0.10",
+					Port:    80,
+					Healthy: true,
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	route := findProjectedHTTPRoute(t, projected, "echo-route")
+	if got := len(route.GetRules()); got != 1 {
+		t.Fatalf("http route rule count = %d, want 1", got)
+	}
+	if got := len(route.GetRules()[0].GetBackendRefs()); got != 1 {
+		t.Fatalf("http route backend ref count = %d, want 1", got)
+	}
+}
+
+func TestProjectedSnapshotKeepsGRPCRouteWithPortQualifiedBackendName(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			GRPCRoutes: []ir.GRPCRoute{{
+				Name:      "echo-grpc",
+				Namespace: "default",
+				Rules: []ir.GRPCRule{{
+					Name: "echo",
+					BackendRefs: []ir.BackendRef{{
+						Name:      "echo",
+						Namespace: "default",
+						Port:      9000,
+					}},
+				}},
+			}},
+			Backends: []ir.BackendCluster{{
+				Name:           "echo:9000",
+				Namespace:      "default",
+				Protocol:       "GRPC",
+				ConnectTimeout: 5 * time.Second,
+				Endpoints: []ir.BackendEndpoint{{
+					Address: "10.0.0.11",
+					Port:    9000,
+					Healthy: true,
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	route := findProjectedGRPCRoute(t, projected, "echo-grpc")
+	if got := len(route.GetRules()); got != 1 {
+		t.Fatalf("grpc route rule count = %d, want 1", got)
+	}
+	if got := len(route.GetRules()[0].GetBackendRefs()); got != 1 {
+		t.Fatalf("grpc route backend ref count = %d, want 1", got)
+	}
+}
+
+func TestProjectedSnapshotKeepsStreamRouteWithPortQualifiedBackendName(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			StreamRoutes: []ir.StreamRoute{{
+				Name:      "echo-stream",
+				Namespace: "default",
+				Kind:      "TCP",
+				Rules: []ir.StreamRule{{
+					Name: "echo",
+					BackendRefs: []ir.BackendRef{{
+						Name:      "echo",
+						Namespace: "default",
+						Port:      7000,
+					}},
+				}},
+			}},
+			Backends: []ir.BackendCluster{{
+				Name:           "echo:7000",
+				Namespace:      "default",
+				Protocol:       "TCP",
+				ConnectTimeout: 5 * time.Second,
+				Endpoints: []ir.BackendEndpoint{{
+					Address: "10.0.0.12",
+					Port:    7000,
+					Healthy: true,
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	route := findProjectedStreamRoute(t, projected, "echo-stream")
+	if got := len(route.GetRules()); got != 1 {
+		t.Fatalf("stream route rule count = %d, want 1", got)
+	}
+	if got := len(route.GetRules()[0].GetBackendRefs()); got != 1 {
+		t.Fatalf("stream route backend ref count = %d, want 1", got)
+	}
+}
+
 func projectionTestSnapshot() *ir.Snapshot {
 	return &ir.Snapshot{
 		ID:          "projection-snapshot",
