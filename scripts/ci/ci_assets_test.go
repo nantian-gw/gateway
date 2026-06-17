@@ -308,6 +308,23 @@ func TestSmokeScriptUsesCurlBasedInClusterProbe(t *testing.T) {
 	}
 }
 
+func TestSmokeScriptCapturesProtocolForensicsOnFailure(t *testing.T) {
+	contents := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
+
+	for _, want := range []string{
+		`last_https_fallback_code`,
+		`last_https_fallback_body`,
+		`last_backend_direct_code`,
+		`last_backend_direct_body`,
+		`https_fallback_url=`,
+		`backend_direct_url=`,
+	} {
+		if !strings.Contains(contents, want) {
+			t.Fatalf("smoke script missing %q", want)
+		}
+	}
+}
+
 func TestEmbeddedProtoGoModuleAvoidsKnownVulnerableIndirectDeps(t *testing.T) {
 	contents := string(readFile(t, repoPath("gen", "go", "go.mod")))
 
@@ -327,6 +344,24 @@ func TestEmbeddedProtoGoModuleAvoidsKnownVulnerableIndirectDeps(t *testing.T) {
 		if strings.Contains(contents, unwanted) {
 			t.Fatalf("embedded proto go.mod still contains vulnerable dep %q", unwanted)
 		}
+	}
+}
+
+func TestGoModulesDeclarePatchedStdlibVersion(t *testing.T) {
+	for _, path := range []string{
+		repoPath("go.mod"),
+		repoPath("gen", "go", "go.mod"),
+	} {
+		t.Run(path, func(t *testing.T) {
+			contents := string(readFile(t, path))
+
+			if !strings.Contains(contents, "go 1.26.4") {
+				t.Fatalf("%s missing %q", path, "go 1.26.4")
+			}
+			if strings.Contains(contents, "go 1.26.3") {
+				t.Fatalf("%s still contains %q", path, "go 1.26.3")
+			}
+		})
 	}
 }
 

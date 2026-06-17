@@ -17,6 +17,7 @@ GATEWAY_SERVICE="nantian-gw-$GATEWAY_NAME"
 SMOKE_CLIENT_POD="smoke-client"
 SMOKE_CLIENT_IMAGE="${SMOKE_CLIENT_IMAGE:-curlimages/curl:8.16.0}"
 SMOKE_URL="http://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"
+BACKEND_DIRECT_URL="http://echo.${TEST_NS}.svc.cluster.local/echo"
 ECHO_PORT=8080
 TIMEOUT="${TIMEOUT:-180}"
 KIND_CONFIG="${KIND_CONFIG:-$GATEWAY_ROOT/scripts/ci/kind-ci-config.yaml}"
@@ -48,6 +49,65 @@ trim_response_detail() {
     value="${value//$'\r'/}"
     value="$(printf '%s' "$value" | sed 's/[[:space:]]\+/ /g')"
     printf '%.240s' "$value"
+}
+
+probe_from_smoke_client() {
+    local url="$1"
+    local request_timeout="$2"
+    local mode="${3:-plain}"
+
+    kubectl exec -n "$TEST_NS" "$SMOKE_CLIENT_POD" -- \
+        sh -c '
+            body_file=/tmp/smoke-response-body.txt
+            rm -f "$body_file"
+
+            curl_flags=""
+            if [ "$3" = "insecure" ]; then
+                curl_flags="-k"
+            fi
+
+            if ! status="$(curl -sS ${curl_flags} --connect-timeout "$1" --max-time "$1" \
+                -o "$body_file" -w "%{http_code}" "$2")"; then
+                rc=$?
+                printf "__CURL_EXIT__%s\n" "$rc"
+                [ -f "$body_file" ] && cat "$body_file"
+                exit "$rc"
+            fi
+
+            printf "__STATUS__%s\n" "$status"
+            cat "$body_file"
+        ' sh "$request_timeout" "$url" "$mode" 2>&1
+}
+
+probe_output_code() {
+    printf '%s\n' "$1" | awk 'NR == 1 {sub(/^__STATUS__/, "", $0); print; exit}'
+}
+
+probe_output_body() {
+    printf '%s\n' "$1" | tail -n +2
+}
+
+probe_and_capture() {
+    local url="$1"
+    local request_timeout="$2"
+    local mode="$3"
+    local -n code_ref="$4"
+    local -n body_ref="$5"
+    local -n error_ref="$6"
+    local output=""
+
+    code_ref=""
+    body_ref=""
+    error_ref=""
+
+    if ! output="$(probe_from_smoke_client "$url" "$request_timeout" "$mode")"; then
+        error_ref="$output"
+        return 1
+    fi
+
+    code_ref="$(probe_output_code "$output")"
+    body_ref="$(probe_output_body "$output")"
+    return 0
 }
 
 fail() {
@@ -281,6 +341,14 @@ send_request() {
     local last_request_error=""
     local last_response_code=""
     local last_response_body=""
+    local https_fallback_url="https://${GATEWAY_SERVICE}.${CONTROL_PLANE_NS}.svc.cluster.local/echo"
+    local backend_direct_url="$BACKEND_DIRECT_URL"
+    local last_https_fallback_error=""
+    local last_https_fallback_code=""
+    local last_https_fallback_body=""
+    local last_backend_direct_error=""
+    local last_backend_direct_code=""
+    local last_backend_direct_body=""
     local output=""
     local response_code=""
     local response_body=""
@@ -325,6 +393,22 @@ send_request() {
         sleep 2
     done
 
+    probe_and_capture \
+        "$https_fallback_url" \
+        "$request_timeout" \
+        insecure \
+        last_https_fallback_code \
+        last_https_fallback_body \
+        last_https_fallback_error || true
+
+    probe_and_capture \
+        "$backend_direct_url" \
+        "$request_timeout" \
+        plain \
+        last_backend_direct_code \
+        last_backend_direct_body \
+        last_backend_direct_error || true
+
     local detail=""
     if [[ -n "$last_request_error" ]]; then
         detail=$'\nlast request error: '"$last_request_error"
@@ -334,6 +418,24 @@ send_request() {
     fi
     if [[ -n "$last_response_body" ]]; then
         detail+=$'\nlast response body: '"$(trim_response_detail "$last_response_body")"
+    fi
+    if [[ -n "$last_https_fallback_error" ]]; then
+        detail+=$'\nlast https fallback error: '"$(trim_response_detail "$last_https_fallback_error")"
+    fi
+    if [[ -n "$last_https_fallback_code" ]]; then
+        detail+=$'\nlast https fallback code: '"$last_https_fallback_code"
+    fi
+    if [[ -n "$last_https_fallback_body" ]]; then
+        detail+=$'\nlast https fallback body: '"$(trim_response_detail "$last_https_fallback_body")"
+    fi
+    if [[ -n "$last_backend_direct_error" ]]; then
+        detail+=$'\nlast backend direct error: '"$(trim_response_detail "$last_backend_direct_error")"
+    fi
+    if [[ -n "$last_backend_direct_code" ]]; then
+        detail+=$'\nlast backend direct code: '"$last_backend_direct_code"
+    fi
+    if [[ -n "$last_backend_direct_body" ]]; then
+        detail+=$'\nlast backend direct body: '"$(trim_response_detail "$last_backend_direct_body")"
     fi
 
     fail "GET /echo via $GATEWAY_SERVICE did not succeed within ${TIMEOUT}s${detail}"
