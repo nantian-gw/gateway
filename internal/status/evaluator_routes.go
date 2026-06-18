@@ -270,17 +270,16 @@ func evaluateResolvedRefs(state *clusterState, route routeInput) routeResolution
 	return result
 }
 
-func recordAttachments(attachments map[listenerKey]map[string]struct{}, routeKey client.ObjectKey, evals []routeParentEvaluation) {
-	key := routeKey.Namespace + "/" + routeKey.Name
+func recordAttachments(attachments map[listenerKey]routeAttachmentSet, routeKey client.ObjectKey, evals []routeParentEvaluation) {
 	for _, eval := range evals {
 		if eval.acceptedCondition.Status != metav1.ConditionTrue {
 			continue
 		}
 		for _, listener := range eval.matchedListeners {
 			if attachments[listener] == nil {
-				attachments[listener] = make(map[string]struct{})
+				attachments[listener] = make(routeAttachmentSet)
 			}
-			attachments[listener][key] = struct{}{}
+			attachments[listener][routeKey] = struct{}{}
 		}
 	}
 }

@@ -27,7 +27,7 @@ func evaluateListenerSets(
 	state *clusterState,
 	lses []gatewayv1.ListenerSet,
 	managedGateways map[string]gatewayv1.Gateway,
-	attachments map[listenerKey]map[string]struct{},
+	attachments map[listenerKey]routeAttachmentSet,
 ) map[string]listenerSetEvaluation {
 	out := make(map[string]listenerSetEvaluation, len(lses))
 	gwToLSes := groupListenerSetsByGateway(lses)
@@ -87,7 +87,7 @@ func evaluateOneListenerSet(
 	gw gatewayv1.Gateway,
 	conflictListeners []gatewayv1.Listener,
 	state *clusterState,
-	attachments map[listenerKey]map[string]struct{},
+	attachments map[listenerKey]routeAttachmentSet,
 ) listenerSetEvaluation {
 	allowed := gatewayAllowsListenerSet(gw, ls, state.namespaceByName)
 	if !allowed {
@@ -237,7 +237,7 @@ func listenerSetEntryAttachedRoutes(
 	gateway gatewayv1.Gateway,
 	ls gatewayv1.ListenerSet,
 	entry gatewayv1.ListenerEntry,
-	attachments map[listenerKey]map[string]struct{},
+	attachments map[listenerKey]routeAttachmentSet,
 ) int32 {
 	if len(attachments) == 0 {
 		return 0
@@ -287,7 +287,7 @@ func evaluateGatewayListenerSetListeners(
 	state *clusterState,
 	gateway gatewayv1.Gateway,
 	listenerSets []gatewayv1.ListenerSet,
-	attachments map[listenerKey]map[string]struct{},
+	attachments map[listenerKey]routeAttachmentSet,
 ) []listenerEvaluation {
 	if len(listenerSets) == 0 {
 		return nil

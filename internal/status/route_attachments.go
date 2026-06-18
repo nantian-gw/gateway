@@ -2,8 +2,8 @@ package status
 
 import "sigs.k8s.io/controller-runtime/pkg/client"
 
-func evaluateRouteAttachments(state *clusterState) map[listenerKey]map[string]struct{} {
-	attachments := make(map[listenerKey]map[string]struct{})
+func evaluateRouteAttachments(state *clusterState) map[listenerKey]routeAttachmentSet {
+	attachments := make(map[listenerKey]routeAttachmentSet)
 
 	for _, route := range state.httpRoutes {
 		key := client.ObjectKeyFromObject(&route)

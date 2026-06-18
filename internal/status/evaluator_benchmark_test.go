@@ -17,7 +17,7 @@ var (
 	benchmarkListenerStatusSink     []gatewayv1.ListenerStatus
 	benchmarkBackendTLSPoliciesSink map[client.ObjectKey]backendTLSPolicyEvaluation
 	benchmarkBackendLBPoliciesSink  map[client.ObjectKey]backendLBPolicyEvaluation
-	benchmarkGatewayAttachmentsSink map[listenerKey]map[string]struct{}
+	benchmarkGatewayAttachmentsSink map[listenerKey]routeAttachmentSet
 )
 
 func BenchmarkEvaluateRoutesRouteFanout(b *testing.B) {
@@ -103,8 +103,8 @@ func benchmarkLoadStatusState(b *testing.B, reconciler *Reconciler) *clusterStat
 	return state
 }
 
-func benchmarkGatewayFleetAttachments(state *clusterState, attachedPerListener int) map[listenerKey]map[string]struct{} {
-	out := make(map[listenerKey]map[string]struct{}, len(state.managedGateways))
+func benchmarkGatewayFleetAttachments(state *clusterState, attachedPerListener int) map[listenerKey]routeAttachmentSet {
+	out := make(map[listenerKey]routeAttachmentSet, len(state.managedGateways))
 	for _, gateway := range state.managedGateways {
 		for _, listener := range gateway.Spec.Listeners {
 			key := listenerKey{
@@ -112,9 +112,12 @@ func benchmarkGatewayFleetAttachments(state *clusterState, attachedPerListener i
 				gatewayName:      gateway.Name,
 				listenerName:     listener.Name,
 			}
-			attached := make(map[string]struct{}, attachedPerListener)
+			attached := make(routeAttachmentSet, attachedPerListener)
 			for i := 0; i < attachedPerListener; i++ {
-				attached[fmt.Sprintf("%s/%s-route-%d", gateway.Namespace, gateway.Name, i)] = struct{}{}
+				attached[client.ObjectKey{
+					Namespace: gateway.Namespace,
+					Name:      fmt.Sprintf("%s-route-%d", gateway.Name, i),
+				}] = struct{}{}
 			}
 			out[key] = attached
 		}

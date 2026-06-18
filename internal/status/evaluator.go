@@ -15,7 +15,7 @@ func evaluateRoutes(state *clusterState) routeState {
 		tcp:         make(map[client.ObjectKey][]routeParentEvaluation),
 		udp:         make(map[client.ObjectKey][]routeParentEvaluation),
 		tls:         make(map[client.ObjectKey][]routeParentEvaluation),
-		attachments: make(map[listenerKey]map[string]struct{}),
+		attachments: make(map[listenerKey]routeAttachmentSet),
 	}
 
 	for _, route := range state.httpRoutes {
@@ -56,7 +56,7 @@ func evaluateRoutes(state *clusterState) routeState {
 	return out
 }
 
-func evaluateGateways(state *clusterState, attachments map[listenerKey]map[string]struct{}) map[client.ObjectKey]gatewayEvaluation {
+func evaluateGateways(state *clusterState, attachments map[listenerKey]routeAttachmentSet) map[client.ObjectKey]gatewayEvaluation {
 	out := make(map[client.ObjectKey]gatewayEvaluation, len(state.managedGateways))
 
 	for _, gateway := range state.managedGateways {
