@@ -18,8 +18,7 @@ conformance:
 	kind create cluster --name $(CLUSTER_NAME) --wait 5m
 	kubectl wait --for=condition=ready node --all --timeout=2m
 	@echo "=== Installing Gateway API CRDs ==="
-	kubectl apply -f $(GATEWAY_API_CRDS_STANDARD)
-	-kubectl apply -f $(GATEWAY_API_CRDS_EXPERIMENTAL)
+	GATEWAY_API_CHANNEL=experimental scripts/ci/install-gateway-api-crds.sh
 	@echo "=== Deploying nantian-gw ==="
 	kustomize build deploy/kubernetes/overlays/kind-conformance --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 	kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=180s

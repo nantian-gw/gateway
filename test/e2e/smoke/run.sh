@@ -10,13 +10,17 @@ CLUSTER_NAME="${CLUSTER_NAME:-nantian-e2e}"
 CONTROL_PLANE_NS="nantian-gw"
 TEST_NS="nantian-e2e"
 CONTROL_PLANE_DEPLOYMENT="nantian-gw-controlplane"
-DATA_PLANE_SVC="nantian-gw-dataplane"
+DATA_PLANE_DEPLOYMENT="nantian-gw-dataplane"
+CONTROL_PLANE_IMAGE="${CONTROL_PLANE_IMAGE:-ghcr.io/nantian-gw/nantian-controlplane:latest}"
+DATA_PLANE_IMAGE="${DATA_PLANE_IMAGE:-ghcr.io/nantian-gw/dataplane:latest}"
+DASHBOARD_IMAGE="${DASHBOARD_IMAGE:-ghcr.io/nantian-gw/dashboard:latest}"
 DATA_PLANE_SELECTOR="app=nantian-gw-dataplane"
 GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"
+ECHO_IMAGE="${ECHO_IMAGE:-registry.k8s.io/e2e-test-images/echoserver:2.5}"
 ECHO_PORT=8080
 LOCAL_HTTP_PORT="${LOCAL_HTTP_PORT:-10080}"
 GATEWAY_HTTP_PORT="${GATEWAY_HTTP_PORT:-80}"
-TIMEOUT="${TIMEOUT:-180}"
+TIMEOUT="${TIMEOUT:-300}"
 CLEANUP="${1:-}"
 FAILED=false
 
@@ -36,6 +40,21 @@ cleanup_cluster() {
     fi
     echo "=== Cleaning up ==="
     kind delete cluster --name "$CLUSTER_NAME" 2>/dev/null || true
+}
+
+finish() {
+    local exit_code=$?
+    if (( exit_code != 0 )); then
+        FAILED=true
+    fi
+
+    cleanup_cluster
+    if $FAILED; then
+        red "✗ Smoke test FAILED"
+    else
+        green "✓ Smoke test PASSED"
+    fi
+    exit "$exit_code"
 }
 
 stop_port_forward() {
@@ -62,13 +81,41 @@ install_gateway_api_crds() {
         return
     fi
     echo "=== Installing Gateway API CRDs ==="
-    BASE="https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1"
-    kubectl apply -f "$BASE/standard-install.yaml"
-    kubectl apply -f "$BASE/experimental-install.yaml" || true
-    kubectl wait --for=condition=established crd/gatewayclasses.gateway.networking.k8s.io --timeout=60s
+    GATEWAY_API_CHANNEL=experimental "$GATEWAY_ROOT/scripts/ci/install-gateway-api-crds.sh"
 }
 
-# ── Step 3: deploy nantian-gw ──
+# ── Step 3: preload runtime images ──
+preload_image() {
+    local image="$1"
+    local image_archive
+
+    for attempt in 1 2 3; do
+        if docker image inspect "$image" >/dev/null 2>&1 || docker pull "$image"; then
+            image_archive="$(mktemp "${TMPDIR:-/tmp}/nantian-kind-image.XXXXXX.tar")"
+            if docker save --platform linux/amd64 -o "$image_archive" "$image" \
+                && kind load image-archive --name "$CLUSTER_NAME" "$image_archive"; then
+                rm -f "$image_archive"
+                return
+            fi
+            rm -f "$image_archive"
+        fi
+
+        echo "Failed to preload $image on attempt $attempt; retrying in 10s..." >&2
+        sleep 10
+    done
+
+    echo "Failed to preload $image after 3 attempts." >&2
+    return 1
+}
+
+preload_gateway_images() {
+    echo "=== Preloading nantian-gw images ==="
+    preload_image "$CONTROL_PLANE_IMAGE"
+    preload_image "$DATA_PLANE_IMAGE"
+    preload_image "$DASHBOARD_IMAGE"
+}
+
+# ── Step 4: deploy nantian-gw ──
 deploy_gateway() {
     if kubectl get deployment -n "$CONTROL_PLANE_NS" "$CONTROL_PLANE_DEPLOYMENT" &>/dev/null; then
         yellow "nantian-gw already deployed, skipping"
@@ -76,15 +123,22 @@ deploy_gateway() {
     fi
     echo "=== Deploying nantian-gw ==="
     kustomize build "$GATEWAY_ROOT/deploy/kubernetes/overlays/kind-conformance" --load-restrictor LoadRestrictionsNone | kubectl apply -f -
-    kubectl wait --for=condition=ready pod --all -n "$CONTROL_PLANE_NS" --timeout="${TIMEOUT}s"
+    kubectl wait --for=condition=available deployment/"$CONTROL_PLANE_DEPLOYMENT" -n "$CONTROL_PLANE_NS" --timeout="${TIMEOUT}s"
+    kubectl wait --for=condition=available deployment/"$DATA_PLANE_DEPLOYMENT" -n "$CONTROL_PLANE_NS" --timeout="${TIMEOUT}s"
 }
 
-# ── Step 4: deploy echo backend ──
+# ── Step 5: preload echo backend image ──
+preload_echo_image() {
+    echo "=== Preloading echo backend image ==="
+    preload_image "$ECHO_IMAGE"
+}
+
+# ── Step 6: deploy echo backend ──
 deploy_backend() {
     echo "=== Deploying echo backend ==="
     kubectl create namespace "$TEST_NS" --dry-run=client -o yaml | kubectl apply -f -
 
-    kubectl apply -n "$TEST_NS" -f - <<'YAML'
+    kubectl apply -n "$TEST_NS" -f - <<YAML
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -101,12 +155,9 @@ spec:
     spec:
       containers:
       - name: echo
-        image: docker.io/ealen/echo-server:latest
+        image: $ECHO_IMAGE
         ports:
-        - containerPort: 80
-        env:
-        - name: PORT
-          value: "80"
+        - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -117,14 +168,14 @@ spec:
     app: echo
   ports:
   - port: 80
-    targetPort: 80
+    targetPort: 8080
 YAML
 
     kubectl wait --for=condition=ready pod -l app=echo -n "$TEST_NS" --timeout="${TIMEOUT}s"
     green "  echo backend ready"
 }
 
-# ── Step 5: create Gateway, ReferenceGrant, and HTTPRoute ──
+# ── Step 7: create Gateway, ReferenceGrant, and HTTPRoute ──
 create_gateway() {
     echo "=== Creating Gateway ==="
     kubectl apply -n "$CONTROL_PLANE_NS" -f - <<YAML
@@ -195,9 +246,9 @@ YAML
     green "  HTTPRoute created"
 }
 
-# ── Step 6: port-forward and send request ──
+# ── Step 8: port-forward and send request ──
 send_request() {
-    local dataplane_target="service/$DATA_PLANE_SVC"
+    local dataplane_target="deployment/$DATA_PLANE_DEPLOYMENT"
 
     echo "=== Sending test request (port-forward $dataplane_target ${LOCAL_HTTP_PORT}:${GATEWAY_HTTP_PORT}) ==="
 
@@ -231,11 +282,13 @@ send_request() {
 
 # ── Main ──
 main() {
-    trap 'cleanup_cluster; if $FAILED; then red "✗ Smoke test FAILED"; else green "✓ Smoke test PASSED"; fi' EXIT
+    trap finish EXIT
 
     ensure_cluster
     install_gateway_api_crds
+    preload_gateway_images
     deploy_gateway
+    preload_echo_image
     deploy_backend
     create_gateway
     create_reference_grant
