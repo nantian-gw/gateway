@@ -15,20 +15,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
-func candidateListeners(state *clusterState, gateway gatewayv1.Gateway, parentRef gatewayv1.ParentReference) []gatewayv1.Listener {
-	out := make([]gatewayv1.Listener, 0, len(gateway.Spec.Listeners))
-	for _, listener := range gateway.Spec.Listeners {
-		if parentRef.SectionName != nil && listener.Name != *parentRef.SectionName {
-			continue
-		}
-		if parentRef.Port != nil && listener.Port != *parentRef.Port {
-			continue
-		}
-		out = append(out, listener)
-	}
-	return out
-}
-
 func serviceParentPortMatches(service corev1.Service, parentRef gatewayv1.ParentReference) bool {
 	if parentRef.Port == nil {
 		return true
@@ -269,7 +255,12 @@ func referenceGrantToAllowed(items []gatewayv1beta1.ReferenceGrantTo, expected g
 }
 
 func httpRouteBackends(route gatewayv1.HTTPRoute) []backendInput {
-	out := make([]backendInput, 0)
+	total := 0
+	for _, rule := range route.Spec.Rules {
+		total += len(rule.BackendRefs)
+	}
+
+	out := make([]backendInput, 0, total)
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{
@@ -285,7 +276,12 @@ func httpRouteBackends(route gatewayv1.HTTPRoute) []backendInput {
 }
 
 func grpcRouteBackends(route gatewayv1.GRPCRoute) []backendInput {
-	out := make([]backendInput, 0)
+	total := 0
+	for _, rule := range route.Spec.Rules {
+		total += len(rule.BackendRefs)
+	}
+
+	out := make([]backendInput, 0, total)
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{
@@ -301,7 +297,12 @@ func grpcRouteBackends(route gatewayv1.GRPCRoute) []backendInput {
 }
 
 func tcpRouteBackends(route gatewayv1alpha2.TCPRoute) []backendInput {
-	out := make([]backendInput, 0)
+	total := 0
+	for _, rule := range route.Spec.Rules {
+		total += len(rule.BackendRefs)
+	}
+
+	out := make([]backendInput, 0, total)
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{
@@ -317,7 +318,12 @@ func tcpRouteBackends(route gatewayv1alpha2.TCPRoute) []backendInput {
 }
 
 func udpRouteBackends(route gatewayv1alpha2.UDPRoute) []backendInput {
-	out := make([]backendInput, 0)
+	total := 0
+	for _, rule := range route.Spec.Rules {
+		total += len(rule.BackendRefs)
+	}
+
+	out := make([]backendInput, 0, total)
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{
@@ -333,7 +339,12 @@ func udpRouteBackends(route gatewayv1alpha2.UDPRoute) []backendInput {
 }
 
 func tlsRouteBackends(route gatewayv1alpha2.TLSRoute) []backendInput {
-	out := make([]backendInput, 0)
+	total := 0
+	for _, rule := range route.Spec.Rules {
+		total += len(rule.BackendRefs)
+	}
+
+	out := make([]backendInput, 0, total)
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{

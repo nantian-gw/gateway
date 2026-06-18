@@ -119,6 +119,8 @@ type listenerKey struct {
 	listenerName     gatewayv1.SectionName
 }
 
+type routeAttachmentSet map[client.ObjectKey]struct{}
+
 type gatewayEvaluation struct {
 	sourceGeneration     int64
 	addresses            []gatewayv1.GatewayStatusAddress
@@ -149,7 +151,7 @@ type routeState struct {
 	tcp         map[client.ObjectKey][]routeParentEvaluation
 	udp         map[client.ObjectKey][]routeParentEvaluation
 	tls         map[client.ObjectKey][]routeParentEvaluation
-	attachments map[listenerKey]map[string]struct{}
+	attachments map[listenerKey]routeAttachmentSet
 }
 
 type listenerPolicy struct {

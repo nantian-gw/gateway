@@ -2,55 +2,34 @@ package status
 
 import "sigs.k8s.io/controller-runtime/pkg/client"
 
-func evaluateRouteAttachments(state *clusterState) map[listenerKey]map[string]struct{} {
-	attachments := make(map[listenerKey]map[string]struct{})
+func evaluateRouteAttachments(state *clusterState) map[listenerKey]routeAttachmentSet {
+	ctx := newRouteEvaluationContext(state)
+	attachments := make(map[listenerKey]routeAttachmentSet)
 
 	for _, route := range state.httpRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		recordAttachments(attachments, key, evaluateRouteAttachmentsForInput(state, httpRouteInput(route)))
+		recordAttachments(attachments, key, ctx.evaluateRouteAttachments(httpRouteInput(route)))
 	}
 
 	for _, route := range state.grpcRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		recordAttachments(attachments, key, evaluateRouteAttachmentsForInput(state, grpcRouteInput(route)))
+		recordAttachments(attachments, key, ctx.evaluateRouteAttachments(grpcRouteInput(route)))
 	}
 
 	for _, route := range state.tcpRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		recordAttachments(attachments, key, evaluateRouteAttachmentsForInput(state, tcpRouteInput(route)))
+		recordAttachments(attachments, key, ctx.evaluateRouteAttachments(tcpRouteInput(route)))
 	}
 
 	for _, route := range state.udpRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		recordAttachments(attachments, key, evaluateRouteAttachmentsForInput(state, udpRouteInput(route)))
+		recordAttachments(attachments, key, ctx.evaluateRouteAttachments(udpRouteInput(route)))
 	}
 
 	for _, route := range state.tlsRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		recordAttachments(attachments, key, evaluateRouteAttachmentsForInput(state, tlsRouteInput(route)))
+		recordAttachments(attachments, key, ctx.evaluateRouteAttachments(tlsRouteInput(route)))
 	}
 
 	return attachments
-}
-
-func evaluateRouteAttachmentsForInput(state *clusterState, route routeInput) []routeParentEvaluation {
-	parentRefs := routeEffectiveParentRefs(state, route)
-	if len(parentRefs) == 0 {
-		return nil
-	}
-
-	out := make([]routeParentEvaluation, 0, len(parentRefs))
-	for _, parentRef := range parentRefs {
-		eval, ok := evaluateParentRef(state, route, parentRef, routeResolutionEvaluation{
-			resolvedCondition: conditionSpec{
-				ObservedGeneration: route.generation,
-			},
-		})
-		if !ok {
-			continue
-		}
-		out = append(out, eval)
-	}
-
-	return out
 }
