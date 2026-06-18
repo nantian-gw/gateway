@@ -135,6 +135,111 @@ func TestProjectedSnapshotFullProfilePreservesAIServiceTokenPolicyWasmAndLabels(
 	}
 }
 
+func TestProjectedSnapshotPreservesBackendRefsMatchedByServiceNameAndPort(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			ID:          "projection-port-backend",
+			GeneratedAt: time.Unix(1_700_000_000, 0).UTC(),
+			Listeners: []ir.Listener{{
+				Name:           "listener-http",
+				Address:        "0.0.0.0",
+				Port:           80,
+				Protocol:       "HTTP",
+				AttachedRoutes: []string{"default/http-port"},
+			}},
+			HTTPRoutes: []ir.HTTPRoute{{
+				Name:      "http-port",
+				Namespace: "default",
+				Rules: []ir.HTTPRule{{
+					Name: "service-port",
+					BackendRefs: []ir.BackendRef{{
+						Name:      "echo",
+						Namespace: "default",
+						Port:      8080,
+						Weight:    1,
+					}},
+				}},
+			}},
+			Backends: []ir.BackendCluster{{
+				Name:           "echo:8080",
+				Namespace:      "default",
+				Protocol:       "HTTP",
+				ConnectTimeout: 5 * time.Second,
+				Endpoints: []ir.BackendEndpoint{{
+					Address: "10.0.0.10",
+					Port:    3000,
+					Healthy: true,
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	listener := findProjectedListener(t, projected, "listener-http")
+	if got, want := listener.GetAttachedRoutes(), []string{"default/http-port"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("attached routes = %#v, want %#v", got, want)
+	}
+
+	route := findProjectedHTTPRoute(t, projected, "http-port")
+	if got := route.GetRules()[0].GetBackendRefs(); len(got) != 1 || got[0].GetName() != "echo" || got[0].GetPort() != 8080 {
+		t.Fatalf("projected backend refs = %#v, want echo:8080 reference preserved", got)
+	}
+}
+
+func TestProjectedSnapshotPreservesInvalidBackendRefsWithoutBackendCluster(t *testing.T) {
+	t.Parallel()
+
+	projected := buildProjectedProtoSnapshot(
+		&ir.Snapshot{
+			ID:          "projection-invalid-backend",
+			GeneratedAt: time.Unix(1_700_000_000, 0).UTC(),
+			Listeners: []ir.Listener{{
+				Name:           "listener-http",
+				Address:        "0.0.0.0",
+				Port:           80,
+				Protocol:       "HTTP",
+				AttachedRoutes: []string{"default/http-invalid-backend"},
+			}},
+			HTTPRoutes: []ir.HTTPRoute{{
+				Name:      "http-invalid-backend",
+				Namespace: "default",
+				Rules: []ir.HTTPRule{{
+					Name: "missing-service",
+					BackendRefs: []ir.BackendRef{{
+						Name:      "missing",
+						Namespace: "default",
+						Port:      8080,
+						Weight:    1,
+						Metadata: map[string]string{
+							"nantian.dev/backend-ref-valid":  "false",
+							"nantian.dev/backend-ref-reason": "BackendNotFound",
+						},
+					}},
+				}},
+			}},
+		},
+		effectiveProjectionProfile([]string{featureCoreV1}),
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+
+	listener := findProjectedListener(t, projected, "listener-http")
+	if got, want := listener.GetAttachedRoutes(), []string{"default/http-invalid-backend"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("attached routes = %#v, want %#v", got, want)
+	}
+
+	route := findProjectedHTTPRoute(t, projected, "http-invalid-backend")
+	refs := route.GetRules()[0].GetBackendRefs()
+	if len(refs) != 1 {
+		t.Fatalf("projected backend refs = %#v, want invalid ref preserved", refs)
+	}
+	if got := refs[0].GetMetadata()["nantian.dev/backend-ref-valid"]; got != "false" {
+		t.Fatalf("projected backend ref metadata = %#v, want invalid marker preserved", refs[0].GetMetadata())
+	}
+}
+
 func projectionTestSnapshot() *ir.Snapshot {
 	return &ir.Snapshot{
 		ID:          "projection-snapshot",

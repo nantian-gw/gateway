@@ -5,7 +5,7 @@ This page summarizes Nantian Gateway's current support status for upstream Gatew
 - part of an upstream `ExtendedFeatures` set, or
 - marked with upstream `experimental` channel metadata.
 
-It is intentionally narrower than a full product compatibility guide. Core features such as `Gateway`, `HTTPRoute`, `GRPCRoute`, `Mesh`, `ReferenceGrant`, `BackendTLSPolicy`, and the base `TLSRoute` feature are not repeated here.
+It is intentionally narrower than a full product compatibility guide. Core features such as `Gateway`, `HTTPRoute`, `Mesh`, `ReferenceGrant`, and the base `TLSRoute` feature are not repeated here.
 
 ## How To Read This Matrix
 
@@ -25,7 +25,7 @@ For conformance runs, `ALL_FEATURES=true` expands the suite to the repository-su
 |---|---|---|---|---|---|
 | GatewayPort8080 | Gateway ext | standard | Yes | Yes | Supported |
 | GatewayStaticAddresses | Gateway ext | standard | Yes | Yes | Supported |
-| GatewayHTTPListenerIsolation | Gateway ext | standard | Yes | Yes | Supported |
+| GatewayHTTPListenerIsolation | Gateway ext | standard | No | No | Not advertised pending conformance |
 | GatewayHTTPSListenerDetectMisdirectedRequests | Gateway ext | standard | Yes | Yes | Supported |
 | GatewayInfrastructurePropagation | Gateway ext | standard | Yes | Yes | Supported |
 | GatewayAddressEmpty | Gateway ext | standard | Yes | Yes | Supported |
@@ -33,7 +33,7 @@ For conformance runs, `ALL_FEATURES=true` expands the suite to the repository-su
 | GatewayBackendClientCertificate | Gateway ext | standard | Yes | Yes | Supported |
 | GatewayFrontendClientCertificateValidation | Gateway ext | standard | No | No | Not supported |
 | GatewayFrontendClientCertificateValidationInsecureFallback | Gateway ext | standard | No | No | Not supported |
-| GRPCRouteNamedRouteRule | GRPCRoute ext | standard | Yes | Yes | Supported |
+| GRPCRouteNamedRouteRule | GRPCRoute ext | standard | No | No | Not advertised pending conformance |
 | HTTPRouteDestinationPortMatching | HTTPRoute ext | experimental | Yes | Yes | Supported |
 | HTTPRouteBackendRequestHeaderModification | HTTPRoute ext | standard | Yes | Yes | Supported |
 | HTTPRouteQueryParamMatching | HTTPRoute ext | standard | Yes | Yes | Supported |
@@ -50,13 +50,13 @@ For conformance runs, `ALL_FEATURES=true` expands the suite to the repository-su
 | HTTPRouteRequestTimeout | HTTPRoute ext | standard | Yes | Yes | Supported |
 | HTTPRouteBackendTimeout | HTTPRoute ext | standard | Yes | Yes | Supported |
 | HTTPRouteParentRefPort | HTTPRoute ext | standard | Yes | Yes | Supported |
-| HTTPRouteBackendProtocolH2C | HTTPRoute ext | standard | Yes | Yes | Supported |
-| HTTPRouteBackendProtocolWebSocket | HTTPRoute ext | standard | Yes | Yes | Supported |
+| HTTPRouteBackendProtocolH2C | HTTPRoute ext | standard | No | No | Not advertised pending conformance |
+| HTTPRouteBackendProtocolWebSocket | HTTPRoute ext | standard | No | No | Not advertised pending conformance |
 | HTTPRouteNamedRouteRule | HTTPRoute ext | standard | Yes | Yes | Supported |
-| HTTPRouteCORS | HTTPRoute ext | standard | Yes | Yes | Supported |
-| HTTPRoute303RedirectStatusCode | HTTPRoute ext | standard | Yes | Yes | Supported |
-| HTTPRoute307RedirectStatusCode | HTTPRoute ext | standard | Yes | Yes | Supported |
-| HTTPRoute308RedirectStatusCode | HTTPRoute ext | standard | Yes | Yes | Supported |
+| HTTPRouteCORS | HTTPRoute ext | standard | No | No | Not advertised pending conformance |
+| HTTPRoute303RedirectStatusCode | HTTPRoute ext | standard | No | No | Not advertised pending conformance |
+| HTTPRoute307RedirectStatusCode | HTTPRoute ext | standard | No | No | Not advertised pending conformance |
+| HTTPRoute308RedirectStatusCode | HTTPRoute ext | standard | No | No | Not advertised pending conformance |
 | TLSRouteModeTerminate | TLSRoute ext | standard | No | Yes | Experimental runtime only |
 | TLSRouteModeMixed | TLSRoute ext | experimental | No | Yes | Experimental runtime only |
 | MeshClusterIPMatching | Mesh ext | standard | Yes | Yes | Supported |
@@ -68,13 +68,14 @@ For conformance runs, `ALL_FEATURES=true` expands the suite to the repository-su
 | MeshHTTPRouteBackendRequestHeaderModification | Mesh ext | standard | Yes | Yes | Supported |
 | MeshHTTPRouteQueryParamMatching | Mesh ext | standard | Yes | Yes | Supported |
 | MeshHTTPRouteNamedRouteRule | Mesh ext | standard | Yes | Yes | Supported |
-| BackendTLSPolicySANValidation | BackendTLSPolicy ext | standard | Yes | Yes | Supported |
+| BackendTLSPolicySANValidation | BackendTLSPolicy ext | standard | No | No | Not advertised pending conformance |
 | UDPRoute | UDPRoute | experimental | No | Yes | Experimental runtime only |
 
 ## Notes
 
 - `ListenerSet`, `TLSRouteModeTerminate`, `TLSRouteModeMixed`, and `UDPRoute` require `enableExperimentalGateway=true` even though some of them are upstream standard-channel features. That runtime gate reflects Nantian Gateway's current implementation boundary, not just the upstream channel label.
 - `HTTPRouteDestinationPortMatching` is an upstream experimental-channel feature, but Nantian Gateway currently advertises it in the default runtime.
+- `BackendTLSPolicy`, `GRPCRoute`, and their listed extension features are not advertised until their upstream conformance probes pass.
 - The two upstream features that remain unsupported are:
   - `GatewayFrontendClientCertificateValidation`
   - `GatewayFrontendClientCertificateValidationInsecureFallback`

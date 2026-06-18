@@ -32,6 +32,14 @@ type controlPlaneConfig struct {
 	Dashboard controlPlaneDashboard `yaml:"dashboard"`
 }
 
+type dataplaneConfig struct {
+	Runtime dataplaneRuntimeConfig `yaml:"runtime"`
+}
+
+type dataplaneRuntimeConfig struct {
+	HTTPListenAddr string `yaml:"httpListenAddr"`
+}
+
 type controlPlaneFeatures struct {
 	EnableExperimentalGateway bool `yaml:"enableExperimentalGateway"`
 	EnableAiGateway           bool `yaml:"enableAiGateway"`
@@ -185,6 +193,74 @@ func TestSmokeScriptForwardsToProgrammedGatewayListener(t *testing.T) {
 	}
 }
 
+func TestConformanceTargetPreloadsImagesAndWaitsRequiredDeployments(t *testing.T) {
+	makefile := string(readFile(t, repoPath("Makefile")))
+	loader := string(readFile(t, repoPath("scripts", "ci", "load-kind-images.sh")))
+	deploy := string(readFile(t, repoPath("scripts", "ci", "deploy-kind-conformance.sh")))
+
+	for _, want := range []string{
+		`CONFORMANCE_TIMEOUT ?= 300`,
+		`CONFORMANCE_ECHO_BASIC_IMAGE ?= gcr.io/k8s-staging-gateway-api/echo-basic:v20260204-monthly-2026.01-60-g28382302`,
+		`CONFORMANCE_COREDNS_IMAGE ?= registry.k8s.io/coredns/coredns:v1.12.2`,
+		`CONFORMANCE_ECHO_ADVANCED_IMAGE ?= gcr.io/k8s-staging-gateway-api/echo-advanced:v20240412-v1.0.0-394-g40c666fd`,
+		`CONFORMANCE_TEST_IMAGES ?= $(CONFORMANCE_ECHO_BASIC_IMAGE) $(CONFORMANCE_COREDNS_IMAGE) $(CONFORMANCE_ECHO_ADVANCED_IMAGE)`,
+		`CLUSTER_NAME=$(CLUSTER_NAME) CONTROL_PLANE_IMAGE=$(CONTROL_PLANE_IMAGE) DATA_PLANE_IMAGE=$(DATA_PLANE_IMAGE) DASHBOARD_IMAGE=$(DASHBOARD_IMAGE) scripts/ci/load-kind-images.sh`,
+		`CONFORMANCE_TEST_IMAGES="$(CONFORMANCE_TEST_IMAGES)"`,
+		`CONTROL_PLANE_IMAGE=$(CONTROL_PLANE_IMAGE) DATA_PLANE_IMAGE=$(DATA_PLANE_IMAGE) DASHBOARD_IMAGE=$(DASHBOARD_IMAGE) TIMEOUT=$(CONFORMANCE_TIMEOUT)s scripts/ci/deploy-kind-conformance.sh`,
+		`go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ -args -gateway-class nantian-gw`,
+	} {
+		if !strings.Contains(makefile, want) {
+			t.Fatalf("Makefile missing %q", want)
+		}
+	}
+
+	if !strings.Contains(makefile, `CLUSTER_NAME=$(CLUSTER_NAME) scripts/ci/create-kind-cluster.sh`) {
+		t.Fatalf("Makefile conformance target must create kind through scripts/ci/create-kind-cluster.sh")
+	}
+	if strings.Contains(makefile, `kind create cluster --name $(CLUSTER_NAME) --wait 5m`) {
+		t.Fatalf("Makefile conformance target still creates a plain kind cluster without --config")
+	}
+	if strings.Contains(makefile, `kubectl wait --for=condition=ready node --all --timeout=2m`) {
+		t.Fatalf("Makefile conformance target should rely on scripts/ci/create-kind-cluster.sh for node readiness")
+	}
+	if strings.Contains(makefile, `kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout=180s`) {
+		t.Fatalf("Makefile still waits for every pod in nantian-gw")
+	}
+	if strings.Contains(makefile, `kustomize build deploy/kubernetes/overlays/kind-conformance --load-restrictor LoadRestrictionsNone | kubectl apply -f -`) {
+		t.Fatalf("Makefile deploys kind-conformance overlay without applying image overrides")
+	}
+
+	for _, want := range []string{
+		`CONTROL_PLANE_IMAGE="${CONTROL_PLANE_IMAGE:-${CONTROLPLANE_IMAGE:-ghcr.io/nantian-gw/nantian-controlplane:latest}}"`,
+		`DATA_PLANE_IMAGE="${DATA_PLANE_IMAGE:-${DATAPLANE_IMAGE:-ghcr.io/nantian-gw/dataplane:latest}}"`,
+		`CONFORMANCE_TEST_IMAGES="${CONFORMANCE_TEST_IMAGES:-}"`,
+		`for image in $CONFORMANCE_TEST_IMAGES; do`,
+		`docker save --platform linux/amd64`,
+		`kind load image-archive --name "$CLUSTER_NAME"`,
+	} {
+		if !strings.Contains(loader, want) {
+			t.Fatalf("load-kind-images.sh missing %q", want)
+		}
+	}
+
+	for _, want := range []string{
+		`CONTROL_PLANE_IMAGE="${CONTROL_PLANE_IMAGE:-${CONTROLPLANE_IMAGE:?CONTROL_PLANE_IMAGE is required}}"`,
+		`DATA_PLANE_IMAGE="${DATA_PLANE_IMAGE:-${DATAPLANE_IMAGE:-ghcr.io/nantian-gw/dataplane:latest}}"`,
+		`kustomize edit set image "nantian-controlplane=$CONTROL_PLANE_IMAGE"`,
+		`kustomize edit set image "nantian-dataplane=$DATA_PLANE_IMAGE"`,
+		`kustomize edit set image "nantian-gw-dashboard=$DASHBOARD_IMAGE"`,
+		`kubectl wait --for=condition=available deployment/nantian-gw-controlplane -n nantian-gw --timeout="$TIMEOUT"`,
+		`kubectl wait --for=condition=available deployment/nantian-gw-dataplane -n nantian-gw --timeout="$TIMEOUT"`,
+	} {
+		if !strings.Contains(deploy, want) {
+			t.Fatalf("deploy-kind-conformance.sh missing %q", want)
+		}
+	}
+	if strings.Contains(deploy, `kubectl wait --for=condition=ready pod --all -n nantian-gw`) {
+		t.Fatalf("deploy-kind-conformance.sh still waits for every pod in nantian-gw")
+	}
+}
+
 func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 	conformanceWorkflow := string(readFile(t, repoPath(".github", "workflows", "conformance.yml")))
 	if !strings.Contains(conformanceWorkflow, "-gateway-class nantian-gw") {
@@ -230,6 +306,22 @@ func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T
 	}
 	if config.Features.EnableAiGateway {
 		t.Fatalf("kind conformance controlplane config should not enable AI Gateway features")
+	}
+}
+
+func TestConformanceOverlayDataplaneListensOnGatewayHTTPPort(t *testing.T) {
+	data := readFile(t, repoPath("deploy", "kubernetes", "overlays", "kind-conformance", "dataplane-config.yaml"))
+
+	var config dataplaneConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		t.Fatalf("parse kind-conformance dataplane config: %v", err)
+	}
+
+	if config.Runtime.HTTPListenAddr != "0.0.0.0:80" {
+		t.Fatalf(
+			"kind-conformance runtime.httpListenAddr = %q, want 0.0.0.0:80 so NodePort 30080 reaches the dataplane listener",
+			config.Runtime.HTTPListenAddr,
+		)
 	}
 }
 

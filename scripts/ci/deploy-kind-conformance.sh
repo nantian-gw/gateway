@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONTROLPLANE_IMAGE="${CONTROLPLANE_IMAGE:?CONTROLPLANE_IMAGE is required}"
-DATAPLANE_IMAGE="${DATAPLANE_IMAGE:-ghcr.io/nantian-gw/dataplane:latest}"
+CONTROL_PLANE_IMAGE="${CONTROL_PLANE_IMAGE:-${CONTROLPLANE_IMAGE:?CONTROL_PLANE_IMAGE is required}}"
+DATA_PLANE_IMAGE="${DATA_PLANE_IMAGE:-${DATAPLANE_IMAGE:-ghcr.io/nantian-gw/dataplane:latest}}"
 DASHBOARD_IMAGE="${DASHBOARD_IMAGE:-ghcr.io/nantian-gw/dashboard:latest}"
 CONFORMANCE_EXPERIMENTAL="${CONFORMANCE_EXPERIMENTAL:-${ALL_FEATURES:-false}}"
 TIMEOUT="${TIMEOUT:-300s}"
@@ -29,8 +29,8 @@ rendered="$tmpdir/kind-conformance.yaml"
 
 (
   cd "$overlay"
-  kustomize edit set image "nantian-controlplane=$CONTROLPLANE_IMAGE"
-  kustomize edit set image "nantian-dataplane=$DATAPLANE_IMAGE"
+  kustomize edit set image "nantian-controlplane=$CONTROL_PLANE_IMAGE"
+  kustomize edit set image "nantian-dataplane=$DATA_PLANE_IMAGE"
   kustomize edit set image "nantian-gw-dashboard=$DASHBOARD_IMAGE"
 )
 
@@ -54,10 +54,11 @@ if [[ "$CONFORMANCE_EXPERIMENTAL" == "true" ]]; then
 fi
 
 kustomize build "$overlay" --load-restrictor LoadRestrictionsNone >"$rendered"
-if ! grep -F "image: $CONTROLPLANE_IMAGE" "$rendered" >/dev/null; then
-  echo "rendered manifests do not use expected control-plane image: $CONTROLPLANE_IMAGE" >&2
+if ! grep -F "image: $CONTROL_PLANE_IMAGE" "$rendered" >/dev/null; then
+  echo "rendered manifests do not use expected control-plane image: $CONTROL_PLANE_IMAGE" >&2
   exit 1
 fi
 
 kubectl apply -f "$rendered"
-kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout="$TIMEOUT"
+kubectl wait --for=condition=available deployment/nantian-gw-controlplane -n nantian-gw --timeout="$TIMEOUT"
+kubectl wait --for=condition=available deployment/nantian-gw-dataplane -n nantian-gw --timeout="$TIMEOUT"

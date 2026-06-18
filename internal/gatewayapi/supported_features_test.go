@@ -19,27 +19,16 @@ func TestSupportedFeatureNamesAreSortedAndComplete(t *testing.T) {
 
 	want := sortedFeatureNames([]gatewayfeatures.FeatureName{
 		SupportedBackendLBSessionPersistence,
-		gatewayfeatures.SupportBackendTLSPolicy,
-		gatewayfeatures.SupportBackendTLSPolicySANValidation,
-		gatewayfeatures.SupportGRPCRoute,
-		gatewayfeatures.SupportGRPCRouteNamedRouteRule,
 		gatewayfeatures.SupportGateway,
 		gatewayfeatures.SupportGatewayAddressEmpty,
 		gatewayfeatures.SupportGatewayBackendClientCertificate,
-		gatewayfeatures.SupportGatewayHTTPListenerIsolation,
 		gatewayfeatures.SupportGatewayHTTPSListenerDetectMisdirectedRequests,
 		gatewayfeatures.SupportGatewayInfrastructurePropagation,
 		gatewayfeatures.SupportGatewayPort8080,
 		gatewayfeatures.SupportGatewayStaticAddresses,
 		gatewayfeatures.SupportHTTPRoute,
-		gatewayfeatures.SupportHTTPRoute303RedirectStatusCode,
-		gatewayfeatures.SupportHTTPRoute307RedirectStatusCode,
-		gatewayfeatures.SupportHTTPRoute308RedirectStatusCode,
-		gatewayfeatures.SupportHTTPRouteBackendProtocolH2C,
-		gatewayfeatures.SupportHTTPRouteBackendProtocolWebSocket,
 		gatewayfeatures.SupportHTTPRouteBackendRequestHeaderModification,
 		gatewayfeatures.SupportHTTPRouteBackendTimeout,
-		gatewayfeatures.SupportHTTPRouteCORS,
 		gatewayfeatures.SupportHTTPRouteDestinationPortMatching,
 		gatewayfeatures.SupportHTTPRouteHostRewrite,
 		gatewayfeatures.SupportHTTPRouteMethodMatching,
@@ -98,7 +87,6 @@ func TestSupportedFeatureNamesForOptionsExcludesExperimentalGatewayFeaturesWhenD
 	for _, name := range []gatewayfeatures.FeatureName{
 		gatewayfeatures.SupportGateway,
 		gatewayfeatures.SupportHTTPRoute,
-		gatewayfeatures.SupportGRPCRoute,
 		gatewayfeatures.SupportReferenceGrant,
 	} {
 		if !names[name] {
@@ -131,6 +119,39 @@ func TestSupportedFeatureNamesForOptionsExcludesUnsupportedFrontendClientCertifi
 	}
 }
 
+func TestSupportedFeatureNamesForOptionsExcludesNonConformantOptionalFeatures(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		options FeatureOptions
+	}{
+		{name: "default runtime", options: FeatureOptions{EnableExperimentalGateway: false}},
+		{name: "experimental runtime", options: FeatureOptions{EnableExperimentalGateway: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := SupportedFeatureNamesForOptions(tc.options)
+			names := featureNameSet(got)
+
+			for _, name := range []gatewayfeatures.FeatureName{
+				gatewayfeatures.SupportBackendTLSPolicy,
+				gatewayfeatures.SupportBackendTLSPolicySANValidation,
+				gatewayfeatures.SupportGatewayHTTPListenerIsolation,
+				gatewayfeatures.SupportGRPCRoute,
+				gatewayfeatures.SupportGRPCRouteNamedRouteRule,
+				gatewayfeatures.SupportHTTPRoute303RedirectStatusCode,
+				gatewayfeatures.SupportHTTPRoute307RedirectStatusCode,
+				gatewayfeatures.SupportHTTPRoute308RedirectStatusCode,
+				gatewayfeatures.SupportHTTPRouteBackendProtocolH2C,
+				gatewayfeatures.SupportHTTPRouteBackendProtocolWebSocket,
+				gatewayfeatures.SupportHTTPRouteCORS,
+			} {
+				if names[name] {
+					t.Fatalf("feature %s should not be advertised until it passes Gateway API conformance: %#v", name, got)
+				}
+			}
+		})
+	}
+}
+
 func TestSupportedFeatureNamesForOptionsIncludesExperimentalGatewayFeaturesWhenEnabled(t *testing.T) {
 	got := SupportedFeatureNamesForOptions(FeatureOptions{EnableExperimentalGateway: true})
 	names := featureNameSet(got)
@@ -150,27 +171,16 @@ func TestSupportedFeatureNamesForOptionsIncludesExperimentalGatewayFeaturesWhenE
 
 	want := sortedFeatureNames([]gatewayfeatures.FeatureName{
 		SupportedBackendLBSessionPersistence,
-		gatewayfeatures.SupportBackendTLSPolicy,
-		gatewayfeatures.SupportBackendTLSPolicySANValidation,
-		gatewayfeatures.SupportGRPCRoute,
-		gatewayfeatures.SupportGRPCRouteNamedRouteRule,
 		gatewayfeatures.SupportGateway,
 		gatewayfeatures.SupportGatewayAddressEmpty,
 		gatewayfeatures.SupportGatewayBackendClientCertificate,
-		gatewayfeatures.SupportGatewayHTTPListenerIsolation,
 		gatewayfeatures.SupportGatewayHTTPSListenerDetectMisdirectedRequests,
 		gatewayfeatures.SupportGatewayInfrastructurePropagation,
 		gatewayfeatures.SupportGatewayPort8080,
 		gatewayfeatures.SupportGatewayStaticAddresses,
 		gatewayfeatures.SupportHTTPRoute,
-		gatewayfeatures.SupportHTTPRoute303RedirectStatusCode,
-		gatewayfeatures.SupportHTTPRoute307RedirectStatusCode,
-		gatewayfeatures.SupportHTTPRoute308RedirectStatusCode,
-		gatewayfeatures.SupportHTTPRouteBackendProtocolH2C,
-		gatewayfeatures.SupportHTTPRouteBackendProtocolWebSocket,
 		gatewayfeatures.SupportHTTPRouteBackendRequestHeaderModification,
 		gatewayfeatures.SupportHTTPRouteBackendTimeout,
-		gatewayfeatures.SupportHTTPRouteCORS,
 		gatewayfeatures.SupportHTTPRouteDestinationPortMatching,
 		gatewayfeatures.SupportHTTPRouteHostRewrite,
 		gatewayfeatures.SupportHTTPRouteMethodMatching,

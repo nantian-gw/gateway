@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"log/slog"
+	"strconv"
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
@@ -173,11 +174,28 @@ func filterBackendRefs(routeNamespace string, refs []ir.BackendRef, survivingBac
 		if namespace == "" {
 			namespace = routeNamespace
 		}
-		if _, ok := survivingBackends[backendProjectionKey(namespace, ref.Name)]; ok {
+		if backendRefSurvivesProjection(namespace, ref, survivingBackends) {
 			out = append(out, ref)
 		}
 	}
 	return out
+}
+
+func backendRefSurvivesProjection(namespace string, ref ir.BackendRef, survivingBackends map[string]struct{}) bool {
+	if backendRefMarkedInvalidForProjection(ref) {
+		return true
+	}
+	if ref.Port != 0 {
+		if _, ok := survivingBackends[backendProjectionKey(namespace, ref.Name+":"+strconv.FormatUint(uint64(ref.Port), 10))]; ok {
+			return true
+		}
+	}
+	_, ok := survivingBackends[backendProjectionKey(namespace, ref.Name)]
+	return ok
+}
+
+func backendRefMarkedInvalidForProjection(ref ir.BackendRef) bool {
+	return ref.Metadata["nantian.dev/backend-ref-valid"] == "false"
 }
 
 func backendRequiresUnsupportedHardFeature(backend ir.BackendCluster, supported map[string]struct{}) bool {
