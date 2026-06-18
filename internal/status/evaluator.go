@@ -9,6 +9,7 @@ import (
 )
 
 func evaluateRoutes(state *clusterState) routeState {
+	ctx := newRouteEvaluationContext(state)
 	out := routeState{
 		http:        make(map[client.ObjectKey][]routeParentEvaluation),
 		grpc:        make(map[client.ObjectKey][]routeParentEvaluation),
@@ -20,35 +21,35 @@ func evaluateRoutes(state *clusterState) routeState {
 
 	for _, route := range state.httpRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		evals := evaluateRoute(state, httpRouteInput(route))
+		evals := ctx.evaluateRoute(httpRouteInput(route))
 		out.http[key] = evals
 		recordAttachments(out.attachments, key, evals)
 	}
 
 	for _, route := range state.grpcRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		evals := evaluateRoute(state, grpcRouteInput(route))
+		evals := ctx.evaluateRoute(grpcRouteInput(route))
 		out.grpc[key] = evals
 		recordAttachments(out.attachments, key, evals)
 	}
 
 	for _, route := range state.tcpRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		evals := evaluateRoute(state, tcpRouteInput(route))
+		evals := ctx.evaluateRoute(tcpRouteInput(route))
 		out.tcp[key] = evals
 		recordAttachments(out.attachments, key, evals)
 	}
 
 	for _, route := range state.udpRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		evals := evaluateRoute(state, udpRouteInput(route))
+		evals := ctx.evaluateRoute(udpRouteInput(route))
 		out.udp[key] = evals
 		recordAttachments(out.attachments, key, evals)
 	}
 
 	for _, route := range state.tlsRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		evals := evaluateRoute(state, tlsRouteInput(route))
+		evals := ctx.evaluateRoute(tlsRouteInput(route))
 		out.tls[key] = evals
 		recordAttachments(out.attachments, key, evals)
 	}
