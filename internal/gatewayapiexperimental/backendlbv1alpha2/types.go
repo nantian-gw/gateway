@@ -1,8 +1,6 @@
 package backendlbv1alpha2
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -93,9 +91,51 @@ func (in *BackendLBPolicy) DeepCopy() *BackendLBPolicy {
 		return nil
 	}
 
-	var out BackendLBPolicy
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(BackendLBPolicy)
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+
+	if in.Spec.TargetRefs != nil {
+		out.Spec.TargetRefs = make([]LocalPolicyTargetReference, len(in.Spec.TargetRefs))
+		copy(out.Spec.TargetRefs, in.Spec.TargetRefs)
+	}
+	if in.Spec.SessionPersistence != nil {
+		sp := *in.Spec.SessionPersistence
+		out.Spec.SessionPersistence = &sp
+	}
+	if in.Spec.LoadBalancing != nil {
+		lb := *in.Spec.LoadBalancing
+		out.Spec.LoadBalancing = &lb
+		if in.Spec.LoadBalancing.Type != nil {
+			t := *in.Spec.LoadBalancing.Type
+			out.Spec.LoadBalancing.Type = &t
+		}
+		if in.Spec.LoadBalancing.ConsistentHash != nil {
+			ch := *in.Spec.LoadBalancing.ConsistentHash
+			out.Spec.LoadBalancing.ConsistentHash = &ch
+			if in.Spec.LoadBalancing.ConsistentHash.KeyType != nil {
+				kt := *in.Spec.LoadBalancing.ConsistentHash.KeyType
+				out.Spec.LoadBalancing.ConsistentHash.KeyType = &kt
+			}
+			if in.Spec.LoadBalancing.ConsistentHash.HeaderName != nil {
+				hn := *in.Spec.LoadBalancing.ConsistentHash.HeaderName
+				out.Spec.LoadBalancing.ConsistentHash.HeaderName = &hn
+			}
+		}
+	}
+
+	if in.Status.Ancestors != nil {
+		out.Status.Ancestors = make([]gatewayv1.PolicyAncestorStatus, len(in.Status.Ancestors))
+		for i := range in.Status.Ancestors {
+			out.Status.Ancestors[i] = in.Status.Ancestors[i]
+			if in.Status.Ancestors[i].Conditions != nil {
+				out.Status.Ancestors[i].Conditions = make([]metav1.Condition, len(in.Status.Ancestors[i].Conditions))
+				copy(out.Status.Ancestors[i].Conditions, in.Status.Ancestors[i].Conditions)
+			}
+		}
+	}
+
+	return out
 }
 
 func (in *BackendLBPolicyList) DeepCopyObject() runtime.Object {
@@ -111,17 +151,97 @@ func (in *BackendLBPolicyList) DeepCopy() *BackendLBPolicyList {
 		return nil
 	}
 
-	var out BackendLBPolicyList
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(BackendLBPolicyList)
+	*out = *in
+	if in.Items != nil {
+		out.Items = make([]BackendLBPolicy, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+	return out
 }
 
-func mustRoundTrip(in any, out any) {
-	data, err := json.Marshal(in)
-	if err != nil {
-		return
+func (in *BackendLBPolicy) DeepCopyInto(out *BackendLBPolicy) {
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+
+	if in.Spec.TargetRefs != nil {
+		out.Spec.TargetRefs = make([]LocalPolicyTargetReference, len(in.Spec.TargetRefs))
+		copy(out.Spec.TargetRefs, in.Spec.TargetRefs)
 	}
-	if err := json.Unmarshal(data, out); err != nil {
-		return
+	if in.Spec.SessionPersistence != nil {
+		sp := *in.Spec.SessionPersistence
+		out.Spec.SessionPersistence = &sp
 	}
+	if in.Spec.LoadBalancing != nil {
+		lb := *in.Spec.LoadBalancing
+		out.Spec.LoadBalancing = &lb
+		if in.Spec.LoadBalancing.Type != nil {
+			t := *in.Spec.LoadBalancing.Type
+			out.Spec.LoadBalancing.Type = &t
+		}
+		if in.Spec.LoadBalancing.ConsistentHash != nil {
+			ch := *in.Spec.LoadBalancing.ConsistentHash
+			out.Spec.LoadBalancing.ConsistentHash = &ch
+			if in.Spec.LoadBalancing.ConsistentHash.KeyType != nil {
+				kt := *in.Spec.LoadBalancing.ConsistentHash.KeyType
+				out.Spec.LoadBalancing.ConsistentHash.KeyType = &kt
+			}
+			if in.Spec.LoadBalancing.ConsistentHash.HeaderName != nil {
+				hn := *in.Spec.LoadBalancing.ConsistentHash.HeaderName
+				out.Spec.LoadBalancing.ConsistentHash.HeaderName = &hn
+			}
+		}
+	}
+
+	if in.Status.Ancestors != nil {
+		out.Status.Ancestors = make([]gatewayv1.PolicyAncestorStatus, len(in.Status.Ancestors))
+		for i := range in.Status.Ancestors {
+			out.Status.Ancestors[i] = in.Status.Ancestors[i]
+			if in.Status.Ancestors[i].Conditions != nil {
+				out.Status.Ancestors[i].Conditions = make([]metav1.Condition, len(in.Status.Ancestors[i].Conditions))
+				copy(out.Status.Ancestors[i].Conditions, in.Status.Ancestors[i].Conditions)
+			}
+		}
+	}
+}
+
+func (in *BackendLBPolicySpec) DeepCopy() *BackendLBPolicySpec {
+	if in == nil {
+		return nil
+	}
+
+	out := new(BackendLBPolicySpec)
+	*out = *in
+	if in.TargetRefs != nil {
+		out.TargetRefs = make([]LocalPolicyTargetReference, len(in.TargetRefs))
+		copy(out.TargetRefs, in.TargetRefs)
+	}
+	if in.SessionPersistence != nil {
+		sp := *in.SessionPersistence
+		out.SessionPersistence = &sp
+	}
+	if in.LoadBalancing != nil {
+		lb := *in.LoadBalancing
+		out.LoadBalancing = &lb
+		if in.LoadBalancing.Type != nil {
+			t := *in.LoadBalancing.Type
+			out.LoadBalancing.Type = &t
+		}
+		if in.LoadBalancing.ConsistentHash != nil {
+			ch := *in.LoadBalancing.ConsistentHash
+			out.LoadBalancing.ConsistentHash = &ch
+			if in.LoadBalancing.ConsistentHash.KeyType != nil {
+				kt := *in.LoadBalancing.ConsistentHash.KeyType
+				out.LoadBalancing.ConsistentHash.KeyType = &kt
+			}
+			if in.LoadBalancing.ConsistentHash.HeaderName != nil {
+				hn := *in.LoadBalancing.ConsistentHash.HeaderName
+				out.LoadBalancing.ConsistentHash.HeaderName = &hn
+			}
+		}
+	}
+
+	return out
 }
