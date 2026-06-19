@@ -19,7 +19,7 @@ func (s *Server) handleDataplanes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"dataplanes": endpoints,
 	})
 }
@@ -56,7 +56,7 @@ func (s *Server) handleDataplaneSummary(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var summary map[string]interface{}
+	var summary map[string]any
 	if err := s.dataplaneClient.GetJSON(r.Context(), targetEndpoint.URL, "/v1/summary", &summary); err != nil {
 		http.Error(w, `{"error":"failed to get summary: `+err.Error()+`"}`, http.StatusInternalServerError)
 		return
