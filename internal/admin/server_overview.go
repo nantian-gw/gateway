@@ -9,7 +9,9 @@ import (
 
 func (s *Server) handleLiveness(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("ok"))
+	if _, err := w.Write([]byte("ok")); err != nil {
+		s.logger.Warn("health_liveness: write failed", "err", err)
+	}
 }
 
 func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +22,9 @@ func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
 	}
 	if !requiresCurrentSnapshotReadiness(s.readinessMode) {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ready"))
+		if _, err := w.Write([]byte("ready")); err != nil {
+			s.logger.Warn("health_readiness: write failed", "err", err)
+		}
 		return
 	}
 
@@ -44,7 +48,9 @@ func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("ready"))
+	if _, err := w.Write([]byte("ready")); err != nil {
+		s.logger.Warn("health_readiness: write failed", "err", err)
+	}
 }
 
 func (s *Server) handleSnapshot(w http.ResponseWriter, _ *http.Request) {
