@@ -226,7 +226,7 @@ func toProtoWasmPlugin(item *ir.WasmPluginConfig) *controlv1.WasmPluginConfig {
 	return &controlv1.WasmPluginConfig{
 		Name:       item.Name,
 		Namespace:  item.Namespace,
-		WasmBytes:  item.WasmBytes,
+		WasmBytes:  append([]byte{}, item.WasmBytes...),
 		Sha256:     item.SHA256,
 		Hooks:      item.Hooks,
 		ConfigJson: item.ConfigJSON,

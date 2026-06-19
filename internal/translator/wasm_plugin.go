@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -15,8 +15,14 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
+const (
+	wasmDownloadTimeout           = 30 * time.Second
+	wasmConfigMapDefaultKey       = "plugin.wasm"
+	wasmConfigMapDefaultKeyLegacy = ""
+)
+
 func referencedConfigMapKeysForWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlugin) []client.ObjectKey {
-	var keys []client.ObjectKey
+	keys := make([]client.ObjectKey, 0, len(plugins))
 	for _, p := range plugins {
 		if p.Spec.Wasm.ConfigMap != nil && p.Spec.Wasm.ConfigMap.Name != "" {
 			keys = append(keys, client.ObjectKey{
@@ -31,8 +37,8 @@ func referencedConfigMapKeysForWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlug
 func wasmConfigMapData(configMaps []corev1.ConfigMap, namespace, name, key string) []byte {
 	for _, cm := range configMaps {
 		if cm.Namespace == namespace && cm.Name == name {
-			if key == "" {
-				key = "plugin.wasm"
+			if key == "" || key == wasmConfigMapDefaultKeyLegacy {
+				key = wasmConfigMapDefaultKey
 			}
 			return cm.BinaryData[key]
 		}
@@ -59,7 +65,11 @@ func translateWasmPlugin(p wasmpluginv1alpha1.WasmPlugin, configMaps []corev1.Co
 	if p.Spec.Wasm.Inline != "" {
 		decoded, err := base64.StdEncoding.DecodeString(p.Spec.Wasm.Inline)
 		if err != nil {
-			log.Printf("wasm plugin %s/%s: failed to decode inline wasm bytes: %v", p.Namespace, p.Name, err)
+			slog.Warn("wasm plugin: failed to decode inline wasm bytes",
+				"namespace", p.Namespace,
+				"name", p.Name,
+				"error", err,
+			)
 		} else {
 			cfg.WasmBytes = decoded
 		}
@@ -67,7 +77,12 @@ func translateWasmPlugin(p wasmpluginv1alpha1.WasmPlugin, configMaps []corev1.Co
 	if p.Spec.Wasm.URL != "" {
 		wasmBytes, err := downloadWasmURL(p.Spec.Wasm.URL)
 		if err != nil {
-			log.Printf("wasm plugin %s/%s: failed to download from %s: %v", p.Namespace, p.Name, p.Spec.Wasm.URL, err)
+			slog.Warn("wasm plugin: failed to download wasm from URL",
+				"namespace", p.Namespace,
+				"name", p.Name,
+				"url", p.Spec.Wasm.URL,
+				"error", err,
+			)
 		} else {
 			cfg.WasmBytes = wasmBytes
 		}
@@ -75,7 +90,7 @@ func translateWasmPlugin(p wasmpluginv1alpha1.WasmPlugin, configMaps []corev1.Co
 	if p.Spec.Wasm.ConfigMap != nil {
 		key := p.Spec.Wasm.ConfigMap.Key
 		if key == "" {
-			key = "plugin.wasm"
+			key = wasmConfigMapDefaultKey
 		}
 		cfg.WasmBytes = wasmConfigMapData(configMaps, p.Namespace, p.Spec.Wasm.ConfigMap.Name, key)
 	}
@@ -91,8 +106,6 @@ func translateWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlugin, configMaps []
 	return result
 }
 
-const wasmDownloadTimeout = 30 * time.Second
-
 func downloadWasmURL(url string) ([]byte, error) {
 	client := &http.Client{Timeout: wasmDownloadTimeout}
 	resp, err := client.Get(url)
@@ -103,5 +116,5 @@ func downloadWasmURL(url string) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("http %d", resp.StatusCode)
 	}
-	return io.ReadAll(resp.Body)
+	return io.ReadAll(io.LimitReader(resp.Body, 50<<20))
 }
