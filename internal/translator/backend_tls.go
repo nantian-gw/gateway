@@ -2,7 +2,6 @@ package translator
 
 import (
 	"crypto/tls"
-	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -69,7 +68,7 @@ func backendTLSForGatewayWithIndexes(
 	}
 
 	return &ir.BackendTLSConfig{
-		ClientCertificateRef: fmt.Sprintf("%s/%s", targetNamespace, ref.Name),
+		ClientCertificateRef: targetNamespace + "/" + string(ref.Name),
 	}
 }
 

@@ -198,7 +198,7 @@ func serviceKey(namespace string, name string) string {
 }
 
 func servicePortKey(namespace string, name string, port int32) string {
-	return fmt.Sprintf("%s/%s/%d", namespace, name, port)
+	return namespace + "/" + name + "/" + strconv.Itoa(int(port))
 }
 
 func namespaceOrDefault(namespace *gatewayv1.Namespace, defaultNamespace string) string {

@@ -2,7 +2,6 @@ package translator
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net"
 	"sort"
 	"strings"
@@ -141,7 +140,7 @@ func listenerCertificateSecretRefsWithIndexes(
 			continue
 		}
 
-		key := fmt.Sprintf("%s/%s", targetNamespace, ref.Name)
+		key := targetNamespace + "/" + string(ref.Name)
 		if _, exists := seen[key]; exists {
 			continue
 		}
