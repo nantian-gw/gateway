@@ -91,8 +91,10 @@ func translateWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlugin, configMaps []
 	return result
 }
 
+const wasmDownloadTimeout = 30 * time.Second
+
 func downloadWasmURL(url string) ([]byte, error) {
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: wasmDownloadTimeout}
 	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
