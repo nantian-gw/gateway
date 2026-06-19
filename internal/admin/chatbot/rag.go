@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -20,15 +21,26 @@ import (
 //   - HTTPRoutes and GRPCRoutes (namespace/name, rules, backendRefs).
 //   - Available Services (namespace/name, ports).
 func BuildRAGContext(ctx context.Context, cl client.Client, controllerName string) (string, error) {
-	var b strings.Builder
+	var (
+		gcList   gatewayv1.GatewayClassList
+		gwList   gatewayv1.GatewayList
+		httpList gatewayv1.HTTPRouteList
+		grpcList gatewayv1.GRPCRouteList
+		svcList  corev1.ServiceList
+	)
 
-	// 1. GatewayClasses controlled by this controller.
-	gcList := &gatewayv1.GatewayClassList{}
-	if err := cl.List(ctx, gcList); err != nil {
-		return "", fmt.Errorf("rag: list GatewayClasses: %w", err)
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error { return cl.List(ctx, &gcList) })
+	g.Go(func() error { return cl.List(ctx, &gwList) })
+	g.Go(func() error { return cl.List(ctx, &httpList) })
+	g.Go(func() error { return cl.List(ctx, &grpcList) })
+	g.Go(func() error { return cl.List(ctx, &svcList) })
+
+	if err := g.Wait(); err != nil {
+		return "", fmt.Errorf("rag: list resources: %w", err)
 	}
 
-	managedClasses := make(map[string]bool)
+	managedClasses := make(map[string]bool, len(gcList.Items))
 	for _, gc := range gcList.Items {
 		if string(gc.Spec.ControllerName) == controllerName {
 			managedClasses[gc.Name] = true
@@ -39,12 +51,6 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 		return "No managed GatewayClasses found for controller " + controllerName, nil
 	}
 
-	// 2. Gateways.
-	gwList := &gatewayv1.GatewayList{}
-	if err := cl.List(ctx, gwList); err != nil {
-		return "", fmt.Errorf("rag: list Gateways: %w", err)
-	}
-
 	var managedGateways []gatewayv1.Gateway
 	for _, gw := range gwList.Items {
 		if managedClasses[string(gw.Spec.GatewayClassName)] {
@@ -52,25 +58,9 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 		}
 	}
 
-	// 3. HTTPRoutes.
-	httpList := &gatewayv1.HTTPRouteList{}
-	if err := cl.List(ctx, httpList); err != nil {
-		return "", fmt.Errorf("rag: list HTTPRoutes: %w", err)
-	}
-
-	// 4. GRPCRoutes.
-	grpcList := &gatewayv1.GRPCRouteList{}
-	if err := cl.List(ctx, grpcList); err != nil {
-		return "", fmt.Errorf("rag: list GRPCRoutes: %w", err)
-	}
-
-	// 5. Services.
-	svcList := &corev1.ServiceList{}
-	if err := cl.List(ctx, svcList); err != nil {
-		return "", fmt.Errorf("rag: list Services: %w", err)
-	}
-
 	// ── Format output ────────────────────────────────────────────
+
+	var b strings.Builder
 
 	b.WriteString("## Current Gateway API Topology\n\n")
 
@@ -182,36 +172,37 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 	// Services
 	b.WriteString("### Services\n\n")
 	if len(svcList.Items) == 0 {
-		b.WriteString("(none)\n")
+		b.WriteString("(none)\n\n")
 	} else {
 		for _, svc := range svcList.Items {
-			fmt.Fprintf(&b, "- **%s/%s**", svc.Namespace, svc.Name)
+			fmt.Fprintf(&b, "- **%s/%s** (type=%s)", svc.Namespace, svc.Name, svc.Spec.Type)
 			if len(svc.Spec.Ports) > 0 {
-				ports := make([]string, 0, len(svc.Spec.Ports))
-				for _, p := range svc.Spec.Ports {
-					ports = append(ports, fmt.Sprintf("%s:%d/%s", p.Name, p.Port, p.Protocol))
+				b.WriteString(" [")
+				for j, port := range svc.Spec.Ports {
+					if j > 0 {
+						b.WriteString(", ")
+					}
+					fmt.Fprintf(&b, "%d/%s", port.Port, port.Protocol)
 				}
-				fmt.Fprintf(&b, " ports=[%s]", strings.Join(ports, ", "))
+				b.WriteString("]")
 			}
 			b.WriteString("\n")
 		}
+		b.WriteString("\n")
 	}
 
 	return b.String(), nil
 }
 
 func fmtRouteParents(b *strings.Builder, refs []gatewayv1.ParentReference, defaultNS string) {
-	if len(refs) == 0 {
-		return
-	}
-	parts := make([]string, 0, len(refs))
-	for _, pr := range refs {
-		ns := defaultNS
-		if pr.Namespace != nil {
-			ns = string(*pr.Namespace)
+	for j, ref := range refs {
+		if j > 0 {
+			b.WriteString(", ")
 		}
-		parts = append(parts, fmt.Sprintf("%s/%s", ns, pr.Name))
+		ns := defaultNS
+		if ref.Namespace != nil {
+			ns = string(*ref.Namespace)
+		}
+		fmt.Fprintf(b, " → %s/%s", ns, ref.Name)
 	}
-	fmt.Fprintf(b, " → gateways: [%s]", strings.Join(parts, ", "))
 }
-

@@ -18,6 +18,7 @@ import (
 const (
 	chatbotConfigNamespace = "nantian-gw"
 	chatbotConfigSecret    = "chatbot-config"
+	maxChatHistoryMessages = 40
 )
 
 // maskAPIKey returns a masked version of the API key for safe display.
@@ -202,8 +203,11 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	// Prep the system prompt with RAG context.
 	systemPrompt := buildSystemPrompt(ragContext)
 
-	// Build the full history.
+	// Build the full history (with a bound to prevent unbounded growth).
 	history := append([]chatbot.Message(nil), req.History...)
+	if len(history) > maxChatHistoryMessages {
+		history = history[len(history)-maxChatHistoryMessages:]
+	}
 
 	// Create the LLM adapter.
 	llm := chatbot.NewOpenAIAdapter(cfg.APIEndpoint, cfg.APIKey, cfg.Model, cfg.Temperature)
