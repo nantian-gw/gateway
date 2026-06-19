@@ -263,7 +263,7 @@ func resolveListenerSetParent(
 	baseListeners := gatewayapi.EffectiveListeners(gateway)
 	allListeners := mergeListenerSetListeners(gateway, baseListeners, []gatewayv1.ListenerSet{ls}, namespaces)
 	listenerSetListeners := allListeners[len(baseListeners):]
-	out := make([]gatewayv1.Listener, 0)
+	out := make([]gatewayv1.Listener, 0, len(listenerSetListeners))
 	for _, l := range listenerSetListeners {
 		if parentRef.SectionName != "" && listenerSetRuntimeEntryName(ls, l) != parentRef.SectionName {
 			continue

@@ -66,7 +66,13 @@ func httpRouteFilterNeedsRawConfig(filter gatewayv1.HTTPRouteFilter) bool {
 }
 
 func rawHTTPRouteFilterConfigsFromObject(object map[string]any) rawHTTPRouteFilterConfigs {
-	rules, _, _ := unstructured.NestedSlice(object, "spec", "rules")
+	rules, exists, err := unstructured.NestedSlice(object, "spec", "rules")
+	if err != nil {
+		return nil
+	}
+	if !exists {
+		return nil
+	}
 	routeConfigs := make(rawHTTPRouteFilterConfigs, 0, len(rules))
 	for _, rawRule := range rules {
 		ruleMap, ok := rawRule.(map[string]any)
@@ -75,7 +81,11 @@ func rawHTTPRouteFilterConfigsFromObject(object map[string]any) rawHTTPRouteFilt
 			continue
 		}
 
-		filters, _ := nestedMapSlice(ruleMap, "filters")
+		filters, ok := nestedMapSlice(ruleMap, "filters")
+		if !ok {
+			routeConfigs = append(routeConfigs, nil)
+			continue
+		}
 		ruleConfigs := make([]map[string]any, 0, len(filters))
 		for _, filter := range filters {
 			ruleConfigs = append(ruleConfigs, filter)

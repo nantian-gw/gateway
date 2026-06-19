@@ -1,8 +1,6 @@
 package wasmpluginv1alpha1
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -88,9 +86,26 @@ func (in *WasmPlugin) DeepCopy() *WasmPlugin {
 	if in == nil {
 		return nil
 	}
-	var out WasmPlugin
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(WasmPlugin)
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Spec.TargetRefs != nil {
+		out.Spec.TargetRefs = make([]WasmPluginTargetRef, len(in.Spec.TargetRefs))
+		copy(out.Spec.TargetRefs, in.Spec.TargetRefs)
+	}
+	if in.Spec.Hooks != nil {
+		out.Spec.Hooks = make([]WasmHook, len(in.Spec.Hooks))
+		copy(out.Spec.Hooks, in.Spec.Hooks)
+	}
+	if in.Spec.Wasm.ConfigMap != nil {
+		cp := *in.Spec.Wasm.ConfigMap
+		out.Spec.Wasm.ConfigMap = &cp
+	}
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
+	return out
 }
 
 func (in *WasmPluginList) DeepCopyObject() runtime.Object {
@@ -104,17 +119,67 @@ func (in *WasmPluginList) DeepCopy() *WasmPluginList {
 	if in == nil {
 		return nil
 	}
-	var out WasmPluginList
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(WasmPluginList)
+	*out = *in
+	if in.Items != nil {
+		out.Items = make([]WasmPlugin, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+	return out
 }
 
-func mustRoundTrip(in any, out any) {
-	data, err := json.Marshal(in)
-	if err != nil {
-		return
+func (in *WasmPlugin) DeepCopyInto(out *WasmPlugin) {
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Spec.TargetRefs != nil {
+		out.Spec.TargetRefs = make([]WasmPluginTargetRef, len(in.Spec.TargetRefs))
+		copy(out.Spec.TargetRefs, in.Spec.TargetRefs)
 	}
-	if err := json.Unmarshal(data, out); err != nil {
-		return
+	if in.Spec.Hooks != nil {
+		out.Spec.Hooks = make([]WasmHook, len(in.Spec.Hooks))
+		copy(out.Spec.Hooks, in.Spec.Hooks)
 	}
+	if in.Spec.Wasm.ConfigMap != nil {
+		cp := *in.Spec.Wasm.ConfigMap
+		out.Spec.Wasm.ConfigMap = &cp
+	}
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
+}
+
+func (in *WasmPluginSpec) DeepCopy() *WasmPluginSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(WasmPluginSpec)
+	*out = *in
+	if in.TargetRefs != nil {
+		out.TargetRefs = make([]WasmPluginTargetRef, len(in.TargetRefs))
+		copy(out.TargetRefs, in.TargetRefs)
+	}
+	if in.Hooks != nil {
+		out.Hooks = make([]WasmHook, len(in.Hooks))
+		copy(out.Hooks, in.Hooks)
+	}
+	if in.Wasm.ConfigMap != nil {
+		cp := *in.Wasm.ConfigMap
+		out.Wasm.ConfigMap = &cp
+	}
+	return out
+}
+
+func (in *WasmPluginStatus) DeepCopy() *WasmPluginStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(WasmPluginStatus)
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		copy(out.Conditions, in.Conditions)
+	}
+	return out
 }

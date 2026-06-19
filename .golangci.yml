@@ -26,6 +26,11 @@ linters:
     - revive
     - goconst
     - unparam
+    - dupl
+    - gofumpt
+    - whitespace
+    - nolintlint
+    - wrapcheck
 
   settings:
     errcheck:
@@ -37,6 +42,19 @@ linters:
         - diagnostic
         - performance
         - style
+    dupl:
+      threshold: 150
+    goconst:
+      min-len: 3
+      min-occurrences: 4
+    wrapcheck:
+      ignore-sigs:
+        - google.golang.org/grpc/status.Error
+        - google.golang.org/grpc/status.Errorf
+        - fmt.Errorf
+    nolintlint:
+      require-explanation: true
+      require-specific: true
 
   exclusions:
     generated: lax

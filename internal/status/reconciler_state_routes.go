@@ -369,7 +369,7 @@ func filterTLSRoutesByDefaultScope(items []gatewayv1alpha2.TLSRoute, scope gatew
 }
 
 func filterHTTPRoutesByDefaultScopes(items []gatewayv1.HTTPRoute, scopes map[gatewayv1.GatewayDefaultScope]struct{}) []gatewayv1.HTTPRoute {
-	out := make([]gatewayv1.HTTPRoute, 0)
+	out := make([]gatewayv1.HTTPRoute, 0, len(items))
 	for _, route := range items {
 		if _, ok := scopes[route.Spec.UseDefaultGateways]; ok {
 			out = append(out, route)
@@ -379,7 +379,7 @@ func filterHTTPRoutesByDefaultScopes(items []gatewayv1.HTTPRoute, scopes map[gat
 }
 
 func filterGRPCRoutesByDefaultScopes(items []gatewayv1.GRPCRoute, scopes map[gatewayv1.GatewayDefaultScope]struct{}) []gatewayv1.GRPCRoute {
-	out := make([]gatewayv1.GRPCRoute, 0)
+	out := make([]gatewayv1.GRPCRoute, 0, len(items))
 	for _, route := range items {
 		if _, ok := scopes[route.Spec.UseDefaultGateways]; ok {
 			out = append(out, route)
@@ -389,7 +389,7 @@ func filterGRPCRoutesByDefaultScopes(items []gatewayv1.GRPCRoute, scopes map[gat
 }
 
 func filterTCPRoutesByDefaultScopes(items []gatewayv1alpha2.TCPRoute, scopes map[gatewayv1.GatewayDefaultScope]struct{}) []gatewayv1alpha2.TCPRoute {
-	out := make([]gatewayv1alpha2.TCPRoute, 0)
+	out := make([]gatewayv1alpha2.TCPRoute, 0, len(items))
 	for _, route := range items {
 		if _, ok := scopes[route.Spec.UseDefaultGateways]; ok {
 			out = append(out, route)
@@ -399,7 +399,7 @@ func filterTCPRoutesByDefaultScopes(items []gatewayv1alpha2.TCPRoute, scopes map
 }
 
 func filterUDPRoutesByDefaultScopes(items []gatewayv1alpha2.UDPRoute, scopes map[gatewayv1.GatewayDefaultScope]struct{}) []gatewayv1alpha2.UDPRoute {
-	out := make([]gatewayv1alpha2.UDPRoute, 0)
+	out := make([]gatewayv1alpha2.UDPRoute, 0, len(items))
 	for _, route := range items {
 		if _, ok := scopes[route.Spec.UseDefaultGateways]; ok {
 			out = append(out, route)
@@ -409,7 +409,7 @@ func filterUDPRoutesByDefaultScopes(items []gatewayv1alpha2.UDPRoute, scopes map
 }
 
 func filterTLSRoutesByDefaultScopes(items []gatewayv1alpha2.TLSRoute, scopes map[gatewayv1.GatewayDefaultScope]struct{}) []gatewayv1alpha2.TLSRoute {
-	out := make([]gatewayv1alpha2.TLSRoute, 0)
+	out := make([]gatewayv1alpha2.TLSRoute, 0, len(items))
 	for _, route := range items {
 		if _, ok := scopes[route.Spec.UseDefaultGateways]; ok {
 			out = append(out, route)

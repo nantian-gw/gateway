@@ -1,8 +1,6 @@
 package aiservicev1alpha1
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -85,9 +83,14 @@ func (in *AIService) DeepCopy() *AIService {
 	if in == nil {
 		return nil
 	}
-	var out AIService
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(AIService)
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
+	return out
 }
 
 func (in *AIServiceList) DeepCopyObject() runtime.Object {
@@ -101,17 +104,43 @@ func (in *AIServiceList) DeepCopy() *AIServiceList {
 	if in == nil {
 		return nil
 	}
-	var out AIServiceList
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(AIServiceList)
+	*out = *in
+	if in.Items != nil {
+		out.Items = make([]AIService, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+	return out
 }
 
-func mustRoundTrip(in any, out any) {
-	data, err := json.Marshal(in)
-	if err != nil {
-		return
+func (in *AIService) DeepCopyInto(out *AIService) {
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
 	}
-	if err := json.Unmarshal(data, out); err != nil {
-		return
+}
+
+func (in *AIServiceSpec) DeepCopy() *AIServiceSpec {
+	if in == nil {
+		return nil
 	}
+	out := new(AIServiceSpec)
+	*out = *in
+	return out
+}
+
+func (in *AIServiceStatus) DeepCopy() *AIServiceStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(AIServiceStatus)
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		copy(out.Conditions, in.Conditions)
+	}
+	return out
 }

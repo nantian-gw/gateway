@@ -1,8 +1,6 @@
 package tokenpolicyv1alpha1
 
 import (
-	"encoding/json"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -58,9 +56,18 @@ func (in *TokenPolicy) DeepCopy() *TokenPolicy {
 	if in == nil {
 		return nil
 	}
-	var out TokenPolicy
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(TokenPolicy)
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Spec.TargetRefs != nil {
+		out.Spec.TargetRefs = make([]gatewayv1.LocalPolicyTargetReference, len(in.Spec.TargetRefs))
+		copy(out.Spec.TargetRefs, in.Spec.TargetRefs)
+	}
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
+	return out
 }
 
 func (in *TokenPolicyList) DeepCopyObject() runtime.Object {
@@ -74,35 +81,51 @@ func (in *TokenPolicyList) DeepCopy() *TokenPolicyList {
 	if in == nil {
 		return nil
 	}
-	var out TokenPolicyList
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(TokenPolicyList)
+	*out = *in
+	if in.Items != nil {
+		out.Items = make([]TokenPolicy, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+	return out
+}
+
+func (in *TokenPolicy) DeepCopyInto(out *TokenPolicy) {
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.Spec.TargetRefs != nil {
+		out.Spec.TargetRefs = make([]gatewayv1.LocalPolicyTargetReference, len(in.Spec.TargetRefs))
+		copy(out.Spec.TargetRefs, in.Spec.TargetRefs)
+	}
+	if in.Status.Conditions != nil {
+		out.Status.Conditions = make([]metav1.Condition, len(in.Status.Conditions))
+		copy(out.Status.Conditions, in.Status.Conditions)
+	}
 }
 
 func (in *TokenPolicySpec) DeepCopy() *TokenPolicySpec {
 	if in == nil {
 		return nil
 	}
-	var out TokenPolicySpec
-	mustRoundTrip(in, &out)
-	return &out
+	out := new(TokenPolicySpec)
+	*out = *in
+	if in.TargetRefs != nil {
+		out.TargetRefs = make([]gatewayv1.LocalPolicyTargetReference, len(in.TargetRefs))
+		copy(out.TargetRefs, in.TargetRefs)
+	}
+	return out
 }
 
 func (in *TokenPolicyStatus) DeepCopy() *TokenPolicyStatus {
 	if in == nil {
 		return nil
 	}
-	var out TokenPolicyStatus
-	mustRoundTrip(in, &out)
-	return &out
-}
-
-func mustRoundTrip(in any, out any) {
-	data, err := json.Marshal(in)
-	if err != nil {
-		return
+	out := new(TokenPolicyStatus)
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		copy(out.Conditions, in.Conditions)
 	}
-	if err := json.Unmarshal(data, out); err != nil {
-		return
-	}
+	return out
 }

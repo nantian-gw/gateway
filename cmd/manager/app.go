@@ -4,40 +4,23 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
-	coordinationv1 "k8s.io/api/coordination/v1"
-	corev1 "k8s.io/api/core/v1"
-	discoveryv1 "k8s.io/api/discovery/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
-	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
-	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
-	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/admin"
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/controller"
-	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
-	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
 	"github.com/nantian-gw/gateway/internal/grpcserver"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
@@ -82,36 +65,6 @@ func controlplaneManagerOptions(
 		RenewDeadline:          ptr(cfg.LeaderElectionRenewDeadline()),
 		RetryPeriod:            ptr(cfg.LeaderElectionRetryPeriod()),
 	}
-}
-
-func controlplaneTracingConfig(cfg *config.Config) observability.TracingConfig {
-	if cfg == nil {
-		return observability.TracingConfig{}
-	}
-
-	return observability.TracingConfig{
-		Enabled:      cfg.Tracing.Enabled,
-		Endpoint:     strings.TrimSpace(cfg.Tracing.Endpoint),
-		Insecure:     cfg.Tracing.Insecure,
-		SamplerRatio: cfg.TracingSamplerRatio(),
-		Headers:      cfg.TracingHeaders(),
-	}
-}
-
-func logControlplaneTracingStatus(logger *slog.Logger, cfg observability.TracingConfig) {
-	if logger == nil {
-		return
-	}
-
-	summary := observability.SummarizeTracing(cfg)
-	logger.Info(
-		"configured controlplane tracing",
-		"enabled", summary.Enabled,
-		"endpoint", summary.Endpoint,
-		"insecure", summary.Insecure,
-		"sampler_ratio", summary.SamplerRatio,
-		"header_count", summary.HeaderCount,
-	)
 }
 
 func run(configPath string) error {
@@ -475,190 +428,4 @@ func newMetricsServer(addr string, metrics *observability.Metrics, bearerToken, 
 		IdleTimeout:       defaultMetricsIdleTimeout,
 		MaxHeaderBytes:    defaultMetricsMaxHeaderBytes,
 	}
-}
-
-func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
-	scheme := runtime.NewScheme()
-	registrations := []struct {
-		name string
-		fn   func(*runtime.Scheme) error
-	}{
-		{name: "client-go", fn: clientgoscheme.AddToScheme},
-		{name: "core/v1", fn: corev1.AddToScheme},
-		{name: "coordination/v1", fn: coordinationv1.AddToScheme},
-		{name: "discovery/v1", fn: discoveryv1.AddToScheme},
-		{name: "apiextensions/v1", fn: apiextensionsv1.AddToScheme},
-		{name: "gateway/v1", fn: gatewayv1.Install},
-		{name: "gateway/v1alpha2", fn: gatewayv1alpha2.Install},
-		{name: "gateway/v1alpha3", fn: gatewayv1alpha3.Install},
-		{name: "gateway/v1beta1", fn: gatewayv1beta1.Install},
-		{name: "mcs/v1alpha1", fn: mcsv1alpha1.AddToScheme},
-	}
-
-	if cfg.Features.EnableExperimentalGateway {
-		registrations = append(registrations,
-			[]struct {
-				name string
-				fn   func(*runtime.Scheme) error
-			}{
-				{name: "gateway.experimental/v1alpha2", fn: backendlbv1alpha2.Install},
-				{name: "wasmplugin/v1alpha1", fn: wasmpluginv1alpha1.AddToScheme},
-				{name: "tokenpolicy/v1alpha1", fn: tokenpolicyv1alpha1.AddToScheme},
-			}...,
-		)
-	}
-
-	if cfg.Features.EnableAiGateway {
-		registrations = append(registrations,
-			struct {
-				name string
-				fn   func(*runtime.Scheme) error
-			}{name: "aiservice/v1alpha1", fn: aiservicev1alpha1.AddToScheme},
-		)
-	}
-
-	for _, registration := range registrations {
-		if err := registration.fn(scheme); err != nil {
-			return nil, fmt.Errorf("register %s scheme: %w", registration.name, err)
-		}
-	}
-
-	return scheme, nil
-}
-
-func newManagerComponent(mgr ctrl.Manager, leaderElectionEnabled bool) lifecycle.Component {
-	return lifecycle.Component{
-		Name: "controller-manager",
-		Run: func(ctx context.Context, markStarted func()) error {
-			errCh := make(chan error, 1)
-			go func() {
-				errCh <- mgr.Start(ctx)
-			}()
-
-			// Standby replicas with leader election enabled may intentionally wait
-			// for leadership before caches sync; treat process startup as complete
-			// once the manager goroutine is running in that mode.
-			if leaderElectionEnabled {
-				markStarted()
-				return waitManagerExit(ctx, errCh, false)
-			}
-
-			syncedCh := make(chan bool, 1)
-			go func() {
-				syncedCh <- mgr.GetCache().WaitForCacheSync(ctx)
-			}()
-
-			for {
-				select {
-				case synced := <-syncedCh:
-					if !synced {
-						if ctx.Err() != nil {
-							return waitManagerExit(ctx, errCh, true)
-						}
-						select {
-						case err := <-errCh:
-							if err != nil {
-								return err
-							}
-						default:
-						}
-						return errors.New("controller manager cache sync did not complete")
-					}
-
-					markStarted()
-					return waitManagerExit(ctx, errCh, false)
-				case err := <-errCh:
-					if ctx.Err() != nil && err == nil {
-						return nil
-					}
-					if err != nil {
-						return err
-					}
-					return errors.New("controller manager stopped before cache sync completed")
-				case <-ctx.Done():
-					return waitManagerExit(ctx, errCh, true)
-				}
-			}
-		},
-	}
-}
-
-func waitManagerExit(ctx context.Context, errCh <-chan error, shuttingDown bool) error {
-	err := <-errCh
-	if ctx.Err() != nil {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	if shuttingDown {
-		return nil
-	}
-	return errors.New("controller manager stopped unexpectedly")
-}
-
-func newHTTPComponent(
-	name string,
-	addr string,
-	serve func(net.Listener) error,
-	shutdown func(context.Context) error,
-	closeServer func() error,
-	shutdownTimeout time.Duration,
-	logger *slog.Logger,
-) lifecycle.Component {
-	return lifecycle.Component{
-		Name: name,
-		Run: func(ctx context.Context, markStarted func()) error {
-			listener, err := net.Listen("tcp", addr)
-			if err != nil {
-				return fmt.Errorf("listen on %s: %w", addr, err)
-			}
-			defer listener.Close()
-
-			go func() {
-				<-ctx.Done()
-
-				shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-				defer cancel()
-
-				if err := shutdown(shutdownCtx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					logger.Warn("http component shutdown returned error", "component", name, "error", err)
-					_ = closeServer()
-				}
-				if shutdownCtx.Err() == context.DeadlineExceeded {
-					logger.Warn("http component shutdown timed out, forcing close", "component", name)
-					_ = closeServer()
-				}
-			}()
-
-			markStarted()
-			err = serve(listener)
-			switch {
-			case ctx.Err() != nil:
-				return nil
-			case err == nil:
-				return fmt.Errorf("%s server stopped unexpectedly", name)
-			default:
-				return err
-			}
-		},
-	}
-}
-
-func newGRPCComponent(name, addr string, server *grpcserver.Server) lifecycle.Component {
-	return lifecycle.Component{
-		Name: name,
-		Run: func(ctx context.Context, markStarted func()) error {
-			listener, err := net.Listen("tcp", addr)
-			if err != nil {
-				return fmt.Errorf("listen on %s: %w", addr, err)
-			}
-			defer listener.Close()
-			return server.Serve(ctx, listener, markStarted)
-		},
-	}
-}
-
-func ptr[T any](value T) *T {
-	return &value
 }
