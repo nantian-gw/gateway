@@ -72,8 +72,8 @@ func translateMeshServiceListeners(frontends []mesh.ServiceFrontendPort) []ir.Li
 }
 
 func effectiveBackendServices(services []corev1.Service) []backendService {
-	shadowByName := make(map[string]corev1.Service)
-	shadowByOriginal := make(map[string]corev1.Service)
+	shadowByName := make(map[string]corev1.Service, len(services))
+	shadowByOriginal := make(map[string]corev1.Service, len(services))
 	for _, service := range services {
 		if service.Labels[mesh.ShadowServiceRoleLabel] != mesh.ShadowServiceRoleValue {
 			continue

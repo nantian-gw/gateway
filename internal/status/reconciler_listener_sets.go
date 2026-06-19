@@ -2,7 +2,6 @@ package status
 
 import (
 	"context"
-	"fmt"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,7 +14,7 @@ import (
 func (r *Reconciler) reconcileListenerSetStatuses(ctx context.Context, lses []gatewayv1.ListenerSet, evals map[string]listenerSetEvaluation) error {
 	for i := range lses {
 		key := client.ObjectKeyFromObject(&lses[i])
-		eval, ok := evals[fmt.Sprintf("%s/%s", lses[i].Namespace, lses[i].Name)]
+		eval, ok := evals[lses[i].Namespace+"/"+lses[i].Name]
 		if !ok {
 			continue
 		}

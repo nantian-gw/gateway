@@ -225,7 +225,7 @@ func expandMeshShadowBackendKeys(
 
 	expandedServiceKeys := cloneObjectKeyMap(serviceKeys)
 	expandedReplacementKeys := cloneObjectKeyMap(replacementKeys)
-	loadedKeys := make(map[string]struct{})
+	loadedKeys := make(map[string]struct{}, len(serviceKeys))
 	pendingKeys := cloneObjectKeyMap(serviceKeys)
 
 	for len(pendingKeys) != 0 {

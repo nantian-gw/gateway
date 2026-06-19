@@ -2,8 +2,8 @@ package translator
 
 import (
 	"crypto/x509"
-	"fmt"
 	"sort"
+	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -383,7 +383,7 @@ func serviceImportBackendKeys(
 }
 
 func backendClusterKey(namespace, name string, port int32) string {
-	return fmt.Sprintf("%s/%s:%d", namespace, name, port)
+	return namespace + "/" + name + ":" + strconv.Itoa(int(port))
 }
 
 func compactStrings(items []string) []string {
