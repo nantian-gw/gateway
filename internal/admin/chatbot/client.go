@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // Message represents a single turn in a conversation.
@@ -39,7 +40,16 @@ type openAIAdapter struct {
 	client   *http.Client
 }
 
-const openAIChatCompletionsPath = "/v1/chat/completions"
+const (
+	openAIChatCompletionsPath = "/v1/chat/completions"
+	defaultLLMTimeout         = 120 * time.Second
+	defaultLLMIdleTimeout     = 90 * time.Second
+)
+
+var defaultLLMTransport = &http.Transport{
+	MaxIdleConns:    10,
+	IdleConnTimeout: defaultLLMIdleTimeout,
+}
 
 // openAIStreamResponse represents a single SSE chunk returned by the server.
 type openAIStreamResponse struct {
@@ -64,10 +74,13 @@ func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64) LLMCl
 		slog.Warn("CHATBOT_INSECURE_TLS is enabled — TLS certificate verification is disabled for LLM API calls")
 	}
 
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: insecureSkipVerify,
-		},
+	transport := defaultLLMTransport
+	if insecureSkipVerify {
+		transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
 	}
 
 	return &openAIAdapter{
@@ -75,7 +88,10 @@ func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64) LLMCl
 		apiKey:   apiKey,
 		model:    model,
 		temp:     temperature,
-		client:   &http.Client{Transport: transport},
+		client: &http.Client{
+			Transport: transport,
+			Timeout:   defaultLLMTimeout,
+		},
 	}
 }
 

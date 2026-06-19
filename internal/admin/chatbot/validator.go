@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -173,6 +174,8 @@ func AutoCorrectGenerate(
 	}
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
+		time.Sleep(time.Duration(attempt) * time.Second)
+
 		feedback := fmt.Sprintf(correctionPrompt, err.Error())
 
 		correctedResponse, retryErr := collectFullStreamingResponse(ctx, llm, feedback, history)
