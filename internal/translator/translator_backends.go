@@ -82,11 +82,16 @@ func translateEffectiveBackends(
 					service.logicalName,
 					port.Port,
 				)],
-				LoadBalancing: backendLB.loadBalancing[backendClusterKey(
-					service.namespace,
-					service.logicalName,
-					port.Port,
-				)],
+			LoadBalancing: backendLB.loadBalancing[backendClusterKey(
+				service.namespace,
+				service.logicalName,
+				port.Port,
+			)],
+			CircuitBreaker: backendLB.circuitBreaker[backendClusterKey(
+				service.namespace,
+				service.logicalName,
+				port.Port,
+			)],
 				Metadata: map[string]string{
 					"service": service.logicalName,
 				},

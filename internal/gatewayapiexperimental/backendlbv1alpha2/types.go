@@ -57,6 +57,11 @@ type BackendLBPolicySpec struct {
 	TargetRefs         []LocalPolicyTargetReference `json:"targetRefs"`
 	SessionPersistence *SessionPersistence          `json:"sessionPersistence,omitempty"`
 	LoadBalancing      *LoadBalancingPolicy         `json:"loadBalancing,omitempty"`
+	CircuitBreaker     *CircuitBreakerConfig        `json:"circuitBreaker,omitempty"`
+}
+
+type CircuitBreakerConfig struct {
+	MaxInflightRequests *int32 `json:"maxInflightRequests,omitempty"`
 }
 
 type BackendLBPolicy struct {

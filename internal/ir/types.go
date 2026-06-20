@@ -211,6 +211,7 @@ type BackendCluster struct {
 	BackendTLSValidation *BackendTLSValidation     `json:"backendTlsValidation,omitempty"`
 	SessionPersistence   *SessionPersistencePolicy `json:"sessionPersistence,omitempty"`
 	LoadBalancing        *LoadBalancingPolicy      `json:"loadBalancing,omitempty"`
+	CircuitBreaker       *CircuitBreakerConfig     `json:"circuitBreaker,omitempty"`
 	Metadata             map[string]string         `json:"metadata,omitempty"`
 	AIService            *AIServiceConfig           `json:"aiService,omitempty"`
 	TokenPolicy          *TokenPolicyConfig         `json:"tokenPolicy,omitempty"`
@@ -272,6 +273,10 @@ type LoadBalancingPolicy struct {
 type ConsistentHashPolicy struct {
 	KeyType    string `json:"keyType,omitempty"`
 	HeaderName string `json:"headerName,omitempty"`
+}
+
+type CircuitBreakerConfig struct {
+	MaxInflightRequests int `json:"maxInflightRequests,omitempty"`
 }
 
 type SecretMaterial struct {

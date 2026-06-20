@@ -15,12 +15,14 @@ type translatedBackendLBPolicy struct {
 	backendKeys        []string
 	sessionPersistence *ir.SessionPersistencePolicy
 	loadBalancing      *ir.LoadBalancingPolicy
+	circuitBreaker     *ir.CircuitBreakerConfig
 	policy             backendlbv1alpha2.BackendLBPolicy
 }
 
 type backendLBPolicyIndexes struct {
 	sessionPersistence map[string]*ir.SessionPersistencePolicy
 	loadBalancing      map[string]*ir.LoadBalancingPolicy
+	circuitBreaker     map[string]*ir.CircuitBreakerConfig
 }
 
 func buildBackendLBPolicyIndexes(
@@ -48,7 +50,8 @@ func buildBackendLBPolicyIndexesWithIndexes(
 			policy.Spec.SessionPersistence,
 		)
 		loadBalancing := backendLoadBalancing(policy.Spec.LoadBalancing)
-		if sessionPersistence == nil && loadBalancing == nil {
+		circuitBreaker := backendCircuitBreaker(policy.Spec.CircuitBreaker)
+		if sessionPersistence == nil && loadBalancing == nil && circuitBreaker == nil {
 			continue
 		}
 
@@ -61,6 +64,7 @@ func buildBackendLBPolicyIndexesWithIndexes(
 			backendKeys:        backendKeys,
 			sessionPersistence: sessionPersistence,
 			loadBalancing:      loadBalancing,
+			circuitBreaker:     circuitBreaker,
 			policy:             policy,
 		})
 		translationIndex := len(translations) - 1
@@ -74,6 +78,7 @@ func buildBackendLBPolicyIndexesWithIndexes(
 
 	sessionPersistence := make(map[string]*ir.SessionPersistencePolicy, len(owners))
 	loadBalancing := make(map[string]*ir.LoadBalancingPolicy, len(owners))
+	circuitBreaker := make(map[string]*ir.CircuitBreakerConfig, len(owners))
 	for backendKey, ownerIndex := range owners {
 		if item := translations[ownerIndex].sessionPersistence; item != nil {
 			copyItem := *item
@@ -87,11 +92,16 @@ func buildBackendLBPolicyIndexesWithIndexes(
 			}
 			loadBalancing[backendKey] = &copyItem
 		}
+		if item := translations[ownerIndex].circuitBreaker; item != nil {
+			copyItem := *item
+			circuitBreaker[backendKey] = &copyItem
+		}
 	}
 
 	return backendLBPolicyIndexes{
 		sessionPersistence: sessionPersistence,
 		loadBalancing:      loadBalancing,
+		circuitBreaker:     circuitBreaker,
 	}
 }
 
@@ -153,4 +163,13 @@ func backendLBPolicyBackendKeysWithIndexes(
 
 	sort.Strings(keys)
 	return compactStrings(keys), true
+}
+
+func backendCircuitBreaker(cb *backendlbv1alpha2.CircuitBreakerConfig) *ir.CircuitBreakerConfig {
+	if cb == nil || cb.MaxInflightRequests == nil {
+		return nil
+	}
+	return &ir.CircuitBreakerConfig{
+		MaxInflightRequests: int(*cb.MaxInflightRequests),
+	}
 }
