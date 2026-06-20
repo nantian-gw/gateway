@@ -1,0 +1,1216 @@
+openapi: "3.0.3"
+info:
+  title: Nantian Gateway Admin API
+  version: "1.0"
+  description: |
+    REST API for the Nantian Gateway control plane admin server.
+    Provides observability, configuration, and management endpoints.
+
+    ## Authentication
+    Most endpoints require Bearer token authentication when `adminAuth.bearerToken`
+    is configured in the control plane config. Health checks (`/livez`, `/readyz`)
+    are unauthenticated.
+
+    ## Pagination
+    List endpoints support `?limit=N&offset=M` query parameters.
+    Responses include `Link` header with `rel=next` for pagination.
+
+    ## Content Types
+    - Most endpoints: `application/json`
+    - Health checks: `text/plain`
+    - Chatbot streaming: `text/event-stream`
+
+servers:
+  - url: http://localhost:9000
+    description: Default admin server address
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token from adminAuth.bearerToken config
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+
+    Summary:
+      type: object
+      properties:
+        snapshotVersion:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        listenerCount:
+          type: integer
+        httpRouteCount:
+          type: integer
+        grpcRouteCount:
+          type: integer
+        streamRouteCount:
+          type: integer
+        routeCount:
+          type: integer
+        backendCount:
+          type: integer
+        secretCount:
+          type: integer
+        nodeCount:
+          type: integer
+        connectedNodeCount:
+          type: integer
+        readyNodeCount:
+          type: integer
+        currentVersionNodeCount:
+          type: integer
+        currentVersionReadyCount:
+          type: integer
+        driftedNodeCount:
+          type: integer
+        readyListenerCount:
+          type: integer
+        warningListenerCount:
+          type: integer
+        failedListenerCount:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+
+    Listener:
+      type: object
+      properties:
+        name:
+          type: string
+        hostname:
+          type: string
+        port:
+          type: integer
+        protocol:
+          type: string
+        ready:
+          type: boolean
+        attachedRoutes:
+          type: integer
+
+    RouteList:
+      type: object
+      properties:
+        http:
+          type: array
+          items:
+            type: object
+        grpc:
+          type: array
+          items:
+            type: object
+        stream:
+          type: array
+          items:
+            type: object
+
+    Backend:
+      type: object
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        protocol:
+          type: string
+        endpoints:
+          type: array
+          items:
+            type: object
+        weight:
+          type: integer
+
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        connected:
+          type: boolean
+        ready:
+          type: boolean
+        connectedAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+
+    InfrastructureReport:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalCount:
+              type: integer
+            healthyCount:
+              type: integer
+            driftedCount:
+              type: integer
+            missingCount:
+              type: integer
+            orphanCount:
+              type: integer
+
+    Service:
+      type: object
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        ports:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+
+    ResourceKind:
+      type: object
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        namespaced:
+          type: boolean
+        supportsApply:
+          type: boolean
+
+    ManagedResource:
+      type: object
+      properties:
+        kind:
+          type: string
+        namespace:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        labels:
+          type: object
+
+    Topology:
+      type: object
+      properties:
+        gateways:
+          type: array
+          items:
+            type: object
+        routes:
+          type: object
+          properties:
+            http:
+              type: array
+              items:
+                type: object
+            grpc:
+              type: array
+              items:
+                type: object
+            stream:
+              type: array
+              items:
+                type: object
+        services:
+          type: array
+          items:
+            type: object
+
+    ChatbotConfig:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        provider:
+          type: string
+        apiEndpoint:
+          type: string
+        apiKey:
+          type: string
+          description: Masked (sk-••••xyz)
+        model:
+          type: string
+        temperature:
+          type: number
+
+    ChatbotConfigRequest:
+      type: object
+      required: [provider, apiEndpoint, apiKey, model]
+      properties:
+        provider:
+          type: string
+        apiEndpoint:
+          type: string
+        apiKey:
+          type: string
+        model:
+          type: string
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 0.1
+
+    ChatRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant]
+        content:
+          type: string
+
+    MetricsConfig:
+      type: object
+      properties:
+        scrapeInterval:
+          type: string
+        retentionPeriod:
+          type: string
+
+    MetricsConfigRequest:
+      type: object
+      properties:
+        scrapeInterval:
+          type: string
+        retentionPeriod:
+          type: string
+
+    MetricsQuery:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          description: PromQL query
+        time:
+          type: string
+          format: date-time
+
+    MetricsQueryRange:
+      type: object
+      required: [query, start, end, step]
+      properties:
+        query:
+          type: string
+          description: PromQL query
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        step:
+          type: string
+          description: Duration string (e.g. "15s")
+
+    MetricsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+
+    DashboardCapabilities:
+      type: object
+      properties:
+        overview:
+          type: boolean
+        gateways:
+          type: boolean
+        routes:
+          type: boolean
+        referenceGrants:
+          type: boolean
+        backendTls:
+          type: boolean
+        nodes:
+          type: boolean
+        diagnostics:
+          type: boolean
+        observability:
+          type: boolean
+        settings:
+          type: boolean
+        aiOverview:
+          type: boolean
+        aiServices:
+          type: boolean
+        aiTokenPolicies:
+          type: boolean
+        aiCost:
+          type: boolean
+        aiTraces:
+          type: boolean
+        aiUsage:
+          type: boolean
+        wasmPlugins:
+          type: boolean
+        chatbot:
+          type: boolean
+
+    SnapshotSync:
+      type: object
+      properties:
+        version:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              version:
+                type: string
+              ready:
+                type: boolean
+              drift:
+                type: string
+
+    Dataplane:
+      type: object
+      properties:
+        nodeId:
+          type: string
+        address:
+          type: string
+        version:
+          type: string
+        connected:
+          type: boolean
+
+    DataplaneSummary:
+      type: object
+      description: Data plane /v1/summary response (forwarded)
+
+    ResourceApplyRequest:
+      type: object
+      required: [yaml]
+      properties:
+        yaml:
+          type: string
+          description: YAML manifest to create or update
+
+    AIOverview:
+      type: object
+      properties:
+        totalServices:
+          type: integer
+        activeServices:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+
+    AIService:
+      type: object
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        status:
+          type: string
+
+    AITokenUsage:
+      type: object
+
+    AITrace:
+      type: object
+
+    AICost:
+      type: object
+      properties:
+        totalCost:
+          type: number
+        breakdown:
+          type: array
+          items:
+            type: object
+
+  parameters:
+    NamespaceQuery:
+      name: namespace
+      in: query
+      schema:
+        type: string
+      description: Filter by namespace
+    NameQuery:
+      name: name
+      in: query
+      schema:
+        type: string
+      description: Filter by name (supports prefix match)
+    KindQuery:
+      name: kind
+      in: query
+      schema:
+        type: string
+        enum: [HTTPRoute, GRPCRoute, TCPRoute, UDPRoute, TLSRoute]
+      description: Route kind filter
+    SearchQuery:
+      name: search
+      in: query
+      schema:
+        type: string
+      description: Full-text search
+    SortQuery:
+      name: sort
+      in: query
+      schema:
+        type: string
+      description: Sort field name
+    OrderQuery:
+      name: order
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+    LimitQuery:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+      description: Maximum items per page
+    OffsetQuery:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+      description: Pagination offset
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Liveness and readiness probes
+  - name: Observability
+    description: Snapshot, listeners, routes, backends, nodes
+  - name: Management
+    description: Infrastructure, resource CRUD, topology
+  - name: AI Gateway
+    description: AI service overview, usage, traces, cost
+  - name: Chatbot
+    description: LLM-powered assistant
+  - name: Metrics
+    description: Prometheus metrics configuration and querying
+  - name: Dashboard
+    description: UI capability flags
+
+paths:
+
+  # ── Health ──────────────────────────────────────────────
+  /livez:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+      security: []
+
+  /readyz:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      responses:
+        '200':
+          description: Ready
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ready
+        '503':
+          description: Not ready
+      security: []
+
+  # ── Observability ───────────────────────────────────────
+  /v1/summary:
+    get:
+      tags: [Observability]
+      summary: Get control plane summary
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Summary'
+
+  /v1/snapshot:
+    get:
+      tags: [Observability]
+      summary: Get current IR snapshot
+      responses:
+        '200':
+          description: Full snapshot object
+
+  /v1/snapshot-sync:
+    get:
+      tags: [Observability]
+      summary: Get snapshot synchronization status
+      responses:
+        '200':
+          description: Snapshot sync status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotSync'
+
+  /v1/listeners:
+    get:
+      tags: [Observability]
+      summary: List listeners
+      parameters:
+        - $ref: '#/components/parameters/NameQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Listeners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Listener'
+
+  /v1/listeners/{name}:
+    get:
+      tags: [Observability]
+      summary: Get listener detail
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listener detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listener'
+
+  /v1/routes:
+    get:
+      tags: [Observability]
+      summary: List routes
+      parameters:
+        - $ref: '#/components/parameters/KindQuery'
+        - $ref: '#/components/parameters/NameQuery'
+        - $ref: '#/components/parameters/NamespaceQuery'
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Routes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteList'
+
+  /v1/routes/{kind}/{namespace}/{name}:
+    get:
+      tags: [Observability]
+      summary: Get route detail
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Route detail
+
+  /v1/backends:
+    get:
+      tags: [Observability]
+      summary: List backends
+      parameters:
+        - $ref: '#/components/parameters/NameQuery'
+        - $ref: '#/components/parameters/NamespaceQuery'
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Backends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Backend'
+
+  /v1/backends/{namespace}/{name}:
+    get:
+      tags: [Observability]
+      summary: Get backend detail
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backend detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Backend'
+
+  /v1/nodes:
+    get:
+      tags: [Observability]
+      summary: List data plane nodes
+      parameters:
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Node'
+
+  /v1/nodes/{nodeId}:
+    get:
+      tags: [Observability]
+      summary: Get node detail
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Node detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+
+  # ── Management ─────────────────────────────────────────
+  /v1/infrastructure:
+    get:
+      tags: [Management]
+      summary: Get infrastructure reconciliation report
+      parameters:
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Infrastructure report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfrastructureReport'
+
+  /v1/service-catalog:
+    get:
+      tags: [Management]
+      summary: List available services
+      parameters:
+        - $ref: '#/components/parameters/NameQuery'
+        - $ref: '#/components/parameters/NamespaceQuery'
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+
+  /v1/namespaces:
+    get:
+      tags: [Management]
+      summary: List namespaces with managed resources
+      responses:
+        '200':
+          description: Namespaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /v1/resource-kinds:
+    get:
+      tags: [Management]
+      summary: List supported resource kinds
+      responses:
+        '200':
+          description: Resource kinds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResourceKind'
+
+  /v1/resources:
+    get:
+      tags: [Management]
+      summary: List managed resources
+      parameters:
+        - name: kind
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/NamespaceQuery'
+        - $ref: '#/components/parameters/NameQuery'
+        - $ref: '#/components/parameters/SearchQuery'
+        - $ref: '#/components/parameters/SortQuery'
+        - $ref: '#/components/parameters/OrderQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ManagedResource'
+    post:
+      tags: [Management]
+      summary: Create a resource from YAML
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceApplyRequest'
+      responses:
+        '200':
+          description: Resource created
+        '400':
+          description: Invalid YAML
+
+  /v1/resources/{kind}/{namespace}/{name}:
+    get:
+      tags: [Management]
+      summary: Get resource detail
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource detail
+    put:
+      tags: [Management]
+      summary: Update a resource from YAML
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceApplyRequest'
+      responses:
+        '200':
+          description: Resource updated
+    delete:
+      tags: [Management]
+      summary: Delete a resource
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resource deleted
+
+  /v1/topology:
+    get:
+      tags: [Management]
+      summary: Get cluster topology graph
+      parameters:
+        - $ref: '#/components/parameters/NamespaceQuery'
+      responses:
+        '200':
+          description: Topology
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topology'
+
+  /v1/dataplanes:
+    get:
+      tags: [Management]
+      summary: List discovered data planes
+      responses:
+        '200':
+          description: Data planes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dataplane'
+
+  /v1/dataplanes/{nodeId}/summary:
+    get:
+      tags: [Management]
+      summary: Get data plane summary (forwarded)
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data plane summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataplaneSummary'
+
+  # ── AI Gateway ─────────────────────────────────────────
+  /v1/ai/overview:
+    get:
+      tags: [AI Gateway]
+      summary: Get AI Gateway overview
+      responses:
+        '200':
+          description: AI overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIOverview'
+
+  /v1/ai/services:
+    get:
+      tags: [AI Gateway]
+      summary: List AI services
+      parameters:
+        - $ref: '#/components/parameters/NamespaceQuery'
+        - $ref: '#/components/parameters/NameQuery'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: AI services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AIService'
+
+  /v1/ai/token-usage:
+    get:
+      tags: [AI Gateway]
+      summary: Get token usage statistics
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d]
+        - name: provider
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token usage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AITokenUsage'
+
+  /v1/ai/traces:
+    get:
+      tags: [AI Gateway]
+      summary: List recent AI request traces
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Traces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AITrace'
+
+  /v1/ai/cost:
+    get:
+      tags: [AI Gateway]
+      summary: Get cost breakdown
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+      responses:
+        '200':
+          description: Cost breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AICost'
+
+  # ── Chatbot ────────────────────────────────────────────
+  /v1/chatbot/config:
+    get:
+      tags: [Chatbot]
+      summary: Get chatbot configuration
+      responses:
+        '200':
+          description: Chatbot config (API key masked)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatbotConfig'
+        '404':
+          description: Chatbot not configured
+    put:
+      tags: [Chatbot]
+      summary: Update chatbot configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatbotConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+
+  /v1/chatbot/chat:
+    post:
+      tags: [Chatbot]
+      summary: Stream LLM chat completion (SSE)
+      description: |
+        Server-Sent Events stream. YAML blocks in the response are
+        intercepted for dry-run validation with auto-correction.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  # ── Metrics ────────────────────────────────────────────
+  /v1/metrics/config:
+    get:
+      tags: [Metrics]
+      summary: Get metrics configuration
+      responses:
+        '200':
+          description: Metrics config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsConfig'
+    put:
+      tags: [Metrics]
+      summary: Update metrics configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+
+  /v1/metrics/query:
+    post:
+      tags: [Metrics]
+      summary: Execute instant PromQL query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsQuery'
+      responses:
+        '200':
+          description: Query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /v1/metrics/query_range:
+    post:
+      tags: [Metrics]
+      summary: Execute range PromQL query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsQueryRange'
+      responses:
+        '200':
+          description: Query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  # ── Dashboard ──────────────────────────────────────────
+  /v1/dashboard/capabilities:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard capability flags
+      responses:
+        '200':
+          description: Capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardCapabilities'
