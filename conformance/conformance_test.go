@@ -32,7 +32,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 		t.Fatalf("build conformance manifest fs: %v", err)
 	}
 	if len(manifestFS) > 0 {
-		options.ManifestFS = manifestFS
+		options.ManifestFS = append(manifestFS, &gatewayconformance.Manifests)
 	}
 	options.UsableNetworkAddresses = parseGatewayAddresses(
 		os.Getenv("CONFORMANCE_USABLE_ADDRESSES"),
