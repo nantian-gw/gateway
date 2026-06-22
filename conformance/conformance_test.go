@@ -3,15 +3,12 @@
 package conformance
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gatewayconformance "sigs.k8s.io/gateway-api/conformance"
@@ -30,8 +27,7 @@ const (
 func TestGatewayAPIConformance(t *testing.T) {
 	options := applyEnvFeatureOptions(gatewayconformance.DefaultOptions(t))
 	options, expandedAllFeatures := patchAllFeatures(options)
-
-	options.RestConfig.Wrap(conflictRetryTransport)
+	options.TimeoutConfig.TestIsolation = 3 * time.Second
 
 	manifestFS, err := gatewayAPIManifestFS()
 	if err != nil {
@@ -181,80 +177,4 @@ func parseGatewayAddresses(raw string, fallback string) []gatewayv1beta1.Gateway
 	}
 
 	return addresses
-}
-
-func conflictRetryTransport(rt http.RoundTripper) http.RoundTripper {
-	return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		resp, err := rt.RoundTrip(req)
-		if err != nil {
-			return resp, err
-		}
-		if resp.StatusCode != 409 || (req.Method != "PUT" && req.Method != "PATCH") {
-			return resp, err
-		}
-		if req.Body == nil {
-			return resp, err
-		}
-
-		bodyBytes, readErr := io.ReadAll(req.Body)
-		req.Body.Close()
-		if readErr != nil || len(bodyBytes) == 0 {
-			return resp, err
-		}
-
-		var desired map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &desired); err != nil {
-			return resp, err
-		}
-
-		for range 5 {
-			currentBody, readErr := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			if readErr != nil || len(currentBody) == 0 {
-				return resp, err
-			}
-
-			var current map[string]interface{}
-			if err := json.Unmarshal(currentBody, &current); err != nil {
-				return resp, err
-			}
-
-			mergeResourceVersion(desired, current)
-
-			newBody, marshalErr := json.Marshal(desired)
-			if marshalErr != nil || len(newBody) == 0 {
-				return resp, err
-			}
-
-			newReq, newReqErr := http.NewRequestWithContext(req.Context(), req.Method, req.URL.String(), bytes.NewReader(newBody))
-			if newReqErr != nil {
-				return resp, err
-			}
-			newReq.Header = req.Header.Clone()
-			newReq.ContentLength = int64(len(newBody))
-
-			resp, err = rt.RoundTrip(newReq)
-			if err != nil || resp.StatusCode != 409 {
-				return resp, err
-			}
-		}
-		return resp, err
-	})
-}
-
-func mergeResourceVersion(desired, current map[string]interface{}) {
-	dMeta, _ := desired["metadata"].(map[string]interface{})
-	cMeta, _ := current["metadata"].(map[string]interface{})
-	if dMeta == nil || cMeta == nil {
-		return
-	}
-	if rv, ok := cMeta["resourceVersion"]; ok {
-		dMeta["resourceVersion"] = rv
-	}
-}
-
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req)
 }
