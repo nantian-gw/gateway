@@ -3,6 +3,7 @@
 package conformance
 
 import (
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -13,9 +14,11 @@ import (
 	gatewayconformance "sigs.k8s.io/gateway-api/conformance"
 	gatewaytests "sigs.k8s.io/gateway-api/conformance/tests"
 	conformancesuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/nantian-gw/gateway/internal/gwapi"
+	"k8s.io/client-go/util/retry"
 )
 
 const (
@@ -25,6 +28,7 @@ const (
 
 func TestGatewayAPIConformance(t *testing.T) {
 	options := applyEnvFeatureOptions(gatewayconformance.DefaultOptions(t))
+	options.Client = &conflictRetryClient{Client: options.Client}
 	options, expandedAllFeatures := patchAllFeatures(options)
 
 	manifestFS, err := gatewayAPIManifestFS()
@@ -175,4 +179,22 @@ func parseGatewayAddresses(raw string, fallback string) []gatewayv1beta1.Gateway
 	}
 
 	return addresses
+}
+
+type conflictRetryClient struct {
+	client.Client
+}
+
+func (c *conflictRetryClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+	key := client.ObjectKeyFromObject(obj)
+	backoff := retry.DefaultBackoff
+
+	return retry.RetryOnConflict(backoff, func() error {
+		latest := obj.DeepCopyObject().(client.Object)
+		if err := c.Client.Get(ctx, key, latest); err != nil {
+			return err
+		}
+		obj.SetResourceVersion(latest.GetResourceVersion())
+		return c.Client.Update(ctx, obj, opts...)
+	})
 }
