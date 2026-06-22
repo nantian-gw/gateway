@@ -93,3 +93,5 @@ require (
 )
 
 replace github.com/nantian-gw/proto => ./gen/go
+
+replace sigs.k8s.io/gateway-api/conformance v1.5.1 => ./conformance/.patched-conformance
