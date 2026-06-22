@@ -4,6 +4,7 @@ package conformance
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/fs"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	gatewayconformance "sigs.k8s.io/gateway-api/conformance"
 	gatewaytests "sigs.k8s.io/gateway-api/conformance/tests"
 	conformancesuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
 	"github.com/nantian-gw/gateway/internal/gwapi"
@@ -198,39 +198,40 @@ func conflictRetryTransport(rt http.RoundTripper) http.RoundTripper {
 
 		bodyBytes, readErr := io.ReadAll(req.Body)
 		req.Body.Close()
-		if readErr != nil {
+		if readErr != nil || len(bodyBytes) == 0 {
 			return resp, err
 		}
 
-		var desired unstructured.Unstructured
-		if err := desired.UnmarshalJSON(bodyBytes); err != nil {
+		var desired map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &desired); err != nil {
 			return resp, err
 		}
 
 		for range 5 {
 			currentBody, readErr := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			if readErr != nil {
+			if readErr != nil || len(currentBody) == 0 {
 				return resp, err
 			}
 
-			var current unstructured.Unstructured
-			if err := current.UnmarshalJSON(currentBody); readErr != nil || err != nil {
+			var current map[string]interface{}
+			if err := json.Unmarshal(currentBody, &current); err != nil {
 				return resp, err
 			}
 
-			desired.SetResourceVersion(current.GetResourceVersion())
-			newBody, marshalErr := desired.MarshalJSON()
-			if marshalErr != nil {
+			mergeResourceVersion(desired, current)
+
+			newBody, marshalErr := json.Marshal(desired)
+			if marshalErr != nil || len(newBody) == 0 {
 				return resp, err
 			}
 
-			newReq := req.Clone(req.Context())
-			newReq.Body = io.NopCloser(bytes.NewReader(newBody))
+			newReq, newReqErr := http.NewRequestWithContext(req.Context(), req.Method, req.URL.String(), bytes.NewReader(newBody))
+			if newReqErr != nil {
+				return resp, err
+			}
+			newReq.Header = req.Header.Clone()
 			newReq.ContentLength = int64(len(newBody))
-			newReq.GetBody = func() (io.ReadCloser, error) {
-				return io.NopCloser(bytes.NewReader(newBody)), nil
-			}
 
 			resp, err = rt.RoundTrip(newReq)
 			if err != nil || resp.StatusCode != 409 {
@@ -239,6 +240,17 @@ func conflictRetryTransport(rt http.RoundTripper) http.RoundTripper {
 		}
 		return resp, err
 	})
+}
+
+func mergeResourceVersion(desired, current map[string]interface{}) {
+	dMeta, _ := desired["metadata"].(map[string]interface{})
+	cMeta, _ := current["metadata"].(map[string]interface{})
+	if dMeta == nil || cMeta == nil {
+		return
+	}
+	if rv, ok := cMeta["resourceVersion"]; ok {
+		dMeta["resourceVersion"] = rv
+	}
 }
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)
