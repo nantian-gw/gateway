@@ -14,3 +14,4 @@ build_push.sh
 *.swp
 .env
 __pycache__/
+docs/superpowers/
