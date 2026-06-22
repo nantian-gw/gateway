@@ -71,6 +71,23 @@ jobs:
         run: |
           mkdir -p dist/conformance
           report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
+
+          apply_file="$(go env GOMODCACHE)/sigs.k8s.io/gateway-api/conformance@v1.5.1/utils/kubernetes/apply.go"
+          python3 - "$apply_file" << 'PYEOF'
+          import sys, re
+          path = sys.argv[1]
+          content = open(path).read()
+          content = content.replace(
+              '"sigs.k8s.io/controller-runtime/pkg/client"',
+              '"sigs.k8s.io/controller-runtime/pkg/client"\n\t"k8s.io/client-go/util/retry"'
+          )
+          old = '		uObj.SetResourceVersion(fetchedObj.GetResourceVersion())\n		tlog.Logf(t, "Updating %s %s", uObj.GetName(), uObj.GetKind())\n		err = c.Update(ctx, uObj)'
+          new = '		uObj.SetResourceVersion(fetchedObj.GetResourceVersion())\n		tlog.Logf(t, "Updating %s %s", uObj.GetName(), uObj.GetKind())\n		err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {\n			latest := &unstructured.Unstructured{}\n			latest.SetGroupVersionKind(uObj.GroupVersionKind())\n			if getErr := c.Get(ctx, client.ObjectKeyFromObject(uObj), latest); getErr != nil {\n				return getErr\n			}\n			uObj.SetResourceVersion(latest.GetResourceVersion())\n			return c.Update(ctx, uObj)\n		})'
+          content = content.replace(old, new)
+          open(path, 'w').write(content)
+          print("Patched apply.go with conflict retry")
+          PYEOF
+
           set +e
           go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
             -args \
