@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/nantian-gw/gateway/internal/protocompat"
+	"github.com/nantian-gw/gateway/internal/compat"
 )
 
 const (
@@ -97,7 +97,7 @@ func main() {
 		fatalf("find base target descriptor: %v", err)
 	}
 
-	result := protocompat.CompareFiles(baseFile, currentFile)
+	result := compat.CompareFiles(baseFile, currentFile)
 	if !result.OK() {
 		fmt.Println("Backward-incompatible changes detected:")
 		for _, f := range result.Errors {

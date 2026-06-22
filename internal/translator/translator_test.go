@@ -19,7 +19,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -603,8 +603,8 @@ func TestFiltersFromHTTPCORS(t *testing.T) {
 			Type: gatewayv1.HTTPRouteFilterType("CORS"),
 		}},
 		"default",
-		extensionfilter.Resolver{},
-		extensionfilter.TargetHTTP,
+		extfilter.Resolver{},
+		extfilter.TargetHTTP,
 		rawHTTPRouteFilterConfigs{{
 			{
 				"type": "CORS",
@@ -757,10 +757,10 @@ func TestFiltersFromGRPCHeaderModifiers(t *testing.T) {
 }
 
 func TestFiltersFromHTTPExtensionRefDirectResponse(t *testing.T) {
-	resolver := extensionfilter.NewResolver([]corev1.ConfigMap{{
+	resolver := extfilter.NewResolver([]corev1.ConfigMap{{
 		ObjectMeta: metav1.ObjectMeta{Name: "maintenance", Namespace: "default"},
 		Data: map[string]string{
-			extensionfilter.ConfigMapDataKey: `
+			extfilter.ConfigMapDataKey: `
 type: DirectResponse
 directResponse:
   statusCode: 503
@@ -777,15 +777,15 @@ directResponse:
 			Kind:  "ConfigMap",
 			Name:  "maintenance",
 		},
-	}}, "default", resolver, extensionfilter.TargetHTTP, nil, 0)
+	}}, "default", resolver, extfilter.TargetHTTP, nil, 0)
 
 	if len(filters) != 1 {
 		t.Fatalf("expected 1 filter, got %d", len(filters))
 	}
-	if filters[0].Type != extensionfilter.TypeExtensionRef {
+	if filters[0].Type != extfilter.TypeExtensionRef {
 		t.Fatalf("unexpected filter type: %s", filters[0].Type)
 	}
-	if got := filters[0].Config["extensionType"]; got != extensionfilter.TypeDirectResponse {
+	if got := filters[0].Config["extensionType"]; got != extfilter.TypeDirectResponse {
 		t.Fatalf("unexpected extension type: %#v", got)
 	}
 	directResponse, ok := filters[0].Config["directResponse"].(map[string]any)
@@ -798,10 +798,10 @@ directResponse:
 }
 
 func TestFiltersFromGRPCExtensionRefHeaderModifier(t *testing.T) {
-	resolver := extensionfilter.NewResolver([]corev1.ConfigMap{{
+	resolver := extfilter.NewResolver([]corev1.ConfigMap{{
 		ObjectMeta: metav1.ObjectMeta{Name: "grpc-headers", Namespace: "default"},
 		Data: map[string]string{
-			extensionfilter.ConfigMapDataKey: `
+			extfilter.ConfigMapDataKey: `
 type: ResponseHeaderModifier
 headerModifier:
   set:
@@ -818,7 +818,7 @@ headerModifier:
 			Kind:  "ConfigMap",
 			Name:  "grpc-headers",
 		},
-	}}, "default", resolver, extensionfilter.TargetGRPC)
+	}}, "default", resolver, extfilter.TargetGRPC)
 
 	if len(filters) != 1 {
 		t.Fatalf("expected 1 filter, got %d", len(filters))
@@ -841,12 +841,12 @@ func TestFiltersFromHTTPExtensionRefMissingConfigMap(t *testing.T) {
 			Kind:  "ConfigMap",
 			Name:  "missing",
 		},
-	}}, "default", extensionfilter.Resolver{}, extensionfilter.TargetHTTP, nil, 0)
+	}}, "default", extfilter.Resolver{}, extfilter.TargetHTTP, nil, 0)
 
 	if len(filters) != 1 {
 		t.Fatalf("expected 1 filter, got %d", len(filters))
 	}
-	if filters[0].Type != extensionfilter.TypeExtensionRef {
+	if filters[0].Type != extfilter.TypeExtensionRef {
 		t.Fatalf("unexpected filter type: %s", filters[0].Type)
 	}
 	if got := filters[0].Config["resolved"]; got != false {
@@ -855,10 +855,10 @@ func TestFiltersFromHTTPExtensionRefMissingConfigMap(t *testing.T) {
 }
 
 func TestFiltersFromHTTPExtensionRefRequestRedirect(t *testing.T) {
-	resolver := extensionfilter.NewResolver([]corev1.ConfigMap{{
+	resolver := extfilter.NewResolver([]corev1.ConfigMap{{
 		ObjectMeta: metav1.ObjectMeta{Name: "redirect", Namespace: "default"},
 		Data: map[string]string{
-			extensionfilter.ConfigMapDataKey: `
+			extfilter.ConfigMapDataKey: `
 type: RequestRedirect
 requestRedirect:
   scheme: https
@@ -875,7 +875,7 @@ requestRedirect:
 			Kind:  "ConfigMap",
 			Name:  "redirect",
 		},
-	}}, "default", resolver, extensionfilter.TargetHTTP, nil, 0)
+	}}, "default", resolver, extfilter.TargetHTTP, nil, 0)
 
 	if len(filters) != 1 {
 		t.Fatalf("expected 1 filter, got %d", len(filters))
@@ -889,10 +889,10 @@ requestRedirect:
 }
 
 func TestFiltersFromHTTPExtensionRefCORS(t *testing.T) {
-	resolver := extensionfilter.NewResolver([]corev1.ConfigMap{{
+	resolver := extfilter.NewResolver([]corev1.ConfigMap{{
 		ObjectMeta: metav1.ObjectMeta{Name: "cors", Namespace: "default"},
 		Data: map[string]string{
-			extensionfilter.ConfigMapDataKey: `
+			extfilter.ConfigMapDataKey: `
 type: CORS
 cors:
   allowOrigins:
@@ -912,7 +912,7 @@ cors:
 			Kind:  "ConfigMap",
 			Name:  "cors",
 		},
-	}}, "default", resolver, extensionfilter.TargetHTTP, nil, 0)
+	}}, "default", resolver, extfilter.TargetHTTP, nil, 0)
 
 	if len(filters) != 1 {
 		t.Fatalf("expected 1 filter, got %d", len(filters))

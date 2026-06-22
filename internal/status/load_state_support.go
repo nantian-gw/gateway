@@ -14,9 +14,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 
@@ -185,7 +185,7 @@ func collectRouteTrafficRefs(
 func collectBackendLBPolicyTrafficRefs(
 	services map[string]client.ObjectKey,
 	serviceImports map[string]client.ObjectKey,
-	policies []backendlbv1alpha2.BackendLBPolicy,
+	policies []backendlb.BackendLBPolicy,
 ) {
 	for _, policy := range policies {
 		for _, targetRef := range policy.Spec.TargetRefs {
@@ -281,7 +281,7 @@ func collectGatewaySecretRefs(out map[string]client.ObjectKey, gateways []gatewa
 			}
 		}
 
-		if backendTLS := gatewayapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
+		if backendTLS := gwapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 			clientCertificateRef := backendTLS.ClientCertificateRef
 			if group := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Group)); group == "" {
 				kind := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Kind))
@@ -322,7 +322,7 @@ func collectGatewayConfigMapRefs(
 		}
 
 		for _, listener := range gateway.Spec.Listeners {
-			validation := gatewayapi.FrontendValidationForListener(gateway, listener)
+			validation := gwapi.FrontendValidationForListener(gateway, listener)
 			if validation == nil {
 				continue
 			}
@@ -359,10 +359,10 @@ func collectRouteExtensionConfigMapRefs(
 	}
 }
 
-func collectExtensionConfigMapRefs(out map[string]client.ObjectKey, refs []extensionfilter.Ref) {
+func collectExtensionConfigMapRefs(out map[string]client.ObjectKey, refs []extfilter.Ref) {
 	for _, ref := range refs {
 		if strings.TrimSpace(ref.Group) != "" ||
-			strings.TrimSpace(ref.Kind) != extensionfilter.ConfigMapKind ||
+			strings.TrimSpace(ref.Kind) != extfilter.ConfigMapKind ||
 			strings.TrimSpace(ref.Name) == "" {
 			continue
 		}

@@ -11,7 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -21,7 +21,7 @@ const (
 	wasmConfigMapDefaultKeyLegacy = ""
 )
 
-func referencedConfigMapKeysForWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlugin) []client.ObjectKey {
+func referencedConfigMapKeysForWasmPlugins(plugins []wasmplugin.WasmPlugin) []client.ObjectKey {
 	keys := make([]client.ObjectKey, 0, len(plugins))
 	for _, p := range plugins {
 		if p.Spec.Wasm.ConfigMap != nil && p.Spec.Wasm.ConfigMap.Name != "" {
@@ -46,7 +46,7 @@ func wasmConfigMapData(configMaps []corev1.ConfigMap, namespace, name, key strin
 	return nil
 }
 
-func translateWasmPlugin(p wasmpluginv1alpha1.WasmPlugin, configMaps []corev1.ConfigMap) ir.WasmPluginConfig {
+func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap) ir.WasmPluginConfig {
 	cfg := ir.WasmPluginConfig{
 		Name:       p.Name,
 		Namespace:  p.Namespace,
@@ -97,7 +97,7 @@ func translateWasmPlugin(p wasmpluginv1alpha1.WasmPlugin, configMaps []corev1.Co
 	return cfg
 }
 
-func translateWasmPlugins(plugins []wasmpluginv1alpha1.WasmPlugin, configMaps []corev1.ConfigMap) map[string]ir.WasmPluginConfig {
+func translateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap) map[string]ir.WasmPluginConfig {
 	result := make(map[string]ir.WasmPluginConfig, len(plugins))
 	for _, p := range plugins {
 		key := backendObjectKey(p.Namespace, p.Name)

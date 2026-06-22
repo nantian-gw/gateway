@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
@@ -260,7 +260,7 @@ func resolveListenerSetParent(
 		return "", "", nil
 	}
 
-	baseListeners := gatewayapi.EffectiveListeners(gateway)
+	baseListeners := gwapi.EffectiveListeners(gateway)
 	allListeners := mergeListenerSetListeners(gateway, baseListeners, []gatewayv1.ListenerSet{ls}, namespaces)
 	listenerSetListeners := allListeners[len(baseListeners):]
 	out := make([]gatewayv1.Listener, 0, len(listenerSetListeners))
@@ -298,7 +298,7 @@ func serviceListenerMatchesParent(listener ir.Listener, parentRef ir.ParentRef) 
 }
 
 func candidateAttachmentListeners(gateway gatewayv1.Gateway, parentRef ir.ParentRef) []gatewayv1.Listener {
-	listeners := gatewayapi.EffectiveListeners(gateway)
+	listeners := gwapi.EffectiveListeners(gateway)
 	out := make([]gatewayv1.Listener, 0, len(listeners))
 	for _, listener := range listeners {
 		if parentRef.SectionName != "" && string(listener.Name) != parentRef.SectionName {

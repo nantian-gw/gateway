@@ -10,7 +10,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/backendtls"
+	"github.com/nantian-gw/gateway/internal/tlspolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -97,7 +97,7 @@ func translateBackendTLSPolicyValidationWithIndexes(
 		return nil, false
 	}
 
-	options, err := backendtls.ParseOptions(policy.Spec.Options)
+	options, err := tlspolicy.ParseOptions(policy.Spec.Options)
 	if err != nil {
 		return nil, false
 	}
@@ -143,7 +143,7 @@ func translateBackendTLSPolicyValidationWithIndexes(
 func backendTLSPolicySubjectAltNames(
 	validation gatewayv1.BackendTLSPolicyValidation,
 ) ([]ir.BackendSubjectName, bool) {
-	items, err := backendtls.ParseSubjectAltNames(validation.SubjectAltNames)
+	items, err := tlspolicy.ParseSubjectAltNames(validation.SubjectAltNames)
 	if err != nil {
 		return nil, false
 	}
@@ -311,7 +311,7 @@ func backendTLSPolicyAssignmentPrecedes(
 	if leftSpecificity != rightSpecificity {
 		return leftSpecificity > rightSpecificity
 	}
-	return backendtls.PolicyPrecedes(left, right)
+	return tlspolicy.PolicyPrecedes(left, right)
 }
 
 func findServiceForPolicy(

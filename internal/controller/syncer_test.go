@@ -27,7 +27,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/observability"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -421,8 +421,8 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 					Name:      "nantian-dataplane",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
-						managedresources.ManagedByLabel: managedresources.ManagedByValue,
-						managedresources.ServiceRoleKey: managedresources.ServiceRoleShared,
+						resources.ManagedByLabel: resources.ManagedByValue,
+						resources.ServiceRoleKey: resources.ServiceRoleShared,
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -441,9 +441,9 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 					Name:      "aeg-shared-ep-nantian-dataplane-ipv4",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
-						managedresources.ManagedByLabel: managedresources.ManagedByValue,
-						managedresources.ServiceRoleKey: managedresources.EndpointSliceRoleSharedFrontend,
-						discoveryv1.LabelManagedBy:      managedresources.ManagedByValue,
+						resources.ManagedByLabel: resources.ManagedByValue,
+						resources.ServiceRoleKey: resources.EndpointSliceRoleSharedFrontend,
+						discoveryv1.LabelManagedBy:      resources.ManagedByValue,
 						discoveryv1.LabelServiceName:    "nantian-dataplane",
 					},
 				},

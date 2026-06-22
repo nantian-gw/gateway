@@ -11,8 +11,8 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 func (r *Reconciler) ReconcileHTTPRouteObject(ctx context.Context, key client.ObjectKey) error {
@@ -244,7 +244,7 @@ func (r *Reconciler) loadRouteParentGateways(
 		}
 	}
 
-	if gatewayapi.UsesDefaultGateways(route.defaultGatewayScope) {
+	if gwapi.UsesDefaultGateways(route.defaultGatewayScope) {
 		if err := r.loadRouteDefaultGateways(ctx, state, route.defaultGatewayScope); err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func (r *Reconciler) loadRouteDefaultGateways(
 		if _, ok := managedClasses[string(gateway.Spec.GatewayClassName)]; !ok {
 			continue
 		}
-		if !gatewayapi.GatewayMatchesDefaultScope(gateway, scope) {
+		if !gwapi.GatewayMatchesDefaultScope(gateway, scope) {
 			continue
 		}
 		key := namespacedName(gateway.Namespace, gateway.Name)
@@ -409,7 +409,7 @@ func (r *Reconciler) loadRouteExtensionConfigMaps(
 ) error {
 	keys := make(map[string]client.ObjectKey)
 	for _, ref := range route.extensionRefs {
-		if ref.Group != "" || ref.Kind != extensionfilter.ConfigMapKind || strings.TrimSpace(ref.Name) == "" {
+		if ref.Group != "" || ref.Kind != extfilter.ConfigMapKind || strings.TrimSpace(ref.Name) == "" {
 			continue
 		}
 

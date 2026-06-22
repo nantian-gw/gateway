@@ -19,8 +19,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 func BenchmarkReconcileFullStatusRouteFanout(b *testing.B) {
@@ -288,8 +288,8 @@ func newBackendPolicyStatusBenchmarkClient(b *testing.B, policyCount int) client
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
-		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
-		WithIndex(&backendlbv1alpha2.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
+		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
+		WithIndex(&backendlb.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
 		WithObjects(objects...).
 		Build()
 }
@@ -385,7 +385,7 @@ func backendPolicyBenchmarkObjects(b *testing.B, policyCount int) []client.Objec
 
 	for i := 0; i < policyCount; i++ {
 		serviceName := "echo-" + strconv.Itoa(i)
-		lbType := backendlbv1alpha2.LoadBalancingStrategyTypeRoundRobin
+		lbType := backendlb.LoadBalancingStrategyTypeRoundRobin
 		objects = append(
 			objects,
 			&corev1.Service{
@@ -417,14 +417,14 @@ func backendPolicyBenchmarkObjects(b *testing.B, policyCount int) []client.Objec
 				},
 			},
 			backendPolicyBenchmarkTLSPolicy(b, serviceName+"-tls", serviceName, caBundle),
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: serviceName + "-lb", Namespace: "default"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Kind: "Service",
 						Name: gatewayv1.ObjectName(serviceName),
 					}},
-					LoadBalancing: &backendlbv1alpha2.LoadBalancingPolicy{
+					LoadBalancing: &backendlb.LoadBalancingPolicy{
 						Type: &lbType,
 					},
 				},
@@ -443,7 +443,7 @@ func backendPolicyBenchmarkTLSPolicy(
 ) client.Object {
 	b.Helper()
 
-	raw, err := gatewayapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
+	raw, err := gwapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: policyName, Namespace: "default"},
 		Spec: gatewayv1.BackendTLSPolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReferenceWithSectionName{{
@@ -657,7 +657,7 @@ func newStatusBenchmarkScheme(b *testing.B) *runtime.Scheme {
 	benchmarkMustAddToScheme(b, scheme, apiextensionsv1.AddToScheme)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1alpha2.Install)
-	benchmarkMustAddToScheme(b, scheme, backendlbv1alpha2.Install)
+	benchmarkMustAddToScheme(b, scheme, backendlb.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1alpha3.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1beta1.Install)
 	benchmarkMustAddToScheme(b, scheme, mcsv1alpha1.AddToScheme)

@@ -16,7 +16,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func TestReconcileGatewayObjectUsesReaderStateForObservedGeneration(t *testing.T) {
@@ -36,7 +36,7 @@ func TestReconcileGatewayObjectUsesReaderStateForObservedGeneration(t *testing.T
 	freshService := gatewayInfrastructureServiceForGateway(freshGateway)
 	freshEndpointSlice := gatewayInfrastructureEndpointSliceForService(
 		freshService,
-		managedresources.EndpointSliceRoleGatewayFrontend,
+		resources.EndpointSliceRoleGatewayFrontend,
 	)
 
 	staleClient := fake.NewClientBuilder().
@@ -150,7 +150,7 @@ func TestReconcileGatewayObjectCountsDefaultedRoute(t *testing.T) {
 	service := gatewayInfrastructureServiceForGateway(defaultGateway)
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(
 		service,
-		managedresources.EndpointSliceRoleGatewayFrontend,
+		resources.EndpointSliceRoleGatewayFrontend,
 	)
 
 	staleClient := fake.NewClientBuilder().

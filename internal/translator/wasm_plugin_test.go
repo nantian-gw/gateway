@@ -9,22 +9,22 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
 )
 
 func TestTranslateWasmPlugin(t *testing.T) {
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
 				SHA256: "abc123",
 			},
-			Hooks: []wasmpluginv1alpha1.WasmHook{
-				wasmpluginv1alpha1.HookOnRequest,
-				wasmpluginv1alpha1.HookOnResponse,
+			Hooks: []wasmplugin.WasmHook{
+				wasmplugin.HookOnRequest,
+				wasmplugin.HookOnResponse,
 			},
 			Config: `{"key": "value"}`,
-			Sandbox: wasmpluginv1alpha1.WasmSandbox{
+			Sandbox: wasmplugin.WasmSandbox{
 				MaxMemoryBytes:     10485760,
 				MaxExecutionTimeMs: 100,
 			},
@@ -68,11 +68,11 @@ func TestTranslateWasmPluginFromConfigMap(t *testing.T) {
 		},
 	}
 
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "cm-plugin", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
-				ConfigMap: &wasmpluginv1alpha1.WasmConfigMapRef{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
+				ConfigMap: &wasmplugin.WasmConfigMapRef{
 					Name: "my-plugin",
 				},
 			},
@@ -98,11 +98,11 @@ func TestTranslateWasmPluginFromConfigMapCustomKey(t *testing.T) {
 		},
 	}
 
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "cm-plugin", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
-				ConfigMap: &wasmpluginv1alpha1.WasmConfigMapRef{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
+				ConfigMap: &wasmplugin.WasmConfigMapRef{
 					Name: "my-plugin",
 					Key:  "my-custom-key.wasm",
 				},
@@ -119,11 +119,11 @@ func TestTranslateWasmPluginFromConfigMapCustomKey(t *testing.T) {
 }
 
 func TestTranslateWasmPluginConfigMapNotFound(t *testing.T) {
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "cm-plugin", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
-				ConfigMap: &wasmpluginv1alpha1.WasmConfigMapRef{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
+				ConfigMap: &wasmplugin.WasmConfigMapRef{
 					Name: "nonexistent",
 				},
 			},
@@ -136,7 +136,7 @@ func TestTranslateWasmPluginConfigMapNotFound(t *testing.T) {
 }
 
 func TestTranslateWasmPlugins(t *testing.T) {
-	plugins := []wasmpluginv1alpha1.WasmPlugin{
+	plugins := []wasmplugin.WasmPlugin{
 		{ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "default"}},
 		{ObjectMeta: metav1.ObjectMeta{Name: "p2", Namespace: "default"}},
 	}
@@ -147,12 +147,12 @@ func TestTranslateWasmPlugins(t *testing.T) {
 }
 
 func TestReferencedConfigMapKeysForWasmPlugins(t *testing.T) {
-	plugins := []wasmpluginv1alpha1.WasmPlugin{
+	plugins := []wasmplugin.WasmPlugin{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "default"},
-			Spec: wasmpluginv1alpha1.WasmPluginSpec{
-				Wasm: wasmpluginv1alpha1.WasmSource{
-					ConfigMap: &wasmpluginv1alpha1.WasmConfigMapRef{
+			Spec: wasmplugin.WasmPluginSpec{
+				Wasm: wasmplugin.WasmSource{
+					ConfigMap: &wasmplugin.WasmConfigMapRef{
 						Name: "cm1",
 					},
 				},
@@ -160,9 +160,9 @@ func TestReferencedConfigMapKeysForWasmPlugins(t *testing.T) {
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "p2", Namespace: "other"},
-			Spec: wasmpluginv1alpha1.WasmPluginSpec{
-				Wasm: wasmpluginv1alpha1.WasmSource{
-					ConfigMap: &wasmpluginv1alpha1.WasmConfigMapRef{
+			Spec: wasmplugin.WasmPluginSpec{
+				Wasm: wasmplugin.WasmSource{
+					ConfigMap: &wasmplugin.WasmConfigMapRef{
 						Name: "cm2",
 					},
 				},
@@ -171,8 +171,8 @@ func TestReferencedConfigMapKeysForWasmPlugins(t *testing.T) {
 		// Plugin without ConfigMap — should be skipped
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "p3", Namespace: "default"},
-			Spec: wasmpluginv1alpha1.WasmPluginSpec{
-				Wasm: wasmpluginv1alpha1.WasmSource{
+			Spec: wasmplugin.WasmPluginSpec{
+				Wasm: wasmplugin.WasmSource{
 					URL: "https://example.com/plugin.wasm",
 				},
 			},
@@ -194,10 +194,10 @@ func TestTranslateWasmPluginFromInline(t *testing.T) {
 	wasmBytes := []byte("mock wasm binary data from inline")
 	encoded := base64.StdEncoding.EncodeToString(wasmBytes)
 
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "inline-plugin", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
 				Inline: encoded,
 				SHA256: "inline-sha256",
 			},
@@ -216,10 +216,10 @@ func TestTranslateWasmPluginFromInline(t *testing.T) {
 }
 
 func TestTranslateWasmPluginFromInlineDecodeError(t *testing.T) {
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "bad-inline", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
 				Inline: "this-is-not-valid-base64!!!",
 			},
 		},
@@ -237,10 +237,10 @@ func TestTranslateWasmPluginFromURL(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "url-plugin", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
 				URL: server.URL + "/plugin.wasm",
 			},
 		},
@@ -260,10 +260,10 @@ func TestTranslateWasmPluginFromURLHTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "url-error", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
 				URL: server.URL + "/not-found.wasm",
 			},
 		},
@@ -284,10 +284,10 @@ func TestTranslateWasmPluginURLOverridesInline(t *testing.T) {
 	}))
 	defer server.Close()
 
-	p := wasmpluginv1alpha1.WasmPlugin{
+	p := wasmplugin.WasmPlugin{
 		ObjectMeta: metav1.ObjectMeta{Name: "url-override", Namespace: "default"},
-		Spec: wasmpluginv1alpha1.WasmPluginSpec{
-			Wasm: wasmpluginv1alpha1.WasmSource{
+		Spec: wasmplugin.WasmPluginSpec{
+			Wasm: wasmplugin.WasmSource{
 				Inline: encoded,
 				URL:    server.URL + "/plugin.wasm",
 			},

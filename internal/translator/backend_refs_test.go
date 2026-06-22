@@ -16,7 +16,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -224,7 +224,7 @@ func TestBuildPreservesHTTPBackendRefCORSExtensionFilter(t *testing.T) {
 		&corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{Name: "backend-cors", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: CORS
 cors:
   allowOrigins:

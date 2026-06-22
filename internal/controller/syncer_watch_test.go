@@ -25,8 +25,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -704,10 +704,10 @@ func TestSnapshotReconcileRequestsQueueServiceImportEndpointSliceBackendRefresh(
 
 func TestSnapshotReconcileRequestsQueueBackendLBPolicyNamespaceRefresh(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(t)
-	policy := &backendlbv1alpha2.BackendLBPolicy{
+	policy := &backendlb.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "default"},
-		Spec: backendlbv1alpha2.BackendLBPolicySpec{
-			TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{
+		Spec: backendlb.BackendLBPolicySpec{
+			TargetRefs: []backendlb.LocalPolicyTargetReference{
 				{
 					Kind: "Service",
 					Name: "echo",
@@ -1830,7 +1830,7 @@ func newIndexedWatchTestSyncer(t *testing.T, objects ...client.Object) *Syncer {
 	mustAddToScheme(t, scheme, gatewayv1.Install)
 	mustAddToScheme(t, scheme, gatewayv1alpha2.Install)
 	mustAddToScheme(t, scheme, gatewayv1alpha3.Install)
-	mustAddToScheme(t, scheme, backendlbv1alpha2.Install)
+	mustAddToScheme(t, scheme, backendlb.Install)
 
 	clientBuilder := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -1859,7 +1859,7 @@ func newIndexedWatchTestSyncer(t *testing.T, objects ...client.Object) *Syncer {
 		WithIndex(&gatewayv1alpha2.TLSRoute{}, tlsRouteReferenceGrantNamespaceIndex, tlsRouteReferenceGrantNamespaceIndexKeys).
 		WithIndex(&gatewayv1alpha2.TLSRoute{}, tlsRouteParentGatewayIndex, tlsRouteParentGatewayIndexKeys).
 		WithIndex(
-			gatewayapi.NewBackendTLSPolicyV1Object(),
+			gwapi.NewBackendTLSPolicyV1Object(),
 			backendTLSPolicyConfigMapRefIndex,
 			backendTLSPolicyConfigMapReferenceIndexKeys,
 		)
@@ -1883,7 +1883,7 @@ func mustEncodeBackendTLSPolicyV1ForWatchTest(
 ) *unstructured.Unstructured {
 	t.Helper()
 
-	raw, err := gatewayapi.EncodeBackendTLSPolicyV1(policy)
+	raw, err := gwapi.EncodeBackendTLSPolicyV1(policy)
 	if err != nil {
 		t.Fatalf("encode BackendTLSPolicy v1: %v", err)
 	}
@@ -1961,7 +1961,7 @@ func (c backendTLSPolicyFieldSelectorRejectingClient) List(
 	if !ok {
 		return c.Client.List(ctx, list, opts...)
 	}
-	if typed.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
+	if typed.GroupVersionKind() != gwapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
 		return c.Client.List(ctx, list, opts...)
 	}
 
@@ -1985,7 +1985,7 @@ func (c *countingBackendTLSPolicyFieldSelectorRejectingClient) List(
 	if !ok {
 		return c.Client.List(ctx, list, opts...)
 	}
-	if typed.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
+	if typed.GroupVersionKind() != gwapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
 		return c.Client.List(ctx, list, opts...)
 	}
 

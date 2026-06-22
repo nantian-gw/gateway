@@ -14,8 +14,8 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 type translatorSupportObjects struct {
@@ -77,7 +77,7 @@ func (t *Translator) loadSupportObjects(
 func referencedSecretKeys(gateways []gatewayv1.Gateway) []client.ObjectKey {
 	keys := make(map[string]client.ObjectKey)
 	for _, gateway := range gateways {
-		for _, listener := range gatewayapi.EffectiveListeners(gateway) {
+		for _, listener := range gwapi.EffectiveListeners(gateway) {
 			if listener.TLS == nil {
 				continue
 			}
@@ -93,7 +93,7 @@ func referencedSecretKeys(gateways []gatewayv1.Gateway) []client.ObjectKey {
 			}
 		}
 
-		backendTLS := gatewayapi.GatewayBackendTLS(gateway)
+		backendTLS := gwapi.GatewayBackendTLS(gateway)
 		if backendTLS == nil || backendTLS.ClientCertificateRef == nil {
 			continue
 		}
@@ -121,8 +121,8 @@ func referencedConfigMapKeys(
 	keys := make(map[string]client.ObjectKey)
 
 	for _, gateway := range gateways {
-		for _, listener := range gatewayapi.EffectiveListeners(gateway) {
-			validation := gatewayapi.FrontendValidationForListener(gateway, listener)
+		for _, listener := range gwapi.EffectiveListeners(gateway) {
+			validation := gwapi.FrontendValidationForListener(gateway, listener)
 			if validation == nil {
 				continue
 			}
@@ -230,7 +230,7 @@ func attachmentNamespaceKeys(
 
 func gatewaysUseRouteNamespaceSelectors(gateways []gatewayv1.Gateway) bool {
 	for _, gateway := range gateways {
-		for _, listener := range gatewayapi.EffectiveListeners(gateway) {
+		for _, listener := range gwapi.EffectiveListeners(gateway) {
 			if listener.AllowedRoutes == nil || listener.AllowedRoutes.Namespaces == nil || listener.AllowedRoutes.Namespaces.From == nil {
 				continue
 			}
@@ -306,7 +306,7 @@ func configMapObjectKeyFromLocalRef(
 	if string(ref.Group) != "" {
 		return client.ObjectKey{}, false
 	}
-	if string(ref.Kind) != extensionfilter.ConfigMapKind {
+	if string(ref.Kind) != extfilter.ConfigMapKind {
 		return client.ObjectKey{}, false
 	}
 	return client.ObjectKey{

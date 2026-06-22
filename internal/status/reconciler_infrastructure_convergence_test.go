@@ -11,7 +11,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func TestReconcileRefreshesInfrastructureConvergenceFromReaderWhenGatewayGenerationIsCurrent(t *testing.T) {
@@ -38,7 +38,7 @@ func TestReconcileRefreshesInfrastructureConvergenceFromReaderWhenGatewayGenerat
 	currentFrontendSlice := gatewayInfrastructureEndpointSlice(
 		"default",
 		"gw",
-		managedresources.EndpointSliceRoleGatewayFrontend,
+		resources.EndpointSliceRoleGatewayFrontend,
 	)
 	currentFrontendSlice.Annotations[gatewayConvergenceOwnerGenerationAnnotation] = "2"
 
@@ -104,7 +104,7 @@ func TestReconcileRefreshesInfrastructureConvergenceFromReaderWhenGatewayGenerat
 				gatewayInfrastructureEndpointSlice(
 					"default",
 					"gw",
-					managedresources.EndpointSliceRoleSharedFrontend,
+					resources.EndpointSliceRoleSharedFrontend,
 				),
 			},
 			freshObjects: []client.Object{

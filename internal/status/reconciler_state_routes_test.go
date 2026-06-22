@@ -16,8 +16,8 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 func TestLoadStateScopesRoutesToManagedGatewaysAndServiceParents(t *testing.T) {
@@ -220,7 +220,7 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 			},
 		},
 	}
-	echoTLSRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoTLSPolicy)
+	echoTLSRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoTLSPolicy)
 	if err != nil {
 		t.Fatalf("encode BackendTLSPolicy: %v", err)
 	}
@@ -244,8 +244,8 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
-		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
-		WithIndex(&backendlbv1alpha2.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
+		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
+		WithIndex(&backendlb.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -303,10 +303,10 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 				},
 			},
 			echoTLSRaw,
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "default"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "echo",
@@ -450,7 +450,7 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 
-	policyRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
+	policyRaw, err := gwapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "orders-tls", Namespace: "default"},
 		Spec: gatewayv1.BackendTLSPolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReferenceWithSectionName{{
@@ -471,8 +471,8 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
-		WithIndex(&backendlbv1alpha2.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
+		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
+		WithIndex(&backendlb.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -488,10 +488,10 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 				},
 			},
 			policyRaw,
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "orders-lb", Namespace: "default"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Kind: "Service",
 						Name: "orders",
 					}},
@@ -510,7 +510,7 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 	reconciler.listReader = validatingListReader{
 		Reader: k8sClient,
 		listValidators: map[reflect.Type]func(client.ListOptions) error{
-			reflect.TypeOf(&backendlbv1alpha2.BackendLBPolicyList{}): func(opts client.ListOptions) error {
+			reflect.TypeOf(&backendlb.BackendLBPolicyList{}): func(opts client.ListOptions) error {
 				if opts.Namespace != "" {
 					return fmt.Errorf("BackendLBPolicy fallback list namespace = %q, want cluster-wide", opts.Namespace)
 				}

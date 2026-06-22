@@ -13,10 +13,10 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func (t *Translator) BuildRoutesForSnapshot(
@@ -96,7 +96,7 @@ func (t *Translator) BuildRoutesForSnapshot(
 	if err != nil {
 		return nil, err
 	}
-	extensionResolver := extensionfilter.NewResolver(configMaps)
+	extensionResolver := extfilter.NewResolver(configMaps)
 
 	updatedHTTPRoutes := make([]ir.HTTPRoute, 0, len(httpRoutes))
 	for _, route := range httpRoutes {
@@ -156,7 +156,7 @@ func (t *Translator) BuildRoutesForSnapshot(
 	}
 
 	annotator := newBackendRefTranslator(
-		managedresources.FilterServices(services),
+		resources.FilterServices(services),
 		serviceImports,
 		referenceGrants,
 		extensionResolver,
@@ -350,27 +350,27 @@ func routesUseDefaultGateways(
 	tlsRoutes []gatewayv1alpha2.TLSRoute,
 ) bool {
 	for _, route := range httpRoutes {
-		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range grpcRoutes {
-		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range tcpRoutes {
-		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range udpRoutes {
-		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range tlsRoutes {
-		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}

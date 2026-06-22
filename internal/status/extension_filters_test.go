@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/internal/extfilter"
 )
 
 func TestEvaluateResolvedRefsAcceptsHTTPRouteExtensionRef(t *testing.T) {
@@ -15,7 +15,7 @@ func TestEvaluateResolvedRefsAcceptsHTTPRouteExtensionRef(t *testing.T) {
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "headers", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: RequestHeaderModifier
 headerModifier:
   add:
@@ -31,8 +31,8 @@ headerModifier:
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "headers",
 		}},
@@ -52,8 +52,8 @@ func TestEvaluateResolvedRefsRejectsMissingExtensionConfigMap(t *testing.T) {
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "missing",
 		}},
@@ -72,7 +72,7 @@ func TestEvaluateResolvedRefsRejectsUnsupportedExtensionType(t *testing.T) {
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "unsupported", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: LocalRateLimit
 `,
 			},
@@ -84,8 +84,8 @@ type: LocalRateLimit
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "unsupported",
 		}},
@@ -104,7 +104,7 @@ func TestEvaluateResolvedRefsRejectsInvalidRequestMirrorExtensionRef(t *testing.
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "mirror", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: RequestMirror
 requestMirror:
   backendRef:
@@ -124,8 +124,8 @@ requestMirror:
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "mirror",
 		}},
@@ -144,7 +144,7 @@ func TestEvaluateResolvedRefsRejectsInvalidRequestRedirectExtensionRef(t *testin
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "redirect", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: RequestRedirect
 requestRedirect:
   scheme: ftp
@@ -158,8 +158,8 @@ requestRedirect:
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "redirect",
 		}},
@@ -178,7 +178,7 @@ func TestEvaluateResolvedRefsAcceptsCORSExtensionRef(t *testing.T) {
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "cors", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: CORS
 cors:
   allowOrigins:
@@ -195,8 +195,8 @@ cors:
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "cors",
 		}},
@@ -215,7 +215,7 @@ func TestEvaluateResolvedRefsRejectsInvalidHeaderModifierExtensionRef(t *testing
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "headers", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: RequestHeaderModifier
 headerModifier:
   remove:
@@ -230,8 +230,8 @@ headerModifier:
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "headers",
 		}},
@@ -250,7 +250,7 @@ func TestEvaluateResolvedRefsRejectsInvalidDirectResponseExtensionRef(t *testing
 		configMaps: []corev1.ConfigMap{{
 			ObjectMeta: metav1.ObjectMeta{Name: "maintenance", Namespace: "default"},
 			Data: map[string]string{
-				extensionfilter.ConfigMapDataKey: `
+				extfilter.ConfigMapDataKey: `
 type: DirectResponse
 directResponse:
   statusCode: 700
@@ -264,8 +264,8 @@ directResponse:
 		namespace:  "default",
 		name:       "orders",
 		generation: 1,
-		extensionRefs: []extensionfilter.Ref{{
-			Kind:      extensionfilter.ConfigMapKind,
+		extensionRefs: []extfilter.Ref{{
+			Kind:      extfilter.ConfigMapKind,
 			Namespace: "default",
 			Name:      "maintenance",
 		}},

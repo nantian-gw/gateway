@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 const (
@@ -65,7 +65,7 @@ func (r *gatewayClassStatusSupportResolver) resolve(
 			r.err = err
 		} else {
 			r.crds = crds.Items
-			r.features = gatewayapi.SupportedFeaturesForOptions(gatewayapi.FeatureOptions{
+			r.features = gwapi.SupportedFeaturesForOptions(gwapi.FeatureOptions{
 				EnableExperimentalGateway: r.reconciler.experimentalGatewayEnabled(),
 			})
 		}

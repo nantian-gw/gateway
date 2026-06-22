@@ -13,7 +13,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 
@@ -487,7 +487,7 @@ func (r *Reconciler) reconcileBackendTLSPolicies(
 
 func (r *Reconciler) reconcileBackendLBPolicies(
 	ctx context.Context,
-	policies []backendlbv1alpha2.BackendLBPolicy,
+	policies []backendlb.BackendLBPolicy,
 	evals map[types.NamespacedName]backendLBPolicyEvaluation,
 ) error {
 	for _, listed := range policies {

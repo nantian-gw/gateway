@@ -10,7 +10,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -60,7 +60,7 @@ func (r *Reconciler) loadReferenceGrantsForNamespaces(
 }
 
 func referenceGrantTargetNamespacesForRoute(route routeInput, gateways []gatewayv1.Gateway) []string {
-	parentRefs := gatewayapi.DefaultGatewayParentRefs(
+	parentRefs := gwapi.DefaultGatewayParentRefs(
 		route.parentRefs,
 		route.namespace,
 		route.defaultGatewayScope,
@@ -139,7 +139,7 @@ func referenceGrantTargetNamespacesForGateway(
 			}
 		}
 
-		validation := gatewayapi.FrontendValidationForListener(gateway, listener)
+		validation := gwapi.FrontendValidationForListener(gateway, listener)
 		if validation == nil {
 			continue
 		}
@@ -187,7 +187,7 @@ func referenceGrantTargetNamespacesForGateway(
 		}
 	}
 
-	if backendTLS := gatewayapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
+	if backendTLS := gwapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 		clientCertificateRef := backendTLS.ClientCertificateRef
 		if group := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Group)); group == "" {
 			kind := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Kind))

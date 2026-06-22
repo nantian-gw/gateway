@@ -28,7 +28,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
-	"github.com/nantian-gw/gateway/internal/nodestatus"
+	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
 
 func TestNewServerAppliesRuntimeTimeouts(t *testing.T) {
@@ -248,16 +248,16 @@ func newTestServerWithOptions(t *testing.T, opts Options) *Server {
 	return newTestServerWithRepository(t, nil, opts)
 }
 
-func newTestServerWithRepository(t *testing.T, repo nodestatus.Repository, opts Options) *Server {
+func newTestServerWithRepository(t *testing.T, repo nodeinfo.Repository, opts Options) *Server {
 	t.Helper()
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodestatus.NewRegistry(
+	nodes := nodeinfo.NewRegistry(
 		ir.NewNodeStatusStore(),
 		repo,
 		logger,
-		nodestatus.Options{PersistTimeout: time.Second},
+		nodeinfo.Options{PersistTimeout: time.Second},
 	)
 	server := NewServer(":0", store, nodes, nil, logger, opts)
 

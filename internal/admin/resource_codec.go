@@ -14,7 +14,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 	k8syaml "sigs.k8s.io/yaml"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 func managedResourceFromObject(spec resourceKindSpec, obj client.Object) (ManagedResource, error) {
@@ -172,7 +172,7 @@ func metaExtractObjects(list client.ObjectList) ([]client.Object, error) {
 			out = append(out, &typed.Items[i])
 		}
 		return out, nil
-	case *backendlbv1alpha2.BackendLBPolicyList:
+	case *backendlb.BackendLBPolicyList:
 		out := make([]client.Object, 0, len(typed.Items))
 		for i := range typed.Items {
 			out = append(out, &typed.Items[i])

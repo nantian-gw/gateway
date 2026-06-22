@@ -13,7 +13,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayfeatures "sigs.k8s.io/gateway-api/pkg/features"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 func TestReconcileGatewayClassObjectSetsAcceptedConditionDetails(t *testing.T) {
@@ -94,7 +94,7 @@ func TestReconcileGatewayClassObjectPublishesSupportedVersionAndFeatures(t *test
 		string(gatewayv1.GatewayClassConditionStatusSupportedVersion),
 		"Gateway API CRD bundle versions are supported: v1.5.1",
 	)
-	wantFeatures := gatewayapi.SupportedFeaturesForOptions(gatewayapi.FeatureOptions{EnableExperimentalGateway: true})
+	wantFeatures := gwapi.SupportedFeaturesForOptions(gwapi.FeatureOptions{EnableExperimentalGateway: true})
 	if !reflect.DeepEqual(gatewayClass.Status.SupportedFeatures, wantFeatures) {
 		t.Fatalf("supported features = %#v, want %#v", gatewayClass.Status.SupportedFeatures, wantFeatures)
 	}
@@ -135,14 +135,14 @@ func TestReconcileGatewayClassObjectFiltersExperimentalGatewayFeaturesWhenDisabl
 		t.Fatalf("Get GatewayClass returned error: %v", err)
 	}
 
-	want := gatewayapi.SupportedFeaturesForOptions(gatewayapi.FeatureOptions{EnableExperimentalGateway: false})
+	want := gwapi.SupportedFeaturesForOptions(gwapi.FeatureOptions{EnableExperimentalGateway: false})
 	if !reflect.DeepEqual(gatewayClass.Status.SupportedFeatures, want) {
 		t.Fatalf("supported features with experimental Gateway disabled = %#v, want %#v", gatewayClass.Status.SupportedFeatures, want)
 	}
 
 	names := supportedFeatureStatusNameSet(gatewayClass.Status.SupportedFeatures)
 	for _, name := range []gatewayv1.FeatureName{
-		gatewayv1.FeatureName(gatewayapi.SupportedTCPRoute),
+		gatewayv1.FeatureName(gwapi.SupportedTCPRoute),
 		gatewayv1.FeatureName(gatewayfeatures.SupportListenerSet),
 		gatewayv1.FeatureName(gatewayfeatures.SupportUDPRoute),
 		gatewayv1.FeatureName(gatewayfeatures.SupportTLSRoute),

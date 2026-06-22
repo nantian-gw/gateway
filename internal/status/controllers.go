@@ -23,7 +23,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 type controllerSetup interface {
@@ -228,14 +228,14 @@ func gatewayInfrastructureStatusRequests(
 
 func gatewayInfrastructureServiceRelevant(service *corev1.Service) bool {
 	return service != nil &&
-		managedresources.IsManagedFrontendService(*service) &&
-		service.Labels[managedresources.ServiceRoleKey] == managedresources.ServiceRoleGateway
+		resources.IsManagedFrontendService(*service) &&
+		service.Labels[resources.ServiceRoleKey] == resources.ServiceRoleGateway
 }
 
 func gatewayFrontendEndpointSliceRelevant(slice *discoveryv1.EndpointSlice) bool {
 	return slice != nil &&
-		managedresources.IsManagedFrontendEndpointSlice(*slice) &&
-		slice.Labels[managedresources.ServiceRoleKey] == managedresources.EndpointSliceRoleGatewayFrontend
+		resources.IsManagedFrontendEndpointSlice(*slice) &&
+		slice.Labels[resources.ServiceRoleKey] == resources.EndpointSliceRoleGatewayFrontend
 }
 
 func gatewayStatusRequestsForLabels(labels map[string]string) []reconcile.Request {

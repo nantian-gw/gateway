@@ -14,8 +14,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -49,10 +49,10 @@ func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *t
 					Addresses: []string{"10.0.0.10"},
 				}},
 			},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "default"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "echo",
@@ -62,10 +62,10 @@ func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *t
 					},
 				},
 			},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "other-lb", Namespace: "other"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "other",
@@ -322,17 +322,17 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 			},
 		},
 	}
-	echoRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoPolicy)
+	echoRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoPolicy)
 	if err != nil {
 		t.Fatalf("encode echo BackendTLSPolicy: %v", err)
 	}
-	spareRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(sparePolicy)
+	spareRaw, err := gwapi.EncodeBackendTLSPolicyV1(sparePolicy)
 	if err != nil {
 		t.Fatalf("encode spare BackendTLSPolicy: %v", err)
 	}
 
 	baseClient := newTranslatorClientBuilder(scheme).
-		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), backendTLSPolicyTargetRefIndex, func(object client.Object) []string {
+		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), backendTLSPolicyTargetRefIndex, func(object client.Object) []string {
 			return backendTLSPolicyTargetRefIndexKeys(object)
 		}).
 		WithObjects(
@@ -401,11 +401,11 @@ func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupporte
 			},
 		},
 	}
-	echoRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoPolicy)
+	echoRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoPolicy)
 	if err != nil {
 		t.Fatalf("encode echo BackendTLSPolicy: %v", err)
 	}
-	spareRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(sparePolicy)
+	spareRaw, err := gwapi.EncodeBackendTLSPolicyV1(sparePolicy)
 	if err != nil {
 		t.Fatalf("encode spare BackendTLSPolicy: %v", err)
 	}
@@ -440,28 +440,28 @@ func TestLoadBackendLBPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.
 	scheme := buildSupportScheme(t)
 
 	baseClient := newTranslatorClientBuilder(scheme).
-		WithIndex(&backendlbv1alpha2.BackendLBPolicy{}, backendLBPolicyTargetRefIndex, func(object client.Object) []string {
-			policy, ok := object.(*backendlbv1alpha2.BackendLBPolicy)
+		WithIndex(&backendlb.BackendLBPolicy{}, backendLBPolicyTargetRefIndex, func(object client.Object) []string {
+			policy, ok := object.(*backendlb.BackendLBPolicy)
 			if !ok {
 				return nil
 			}
 			return testBackendLBPolicyTargetRefIndexKeys(policy)
 		}).
 		WithObjects(
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "default"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "echo",
 					}},
 				},
 			},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "spare-lb", Namespace: "default"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "spare",

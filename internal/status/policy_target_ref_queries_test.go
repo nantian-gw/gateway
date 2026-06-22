@@ -16,8 +16,8 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 type fakeFieldIndexer struct {
@@ -83,10 +83,10 @@ func TestSetupIndexesIgnoresMissingStatusBackendLBPolicyCRD(t *testing.T) {
 		errs: map[string]error{
 			statusBackendLBPolicyTargetRefIndex: &meta.NoKindMatchError{
 				GroupKind: schema.GroupKind{
-					Group: backendlbv1alpha2.GroupVersion.Group,
+					Group: backendlb.GroupVersion.Group,
 					Kind:  "BackendLBPolicy",
 				},
-				SearchedVersions: []string{backendlbv1alpha2.GroupVersion.Version},
+				SearchedVersions: []string{backendlb.GroupVersion.Version},
 			},
 		},
 	}
@@ -100,9 +100,9 @@ func TestSetupIndexesIgnoresMissingStatusBackendTLSPolicyCRD(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
 			statusBackendTLSPolicyTargetRefIndex: &meta.NoKindMatchError{
-				GroupKind: gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
+				GroupKind: gwapi.BackendTLSPolicyV1GVK.GroupKind(),
 				SearchedVersions: []string{
-					gatewayapi.BackendTLSPolicyV1GVK.Version,
+					gwapi.BackendTLSPolicyV1GVK.Version,
 				},
 			},
 		},
@@ -130,7 +130,7 @@ func TestSetupIndexesReturnsUnexpectedStatusBackendLBPolicyIndexError(t *testing
 }
 
 func TestStatusBackendPolicyTargetRefIndexKeysDeduplicateAndSortValues(t *testing.T) {
-	raw, err := gatewayapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
+	raw, err := gwapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
 		Spec: gatewayv1.BackendTLSPolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReferenceWithSectionName{
 				{
@@ -168,9 +168,9 @@ func TestStatusBackendPolicyTargetRefIndexKeysDeduplicateAndSortValues(t *testin
 		t.Fatalf("statusBackendTLSPolicyTargetRefIndexKeys() = %#v, want %#v", gotTLS, wantTLS)
 	}
 
-	gotLB := statusBackendLBPolicyTargetRefIndexKeys(&backendlbv1alpha2.BackendLBPolicy{
-		Spec: backendlbv1alpha2.BackendLBPolicySpec{
-			TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{
+	gotLB := statusBackendLBPolicyTargetRefIndexKeys(&backendlb.BackendLBPolicy{
+		Spec: backendlb.BackendLBPolicySpec{
+			TargetRefs: []backendlb.LocalPolicyTargetReference{
 				{Group: mcsv1alpha1.GroupName, Kind: "ServiceImport", Name: "imported"},
 				{Kind: "Service", Name: "echo"},
 				{Kind: "Service", Name: "echo"},
@@ -287,7 +287,7 @@ func TestBackendPolicyTouchesKeys(t *testing.T) {
 		t.Fatal("expected BackendTLSPolicy to touch orders service")
 	}
 
-	lbRefs := []backendlbv1alpha2.LocalPolicyTargetReference{
+	lbRefs := []backendlb.LocalPolicyTargetReference{
 		{Group: mcsv1alpha1.GroupName, Kind: "ServiceImport", Name: "catalog"},
 	}
 	if !backendLBPolicyTouchesKeys("apps", lbRefs, serviceKeys, serviceImportKeys) {
@@ -296,7 +296,7 @@ func TestBackendPolicyTouchesKeys(t *testing.T) {
 
 	if backendLBPolicyTouchesKeys(
 		"apps",
-		[]backendlbv1alpha2.LocalPolicyTargetReference{{Kind: "Service", Name: "missing"}},
+		[]backendlb.LocalPolicyTargetReference{{Kind: "Service", Name: "missing"}},
 		serviceKeys,
 		serviceImportKeys,
 	) {

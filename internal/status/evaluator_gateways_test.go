@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,7 +20,7 @@ func TestReconcileAcceptsTLSMixedTerminationListeners(t *testing.T) {
 	terminateHostname := gatewayv1.Hostname("tls.example.com")
 	passthroughHostname := gatewayv1.Hostname("abc.example.com")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-tlsroute-mixed-termination")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).

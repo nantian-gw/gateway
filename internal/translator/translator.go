@@ -17,13 +17,13 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
-	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 type Translator struct {
@@ -72,10 +72,10 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		tlsRoutes           gatewayv1alpha2.TLSRouteList
 		referenceGrants     []gatewayv1beta1.ReferenceGrant
 		backendTLSPolicies  []gatewayv1alpha3.BackendTLSPolicy
-		backendLBPolicies   []backendlbv1alpha2.BackendLBPolicy
-		aiServices          []aiservicev1alpha1.AIService
-		tokenPolicies       []tokenpolicyv1alpha1.TokenPolicy
-		wasmPlugins         []wasmpluginv1alpha1.WasmPlugin
+		backendLBPolicies   []backendlb.BackendLBPolicy
+		aiServices          []aiservice.AIService
+		tokenPolicies       []tokenpolicy.TokenPolicy
+		wasmPlugins         []wasmplugin.WasmPlugin
 		services            []corev1.Service
 		serviceImports      []mcsv1alpha1.ServiceImport
 		pods                []corev1.Pod
@@ -176,7 +176,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		return nil, err
 	}
 
-	extensionResolver := extensionfilter.NewResolver(supportObjects.configMaps)
+	extensionResolver := extfilter.NewResolver(supportObjects.configMaps)
 
 	// Translate all routes in parallel — each route's translation is independent.
 	transGroup, _ := errgroup.WithContext(ctx)
@@ -239,7 +239,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		snapshot.StreamRoutes = append(snapshot.StreamRoutes, tlsStreamResults[i])
 	}
 
-	filteredServices := managedresources.FilterServices(services)
+	filteredServices := resources.FilterServices(services)
 	serviceKeyMap := make(map[string]client.ObjectKey, len(filteredServices))
 	for _, service := range filteredServices {
 		key := client.ObjectKey{Namespace: service.Namespace, Name: service.Name}
@@ -292,7 +292,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		return nil
 	})
 	group.Go(func() error {
-		var list aiservicev1alpha1.AIServiceList
+		var list aiservice.AIServiceList
 		if err := cl.List(groupCtx, &list); err != nil {
 			if !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 				return err
@@ -303,7 +303,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		return nil
 	})
 	group.Go(func() error {
-		var list tokenpolicyv1alpha1.TokenPolicyList
+		var list tokenpolicy.TokenPolicyList
 		if err := cl.List(groupCtx, &list); err != nil {
 			if !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 				return err
@@ -314,7 +314,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		return nil
 	})
 	group.Go(func() error {
-		var list wasmpluginv1alpha1.WasmPluginList
+		var list wasmplugin.WasmPluginList
 		if err := cl.List(groupCtx, &list); err != nil {
 			if !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 				return err
@@ -374,7 +374,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		return nil, err
 	}
 
-	filteredEndpointSlices := managedresources.FilterEndpointSlices(endpointSlices)
+	filteredEndpointSlices := resources.FilterEndpointSlices(endpointSlices)
 	mergedConfigMaps := mergeConfigMaps(supportObjects.configMaps, backendConfigMaps, wasmConfigMaps)
 	indexes := newTranslatorIndexes(
 		filteredServices,
@@ -413,7 +413,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		filteredServices,
 		serviceImports,
 		referenceGrants,
-		extensionfilter.NewResolver(mergedConfigMaps),
+		extfilter.NewResolver(mergedConfigMaps),
 	)
 
 	annotGroup, _ := errgroup.WithContext(ctx)

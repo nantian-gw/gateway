@@ -3,11 +3,11 @@ package translator
 import (
 	"time"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
+	"github.com/nantian-gw/gateway/internal/gwexp/aiservice"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func translateAIService(svc aiservicev1alpha1.AIService) ir.AIServiceConfig {
+func translateAIService(svc aiservice.AIService) ir.AIServiceConfig {
 	cfg := ir.AIServiceConfig{
 		Provider:  svc.Spec.Provider,
 		Format:    svc.Spec.Format,
@@ -26,7 +26,7 @@ func translateAIService(svc aiservicev1alpha1.AIService) ir.AIServiceConfig {
 	return cfg
 }
 
-func translateAIServices(svcs []aiservicev1alpha1.AIService) map[string]ir.AIServiceConfig {
+func translateAIServices(svcs []aiservice.AIService) map[string]ir.AIServiceConfig {
 	result := make(map[string]ir.AIServiceConfig, len(svcs))
 	for _, svc := range svcs {
 		key := backendObjectKey(svc.Namespace, svc.Name)

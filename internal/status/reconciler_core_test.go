@@ -11,14 +11,14 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func TestReconcileSetsGatewayAndHTTPRouteStatus(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("default", "gw")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -137,12 +137,12 @@ func TestReconcileUsesReaderStateForObservedGeneration(t *testing.T) {
 	staleService := gatewayInfrastructureService("default", "gw")
 	staleEndpointSlice := gatewayInfrastructureEndpointSliceForService(
 		staleService,
-		managedresources.EndpointSliceRoleGatewayFrontend,
+		resources.EndpointSliceRoleGatewayFrontend,
 	)
 	freshService := gatewayInfrastructureServiceForGateway(freshGateway)
 	freshEndpointSlice := gatewayInfrastructureEndpointSliceForService(
 		freshService,
-		managedresources.EndpointSliceRoleGatewayFrontend,
+		resources.EndpointSliceRoleGatewayFrontend,
 	)
 
 	staleClient := fake.NewClientBuilder().
@@ -546,7 +546,7 @@ func TestReconcileTreatsGatewaysAsManagedWhenGatewayClassIsAbsent(t *testing.T) 
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("default", "gw")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).

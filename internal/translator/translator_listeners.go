@@ -13,7 +13,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -37,7 +37,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 	listenerSets []gatewayv1.ListenerSet,
 	namespaces map[string]corev1.Namespace,
 ) []ir.Listener {
-	listeners := gatewayapi.EffectiveListeners(gateway)
+	listeners := gwapi.EffectiveListeners(gateway)
 	listeners = mergeListenerSetListeners(gateway, listeners, listenerSets, namespaces)
 	out := make([]ir.Listener, 0, len(listeners))
 	addresses := gatewayListenerAddresses(gateway.Spec.Addresses)

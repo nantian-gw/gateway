@@ -7,8 +7,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 func (r *Reconciler) reconcileBackendTLSPolicyStatus(
@@ -17,7 +17,7 @@ func (r *Reconciler) reconcileBackendTLSPolicyStatus(
 	eval backendTLSPolicyEvaluation,
 ) error {
 	return r.retryStatusUpdate(ctx, statusUpdateResourceBackendTLSPolicy, func() error {
-		currentRaw, current, err := gatewayapi.GetBackendTLSPolicyV1(ctx, r.client, key)
+		currentRaw, current, err := gwapi.GetBackendTLSPolicyV1(ctx, r.client, key)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil
@@ -35,7 +35,7 @@ func (r *Reconciler) reconcileBackendTLSPolicyStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, *desiredStatus) {
 			return nil
 		}
-		return gatewayapi.UpdateBackendTLSPolicyV1Status(ctx, r.client, currentRaw, *desiredStatus)
+		return gwapi.UpdateBackendTLSPolicyV1Status(ctx, r.client, currentRaw, *desiredStatus)
 	})
 }
 
@@ -45,7 +45,7 @@ func (r *Reconciler) reconcileBackendLBPolicyStatus(
 	eval backendLBPolicyEvaluation,
 ) error {
 	return r.retryStatusUpdate(ctx, statusUpdateResourceBackendLBPolicy, func() error {
-		var current backendlbv1alpha2.BackendLBPolicy
+		var current backendlb.BackendLBPolicy
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil

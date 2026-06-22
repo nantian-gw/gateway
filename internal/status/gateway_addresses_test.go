@@ -15,7 +15,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/infrastructure"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 const (
@@ -129,7 +129,7 @@ func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusa
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	service.Spec.ExternalIPs = []string{"203.0.113.13", "127.0.0.1"}
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -206,7 +206,7 @@ func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T
 func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -259,7 +259,7 @@ func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -343,7 +343,7 @@ func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testi
 func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -387,7 +387,7 @@ func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *
 func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
@@ -495,7 +495,7 @@ func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testi
 			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			service,
-			gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend),
+			gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend),
 		).
 		Build()
 
@@ -538,7 +538,7 @@ func TestReconcileGatewayStaticAddressesAcceptGatewayServiceExternalIP(t *testin
 				Value: "10.10.10.25",
 			}}),
 			service,
-			gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend),
+			gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend),
 		).
 		Build()
 
@@ -1078,7 +1078,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t
 			gatewayInfrastructureEndpointSlice(
 				"gateway-conformance-infra",
 				"gateway-static-addresses",
-				managedresources.EndpointSliceRoleSharedFrontend,
+				resources.EndpointSliceRoleSharedFrontend,
 			),
 		).
 		Build()
@@ -1118,9 +1118,9 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 					Name:      infrastructure.GatewayServiceName("gateway-static-addresses") + "-ipv4",
 					Namespace: "gateway-conformance-infra",
 					Labels: map[string]string{
-						discoveryv1.LabelManagedBy:               managedresources.ManagedByValue,
+						discoveryv1.LabelManagedBy:               resources.ManagedByValue,
 						discoveryv1.LabelServiceName:             infrastructure.GatewayServiceName("gateway-static-addresses"),
-						managedresources.ServiceRoleKey:          managedresources.EndpointSliceRoleGatewayFrontend,
+						resources.ServiceRoleKey:          resources.EndpointSliceRoleGatewayFrontend,
 						"app.kubernetes.io/managed-by":           "nantian-gw",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
 						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
@@ -1164,7 +1164,7 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 			gatewayInfrastructureEndpointSlice(
 				"gateway-conformance-infra",
 				"gateway-static-addresses",
-				managedresources.EndpointSliceRoleGatewayFrontend,
+				resources.EndpointSliceRoleGatewayFrontend,
 			),
 		).
 		Build()
@@ -1290,9 +1290,9 @@ func gatewayInfrastructureEndpointSliceForService(service *corev1.Service, role 
 	for key, value := range service.Labels {
 		labels[key] = value
 	}
-	labels[discoveryv1.LabelManagedBy] = managedresources.ManagedByValue
+	labels[discoveryv1.LabelManagedBy] = resources.ManagedByValue
 	labels[discoveryv1.LabelServiceName] = service.Name
-	labels[managedresources.ServiceRoleKey] = role
+	labels[resources.ServiceRoleKey] = role
 
 	annotations := make(map[string]string, len(service.Annotations))
 	for key, value := range service.Annotations {

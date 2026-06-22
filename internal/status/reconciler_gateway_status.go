@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 const (
@@ -116,7 +116,7 @@ func (r *Reconciler) reconcileGatewayStatusWithSeed(
 		)
 		removeCondition(
 			&desired.Status.Conditions,
-			gatewayapi.GatewayConditionDefaultGateway,
+			gwapi.GatewayConditionDefaultGateway,
 		)
 		for _, extra := range eval.extraConditions {
 			setCondition(&desired.Status.Conditions, extra)
