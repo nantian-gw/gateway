@@ -73,6 +73,7 @@ jobs:
           report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
 
           apply_file="$(go env GOMODCACHE)/sigs.k8s.io/gateway-api/conformance@v1.5.1/utils/kubernetes/apply.go"
+          chmod u+w "$apply_file"
           python3 - "$apply_file" << 'PYEOF'
           import sys, re
           path = sys.argv[1]
