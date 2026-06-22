@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func TestReconcileRejectsGatewayWithInvalidInfrastructureParametersRef(t *testing.T) {
@@ -373,7 +373,7 @@ func TestReconcileEmitsGatewayInfrastructureParameterEventsOnlyOnChange(t *testi
 	gatewayService := gatewayInfrastructureServiceForGateway(*gatewayObj)
 	gatewayEndpointSlice := gatewayInfrastructureEndpointSliceForService(
 		gatewayService,
-		managedresources.EndpointSliceRoleGatewayFrontend,
+		resources.EndpointSliceRoleGatewayFrontend,
 	)
 
 	k8sClient := fake.NewClientBuilder().

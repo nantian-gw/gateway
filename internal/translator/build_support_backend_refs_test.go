@@ -16,8 +16,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -44,7 +44,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 			},
 		},
 	}
-	echoTLSPolicyRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoTLSPolicy)
+	echoTLSPolicyRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoTLSPolicy)
 	if err != nil {
 		t.Fatalf("encode BackendTLSPolicy: %v", err)
 	}
@@ -129,10 +129,10 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 					}},
 				},
 			},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "backends"},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "echo",

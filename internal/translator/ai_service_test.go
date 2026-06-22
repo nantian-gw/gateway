@@ -6,17 +6,17 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
+	"github.com/nantian-gw/gateway/internal/gwexp/aiservice"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
 func TestTranslateAIService_Basic(t *testing.T) {
-	svc := aiservicev1alpha1.AIService{
+	svc := aiservice.AIService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "openai-gateway",
 			Namespace: "default",
 		},
-		Spec: aiservicev1alpha1.AIServiceSpec{
+		Spec: aiservice.AIServiceSpec{
 			Provider: "openai",
 			Model:    "gpt-4",
 		},
@@ -37,16 +37,16 @@ func TestTranslateAIService_Basic(t *testing.T) {
 }
 
 func TestTranslateAIService_WithFormat(t *testing.T) {
-	svc := aiservicev1alpha1.AIService{
+	svc := aiservice.AIService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "azure-gateway",
 			Namespace: "default",
 		},
-		Spec: aiservicev1alpha1.AIServiceSpec{
+		Spec: aiservice.AIServiceSpec{
 			Provider: "azure",
 			Format:   "openai",
 			Model:    "gpt-4-turbo",
-			Auth: aiservicev1alpha1.AIServiceAuth{
+			Auth: aiservice.AIServiceAuth{
 				Type:   "api_key",
 				Secret: "azure-key",
 				Header: "api-key",
@@ -70,13 +70,13 @@ func TestTranslateAIService_WithFormat(t *testing.T) {
 }
 
 func TestTranslateAIServiceList(t *testing.T) {
-	svcs := []aiservicev1alpha1.AIService{
+	svcs := []aiservice.AIService{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "svc-a",
 				Namespace: "ns1",
 			},
-			Spec: aiservicev1alpha1.AIServiceSpec{
+			Spec: aiservice.AIServiceSpec{
 				Provider: "openai",
 				Model:    "gpt-4",
 			},
@@ -86,7 +86,7 @@ func TestTranslateAIServiceList(t *testing.T) {
 				Name:      "svc-b",
 				Namespace: "ns2",
 			},
-			Spec: aiservicev1alpha1.AIServiceSpec{
+			Spec: aiservice.AIServiceSpec{
 				Provider: "anthropic",
 				Model:    "claude-3-opus",
 			},
@@ -109,12 +109,12 @@ func TestTranslateAIServiceList(t *testing.T) {
 }
 
 func TestTranslateAIService_TimeoutParse(t *testing.T) {
-	svc := aiservicev1alpha1.AIService{
+	svc := aiservice.AIService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "timed-svc",
 			Namespace: "default",
 		},
-		Spec: aiservicev1alpha1.AIServiceSpec{
+		Spec: aiservice.AIServiceSpec{
 			Provider: "openai",
 			Model:    "gpt-4",
 			Timeout:  "invalid",
@@ -127,4 +127,4 @@ func TestTranslateAIService_TimeoutParse(t *testing.T) {
 }
 
 // Ensure interfaces compile
-var _ ir.AIServiceConfig = translateAIService(aiservicev1alpha1.AIService{})
+var _ ir.AIServiceConfig = translateAIService(aiservice.AIService{})

@@ -11,11 +11,11 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
-	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
 )
 
 type resourceKindSpec struct {
@@ -129,8 +129,8 @@ var supportedResourceKinds = []resourceKindSpec{
 			Namespaced:  true,
 		},
 		aliases:    []string{"backendlbpolicy", "backendlbpolicies", "blbpolicy"},
-		newObject:  func() client.Object { return &backendlbv1alpha2.BackendLBPolicy{} },
-		newList:    func() client.ObjectList { return &backendlbv1alpha2.BackendLBPolicyList{} },
+		newObject:  func() client.Object { return &backendlb.BackendLBPolicy{} },
+		newList:    func() client.ObjectList { return &backendlb.BackendLBPolicyList{} },
 		namespaced: true,
 	},
 	{
@@ -142,8 +142,8 @@ var supportedResourceKinds = []resourceKindSpec{
 			Namespaced:  true,
 		},
 		aliases:    []string{"backendtlspolicy", "backendtlspolicies", "btlspolicy"},
-		newObject:  func() client.Object { return gatewayapi.NewBackendTLSPolicyV1Object() },
-		newList:    func() client.ObjectList { return gatewayapi.NewBackendTLSPolicyV1List() },
+		newObject:  func() client.Object { return gwapi.NewBackendTLSPolicyV1Object() },
+		newList:    func() client.ObjectList { return gwapi.NewBackendTLSPolicyV1List() },
 		namespaced: true,
 	},
 	{
@@ -181,8 +181,8 @@ var supportedResourceKinds = []resourceKindSpec{
 			Namespaced:  true,
 		},
 		aliases:    []string{"aiservice", "aiservices", "aisvc"},
-		newObject:  func() client.Object { return &aiservicev1alpha1.AIService{} },
-		newList:    func() client.ObjectList { return &aiservicev1alpha1.AIServiceList{} },
+		newObject:  func() client.Object { return &aiservice.AIService{} },
+		newList:    func() client.ObjectList { return &aiservice.AIServiceList{} },
 		namespaced: true,
 	},
 	{
@@ -194,8 +194,8 @@ var supportedResourceKinds = []resourceKindSpec{
 			Namespaced:  true,
 		},
 		aliases:    []string{"tokenpolicy", "tokenpolicies", "tokpolicy"},
-		newObject:  func() client.Object { return &tokenpolicyv1alpha1.TokenPolicy{} },
-		newList:    func() client.ObjectList { return &tokenpolicyv1alpha1.TokenPolicyList{} },
+		newObject:  func() client.Object { return &tokenpolicy.TokenPolicy{} },
+		newList:    func() client.ObjectList { return &tokenpolicy.TokenPolicyList{} },
 		namespaced: true,
 	},
 	{
@@ -207,8 +207,8 @@ var supportedResourceKinds = []resourceKindSpec{
 			Namespaced:  true,
 		},
 		aliases:    []string{"wasmplugin", "wasmplugins", "wasmp"},
-		newObject:  func() client.Object { return &wasmpluginv1alpha1.WasmPlugin{} },
-		newList:    func() client.ObjectList { return &wasmpluginv1alpha1.WasmPluginList{} },
+		newObject:  func() client.Object { return &wasmplugin.WasmPlugin{} },
+		newList:    func() client.ObjectList { return &wasmplugin.WasmPluginList{} },
 		namespaced: true,
 	},
 }

@@ -7,8 +7,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -31,14 +31,14 @@ type backendRefTranslator struct {
 	servicePorts               map[string]map[uint32]struct{}
 	serviceImportPorts         map[string]map[uint32]struct{}
 	referenceGrantsByNamespace map[string][]gatewayv1beta1.ReferenceGrant
-	extensionResolver          extensionfilter.Resolver
+	extensionResolver          extfilter.Resolver
 }
 
 func newBackendRefTranslator(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 	referenceGrants []gatewayv1beta1.ReferenceGrant,
-	extensionResolver extensionfilter.Resolver,
+	extensionResolver extfilter.Resolver,
 ) backendRefTranslator {
 	servicePorts := make(map[string]map[uint32]struct{}, len(services))
 	for _, service := range services {
@@ -70,7 +70,7 @@ func newBackendRefTranslator(
 
 func (t backendRefTranslator) annotateHTTPRoute(target *ir.HTTPRoute, source gatewayv1.HTTPRoute) {
 	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
-	validation := gatewayapi.ValidateHTTPRouteRules(source)
+	validation := gwapi.ValidateHTTPRouteRules(source)
 	invalidRules := make(map[int]struct{}, len(validation.InvalidRuleIndexes))
 	for _, index := range validation.InvalidRuleIndexes {
 		invalidRules[index] = struct{}{}
@@ -164,7 +164,7 @@ func (t backendRefTranslator) httpBackendRefs(
 					ref.Filters,
 					routeNamespace,
 					t.extensionResolver,
-					extensionfilter.TargetHTTP,
+					extfilter.TargetHTTP,
 					nil,
 					0,
 				),
@@ -197,7 +197,7 @@ func (t backendRefTranslator) grpcBackendRefs(
 					ref.Filters,
 					routeNamespace,
 					t.extensionResolver,
-					extensionfilter.TargetGRPC,
+					extfilter.TargetGRPC,
 				),
 			},
 		))

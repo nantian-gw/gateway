@@ -21,7 +21,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -596,7 +596,7 @@ func newPartialRebuildTestScheme(t *testing.T) *runtime.Scheme {
 	mustAddToScheme(t, scheme, gatewayv1alpha2.Install)
 	mustAddToScheme(t, scheme, gatewayv1alpha3.Install)
 	mustAddToScheme(t, scheme, gatewayv1beta1.Install)
-	mustAddToScheme(t, scheme, backendlbv1alpha2.Install)
+	mustAddToScheme(t, scheme, backendlb.Install)
 	mustAddToScheme(t, scheme, mcsv1alpha1.AddToScheme)
 	return scheme
 }

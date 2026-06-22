@@ -13,7 +13,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodestatus"
+	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
 
 const (
@@ -41,7 +41,7 @@ type Options struct {
 	SharedServiceName         string
 	DataplaneSelector         map[string]string
 	SnapshotStore             *ir.SnapshotStore
-	NodeStatus                *nodestatus.Registry
+	NodeStatus                *nodeinfo.Registry
 	EnableExperimentalGateway bool
 }
 
@@ -51,7 +51,7 @@ type Reconciler struct {
 	controllerName string
 	options        Options
 	store          *ir.SnapshotStore
-	nodes          *nodestatus.Registry
+	nodes          *nodeinfo.Registry
 	logger         *slog.Logger
 }
 

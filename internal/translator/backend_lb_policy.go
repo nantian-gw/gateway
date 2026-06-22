@@ -6,8 +6,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/backendlb"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/lbpolicy"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -16,7 +16,7 @@ type translatedBackendLBPolicy struct {
 	sessionPersistence *ir.SessionPersistencePolicy
 	loadBalancing      *ir.LoadBalancingPolicy
 	circuitBreaker     *ir.CircuitBreakerConfig
-	policy             backendlbv1alpha2.BackendLBPolicy
+	policy             backendlb.BackendLBPolicy
 }
 
 type backendLBPolicyIndexes struct {
@@ -28,7 +28,7 @@ type backendLBPolicyIndexes struct {
 func buildBackendLBPolicyIndexes(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
-	policies []backendlbv1alpha2.BackendLBPolicy,
+	policies []backendlb.BackendLBPolicy,
 ) backendLBPolicyIndexes {
 	return buildBackendLBPolicyIndexesWithIndexes(
 		policies,
@@ -37,7 +37,7 @@ func buildBackendLBPolicyIndexes(
 }
 
 func buildBackendLBPolicyIndexesWithIndexes(
-	policies []backendlbv1alpha2.BackendLBPolicy,
+	policies []backendlb.BackendLBPolicy,
 	indexes translatorIndexes,
 ) backendLBPolicyIndexes {
 	translations := make([]translatedBackendLBPolicy, 0, len(policies))
@@ -70,7 +70,7 @@ func buildBackendLBPolicyIndexesWithIndexes(
 		translationIndex := len(translations) - 1
 		for _, backendKey := range backendKeys {
 			currentOwner, exists := owners[backendKey]
-			if !exists || backendlb.PolicyPrecedes(policy, translations[currentOwner].policy) {
+			if !exists || lbpolicy.PolicyPrecedes(policy, translations[currentOwner].policy) {
 				owners[backendKey] = translationIndex
 			}
 		}
@@ -106,7 +106,7 @@ func buildBackendLBPolicyIndexesWithIndexes(
 }
 
 func backendLBPolicyBackendKeys(
-	policy backendlbv1alpha2.BackendLBPolicy,
+	policy backendlb.BackendLBPolicy,
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 ) ([]string, bool) {
@@ -117,7 +117,7 @@ func backendLBPolicyBackendKeys(
 }
 
 func backendLBPolicyBackendKeysWithIndexes(
-	policy backendlbv1alpha2.BackendLBPolicy,
+	policy backendlb.BackendLBPolicy,
 	indexes translatorIndexes,
 ) ([]string, bool) {
 	keys := make([]string, 0)
@@ -165,7 +165,7 @@ func backendLBPolicyBackendKeysWithIndexes(
 	return compactStrings(keys), true
 }
 
-func backendCircuitBreaker(cb *backendlbv1alpha2.CircuitBreakerConfig) *ir.CircuitBreakerConfig {
+func backendCircuitBreaker(cb *backendlb.CircuitBreakerConfig) *ir.CircuitBreakerConfig {
 	if cb == nil || cb.MaxInflightRequests == nil {
 		return nil
 	}

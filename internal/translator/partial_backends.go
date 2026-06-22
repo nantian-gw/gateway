@@ -15,10 +15,10 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -125,7 +125,7 @@ func (t *Translator) buildBackendsForKeyMaps(
 		serviceImports     []mcsv1alpha1.ServiceImport
 		endpointSlices     []discoveryv1.EndpointSlice
 		backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy
-		backendLBPolicies  []backendlbv1alpha2.BackendLBPolicy
+		backendLBPolicies  []backendlb.BackendLBPolicy
 	)
 	orderedServiceKeys := sortedObjectKeys(serviceKeys)
 	orderedServiceImportKeys := sortedObjectKeys(serviceImportKeys)
@@ -193,7 +193,7 @@ func (t *Translator) buildBackendsForKeyMaps(
 		return nil, err
 	}
 
-	filteredServices := managedresources.FilterServices(services)
+	filteredServices := resources.FilterServices(services)
 	indexes := newTranslatorIndexes(
 		filteredServices,
 		serviceImports,
@@ -414,13 +414,13 @@ func loadBackendLBPoliciesForNamespaces(
 	namespaces []string,
 	serviceKeys map[string]client.ObjectKey,
 	serviceImportKeys map[string]client.ObjectKey,
-) ([]backendlbv1alpha2.BackendLBPolicy, error) {
+) ([]backendlb.BackendLBPolicy, error) {
 	if len(namespaces) == 0 {
 		return nil, nil
 	}
 
 	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
-	policies := make([]backendlbv1alpha2.BackendLBPolicy, 0)
+	policies := make([]backendlb.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 	for _, namespace := range namespaces {
 		items, err := listBackendLBPoliciesForNamespaceTargets(
@@ -469,7 +469,7 @@ func listBackendTLSPoliciesForNamespaceTargets(
 	if usedIndex {
 		return items, nil
 	}
-	return gatewayapi.ListBackendTLSPoliciesV1WithOptions(ctx, cl, client.InNamespace(namespace))
+	return gwapi.ListBackendTLSPoliciesV1WithOptions(ctx, cl, client.InNamespace(namespace))
 }
 
 func listBackendTLSPoliciesByTargetRefIndex(
@@ -482,7 +482,7 @@ func listBackendTLSPoliciesByTargetRefIndex(
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
-		items, err := gatewayapi.ListBackendTLSPoliciesV1WithOptions(
+		items, err := gwapi.ListBackendTLSPoliciesV1WithOptions(
 			ctx,
 			cl,
 			client.InNamespace(namespace),
@@ -512,7 +512,7 @@ func listBackendLBPoliciesForNamespaceTargets(
 	cl client.Client,
 	namespace string,
 	targetValues []string,
-) ([]backendlbv1alpha2.BackendLBPolicy, error) {
+) ([]backendlb.BackendLBPolicy, error) {
 	if len(targetValues) == 0 {
 		return nil, nil
 	}
@@ -525,7 +525,7 @@ func listBackendLBPoliciesForNamespaceTargets(
 		return items, nil
 	}
 
-	var list backendlbv1alpha2.BackendLBPolicyList
+	var list backendlb.BackendLBPolicyList
 	if err := cl.List(ctx, &list, client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
@@ -537,12 +537,12 @@ func listBackendLBPoliciesByTargetRefIndex(
 	cl client.Client,
 	namespace string,
 	targetValues []string,
-) ([]backendlbv1alpha2.BackendLBPolicy, bool, error) {
-	policies := make([]backendlbv1alpha2.BackendLBPolicy, 0)
+) ([]backendlb.BackendLBPolicy, bool, error) {
+	policies := make([]backendlb.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
-		var list backendlbv1alpha2.BackendLBPolicyList
+		var list backendlb.BackendLBPolicyList
 		if err := cl.List(
 			ctx,
 			&list,
@@ -592,7 +592,7 @@ func backendTLSPolicyTouchesKeys(
 
 func backendLBPolicyTouchesKeys(
 	namespace string,
-	targetRefs []backendlbv1alpha2.LocalPolicyTargetReference,
+	targetRefs []backendlb.LocalPolicyTargetReference,
 	serviceKeys map[string]client.ObjectKey,
 	serviceImportKeys map[string]client.ObjectKey,
 ) bool {
@@ -711,7 +711,7 @@ func loadEndpointSlicesForBackendKeys(
 		right := out[j].Namespace + "/" + out[j].Name
 		return left < right
 	})
-	return managedresources.FilterEndpointSlices(out), nil
+	return resources.FilterEndpointSlices(out), nil
 }
 
 func loadEndpointSlicesWithLabel(

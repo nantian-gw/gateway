@@ -11,7 +11,7 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/nantian-gw/gateway/internal/grpcserver"
+	"github.com/nantian-gw/gateway/internal/xds"
 	"github.com/nantian-gw/gateway/internal/lifecycle"
 )
 
@@ -131,7 +131,7 @@ func newHTTPComponent(
 	}
 }
 
-func newGRPCComponent(name, addr string, server *grpcserver.Server) lifecycle.Component {
+func newGRPCComponent(name, addr string, server *xds.Server) lifecycle.Component {
 	return lifecycle.Component{
 		Name: name,
 		Run: func(ctx context.Context, markStarted func()) error {

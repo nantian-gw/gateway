@@ -16,10 +16,10 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/config"
-	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
-	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
+	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
 )
 
 func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
@@ -46,9 +46,9 @@ func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
 				name string
 				fn   func(*runtime.Scheme) error
 			}{
-				{name: "gateway.experimental/v1alpha2", fn: backendlbv1alpha2.Install},
-				{name: "wasmplugin/v1alpha1", fn: wasmpluginv1alpha1.AddToScheme},
-				{name: "tokenpolicy/v1alpha1", fn: tokenpolicyv1alpha1.AddToScheme},
+				{name: "gateway.experimental/v1alpha2", fn: backendlb.Install},
+				{name: "wasmplugin/v1alpha1", fn: wasmplugin.AddToScheme},
+				{name: "tokenpolicy/v1alpha1", fn: tokenpolicy.AddToScheme},
 			}...,
 		)
 	}
@@ -58,7 +58,7 @@ func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
 			struct {
 				name string
 				fn   func(*runtime.Scheme) error
-			}{name: "aiservice/v1alpha1", fn: aiservicev1alpha1.AddToScheme},
+			}{name: "aiservice/v1alpha1", fn: aiservice.AddToScheme},
 		)
 	}
 

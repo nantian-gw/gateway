@@ -16,11 +16,11 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -30,7 +30,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 		serviceImports     mcsv1alpha1.ServiceImportList
 		endpointSlices     discoveryv1.EndpointSliceList
 		backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy
-		backendLBPolicies  backendlbv1alpha2.BackendLBPolicyList
+		backendLBPolicies  backendlb.BackendLBPolicyList
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -48,7 +48,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 	})
 	group.Go(func() error {
 		var err error
-		backendTLSPolicies, err = gatewayapi.ListBackendTLSPoliciesV1(groupCtx, cl)
+		backendTLSPolicies, err = gwapi.ListBackendTLSPoliciesV1(groupCtx, cl)
 		if err != nil && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 			return err
 		}
@@ -73,8 +73,8 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 		return nil, err
 	}
 
-	filteredServices := managedresources.FilterServices(services.Items)
-	filteredEndpointSlices := managedresources.FilterEndpointSlices(endpointSlices.Items)
+	filteredServices := resources.FilterServices(services.Items)
+	filteredEndpointSlices := resources.FilterEndpointSlices(endpointSlices.Items)
 	indexes := newTranslatorIndexes(
 		filteredServices,
 		serviceImports.Items,
@@ -425,10 +425,10 @@ func (t *Translator) refreshBackendRefMetadataForSnapshot(
 	}
 
 	annotator := newBackendRefTranslator(
-		managedresources.FilterServices(services),
+		resources.FilterServices(services),
 		serviceImports,
 		referenceGrants,
-		extensionfilter.Resolver{},
+		extfilter.Resolver{},
 	)
 	next := current.Clone()
 	refreshHTTPRouteBackendRefs(next.HTTPRoutes, annotator)
@@ -485,7 +485,7 @@ func (t *Translator) RebuildMeshServiceListeners(
 
 	meshListeners := translateMeshServiceListeners(
 		collectMeshServiceFrontendsFromSnapshot(
-			managedresources.FilterServices(services),
+			resources.FilterServices(services),
 			current,
 		),
 	)

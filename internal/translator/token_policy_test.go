@@ -6,16 +6,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
 )
 
 func TestTranslateTokenPolicy_Basic(t *testing.T) {
-	policy := tokenpolicyv1alpha1.TokenPolicy{
+	policy := tokenpolicy.TokenPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "orders-rate-limit",
 			Namespace: "default",
 		},
-		Spec: tokenpolicyv1alpha1.TokenPolicySpec{
+		Spec: tokenpolicy.TokenPolicySpec{
 			TokensPerMinute:   1000,
 			TokensPerHour:     10000,
 			RequestsPerMinute: 60,
@@ -48,7 +48,7 @@ func TestTranslateTokenPolicy_Basic(t *testing.T) {
 }
 
 func TestTranslateTokenPolicy_Empty(t *testing.T) {
-	policy := tokenpolicyv1alpha1.TokenPolicy{
+	policy := tokenpolicy.TokenPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "empty-policy",
 			Namespace: "default",
@@ -78,13 +78,13 @@ func TestTranslateTokenPolicy_Empty(t *testing.T) {
 }
 
 func TestTranslateTokenPolicyList(t *testing.T) {
-	policies := []tokenpolicyv1alpha1.TokenPolicy{
+	policies := []tokenpolicy.TokenPolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "svc-a-limit",
 				Namespace: "ns1",
 			},
-			Spec: tokenpolicyv1alpha1.TokenPolicySpec{
+			Spec: tokenpolicy.TokenPolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Group: "", Kind: "Service", Name: "svc-a"},
 				},
@@ -96,7 +96,7 @@ func TestTranslateTokenPolicyList(t *testing.T) {
 				Name:      "svc-b-limit",
 				Namespace: "ns1",
 			},
-			Spec: tokenpolicyv1alpha1.TokenPolicySpec{
+			Spec: tokenpolicy.TokenPolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Group: "", Kind: "Service", Name: "svc-b"},
 				},
@@ -128,13 +128,13 @@ func TestTranslateTokenPolicyList(t *testing.T) {
 }
 
 func TestTranslateTokenPolicies_HTTPRouteTargetRef(t *testing.T) {
-	policies := []tokenpolicyv1alpha1.TokenPolicy{
+	policies := []tokenpolicy.TokenPolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "route-limit",
 				Namespace: "ns1",
 			},
-			Spec: tokenpolicyv1alpha1.TokenPolicySpec{
+			Spec: tokenpolicy.TokenPolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Group: "gateway.networking.k8s.io", Kind: "HTTPRoute", Name: "route-a"},
 				},
@@ -170,13 +170,13 @@ func TestTranslateTokenPolicies_HTTPRouteTargetRef(t *testing.T) {
 }
 
 func TestTranslateTokenPolicies_HTTPRouteNoBackendMatch(t *testing.T) {
-	policies := []tokenpolicyv1alpha1.TokenPolicy{
+	policies := []tokenpolicy.TokenPolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "missing-route-limit",
 				Namespace: "ns1",
 			},
-			Spec: tokenpolicyv1alpha1.TokenPolicySpec{
+			Spec: tokenpolicy.TokenPolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Group: "gateway.networking.k8s.io", Kind: "HTTPRoute", Name: "route-missing"},
 				},

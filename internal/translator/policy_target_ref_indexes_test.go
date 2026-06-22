@@ -10,8 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 type fakeFieldIndexer struct {
@@ -35,10 +35,10 @@ func TestSetupIndexesIgnoresMissingBackendLBPolicyCRD(t *testing.T) {
 		errs: map[string]error{
 			backendLBPolicyTargetRefIndex: &metav1.NoKindMatchError{
 				GroupKind: schema.GroupKind{
-					Group: backendlbv1alpha2.GroupVersion.Group,
+					Group: backendlb.GroupVersion.Group,
 					Kind:  "BackendLBPolicy",
 				},
-				SearchedVersions: []string{backendlbv1alpha2.GroupVersion.Version},
+				SearchedVersions: []string{backendlb.GroupVersion.Version},
 			},
 		},
 	}
@@ -52,9 +52,9 @@ func TestSetupIndexesIgnoresMissingBackendTLSPolicyCRD(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
 			backendTLSPolicyTargetRefIndex: &metav1.NoKindMatchError{
-				GroupKind: gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
+				GroupKind: gwapi.BackendTLSPolicyV1GVK.GroupKind(),
 				SearchedVersions: []string{
-					gatewayapi.BackendTLSPolicyV1GVK.Version,
+					gwapi.BackendTLSPolicyV1GVK.Version,
 				},
 			},
 		},

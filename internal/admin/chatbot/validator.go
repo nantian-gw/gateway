@@ -22,7 +22,7 @@ corev1 "k8s.io/api/core/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -40,7 +40,7 @@ func validatorScheme() *runtime.Scheme {
 	utilruntime.Must(gatewayv1alpha3.Install(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(discoveryv1.AddToScheme(scheme))
-	utilruntime.Must(backendlbv1alpha2.Install(scheme))
+	utilruntime.Must(backendlb.Install(scheme))
 	utilruntime.Must(mcsv1alpha1.Install(scheme))
 	return scheme
 }

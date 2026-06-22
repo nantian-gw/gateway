@@ -5,11 +5,11 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
+	"github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func translateTokenPolicy(policy tokenpolicyv1alpha1.TokenPolicy) ir.TokenPolicyConfig {
+func translateTokenPolicy(policy tokenpolicy.TokenPolicy) ir.TokenPolicyConfig {
 	return ir.TokenPolicyConfig{
 		TokensPerMinute:   policy.Spec.TokensPerMinute,
 		TokensPerHour:     policy.Spec.TokensPerHour,
@@ -21,7 +21,7 @@ func translateTokenPolicy(policy tokenpolicyv1alpha1.TokenPolicy) ir.TokenPolicy
 }
 
 func translateTokenPolicies(
-	policies []tokenpolicyv1alpha1.TokenPolicy,
+	policies []tokenpolicy.TokenPolicy,
 	services map[string]struct{},
 	serviceImports map[string]struct{},
 	httpRoutes map[string][]string,

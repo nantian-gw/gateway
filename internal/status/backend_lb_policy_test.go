@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
@@ -24,7 +24,7 @@ func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 			&gatewayv1.GatewayClass{},
 			&gatewayv1.Gateway{},
 			&gatewayv1.HTTPRoute{},
-			&backendlbv1alpha2.BackendLBPolicy{},
+			&backendlb.BackendLBPolicy{},
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
@@ -69,10 +69,10 @@ func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 					}},
 				},
 			},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "orders-sticky", Namespace: "default", Generation: 1},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "orders",
@@ -88,16 +88,16 @@ func TestReconcileAcceptsBackendLBPolicy(t *testing.T) {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}
 
-	var policy backendlbv1alpha2.BackendLBPolicy
+	var policy backendlb.BackendLBPolicy
 	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "orders-sticky"}, &policy); err != nil {
 		t.Fatalf("Get BackendLBPolicy returned error: %v", err)
 	}
 	if len(policy.Status.Ancestors) != 1 {
 		t.Fatalf("expected 1 ancestor, got %d", len(policy.Status.Ancestors))
 	}
-	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), 1)
+	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), metav1.ConditionTrue, string(backendlb.PolicyReasonAccepted), 1)
 	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, 1)
-	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy is accepted by nantian-gw")
+	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), "BackendLBPolicy is accepted by nantian-gw")
 	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, "BackendLBPolicy references are resolved")
 }
 
@@ -105,16 +105,16 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
-	policy := func(name string, created time.Time) *backendlbv1alpha2.BackendLBPolicy {
-		return &backendlbv1alpha2.BackendLBPolicy{
+	policy := func(name string, created time.Time) *backendlb.BackendLBPolicy {
+		return &backendlb.BackendLBPolicy{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              name,
 				Namespace:         "default",
 				Generation:        1,
 				CreationTimestamp: metav1.NewTime(created),
 			},
-			Spec: backendlbv1alpha2.BackendLBPolicySpec{
-				TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+			Spec: backendlb.BackendLBPolicySpec{
+				TargetRefs: []backendlb.LocalPolicyTargetReference{{
 					Group: "",
 					Kind:  "Service",
 					Name:  "orders",
@@ -130,7 +130,7 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 			&gatewayv1.GatewayClass{},
 			&gatewayv1.Gateway{},
 			&gatewayv1.HTTPRoute{},
-			&backendlbv1alpha2.BackendLBPolicy{},
+			&backendlb.BackendLBPolicy{},
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
@@ -190,23 +190,23 @@ func TestReconcileAppliesBackendLBPolicyPrecedence(t *testing.T) {
 		acceptedStatus metav1.ConditionStatus
 		acceptedReason string
 	}{
-		{name: "older", acceptedStatus: metav1.ConditionTrue, acceptedReason: string(backendlbv1alpha2.PolicyReasonAccepted)},
-		{name: "newer", acceptedStatus: metav1.ConditionFalse, acceptedReason: string(backendlbv1alpha2.PolicyReasonConflicted)},
+		{name: "older", acceptedStatus: metav1.ConditionTrue, acceptedReason: string(backendlb.PolicyReasonAccepted)},
+		{name: "newer", acceptedStatus: metav1.ConditionFalse, acceptedReason: string(backendlb.PolicyReasonConflicted)},
 	} {
-		var item backendlbv1alpha2.BackendLBPolicy
+		var item backendlb.BackendLBPolicy
 		if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: tc.name}, &item); err != nil {
 			t.Fatalf("Get BackendLBPolicy returned error: %v", err)
 		}
 		if len(item.Status.Ancestors) != 1 {
 			t.Fatalf("expected 1 ancestor for %s, got %d", tc.name, len(item.Status.Ancestors))
 		}
-		assertCondition(t, item.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), tc.acceptedStatus, tc.acceptedReason, 1)
+		assertCondition(t, item.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), tc.acceptedStatus, tc.acceptedReason, 1)
 		assertCondition(t, item.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, 1)
 		switch tc.name {
 		case "older":
-			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy is accepted by nantian-gw")
+			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), "BackendLBPolicy is accepted by nantian-gw")
 		case "newer":
-			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy conflicts with another policy targeting the same backend")
+			assertConditionMessage(t, item.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), "BackendLBPolicy conflicts with another policy targeting the same backend")
 		}
 		assertConditionMessage(t, item.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, "BackendLBPolicy references are resolved")
 	}
@@ -218,13 +218,13 @@ func TestReconcileRejectsBackendLBPolicyWithMissingTargetService(t *testing.T) {
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithStatusSubresource(&backendlbv1alpha2.BackendLBPolicy{}).
+		WithStatusSubresource(&backendlb.BackendLBPolicy{}).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "missing", Namespace: "default", Generation: 1},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "orders",
@@ -240,30 +240,30 @@ func TestReconcileRejectsBackendLBPolicyWithMissingTargetService(t *testing.T) {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}
 
-	var policy backendlbv1alpha2.BackendLBPolicy
+	var policy backendlb.BackendLBPolicy
 	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "missing"}, &policy); err != nil {
 		t.Fatalf("Get BackendLBPolicy returned error: %v", err)
 	}
 	if len(policy.Status.Ancestors) != 1 {
 		t.Fatalf("expected 1 ancestor, got %d", len(policy.Status.Ancestors))
 	}
-	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), 1)
-	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), 1)
-	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy target Service was not found")
+	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), 1)
+	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), 1)
+	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), "BackendLBPolicy target Service was not found")
 	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, "BackendLBPolicy target Service was not found")
 }
 
 func TestReconcileRejectsBackendLBPolicyWithInvalidConsistentHash(t *testing.T) {
 	scheme := newScheme(t)
 
-	headerKeyType := backendlbv1alpha2.HashKeyTypeHeader
-	consistentHash := &backendlbv1alpha2.ConsistentHashPolicy{
+	headerKeyType := backendlb.HashKeyTypeHeader
+	consistentHash := &backendlb.ConsistentHashPolicy{
 		KeyType: &headerKeyType,
 	}
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithStatusSubresource(&backendlbv1alpha2.BackendLBPolicy{}).
+		WithStatusSubresource(&backendlb.BackendLBPolicy{}).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -272,15 +272,15 @@ func TestReconcileRejectsBackendLBPolicyWithInvalidConsistentHash(t *testing.T) 
 					Ports: []corev1.ServicePort{{Port: 8080}},
 				},
 			},
-			&backendlbv1alpha2.BackendLBPolicy{
+			&backendlb.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "invalid-hash", Namespace: "default", Generation: 1},
-				Spec: backendlbv1alpha2.BackendLBPolicySpec{
-					TargetRefs: []backendlbv1alpha2.LocalPolicyTargetReference{{
+				Spec: backendlb.BackendLBPolicySpec{
+					TargetRefs: []backendlb.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "orders",
 					}},
-					LoadBalancing: &backendlbv1alpha2.LoadBalancingPolicy{
+					LoadBalancing: &backendlb.LoadBalancingPolicy{
 						ConsistentHash: consistentHash,
 					},
 				},
@@ -293,15 +293,15 @@ func TestReconcileRejectsBackendLBPolicyWithInvalidConsistentHash(t *testing.T) 
 		t.Fatalf("Reconcile returned error: %v", err)
 	}
 
-	var policy backendlbv1alpha2.BackendLBPolicy
+	var policy backendlb.BackendLBPolicy
 	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "invalid-hash"}, &policy); err != nil {
 		t.Fatalf("Get BackendLBPolicy returned error: %v", err)
 	}
 	if len(policy.Status.Ancestors) != 1 {
 		t.Fatalf("expected 1 ancestor, got %d", len(policy.Status.Ancestors))
 	}
-	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonInvalid), 1)
-	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonInvalid), 1)
-	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlbv1alpha2.PolicyConditionAccepted), "BackendLBPolicy consistent hash header strategy requires headerName")
+	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), metav1.ConditionFalse, string(backendlb.PolicyReasonInvalid), 1)
+	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionFalse, string(backendlb.PolicyReasonInvalid), 1)
+	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), "BackendLBPolicy consistent hash header strategy requires headerName")
 	assertConditionMessage(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, "BackendLBPolicy consistent hash header strategy requires headerName")
 }

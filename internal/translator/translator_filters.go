@@ -5,7 +5,7 @@ import (
 
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -13,8 +13,8 @@ func filtersFromHTTP(filters []gatewayv1.HTTPRouteFilter, defaultNamespace strin
 	return filtersFromHTTPWithResolver(
 		filters,
 		defaultNamespace,
-		extensionfilter.Resolver{},
-		extensionfilter.TargetHTTP,
+		extfilter.Resolver{},
+		extfilter.TargetHTTP,
 		nil,
 		0,
 	)
@@ -23,8 +23,8 @@ func filtersFromHTTP(filters []gatewayv1.HTTPRouteFilter, defaultNamespace strin
 func filtersFromHTTPWithResolver(
 	filters []gatewayv1.HTTPRouteFilter,
 	defaultNamespace string,
-	resolver extensionfilter.Resolver,
-	target extensionfilter.Target,
+	resolver extfilter.Resolver,
+	target extfilter.Target,
 	rawFilterConfigs rawHTTPRouteFilterConfigs,
 	ruleIndex int,
 ) []ir.Filter {
@@ -48,7 +48,7 @@ func filtersFromHTTPWithResolver(
 		case gatewayv1.HTTPRouteFilterExternalAuth:
 			item.Config = externalAuthConfig(filter.ExternalAuth, defaultNamespace)
 		case gatewayv1.HTTPRouteFilterExtensionRef:
-			resolved := resolver.Resolve(extensionfilter.RefFromLocalRef(defaultNamespace, filter.ExtensionRef), target)
+			resolved := resolver.Resolve(extfilter.RefFromLocalRef(defaultNamespace, filter.ExtensionRef), target)
 			item.Type = resolved.Type
 			item.Config = resolved.Config
 		}
@@ -58,14 +58,14 @@ func filtersFromHTTPWithResolver(
 }
 
 func filtersFromGRPC(filters []gatewayv1.GRPCRouteFilter, defaultNamespace string) []ir.Filter {
-	return filtersFromGRPCWithResolver(filters, defaultNamespace, extensionfilter.Resolver{}, extensionfilter.TargetGRPC)
+	return filtersFromGRPCWithResolver(filters, defaultNamespace, extfilter.Resolver{}, extfilter.TargetGRPC)
 }
 
 func filtersFromGRPCWithResolver(
 	filters []gatewayv1.GRPCRouteFilter,
 	defaultNamespace string,
-	resolver extensionfilter.Resolver,
-	target extensionfilter.Target,
+	resolver extfilter.Resolver,
+	target extfilter.Target,
 ) []ir.Filter {
 	out := make([]ir.Filter, 0, len(filters))
 	for _, filter := range filters {
@@ -78,7 +78,7 @@ func filtersFromGRPCWithResolver(
 		case gatewayv1.GRPCRouteFilterRequestMirror:
 			item.Config = requestMirrorConfig(filter.RequestMirror, defaultNamespace)
 		case gatewayv1.GRPCRouteFilterExtensionRef:
-			resolved := resolver.Resolve(extensionfilter.RefFromLocalRef(defaultNamespace, filter.ExtensionRef), target)
+			resolved := resolver.Resolve(extfilter.RefFromLocalRef(defaultNamespace, filter.ExtensionRef), target)
 			item.Type = resolved.Type
 			item.Config = resolved.Config
 		}

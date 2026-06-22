@@ -6,7 +6,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/infrastructure"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func gatewayAdvertisedAddresses(state *clusterState, gateway gatewayv1.Gateway) []string {
@@ -28,7 +28,7 @@ func gatewayServiceAdvertisementsReady(
 	gateway gatewayv1.Gateway,
 	service corev1.Service,
 ) bool {
-	if !managedresources.IsManagedFrontendService(service) {
+	if !resources.IsManagedFrontendService(service) {
 		return true
 	}
 	return infrastructure.GatewayServiceMetadataMatches(
@@ -126,10 +126,10 @@ func hasManagedGatewayFrontendEndpointSlice(
 	service corev1.Service,
 ) bool {
 	for _, endpointSlice := range endpointSlices {
-		if !managedresources.IsManagedFrontendEndpointSlice(endpointSlice) {
+		if !resources.IsManagedFrontendEndpointSlice(endpointSlice) {
 			continue
 		}
-		if endpointSlice.Labels[managedresources.ServiceRoleKey] == managedresources.EndpointSliceRoleGatewayFrontend {
+		if endpointSlice.Labels[resources.ServiceRoleKey] == resources.EndpointSliceRoleGatewayFrontend {
 			if infrastructure.GatewayFrontendEndpointSliceMetadataMatches(endpointSlice, service) {
 				return true
 			}

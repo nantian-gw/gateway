@@ -10,7 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodestatus"
+	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
 
 const (
@@ -34,7 +34,7 @@ func (s *Server) currentNodes(ctx context.Context, snapshot *ir.Snapshot) []ir.N
 		return visibleNodes(snapshot, nodes)
 	}
 
-	return visibleNodes(snapshot, nodestatus.FilterStale(nodestatus.Merge(nodes, shared), time.Now().UTC()))
+	return visibleNodes(snapshot, nodeinfo.FilterStale(nodeinfo.Merge(nodes, shared), time.Now().UTC()))
 }
 
 func (m *ResourceManager) ListNodeStatuses(ctx context.Context) ([]ir.NodeStatus, error) {

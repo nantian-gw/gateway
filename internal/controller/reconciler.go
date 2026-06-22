@@ -17,12 +17,12 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	aiservicev1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/aiservicev1alpha1"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
-	tokenpolicyv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/tokenpolicyv1alpha1"
-	wasmpluginv1alpha1 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/wasmpluginv1alpha1"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func (s *Syncer) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -67,7 +67,7 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 	snapshotMutationPredicate := builder.WithPredicates(snapshotInputMutationPredicate())
 	listenerSetMutationPredicate := builder.WithPredicates(snapshotListenerSetMutationPredicate())
 	snapshotInputPredicate := builder.WithPredicates(
-		predicate.NewPredicateFuncs(managedresources.ShouldAffectSnapshot),
+		predicate.NewPredicateFuncs(resources.ShouldAffectSnapshot),
 	)
 	snapshotRequests := EnqueueRequestsFromX(s.snapshotReconcileRequests)
 
@@ -123,14 +123,14 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 
 	if backendTLSPolicyV1Supported(mgr) {
 		controllerBuilder = controllerBuilder.Watches(
-			gatewayapi.NewBackendTLSPolicyV1Object(),
+			gwapi.NewBackendTLSPolicyV1Object(),
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &backendlbv1alpha2.BackendLBPolicy{}) {
+	if resourceSupported(mgr, &backendlb.BackendLBPolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
-			&backendlbv1alpha2.BackendLBPolicy{},
+			&backendlb.BackendLBPolicy{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
@@ -142,23 +142,23 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &aiservicev1alpha1.AIService{}) {
+	if resourceSupported(mgr, &aiservice.AIService{}) {
 		controllerBuilder = controllerBuilder.Watches(
-			&aiservicev1alpha1.AIService{},
+			&aiservice.AIService{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &tokenpolicyv1alpha1.TokenPolicy{}) {
+	if resourceSupported(mgr, &tokenpolicy.TokenPolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
-			&tokenpolicyv1alpha1.TokenPolicy{},
+			&tokenpolicy.TokenPolicy{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &wasmpluginv1alpha1.WasmPlugin{}) {
+	if resourceSupported(mgr, &wasmplugin.WasmPlugin{}) {
 		controllerBuilder = controllerBuilder.Watches(
-			&wasmpluginv1alpha1.WasmPlugin{},
+			&wasmplugin.WasmPlugin{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
@@ -178,8 +178,8 @@ func resourceSupported(mgr ctrl.Manager, object client.Object) bool {
 
 func backendTLSPolicyV1Supported(mgr ctrl.Manager) bool {
 	_, err := mgr.GetRESTMapper().RESTMapping(
-		gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
-		gatewayapi.BackendTLSPolicyV1GVK.Version,
+		gwapi.BackendTLSPolicyV1GVK.GroupKind(),
+		gwapi.BackendTLSPolicyV1GVK.Version,
 	)
 	return err == nil
 }

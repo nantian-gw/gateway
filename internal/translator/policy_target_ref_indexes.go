@@ -13,8 +13,8 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(
 		ctx,
-		gatewayapi.NewBackendTLSPolicyV1Object(),
+		gwapi.NewBackendTLSPolicyV1Object(),
 		backendTLSPolicyTargetRefIndex,
 		backendTLSPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
@@ -33,7 +33,7 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	}
 	if err := indexer.IndexField(
 		ctx,
-		&backendlbv1alpha2.BackendLBPolicy{},
+		&backendlb.BackendLBPolicy{},
 		backendLBPolicyTargetRefIndex,
 		backendLBPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
@@ -52,10 +52,10 @@ func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 	case *gatewayv1alpha3.BackendTLSPolicy:
 		return backendTLSPolicyTargetRefValues(item.Spec.TargetRefs)
 	case *unstructured.Unstructured:
-		if item == nil || item.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK {
+		if item == nil || item.GroupVersionKind() != gwapi.BackendTLSPolicyV1GVK {
 			return nil
 		}
-		policy, err := gatewayapi.DecodeBackendTLSPolicyV1(item)
+		policy, err := gwapi.DecodeBackendTLSPolicyV1(item)
 		if err != nil {
 			return nil
 		}
@@ -66,7 +66,7 @@ func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 }
 
 func backendLBPolicyTargetRefIndexKeys(object client.Object) []string {
-	policy, ok := object.(*backendlbv1alpha2.BackendLBPolicy)
+	policy, ok := object.(*backendlb.BackendLBPolicy)
 	if !ok || policy == nil {
 		return nil
 	}
@@ -92,7 +92,7 @@ func backendTLSPolicyTargetRefValues(
 }
 
 func backendLBPolicyTargetRefValues(
-	targetRefs []backendlbv1alpha2.LocalPolicyTargetReference,
+	targetRefs []backendlb.LocalPolicyTargetReference,
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {

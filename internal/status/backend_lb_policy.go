@@ -8,8 +8,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/backendlb"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/lbpolicy"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 )
 
 type backendLBPolicyEvaluation struct {
-	ancestors []backendlbv1alpha2.PolicyAncestorStatus
+	ancestors []backendlb.PolicyAncestorStatus
 }
 
 type backendLBPolicySpecEvaluation struct {
@@ -40,7 +40,7 @@ func evaluateBackendLBPolicies(
 	backendAncestors := collectBackendTLSPolicyAncestors(state, routeState)
 
 	specEvals := make(map[client.ObjectKey]backendLBPolicySpecEvaluation, len(state.backendLBPolicies))
-	policyByKey := make(map[client.ObjectKey]backendlbv1alpha2.BackendLBPolicy, len(state.backendLBPolicies))
+	policyByKey := make(map[client.ObjectKey]backendlb.BackendLBPolicy, len(state.backendLBPolicies))
 	winners := make(map[string]client.ObjectKey)
 
 	for _, policy := range state.backendLBPolicies {
@@ -53,7 +53,7 @@ func evaluateBackendLBPolicies(
 		}
 		for _, backendKey := range eval.targetBackendKeys {
 			currentWinner, exists := winners[backendKey]
-			if !exists || backendlb.PolicyPrecedes(policy, policyByKey[currentWinner]) {
+			if !exists || lbpolicy.PolicyPrecedes(policy, policyByKey[currentWinner]) {
 				winners[backendKey] = key
 			}
 		}
@@ -84,7 +84,7 @@ func evaluateBackendLBPolicies(
 					acceptedPolicyCondition(
 						eval.generation,
 						metav1.ConditionFalse,
-						string(backendlbv1alpha2.PolicyReasonConflicted),
+						string(backendlb.PolicyReasonConflicted),
 						"BackendLBPolicy conflicts with another policy targeting the same backend",
 					),
 					backendLBResolvedPolicyCondition(
@@ -116,12 +116,12 @@ func evaluateBackendLBPolicies(
 
 func evaluateBackendLBPolicySpec(
 	state *clusterState,
-	policy backendlbv1alpha2.BackendLBPolicy,
+	policy backendlb.BackendLBPolicy,
 ) backendLBPolicySpecEvaluation {
 	eval := backendLBPolicySpecEvaluation{
 		generation:        policy.Generation,
 		claimsTargets:     policy.Spec.SessionPersistence != nil || policy.Spec.LoadBalancing != nil,
-		acceptedCondition: acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), "BackendLBPolicy is accepted by nantian-gw"),
+		acceptedCondition: acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlb.PolicyReasonAccepted), "BackendLBPolicy is accepted by nantian-gw"),
 		resolvedCondition: backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, "BackendLBPolicy references are resolved"),
 	}
 
@@ -132,17 +132,17 @@ func evaluateBackendLBPolicySpec(
 	if !eval.claimsTargets {
 		message := "BackendLBPolicy must configure at least one supported backend policy feature"
 		eval.acceptedCondition = invalidAcceptedPolicyCondition(policy.Generation, message)
-		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonInvalid), message)
+		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonInvalid), message)
 		return eval
 	}
-	if err := backendlb.ValidateLoadBalancing(policy.Spec.LoadBalancing); err != nil {
+	if err := lbpolicy.ValidateLoadBalancing(policy.Spec.LoadBalancing); err != nil {
 		eval.acceptedCondition = invalidAcceptedPolicyCondition(policy.Generation, err.Error())
-		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonInvalid), err.Error())
+		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonInvalid), err.Error())
 		return eval
 	}
-	if err := backendlb.ValidateSessionPersistence(policy.Spec.SessionPersistence); err != nil {
+	if err := lbpolicy.ValidateSessionPersistence(policy.Spec.SessionPersistence); err != nil {
 		eval.acceptedCondition = invalidAcceptedPolicyCondition(policy.Generation, err.Error())
-		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonInvalid), err.Error())
+		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonInvalid), err.Error())
 		return eval
 	}
 
@@ -161,7 +161,7 @@ func evaluateBackendLBPolicySpec(
 
 func backendLBPolicyTargets(
 	state *clusterState,
-	policy backendlbv1alpha2.BackendLBPolicy,
+	policy backendlb.BackendLBPolicy,
 ) ([]string, []gatewayv1.ParentReference, conditionSpec, conditionSpec, bool) {
 	keys := make([]string, 0)
 	ancestors := make([]gatewayv1.ParentReference, 0, len(policy.Spec.TargetRefs))
@@ -178,16 +178,16 @@ func backendLBPolicyTargets(
 			if !ok {
 				message := "BackendLBPolicy target Service was not found"
 				return nil, ancestors,
-					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
-					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
+					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
+					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
 					false
 			}
 			targetKeys, ok := backendTLSPolicyServiceKeys(policy.Namespace, service.Spec.Ports, nil, string(targetRef.Name))
 			if !ok {
 				message := "BackendLBPolicy target did not resolve to any backend ports"
 				return nil, ancestors,
-					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
-					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
+					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
+					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
 					false
 			}
 			keys = append(keys, targetKeys...)
@@ -196,23 +196,23 @@ func backendLBPolicyTargets(
 			if !ok {
 				message := "BackendLBPolicy target ServiceImport was not found"
 				return nil, ancestors,
-					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
-					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
+					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
+					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
 					false
 			}
 			targetKeys, ok := backendTLSPolicyServiceImportKeys(policy.Namespace, serviceImport.Spec.Ports, nil, string(targetRef.Name))
 			if !ok {
 				message := "BackendLBPolicy target did not resolve to any backend ports"
 				return nil, ancestors,
-					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
-					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
+					acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
+					backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
 					false
 			}
 			keys = append(keys, targetKeys...)
 		default:
 			message := "BackendLBPolicy targetRef kind is not supported"
 			return nil, ancestors,
-				acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonInvalid), message),
+				acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonInvalid), message),
 				backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, backendLBPolicyReasonInvalidKind, message),
 				false
 		}
@@ -223,19 +223,19 @@ func backendLBPolicyTargets(
 	if len(keys) == 0 {
 		message := "BackendLBPolicy target did not resolve to any backend ports"
 		return nil, ancestors,
-			acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
-			backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlbv1alpha2.PolicyReasonTargetNotFound), message),
+			acceptedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
+			backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backendlb.PolicyReasonTargetNotFound), message),
 			false
 	}
 
 	return keys, ancestors,
-		acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlbv1alpha2.PolicyReasonAccepted), "BackendLBPolicy is accepted by nantian-gw"),
+		acceptedPolicyCondition(policy.Generation, metav1.ConditionTrue, string(backendlb.PolicyReasonAccepted), "BackendLBPolicy is accepted by nantian-gw"),
 		backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, "BackendLBPolicy references are resolved"),
 		true
 }
 
 func backendLBPolicyFallbackAncestors(
-	policy backendlbv1alpha2.BackendLBPolicy,
+	policy backendlb.BackendLBPolicy,
 ) []gatewayv1.ParentReference {
 	out := make([]gatewayv1.ParentReference, 0, len(policy.Spec.TargetRefs))
 	for _, targetRef := range policy.Spec.TargetRefs {
@@ -246,7 +246,7 @@ func backendLBPolicyFallbackAncestors(
 
 func backendLBPolicyTargetAncestor(
 	namespace string,
-	targetRef backendlbv1alpha2.LocalPolicyTargetReference,
+	targetRef backendlb.LocalPolicyTargetReference,
 ) gatewayv1.ParentReference {
 	return gatewayv1.ParentReference{
 		Group:     groupPtr(string(targetRef.Group)),

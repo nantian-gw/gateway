@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 type servicePortKey struct {
@@ -203,7 +203,7 @@ func sharedServicePorts(gateways []gatewayv1.Gateway) []corev1.ServicePort {
 
 func gatewayServicePorts(gateway gatewayv1.Gateway) []corev1.ServicePort {
 	index := make(map[servicePortKey]corev1.ServicePort)
-	for _, listener := range gatewayapi.InfrastructureListeners(gateway) {
+	for _, listener := range gwapi.InfrastructureListeners(gateway) {
 		protocol, ok := serviceProtocol(listener.Protocol)
 		if !ok {
 			continue
@@ -236,7 +236,7 @@ func gatewayServicePorts(gateway gatewayv1.Gateway) []corev1.ServicePort {
 func collectListenerPorts(gateways []gatewayv1.Gateway) []corev1.ServicePort {
 	index := make(map[servicePortKey]corev1.ServicePort)
 	for _, gateway := range gateways {
-		for _, listener := range gatewayapi.InfrastructureListeners(gateway) {
+		for _, listener := range gwapi.InfrastructureListeners(gateway) {
 			protocol, ok := serviceProtocol(listener.Protocol)
 			if !ok {
 				continue

@@ -26,9 +26,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodestatus"
+	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
 
 func newTestServerWithResourceManager(t *testing.T, resources *ResourceManager) *Server {
@@ -57,11 +57,11 @@ func newTestServerWithResourceManagerAndLoggerAndOptions(
 	t.Helper()
 
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodestatus.NewRegistry(
+	nodes := nodeinfo.NewRegistry(
 		ir.NewNodeStatusStore(),
 		nil,
 		logger,
-		nodestatus.Options{PersistTimeout: time.Second},
+		nodeinfo.Options{PersistTimeout: time.Second},
 	)
 	server := NewServer(":0", store, nodes, resources, logger, opts)
 
@@ -115,7 +115,7 @@ func resourceManagerForTestWithLogger(t *testing.T, logger *slog.Logger) *Resour
 	if err := gatewayv1alpha2.Install(scheme); err != nil {
 		t.Fatalf("install gateway v1alpha2 scheme: %v", err)
 	}
-	if err := backendlbv1alpha2.Install(scheme); err != nil {
+	if err := backendlb.Install(scheme); err != nil {
 		t.Fatalf("install backendlb v1alpha2 scheme: %v", err)
 	}
 	if err := gatewayv1alpha3.Install(scheme); err != nil {
@@ -203,7 +203,7 @@ type noMatchListClient struct {
 
 func (c noMatchListClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	switch list.(type) {
-	case *backendlbv1alpha2.BackendLBPolicyList:
+	case *backendlb.BackendLBPolicyList:
 		return &meta.NoKindMatchError{
 			GroupKind:        schema.GroupKind{Group: gatewayv1.GroupName, Kind: "BackendLBPolicy"},
 			SearchedVersions: []string{"v1alpha2"},

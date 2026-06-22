@@ -18,7 +18,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
-	"github.com/nantian-gw/gateway/internal/nodestatus"
+	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
 
 func TestReconcileGatewayInfrastructureServicesAreIdempotent(t *testing.T) {
@@ -625,7 +625,7 @@ func TestReconcileFrontsMeshServiceOnlyWithAckedCurrentSnapshotNodes(t *testing.
 	}
 	currentVersion := store.Current().ID
 
-	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodestatus.Options{})
+	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodeinfo.Options{})
 	now := time.Now().UTC()
 	nodes.Connect(context.Background(), "nantian-dataplane-current", "kind", nil, now)
 	nodes.ObservePublished(context.Background(), "nantian-dataplane-current", currentVersion, now)
@@ -718,7 +718,7 @@ func TestReconcileMeshServiceRequiresCurrentSnapshotAckNodes(t *testing.T) {
 		t.Fatal("expected snapshot publish to succeed")
 	}
 
-	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodestatus.Options{})
+	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodeinfo.Options{})
 	now := time.Now().UTC()
 	nodes.Connect(context.Background(), "nantian-dataplane-stable", "kind", nil, now)
 	nodes.ObservePublished(context.Background(), "nantian-dataplane-stable", store.Current().ID, now)
@@ -943,7 +943,7 @@ func TestReconcileFrontsSharedAndGatewayServicesOnlyWithAckedCurrentSnapshotNode
 	}
 	currentVersion := store.Current().ID
 
-	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodestatus.Options{})
+	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodeinfo.Options{})
 	now := time.Now().UTC()
 	nodes.Connect(context.Background(), "nantian-dataplane-current", "kind", nil, now)
 	nodes.ObservePublished(context.Background(), "nantian-dataplane-current", currentVersion, now)
@@ -1089,7 +1089,7 @@ func TestReconcileFrontsSharedAndGatewayServicesRequireCurrentSnapshotAck(t *tes
 		t.Fatal("expected snapshot publish to succeed")
 	}
 
-	nodes := nodestatus.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodestatus.Options{})
+	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodeinfo.Options{})
 	now := time.Now().UTC()
 	nodes.Connect(context.Background(), "nantian-dataplane-stable-a", "kind", nil, now)
 	nodes.ObservePublished(context.Background(), "nantian-dataplane-stable-a", store.Current().ID, now)

@@ -18,8 +18,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	"github.com/nantian-gw/gateway/internal/extfilter"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 
@@ -46,7 +46,7 @@ type clusterState struct {
 	tcpRoutes          []gatewayv1alpha2.TCPRoute
 	udpRoutes          []gatewayv1alpha2.UDPRoute
 	tlsRoutes          []gatewayv1alpha2.TLSRoute
-	backendLBPolicies  []backendlbv1alpha2.BackendLBPolicy
+	backendLBPolicies  []backendlb.BackendLBPolicy
 	backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy
 	listenerSets       []gatewayv1.ListenerSet
 	listenerSetByKey   map[string]gatewayv1.ListenerSet
@@ -93,7 +93,7 @@ type routeInput struct {
 	parentRefs                   []gatewayv1.ParentReference
 	defaultGatewayScope          gatewayv1.GatewayDefaultScope
 	backends                     []backendInput
-	extensionRefs                []extensionfilter.Ref
+	extensionRefs                []extfilter.Ref
 	acceptedErrorMessage         string
 	resolvedRefsErrorMessage     string
 	partiallyInvalidErrorMessage string

@@ -25,7 +25,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -141,7 +141,7 @@ func TestReconcileGatewayListenerScopedRequestRefreshesOnlyListenersAndSecrets(t
 		reflect.TypeOf(&corev1.ConfigMapList{}):                  "gateway-listener rebuild should not list ConfigMaps",
 		reflect.TypeOf(&corev1.PodList{}):                        "gateway-listener rebuild should not list Pods",
 		reflect.TypeOf(&gatewayv1alpha3.BackendTLSPolicyList{}):  "gateway-listener rebuild should not list BackendTLSPolicies",
-		reflect.TypeOf(&backendlbv1alpha2.BackendLBPolicyList{}): "gateway-listener rebuild should not list BackendLBPolicies",
+		reflect.TypeOf(&backendlb.BackendLBPolicyList{}): "gateway-listener rebuild should not list BackendLBPolicies",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&gatewayv1.GatewayClassList{}): requireGatewayClassControllerList(
@@ -283,7 +283,7 @@ func TestReconcileGatewayListenerScopedRequestDropsGatewayOutsideManagedClass(t 
 		reflect.TypeOf(&corev1.ConfigMapList{}):                  "gateway-listener rebuild should not list ConfigMaps",
 		reflect.TypeOf(&corev1.PodList{}):                        "gateway-listener rebuild should not list Pods",
 		reflect.TypeOf(&gatewayv1alpha3.BackendTLSPolicyList{}):  "gateway-listener rebuild should not list BackendTLSPolicies",
-		reflect.TypeOf(&backendlbv1alpha2.BackendLBPolicyList{}): "gateway-listener rebuild should not list BackendLBPolicies",
+		reflect.TypeOf(&backendlb.BackendLBPolicyList{}): "gateway-listener rebuild should not list BackendLBPolicies",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&gatewayv1.GatewayClassList{}): requireGatewayClassControllerList(
@@ -443,7 +443,7 @@ func TestReconcileGatewayListenerScopedRequestPreservesRoutesAfterRouteScopedRec
 		reflect.TypeOf(&corev1.ConfigMapList{}):                  "gateway-listener rebuild should not list ConfigMaps",
 		reflect.TypeOf(&corev1.PodList{}):                        "gateway-listener rebuild should not list Pods",
 		reflect.TypeOf(&gatewayv1alpha3.BackendTLSPolicyList{}):  "gateway-listener rebuild should not list BackendTLSPolicies",
-		reflect.TypeOf(&backendlbv1alpha2.BackendLBPolicyList{}): "gateway-listener rebuild should not list BackendLBPolicies",
+		reflect.TypeOf(&backendlb.BackendLBPolicyList{}): "gateway-listener rebuild should not list BackendLBPolicies",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&gatewayv1.GatewayClassList{}): requireGatewayClassControllerList(

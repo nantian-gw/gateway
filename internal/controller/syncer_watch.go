@@ -13,9 +13,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlbv1alpha2 "github.com/nantian-gw/gateway/internal/gatewayapiexperimental/backendlbv1alpha2"
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/gwapi"
+	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func (s *Syncer) snapshotReconcileRequests(ctx context.Context, object client.Object) []reconcile.Request {
@@ -39,17 +39,17 @@ func (s *Syncer) snapshotReconcileRequests(ctx context.Context, object client.Ob
 	case *gatewayv1alpha2.TLSRoute:
 		return []reconcile.Request{snapshotTLSRoutesReconcileRequestForKey(client.ObjectKeyFromObject(item))}
 	case *corev1.Service:
-		if !managedresources.ShouldAffectSnapshot(item) {
+		if !resources.ShouldAffectSnapshot(item) {
 			return nil
 		}
 		return []reconcile.Request{snapshotServiceDependenciesReconcileRequestForService(client.ObjectKeyFromObject(item))}
 	case *corev1.Pod:
-		if !managedresources.ShouldAffectSnapshot(item) {
+		if !resources.ShouldAffectSnapshot(item) {
 			return nil
 		}
 		return s.podReconcileRequests(item)
 	case *discoveryv1.EndpointSlice:
-		if !managedresources.ShouldAffectSnapshot(item) {
+		if !resources.ShouldAffectSnapshot(item) {
 			return nil
 		}
 		return endpointSliceBackendReconcileRequests(item)
@@ -63,13 +63,13 @@ func (s *Syncer) snapshotReconcileRequests(ctx context.Context, object client.Ob
 		return s.referenceGrantReconcileRequests(ctx, item)
 	case *mcsv1alpha1.ServiceImport:
 		return []reconcile.Request{snapshotBackendDependenciesReconcileRequestForServiceImport(client.ObjectKeyFromObject(item))}
-	case *backendlbv1alpha2.BackendLBPolicy:
+	case *backendlb.BackendLBPolicy:
 		return backendLBPolicyReconcileRequests(item)
 	case *gatewayv1.ListenerSet:
 		return listenerSetReconcileRequests(item)
 	case *unstructured.Unstructured:
-		if item.GroupVersionKind() == gatewayapi.BackendTLSPolicyV1GVK {
-			policy, err := gatewayapi.DecodeBackendTLSPolicyV1(item)
+		if item.GroupVersionKind() == gwapi.BackendTLSPolicyV1GVK {
+			policy, err := gwapi.DecodeBackendTLSPolicyV1(item)
 			if err != nil {
 				if item.GetNamespace() == "" {
 					return []reconcile.Request{snapshotBackendsReconcileRequest}

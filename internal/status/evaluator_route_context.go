@@ -6,7 +6,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/extensionfilter"
+	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -209,7 +209,7 @@ func (c *routeEvaluationContext) evaluateResolvedRefs(route preparedRouteInput) 
 	}
 
 	if target, ok := routeExtensionTarget(route.kind); ok {
-		resolver := extensionfilter.NewResolver(c.state.configMaps)
+		resolver := extfilter.NewResolver(c.state.configMaps)
 		for _, ref := range route.extensionRefs {
 			resolved := resolver.Resolve(ref, target)
 			if resolved.Resolved {

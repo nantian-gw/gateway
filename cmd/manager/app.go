@@ -21,11 +21,11 @@ import (
 	"github.com/nantian-gw/gateway/internal/admin"
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/controller"
-	"github.com/nantian-gw/gateway/internal/grpcserver"
+	"github.com/nantian-gw/gateway/internal/xds"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/lifecycle"
-	"github.com/nantian-gw/gateway/internal/nodestatus"
+	"github.com/nantian-gw/gateway/internal/nodeinfo"
 	"github.com/nantian-gw/gateway/internal/observability"
 	"github.com/nantian-gw/gateway/internal/status"
 	"github.com/nantian-gw/gateway/internal/translator"
@@ -129,18 +129,18 @@ func run(configPath string) error {
 			metrics.XDSSnapshotFanoutCoalescedTotal.Add(float64(replaced))
 		},
 	})
-	nodeRepository := nodestatus.NewLeaseRepository(
+	nodeRepository := nodeinfo.NewLeaseRepository(
 		mgr.GetAPIReader(),
 		mgr.GetClient(),
 		cfg.NodeStatus.Namespace,
 		cfg.NodeStatus.LeasePrefix,
 		logger,
 	)
-	nodes := nodestatus.NewRegistry(
+	nodes := nodeinfo.NewRegistry(
 		ir.NewNodeStatusStore(),
 		nodeRepository,
 		logger,
-		nodestatus.Options{
+		nodeinfo.Options{
 			BaseContext:     ctx,
 			PersistTimeout:  cfg.NodeStatusPersistTimeout(),
 			PersistDebounce: cfg.NodeStatusPersistDebounce(),
@@ -350,7 +350,7 @@ func run(configPath string) error {
 		logger.Info("configured dataplane admin aggregation", "service", dpCfg.ServiceName, "namespace", namespace)
 	}
 
-	grpcServer, err := grpcserver.New(cfg.GRPCAddr, cfg.GRPCTLS, cfg.GRPCRuntime, store, nodes, logger, metrics)
+	grpcServer, err := xds.New(cfg.GRPCAddr, cfg.GRPCTLS, cfg.GRPCRuntime, store, nodes, logger, metrics)
 	if err != nil {
 		return fmt.Errorf("configure grpc server: %w", err)
 	}

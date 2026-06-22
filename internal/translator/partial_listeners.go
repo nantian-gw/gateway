@@ -11,7 +11,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -589,7 +589,7 @@ func splitNamespacedRef(ref string) (string, string, bool) {
 func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 	namespaces := make(map[string]struct{})
 	for _, gateway := range gateways {
-		for _, listener := range gatewayapi.EffectiveListeners(gateway) {
+		for _, listener := range gwapi.EffectiveListeners(gateway) {
 			if listener.TLS != nil {
 				for _, ref := range listener.TLS.CertificateRefs {
 					targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
@@ -599,7 +599,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 				}
 			}
 
-			if validation := gatewayapi.FrontendValidationForListener(gateway, listener); validation != nil {
+			if validation := gwapi.FrontendValidationForListener(gateway, listener); validation != nil {
 				for _, ref := range validation.CACertificateRefs {
 					targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
 					targetKind := string(ref.Kind)
@@ -613,7 +613,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 			}
 		}
 
-		backendTLS := gatewayapi.GatewayBackendTLS(gateway)
+		backendTLS := gwapi.GatewayBackendTLS(gateway)
 		if backendTLS == nil || backendTLS.ClientCertificateRef == nil {
 			continue
 		}

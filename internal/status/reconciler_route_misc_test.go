@@ -12,7 +12,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/managedresources"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func TestReconcileAcceptsServiceImportBackendRef(t *testing.T) {
@@ -958,7 +958,7 @@ func TestReconcileAcceptsCrossNamespaceCertificateRefWithReferenceGrant(t *testi
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 	service := gatewayInfrastructureService("default", "gw")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
@@ -1114,7 +1114,7 @@ func TestReconcileAllowsHostnamePrecedenceListeners(t *testing.T) {
 	mode := gatewayv1.TLSModeTerminate
 	specificHostname := gatewayv1.Hostname("second-example.org")
 	service := gatewayInfrastructureService("default", "gw")
-	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, managedresources.EndpointSliceRoleGatewayFrontend)
+	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).

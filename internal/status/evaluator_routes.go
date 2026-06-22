@@ -5,7 +5,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/gwapi"
 )
 
 func evaluateRoute(state *clusterState, route routeInput) []routeParentEvaluation {
@@ -13,7 +13,7 @@ func evaluateRoute(state *clusterState, route routeInput) []routeParentEvaluatio
 }
 
 func routeEffectiveParentRefs(state *clusterState, route routeInput) []gatewayv1.ParentReference {
-	return gatewayapi.DefaultGatewayParentRefs(
+	return gwapi.DefaultGatewayParentRefs(
 		route.parentRefs,
 		route.namespace,
 		route.defaultGatewayScope,
