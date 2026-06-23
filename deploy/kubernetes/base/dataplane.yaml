@@ -53,7 +53,14 @@ spec:
           image: nantian-dataplane:dev
           imagePullPolicy: Always
           env:
+            # NANTIAN_GW_NODE_ID is the canonical name; keep AEG_NODE_ID for
+            # backward compatibility with older dataplane images that predate
+            # the AEG_* → NANTIAN_GW_* rename.
             - name: NANTIAN_GW_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: AEG_NODE_ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
