@@ -24,8 +24,13 @@ docker tag "$dataplane_image_id" "$KIND_DATAPLANE_IMAGE"
 docker tag "$dashboard_image_id" "$KIND_DASHBOARD_IMAGE"
 
 kind load docker-image "$CONTROLPLANE_IMAGE" --name "$CLUSTER_NAME"
+kind load docker-image ghcr.io/nantian-gw/nantian-controlplane:latest --name "$CLUSTER_NAME"
 kind load docker-image "$KIND_DATAPLANE_IMAGE" --name "$CLUSTER_NAME"
 kind load docker-image "$KIND_DASHBOARD_IMAGE" --name "$CLUSTER_NAME"
+
+# Force restart control plane pods to pick up the latest image if they exist
+kubectl rollout restart deployment/nantian-gw-controlplane -n nantian-gw --ignore-not-found=true 2>/dev/null || true
+kubectl rollout restart deployment/nantian-gw-dataplane -n nantian-gw --ignore-not-found=true 2>/dev/null || true
 
 if [[ -n "${GITHUB_ENV:-}" ]]; then
   {
