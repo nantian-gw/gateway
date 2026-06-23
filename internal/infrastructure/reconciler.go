@@ -450,9 +450,8 @@ func (r *Reconciler) reconcileGatewayServices(
 		); err != nil {
 			return err
 		}
-		if err := deleteFrontendEndpointSlices(ctx, r.client, state.foreignSlices[serviceID]); err != nil {
-			return err
-		}
+		// Foreign EndpointSlices (e.g. created by Kubernetes when the Service
+		// has a selector) are kept as a fallback for snapshot convergence.
 	}
 
 	for _, service := range services.Items {

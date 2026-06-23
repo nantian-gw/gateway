@@ -982,8 +982,8 @@ func TestReconcileFrontsSharedAndGatewayServicesOnlyWithAckedCurrentSnapshotNode
 	if err != nil {
 		t.Fatalf("Get gateway Service returned error: %v", err)
 	}
-	if gatewayService.Spec.Selector != nil {
-		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", gatewayService.Spec.Selector)
+	if gatewayService.Spec.Selector == nil || gatewayService.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("gateway service selector = %#v, want map[app:nantian-gw-dataplane]", gatewayService.Spec.Selector)
 	}
 
 	var sharedSlices discoveryv1.EndpointSliceList

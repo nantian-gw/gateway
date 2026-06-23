@@ -98,7 +98,8 @@ func desiredGatewayService(
 			OwnerReferences: desiredGatewayServiceOwnerReferences(gateway),
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceTypeClusterIP,
+			Type:     corev1.ServiceTypeClusterIP,
+			Selector: map[string]string{"app": "nantian-gw-dataplane"},
 		},
 	}
 

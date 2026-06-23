@@ -314,8 +314,8 @@ allocateLoadBalancerNodePorts: false
 	if service.Spec.Type != corev1.ServiceTypeLoadBalancer {
 		t.Fatalf("service type = %s, want LoadBalancer", service.Spec.Type)
 	}
-	if service.Spec.Selector != nil {
-		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", service.Spec.Selector)
+	if service.Spec.Selector == nil || service.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("gateway service selector = %#v, want map[app:nantian-gw-dataplane]", service.Spec.Selector)
 	}
 	if service.Spec.ExternalTrafficPolicy != corev1.ServiceExternalTrafficPolicyLocal {
 		t.Fatalf("externalTrafficPolicy = %s, want Local", service.Spec.ExternalTrafficPolicy)
@@ -574,8 +574,8 @@ func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T)
 	if service.Spec.Type != corev1.ServiceTypeClusterIP {
 		t.Fatalf("service type = %s, want ClusterIP fallback", service.Spec.Type)
 	}
-	if service.Spec.Selector != nil {
-		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", service.Spec.Selector)
+	if service.Spec.Selector == nil || service.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("gateway service selector = %#v, want map[app:nantian-gw-dataplane]", service.Spec.Selector)
 	}
 	if service.Spec.ExternalTrafficPolicy != "" {
 		t.Fatalf("externalTrafficPolicy = %q, want empty", service.Spec.ExternalTrafficPolicy)
@@ -687,8 +687,8 @@ allocateLoadBalancerNodePorts: false
 	if service.Spec.Type != corev1.ServiceTypeLoadBalancer {
 		t.Fatalf("service type = %s, want LoadBalancer", service.Spec.Type)
 	}
-	if service.Spec.Selector != nil {
-		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", service.Spec.Selector)
+	if service.Spec.Selector == nil || service.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("gateway service selector = %#v, want map[app:nantian-gw-dataplane]", service.Spec.Selector)
 	}
 	if service.Spec.ExternalTrafficPolicy != corev1.ServiceExternalTrafficPolicyLocal {
 		t.Fatalf("externalTrafficPolicy = %s, want Local", service.Spec.ExternalTrafficPolicy)
@@ -783,8 +783,8 @@ func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.
 	if service.Spec.Type != corev1.ServiceTypeClusterIP {
 		t.Fatalf("service type = %s, want ClusterIP", service.Spec.Type)
 	}
-	if service.Spec.Selector != nil {
-		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", service.Spec.Selector)
+	if service.Spec.Selector == nil || service.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("gateway service selector = %#v, want map[app:nantian-gw-dataplane]", service.Spec.Selector)
 	}
 	if service.Spec.ExternalTrafficPolicy != "" {
 		t.Fatalf("externalTrafficPolicy = %q, want empty", service.Spec.ExternalTrafficPolicy)

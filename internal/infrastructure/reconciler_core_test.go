@@ -156,8 +156,8 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 	if gatewayService.Annotations["example.com/trace"] != "enabled" {
 		t.Fatalf("expected propagated annotation, got %#v", gatewayService.Annotations)
 	}
-	if gatewayService.Spec.Selector != nil {
-		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", gatewayService.Spec.Selector)
+	if gatewayService.Spec.Selector == nil || gatewayService.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("gateway service selector = %#v, want map[app:nantian-gw-dataplane]", gatewayService.Spec.Selector)
 	}
 	assertServicePort(t, gatewayService.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
 	assertServicePort(t, gatewayService.Spec.Ports, 5300, corev1.ProtocolUDP, 0)
