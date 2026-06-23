@@ -253,8 +253,8 @@ func TestServiceFrontendPortMetadata(t *testing.T) {
 }
 
 func TestShadowServiceName(t *testing.T) {
-	if got := ShadowServiceName("apps", "orders"); got != "aeg-shadow-orders" {
-		t.Fatalf("ShadowServiceName(short) = %q, want aeg-shadow-orders", got)
+	if got := ShadowServiceName("apps", "orders"); got != "nantian-gw-shadow-orders" {
+		t.Fatalf("ShadowServiceName(short) = %q, want nantian-gw-shadow-orders", got)
 	}
 
 	longName := "orders-" +

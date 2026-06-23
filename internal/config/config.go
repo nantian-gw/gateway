@@ -245,7 +245,7 @@ func Load(path string) (*Config, error) {
 		cfg.LeaderElection.RetryPeriod = "2s"
 	}
 	if cfg.NodeStatus.LeasePrefix == "" {
-		cfg.NodeStatus.LeasePrefix = "aeg-node"
+		cfg.NodeStatus.LeasePrefix = "nantian-gw-node"
 	}
 	if cfg.NodeStatus.PersistTimeout == "" {
 		cfg.NodeStatus.PersistTimeout = "2s"

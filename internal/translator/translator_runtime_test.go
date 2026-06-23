@@ -563,7 +563,7 @@ func TestRuleSessionPersistenceParsesHeaderAndTimeouts(t *testing.T) {
 	absolute := gatewayv1.Duration("5m")
 	idle := gatewayv1.Duration("30s")
 	sessionType := gatewayv1.HeaderBasedSessionPersistence
-	sessionName := "x-aeg-session"
+	sessionName := "x-nantian-gw-session"
 
 	policy := ruleSessionPersistence("grpc", "default", "greeter", 0, &gatewayv1.SessionPersistence{
 		SessionName:     &sessionName,
@@ -580,7 +580,7 @@ func TestRuleSessionPersistenceParsesHeaderAndTimeouts(t *testing.T) {
 	if policy.Cookie != nil {
 		t.Fatalf("expected header-based persistence to omit cookie config, got %#v", policy.Cookie)
 	}
-	if policy.SessionName != "x-aeg-session" {
+	if policy.SessionName != "x-nantian-gw-session" {
 		t.Fatalf("unexpected session name: %s", policy.SessionName)
 	}
 	if policy.AbsoluteTimeout == nil || *policy.AbsoluteTimeout != 5*time.Minute {

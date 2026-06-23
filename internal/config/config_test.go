@@ -36,7 +36,7 @@ func TestLoadAppliesProductionDefaults(t *testing.T) {
 	if cfg.LeaderElectionRetryPeriod() != 2*time.Second {
 		t.Fatalf("unexpected retry period: %s", cfg.LeaderElectionRetryPeriod())
 	}
-	if cfg.NodeStatus.LeasePrefix != "aeg-node" {
+	if cfg.NodeStatus.LeasePrefix != "nantian-gw-node" {
 		t.Fatalf("unexpected node status lease prefix: %s", cfg.NodeStatus.LeasePrefix)
 	}
 	if cfg.NodeStatusPersistTimeout() != 2*time.Second {

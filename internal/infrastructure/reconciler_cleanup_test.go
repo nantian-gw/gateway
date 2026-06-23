@@ -86,7 +86,7 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-gateway-ep-stale",
+					Name:      "nantian-gw-gateway-ep-stale",
 					Namespace: "default",
 					Labels: map[string]string{
 						discoveryv1.LabelServiceName: serviceName,
@@ -127,7 +127,7 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 	endpointSlice := &discoveryv1.EndpointSlice{}
 	if err := k8sClient.Get(
 		context.Background(),
-		client.ObjectKey{Namespace: "default", Name: "aeg-gateway-ep-stale"},
+		client.ObjectKey{Namespace: "default", Name: "nantian-gw-gateway-ep-stale"},
 		endpointSlice,
 	); client.IgnoreNotFound(err) != nil {
 		t.Fatalf("Get stale EndpointSlice returned error: %v", err)

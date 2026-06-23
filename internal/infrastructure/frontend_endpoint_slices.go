@@ -18,8 +18,8 @@ const (
 	sharedEndpointSliceRoleValue  = "shared-frontend-endpoints"
 	gatewayEndpointSliceRoleValue = "gateway-frontend-endpoints"
 
-	sharedEndpointSliceNamePrefix  = "aeg-shared-ep-"
-	gatewayEndpointSliceNamePrefix = "aeg-gateway-ep-"
+	sharedEndpointSliceNamePrefix  = "nantian-gw-shared-ep-"
+	gatewayEndpointSliceNamePrefix = "nantian-gw-gateway-ep-"
 )
 
 type serviceEndpointState struct {

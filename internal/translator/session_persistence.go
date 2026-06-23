@@ -79,10 +79,10 @@ func buildSessionPersistence(
 
 func defaultRouteSessionName(routeKind string, routeNamespace string, routeName string, ruleIndex int) string {
 	sum := sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%d", routeKind, routeNamespace, routeName, ruleIndex)))
-	return "aeg-" + strings.ToLower(routeKind) + "-" + hex.EncodeToString(sum[:6])
+	return "nantian-gw-" + strings.ToLower(routeKind) + "-" + hex.EncodeToString(sum[:6])
 }
 
 func defaultBackendSessionName(policyNamespace string, policyName string) string {
 	sum := sha256.Sum256([]byte(fmt.Sprintf("backendlb:%s:%s", policyNamespace, policyName)))
-	return "aeg-backendlb-" + hex.EncodeToString(sum[:6])
+	return "nantian-gw-backendlb-" + hex.EncodeToString(sum[:6])
 }

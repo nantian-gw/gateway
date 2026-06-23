@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultLeaseNamespace      = "nantian-gw"
-	defaultLeasePrefix         = "aeg-node"
+	defaultLeasePrefix         = "nantian-gw-node"
 	defaultLeaseDuration       = 300 * time.Second
 	managedByLabelKey          = "app.kubernetes.io/managed-by"
 	managedByLabelValue        = "nantian-gw"

@@ -388,7 +388,7 @@ func TestNodeEndpointsFallbackToSharedLeaseState(t *testing.T) {
 		WithScheme(scheme).
 		WithObjects(&coordinationv1.Lease{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "aeg-node-test",
+					Name:      "nantian-gw-node-test",
 				Namespace: "nantian-gw",
 				Labels: map[string]string{
 					nodeStatusManagedByLabelKey: nodeStatusManagedByLabelValue,
@@ -458,7 +458,7 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 		WithObjects(
 			&coordinationv1.Lease{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-node-stale",
+					Name:      "nantian-gw-node-stale",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						nodeStatusManagedByLabelKey: nodeStatusManagedByLabelValue,
@@ -478,7 +478,7 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 			},
 			&coordinationv1.Lease{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-node-fresh",
+						Name:      "nantian-gw-node-fresh",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						nodeStatusManagedByLabelKey: nodeStatusManagedByLabelValue,

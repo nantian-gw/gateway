@@ -276,7 +276,7 @@ func TestToProtoSnapshotPreservesRouteAnnotations(t *testing.T) {
 			Namespace: "default",
 			Kind:      "TCP",
 			Annotations: map[string]string{
-				"gateway.nantian.dev/access-log-path": "/var/log/aeg/tcp.log",
+				"gateway.nantian.dev/access-log-path": "/var/log/nantian-gw/tcp.log",
 			},
 		}},
 	})
@@ -290,7 +290,7 @@ func TestToProtoSnapshotPreservesRouteAnnotations(t *testing.T) {
 	if got := snapshot.GrpcRoutes[0].Annotations["gateway.nantian.dev/access-log-enabled"]; got != "false" {
 		t.Fatalf("expected grpc route annotation, got %q", got)
 	}
-	if got := snapshot.StreamRoutes[0].Annotations["gateway.nantian.dev/access-log-path"]; got != "/var/log/aeg/tcp.log" {
+	if got := snapshot.StreamRoutes[0].Annotations["gateway.nantian.dev/access-log-path"]; got != "/var/log/nantian-gw/tcp.log" {
 		t.Fatalf("expected stream route annotation, got %q", got)
 	}
 }
@@ -300,7 +300,7 @@ func TestToProtoSessionPersistence(t *testing.T) {
 	idle := 30 * time.Second
 
 	item := toProtoSessionPersistence(&ir.SessionPersistencePolicy{
-		SessionName:     "aeg-http-session",
+		SessionName:     "nantian-gw-http-session",
 		Type:            "Cookie",
 		AbsoluteTimeout: &absolute,
 		IdleTimeout:     &idle,
@@ -312,7 +312,7 @@ func TestToProtoSessionPersistence(t *testing.T) {
 	if item == nil {
 		t.Fatal("expected session persistence proto")
 	}
-	if item.SessionName != "aeg-http-session" {
+	if item.SessionName != "nantian-gw-http-session" {
 		t.Fatalf("unexpected session name: %s", item.SessionName)
 	}
 	if item.Type != controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_COOKIE {

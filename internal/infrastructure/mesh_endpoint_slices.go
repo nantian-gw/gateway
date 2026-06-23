@@ -312,7 +312,7 @@ func meshEndpointSliceName(
 	serviceName string,
 	addressType discoveryv1.AddressType,
 ) string {
-	const prefix = "aeg-mesh-ep-"
+	const prefix = "nantian-gw-mesh-ep-"
 	const maxLen = 63
 
 	suffix := strings.ToLower(string(addressType))

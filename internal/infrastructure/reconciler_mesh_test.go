@@ -830,7 +830,7 @@ func TestReconcileMeshServiceDeletesForeignEndpointSlicesBeforeManagedReplacemen
 	}
 
 	staleDelete := operationIndex(operations, "delete endpointslice/default/echo-stale")
-	managedCreate := operationIndex(operations, "create endpointslice/default/aeg-mesh-ep-echo-ipv4")
+	managedCreate := operationIndex(operations, "create endpointslice/default/nantian-gw-mesh-ep-echo-ipv4")
 	if staleDelete < 0 || managedCreate < 0 {
 		t.Fatalf("expected stale delete and managed create operations, got %#v", operations)
 	}

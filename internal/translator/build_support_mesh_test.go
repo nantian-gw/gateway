@@ -69,7 +69,7 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 					Namespace: "apps",
 					Annotations: map[string]string{
 						mesh.ManagedServiceAnnotation: "true",
-						mesh.ShadowServiceAnnotation:  "aeg-shadow-api",
+						mesh.ShadowServiceAnnotation:  "nantian-gw-shadow-api",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -83,7 +83,7 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 			},
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shadow-api",
+					Name:      "nantian-gw-shadow-api",
 					Namespace: "apps",
 					Labels: map[string]string{
 						mesh.ShadowServiceRoleLabel:        mesh.ShadowServiceRoleValue,
@@ -102,10 +102,10 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shadow-api-1",
+					Name:      "nantian-gw-shadow-api-1",
 					Namespace: "apps",
 					Labels: map[string]string{
-						discoveryv1.LabelServiceName: "aeg-shadow-api",
+						discoveryv1.LabelServiceName: "nantian-gw-shadow-api",
 					},
 				},
 				Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](18080)}},
@@ -239,7 +239,7 @@ func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 					Namespace: "apps",
 					Annotations: map[string]string{
 						mesh.ManagedServiceAnnotation: "true",
-						mesh.ShadowServiceAnnotation:  "aeg-shadow-api",
+						mesh.ShadowServiceAnnotation:  "nantian-gw-shadow-api",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -253,7 +253,7 @@ func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 			},
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shadow-api",
+					Name:      "nantian-gw-shadow-api",
 					Namespace: "apps",
 					Labels: map[string]string{
 						mesh.ShadowServiceRoleLabel:        mesh.ShadowServiceRoleValue,
@@ -272,10 +272,10 @@ func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shadow-api-1",
+					Name:      "nantian-gw-shadow-api-1",
 					Namespace: "apps",
 					Labels: map[string]string{
-						discoveryv1.LabelServiceName: "aeg-shadow-api",
+						discoveryv1.LabelServiceName: "nantian-gw-shadow-api",
 					},
 				},
 				Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](18080)}},
@@ -339,7 +339,7 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 					Namespace: "apps",
 					Annotations: map[string]string{
 						mesh.ManagedServiceAnnotation: "true",
-						mesh.ShadowServiceAnnotation:  "aeg-shadow-api",
+						mesh.ShadowServiceAnnotation:  "nantian-gw-shadow-api",
 					},
 				},
 				Spec: corev1.ServiceSpec{
@@ -353,7 +353,7 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 			},
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shadow-api",
+					Name:      "nantian-gw-shadow-api",
 					Namespace: "apps",
 					Labels: map[string]string{
 						mesh.ShadowServiceRoleLabel:        mesh.ShadowServiceRoleValue,
@@ -372,10 +372,10 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shadow-api-1",
+					Name:      "nantian-gw-shadow-api-1",
 					Namespace: "apps",
 					Labels: map[string]string{
-						discoveryv1.LabelServiceName: "aeg-shadow-api",
+						discoveryv1.LabelServiceName: "nantian-gw-shadow-api",
 					},
 				},
 				Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](18080)}},
@@ -408,7 +408,7 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 		context.Background(),
 		baseClient,
 		current,
-		[]client.ObjectKey{{Namespace: "apps", Name: "aeg-shadow-api"}},
+		[]client.ObjectKey{{Namespace: "apps", Name: "nantian-gw-shadow-api"}},
 		nil,
 	)
 	if err != nil {

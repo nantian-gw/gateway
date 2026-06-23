@@ -8,7 +8,7 @@ syncPeriod: 5s
 syncSettleDelay: 200ms
 nodeStatus:
   namespace: ""
-  leasePrefix: "aeg-node"
+  leasePrefix: "nantian-gw-node"
   persistTimeout: "2s"
 adminRuntime:
   readHeaderTimeout: "5s"

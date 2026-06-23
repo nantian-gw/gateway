@@ -133,7 +133,7 @@ func ListenerProtocolForServicePort(port corev1.ServicePort) string {
 }
 
 func ShadowServiceName(namespace string, name string) string {
-	const prefix = "aeg-shadow-"
+	const prefix = "nantian-gw-shadow-"
 	const maxLen = 63
 
 	base := prefix + name

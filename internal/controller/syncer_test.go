@@ -438,7 +438,7 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "aeg-shared-ep-nantian-dataplane-ipv4",
+					Name:      "nantian-gw-shared-ep-nantian-dataplane-ipv4",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
 						resources.ManagedByLabel: resources.ManagedByValue,
@@ -483,7 +483,7 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 		context.Background(),
 		client.ObjectKey{
 			Namespace: "nantian-gw",
-			Name:      "aeg-shared-ep-nantian-dataplane-ipv4",
+			Name:      "nantian-gw-shared-ep-nantian-dataplane-ipv4",
 		},
 		&frontendSlice,
 	); err != nil {

@@ -117,7 +117,7 @@ func TestInfrastructureEndpointSupportsFilteringSortingAndPagination(t *testing.
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
-	if got := infrastructureResourceKeys(report.Resources); strings.Join(got, ",") != "default/"+mesh.ShadowServiceName("default", "stale")+",default/echo" {
+	if got := infrastructureResourceKeys(report.Resources); strings.Join(got, ",") != "default/"+infrastructure.GatewayServiceName("public")+",default/"+mesh.ShadowServiceName("default", "echo") {
 		t.Fatalf("unexpected paginated infrastructure resources: %+v", got)
 	}
 

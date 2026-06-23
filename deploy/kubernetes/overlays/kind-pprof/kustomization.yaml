@@ -1,0 +1,88 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../kind-conformance
+
+patches:
+  - target:
+      kind: Deployment
+      name: nantian-gw-controlplane
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/ports/-
+        value:
+          name: pprof
+          containerPort: 6060
+  - target:
+      kind: ConfigMap
+      name: nantian-gw-controlplane-config
+    patch: |-
+      - op: replace
+        path: /data/config.yaml
+        value: |
+          grpcAddr: ":18080"
+          adminAddr: ":18081"
+          metricsAddr: ":18082"
+          healthProbeAddr: ":18083"
+          controllerName: "gateway.networking.k8s.io/nantian-gw"
+          statusAddress: "127.0.0.1"
+          namespace: "nantian-gw"
+          syncPeriod: 30s
+          syncSettleDelay: 200ms
+          reconcilerRunner:
+            settleDelay: "300ms"
+            retryBackoff: "1s"
+          nodeStatus:
+            leasePrefix: "nantian-gw-node"
+            persistTimeout: "2s"
+            persistDebounce: "250ms"
+          adminReadiness:
+            mode: "snapshot"
+          adminLimits:
+            maxRequestBodyBytes: 2097152
+            maxResponseBodyBytes: 8388608
+          adminRuntime:
+            readHeaderTimeout: "5s"
+            readTimeout: "30s"
+            writeTimeout: "30s"
+            idleTimeout: "2m"
+          translatorLimits:
+            maxInputObjects: 0
+            maxSnapshotObjects: 0
+            maxSnapshotEndpoints: 0
+          nodeDrift:
+            warningThreshold: "15s"
+          log:
+            level: "info"
+            format: "json"
+            addSource: false
+          leaderElection:
+            enabled: true
+            id: "nantian-controlplane-leader"
+            leaseDuration: "15s"
+            renewDeadline: "10s"
+            retryPeriod: "2s"
+          adminAuth:
+            bearerToken: ""
+            bearerTokenFile: ""
+          dashboardApi:
+            enabled: true
+            basePath: "/api/dashboard"
+            dataplaneAdminUrl: "http://nantian-gw-dataplane-admin.nantian-gw.svc.cluster.local:19080"
+            requestTimeout: "5s"
+            resourceMutationsEnabled: true
+          dashboard:
+            enabled: true
+            capabilities:
+              aiOverview: true
+              aiServices: true
+              aiTokenPolicies: true
+              aiCost: true
+              aiTraces: true
+              aiUsage: true
+              wasmPlugins: true
+              chatbot: true
+          pprof:
+            enabled: true
+            addr: "0.0.0.0:6060"

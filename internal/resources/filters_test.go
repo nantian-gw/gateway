@@ -26,7 +26,7 @@ func TestShouldAffectSnapshotIgnoresManagedFrontendResources(t *testing.T) {
 
 	endpointSlice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "aeg-shared-ep-default-ipv4",
+			Name:      "nantian-gw-shared-ep-default-ipv4",
 			Namespace: "nantian-gw",
 			Labels: map[string]string{
 				discoveryv1.LabelManagedBy: ManagedByValue,

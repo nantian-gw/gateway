@@ -11,7 +11,7 @@ reconcilerRunner:
   settleDelay: "300ms"
   retryBackoff: "1s"
 nodeStatus:
-  leasePrefix: "aeg-node"
+  leasePrefix: "nantian-gw-node"
   persistTimeout: "2s"
   persistDebounce: "250ms"
 adminReadiness:
