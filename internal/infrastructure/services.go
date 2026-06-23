@@ -98,9 +98,14 @@ func desiredGatewayService(
 			OwnerReferences: desiredGatewayServiceOwnerReferences(gateway),
 		},
 		Spec: corev1.ServiceSpec{
-			Type:     corev1.ServiceTypeClusterIP,
-			Selector: map[string]string{"app": "nantian-gw-dataplane"},
+			Type: corev1.ServiceTypeClusterIP,
 		},
+	}
+
+	// Add Selector only when the Gateway is in the same namespace as dataplane pods;
+	// cross-namespace gateways rely on managed EndpointSlices.
+	if gateway.Namespace == defaultDataplaneNamespace {
+		desired.Spec.Selector = map[string]string{"app": "nantian-gw-dataplane"}
 	}
 
 	if current.Name != "" {
