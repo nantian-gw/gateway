@@ -286,7 +286,7 @@ func (r *Reconciler) frontendEligibleDataplanePodSets(
 	ctx context.Context,
 	pods []corev1.Pod,
 ) ([]corev1.Pod, []corev1.Pod, []corev1.Pod) {
-	current := r.frontendEligibleDataplanePods(ctx, pods, frontendExposureStrictCurrent)
+	current := r.frontendEligibleDataplanePods(ctx, pods, frontendExposurePreferStable)
 	return current, current, current
 }
 

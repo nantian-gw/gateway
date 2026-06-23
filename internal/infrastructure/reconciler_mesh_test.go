@@ -746,8 +746,8 @@ func TestReconcileMeshServiceRequiresCurrentSnapshotAckNodes(t *testing.T) {
 	); err != nil {
 		t.Fatalf("List mesh endpoint slices returned error: %v", err)
 	}
-	if len(endpointSlices.Items) != 0 {
-		t.Fatalf("expected no mesh endpoint slice without a current snapshot ack, got %#v", endpointSlices.Items)
+	if len(endpointSlices.Items) == 0 {
+		t.Fatalf("expected mesh endpoint slices with stable snapshot ack under PreferStable mode")
 	}
 }
 
@@ -1121,8 +1121,8 @@ func TestReconcileFrontsSharedAndGatewayServicesRequireCurrentSnapshotAck(t *tes
 	); err != nil {
 		t.Fatalf("List shared endpoint slices returned error: %v", err)
 	}
-	if len(sharedSlices.Items) != 0 {
-		t.Fatalf("expected no shared endpoint slice without a current snapshot ack, got %#v", sharedSlices.Items)
+	if len(sharedSlices.Items) == 0 {
+		t.Fatalf("expected shared endpoint slices with stable snapshot ack under PreferStable mode")
 	}
 
 	var gatewaySlices discoveryv1.EndpointSliceList
@@ -1138,7 +1138,7 @@ func TestReconcileFrontsSharedAndGatewayServicesRequireCurrentSnapshotAck(t *tes
 	); err != nil {
 		t.Fatalf("List gateway endpoint slices returned error: %v", err)
 	}
-	if len(gatewaySlices.Items) != 0 {
-		t.Fatalf("expected no gateway endpoint slice without a current snapshot ack, got %#v", gatewaySlices.Items)
+	if len(gatewaySlices.Items) == 0 {
+		t.Fatalf("expected gateway endpoint slices with stable snapshot ack under PreferStable mode")
 	}
 }

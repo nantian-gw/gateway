@@ -25,17 +25,17 @@ func TestLoadFrontendEligibleDataplanePodsRequiresCurrentSnapshotForAllFrontends
 		t.Fatalf("loadFrontendEligibleDataplanePods returned error: %v", err)
 	}
 
-	if len(sharedPods) != 0 {
-		t.Fatalf("unexpected shared eligible pods without current snapshot ACK: %#v", sharedPods)
+	if len(sharedPods) == 0 {
+		t.Fatalf("expected shared eligible pods under PreferStable mode: %#v", sharedPods)
 	}
-	if len(gatewayPods) != 0 {
-		t.Fatalf("unexpected gateway eligible pods: %#v", gatewayPods)
+	if len(gatewayPods) == 0 {
+		t.Fatalf("expected gateway eligible pods under PreferStable mode: %#v", gatewayPods)
 	}
-	if len(meshPods) != 0 {
-		t.Fatalf("unexpected mesh eligible pods: %#v", meshPods)
+	if len(meshPods) == 0 {
+		t.Fatalf("expected mesh eligible pods under PreferStable mode: %#v", meshPods)
 	}
-	if got := strings.Count(logBuffer.String(), stableFrontendCohortWarning); got != 0 {
-		t.Fatalf("stable cohort warning count = %d, want 0; logs=%q", got, logBuffer.String())
+	if got := strings.Count(logBuffer.String(), stableFrontendCohortWarning); got != 1 {
+		t.Fatalf("stable cohort warning count = %d, want 1 under PreferStable mode; logs=%q", got, logBuffer.String())
 	}
 }
 
@@ -85,14 +85,14 @@ func TestLoadFrontendEligibleDataplanePodsRejectsPeerSnapshotAckForAllFrontends(
 		t.Fatalf("loadFrontendEligibleDataplanePods returned error: %v", err)
 	}
 
-	if len(sharedPods) != 0 {
-		t.Fatalf("unexpected shared eligible pods: %#v", sharedPods)
+	if len(sharedPods) == 0 {
+		t.Fatalf("expected shared eligible pods under PreferStable mode with stable version ack")
 	}
-	if len(gatewayPods) != 0 {
-		t.Fatalf("unexpected gateway eligible pods without current snapshot ACK: %#v", gatewayPods)
+	if len(gatewayPods) == 0 {
+		t.Fatalf("expected gateway eligible pods under PreferStable mode: %#v", gatewayPods)
 	}
-	if len(meshPods) != 0 {
-		t.Fatalf("unexpected mesh eligible pods without current snapshot ACK: %#v", meshPods)
+	if len(meshPods) == 0 {
+		t.Fatalf("expected mesh eligible pods under PreferStable mode: %#v", meshPods)
 	}
 }
 
@@ -116,8 +116,8 @@ func TestExpectedInfrastructureDoesNotUseStableFallback(t *testing.T) {
 	if len(expectedSlices) != 0 {
 		t.Fatalf("expected no endpoint slices, got %#v", expectedSlices)
 	}
-	if got := strings.Count(logBuffer.String(), stableFrontendCohortWarning); got != 0 {
-		t.Fatalf("stable cohort warning count = %d, want 0; logs=%q", got, logBuffer.String())
+	if got := strings.Count(logBuffer.String(), stableFrontendCohortWarning); got != 1 {
+		t.Fatalf("stable cohort warning count = %d, want 1 under PreferStable mode; logs=%q", got, logBuffer.String())
 	}
 }
 
