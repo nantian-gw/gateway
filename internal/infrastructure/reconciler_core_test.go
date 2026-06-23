@@ -111,8 +111,8 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 	if shared.Spec.Type != corev1.ServiceTypeNodePort {
 		t.Fatalf("shared service type = %s, want NodePort", shared.Spec.Type)
 	}
-	if shared.Spec.Selector != nil {
-		t.Fatalf("shared service selector = %#v, want nil with managed EndpointSlices", shared.Spec.Selector)
+	if shared.Spec.Selector == nil || shared.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("shared service selector = %#v, want map[app:nantian-gw-dataplane]", shared.Spec.Selector)
 	}
 	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 30080)
 	assertServicePort(t, shared.Spec.Ports, 8080, corev1.ProtocolTCP, 32080)

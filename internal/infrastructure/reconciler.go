@@ -359,7 +359,10 @@ func (r *Reconciler) reconcileSharedService(
 	); err != nil {
 		return err
 	}
-	return deleteFrontendEndpointSlices(ctx, r.client, state.foreignSlices[serviceID])
+	// Foreign EndpointSlices (e.g. created by the Kubernetes EndpointSlice controller
+	// when the shared Service has a selector) are kept as a fallback; they ensure the
+	// Service has endpoints even when the dataplane snapshot version has not converged.
+	return nil
 }
 
 func (r *Reconciler) reconcileGatewayServices(

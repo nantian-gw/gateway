@@ -970,8 +970,8 @@ func TestReconcileFrontsSharedAndGatewayServicesOnlyWithAckedCurrentSnapshotNode
 	if err != nil {
 		t.Fatalf("Get shared Service returned error: %v", err)
 	}
-	if sharedService.Spec.Selector != nil {
-		t.Fatalf("shared service selector = %#v, want nil with managed EndpointSlices", sharedService.Spec.Selector)
+	if sharedService.Spec.Selector == nil || sharedService.Spec.Selector["app"] != "nantian-gw-dataplane" {
+		t.Fatalf("shared service selector = %#v, want map[app:nantian-gw-dataplane]", sharedService.Spec.Selector)
 	}
 
 	gatewayService, err := mustGetService(

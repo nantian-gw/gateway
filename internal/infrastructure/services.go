@@ -59,6 +59,9 @@ func desiredSharedService(
 		desired.Spec.SessionAffinity = current.Spec.SessionAffinity
 	}
 
+	if len(options.DataplaneSelector) > 0 {
+		desired.Spec.Selector = options.DataplaneSelector
+	}
 	desired.Spec.Ports = assignSharedNodePorts(mergeServicePorts(current.Spec.Ports, ports, true))
 	return desired
 }
