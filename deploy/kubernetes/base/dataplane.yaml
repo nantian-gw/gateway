@@ -37,8 +37,6 @@ spec:
         runAsGroup: 65532
         fsGroup: 65532
         sysctls:
-          - name: net.ipv4.ip_unprivileged_port_start
-            value: "0"
         seccompProfile:
           type: RuntimeDefault
       topologySpreadConstraints:
@@ -69,7 +67,7 @@ spec:
             - "/etc/nantian-gw/config.yaml"
           ports:
             - name: http
-              containerPort: 10080
+              containerPort: 80
             - name: https
               containerPort: 443
             - name: admin

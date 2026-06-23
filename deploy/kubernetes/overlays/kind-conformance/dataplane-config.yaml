@@ -16,7 +16,7 @@ accessLog:
   path: "stdout"
   format: "%START_TIME% %CLIENT_IP% %HOST% %METHOD% %PATH% %ROUTE_NAME% %BACKEND% %STATUS% %LATENCY_MS%"
 runtime:
-  httpListenAddr: "0.0.0.0:10080"
+  httpListenAddr: "0.0.0.0:80"
   enableIpv6: true
   enableHttp3: false
   tlsMinVersion: "1.2"
