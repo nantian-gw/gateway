@@ -30,4 +30,6 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=builder /out/nantian-controlplane /usr/local/bin/nantian-controlplane
 
+USER 65532
+
 ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]
