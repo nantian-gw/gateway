@@ -27,7 +27,7 @@ const (
 func TestGatewayAPIConformance(t *testing.T) {
 	options := applyEnvFeatureOptions(gatewayconformance.DefaultOptions(t))
 	options, expandedAllFeatures := patchAllFeatures(options)
-	options.TimeoutConfig.TestIsolation = 30 * time.Second
+	options.TimeoutConfig.TestIsolation = 3 * time.Second
 
 	manifestFS, err := gatewayAPIManifestFS()
 	if err != nil {
