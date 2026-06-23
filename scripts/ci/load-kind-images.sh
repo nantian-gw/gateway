@@ -11,6 +11,7 @@ DATAPLANE_IMAGE="${DATAPLANE_IMAGE:-$DEFAULT_DATAPLANE_IMAGE}"
 DASHBOARD_IMAGE="${DASHBOARD_IMAGE:-$DEFAULT_DASHBOARD_IMAGE}"
 KIND_DATAPLANE_IMAGE="${KIND_DATAPLANE_IMAGE:-$(kind_runtime_image_ref "$DATAPLANE_IMAGE")}"
 KIND_DASHBOARD_IMAGE="${KIND_DASHBOARD_IMAGE:-$(kind_runtime_image_ref "$DASHBOARD_IMAGE")}"
+CONTROLPLANE_LATEST_IMAGE="${CONTROLPLANE_LATEST_IMAGE:-ghcr.io/nantian-gw/nantian-controlplane:latest}"
 
 docker pull "$DATAPLANE_IMAGE"
 docker pull "$DASHBOARD_IMAGE"
@@ -24,13 +25,14 @@ docker tag "$dataplane_image_id" "$KIND_DATAPLANE_IMAGE"
 docker tag "$dashboard_image_id" "$KIND_DASHBOARD_IMAGE"
 
 kind load docker-image "$CONTROLPLANE_IMAGE" --name "$CLUSTER_NAME"
-kind load docker-image ghcr.io/nantian-gw/nantian-controlplane:latest --name "$CLUSTER_NAME"
+kind load docker-image "$CONTROLPLANE_LATEST_IMAGE" --name "$CLUSTER_NAME"
 kind load docker-image "$KIND_DATAPLANE_IMAGE" --name "$CLUSTER_NAME"
 kind load docker-image "$KIND_DASHBOARD_IMAGE" --name "$CLUSTER_NAME"
 
 # Force restart control plane pods to pick up the latest image if they exist
 kubectl rollout restart deployment/nantian-gw-controlplane -n nantian-gw --ignore-not-found=true 2>/dev/null || true
 kubectl rollout restart deployment/nantian-gw-dataplane -n nantian-gw --ignore-not-found=true 2>/dev/null || true
+kubectl rollout restart deployment/nantian-gw-dashboard -n nantian-gw --ignore-not-found=true 2>/dev/null || true
 
 if [[ -n "${GITHUB_ENV:-}" ]]; then
   {
