@@ -69,7 +69,7 @@ func desiredDataplaneNetworkPolicy(
 		},
 		Ports: []networkingv1.NetworkPolicyPort{{
 			Protocol: &adminProtocol,
-			Port:     intstrPointer(defaultAdminPort),
+			Port:     intstrPointer(options.DataplaneAdminPort),
 		}},
 	})
 

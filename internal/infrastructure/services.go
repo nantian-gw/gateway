@@ -62,7 +62,7 @@ func desiredSharedService(
 	if len(options.DataplaneSelector) > 0 {
 		desired.Spec.Selector = options.DataplaneSelector
 	}
-	desired.Spec.Ports = assignSharedNodePorts(mergeServicePorts(current.Spec.Ports, ports, true))
+	desired.Spec.Ports = assignSharedNodePorts(mergeServicePorts(current.Spec.Ports, ports, true), options)
 	return desired
 }
 
@@ -316,12 +316,12 @@ func shouldPreserveNodePorts(spec corev1.ServiceSpec) bool {
 	}
 }
 
-func assignSharedNodePorts(ports []corev1.ServicePort) []corev1.ServicePort {
+func assignSharedNodePorts(ports []corev1.ServicePort, opts Options) []corev1.ServicePort {
 	for idx := range ports {
 		if ports[idx].NodePort != 0 {
 			continue
 		}
-		ports[idx].NodePort = sharedNodePortFor(ports[idx].Port, ports[idx].Protocol)
+		ports[idx].NodePort = sharedNodePortFor(ports[idx].Port, ports[idx].Protocol, opts)
 	}
 	return ports
 }
@@ -507,18 +507,16 @@ func servicePortName(protocol corev1.Protocol, port int32) string {
 	return strings.ToLower(string(protocol)) + "-" + fmt.Sprint(port)
 }
 
-func sharedNodePortFor(port int32, protocol corev1.Protocol) int32 {
-	const maxDefaultNodePort int32 = 32767
-
+func sharedNodePortFor(port int32, protocol corev1.Protocol, opts Options) int32 {
 	switch protocol {
 	case corev1.ProtocolUDP:
-		return 31000 + (port % 1000)
+		return opts.NodePortBaseUDP + (port % 1000)
 	default:
 		if port < 1024 {
-			return 30000 + port
+			return opts.NodePortBasePrivileged + port
 		}
-		nodePort := 32000 + (port % 1000)
-		if nodePort > maxDefaultNodePort {
+		nodePort := opts.NodePortBaseDefault + (port % 1000)
+		if nodePort > opts.NodePortRangeMax {
 			nodePort -= 1000
 		}
 		return nodePort

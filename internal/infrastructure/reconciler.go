@@ -43,6 +43,12 @@ type Options struct {
 	SnapshotStore             *ir.SnapshotStore
 	NodeStatus                *nodeinfo.Registry
 	EnableExperimentalGateway bool
+
+	DataplaneAdminPort    int32
+	NodePortBasePrivileged int32
+	NodePortBaseUDP        int32
+	NodePortBaseDefault    int32
+	NodePortRangeMax       int32
 }
 
 type Reconciler struct {
@@ -75,6 +81,21 @@ func NewWithOptions(
 	if len(options.DataplaneSelector) == 0 {
 		options.DataplaneSelector = cloneStringMap(defaultDataplaneSelector)
 	}
+	if options.DataplaneAdminPort == 0 {
+		options.DataplaneAdminPort = defaultAdminPort
+	}
+	if options.NodePortBasePrivileged == 0 {
+		options.NodePortBasePrivileged = 30000
+	}
+	if options.NodePortBaseUDP == 0 {
+		options.NodePortBaseUDP = 31000
+	}
+	if options.NodePortBaseDefault == 0 {
+		options.NodePortBaseDefault = 32000
+	}
+	if options.NodePortRangeMax == 0 {
+		options.NodePortRangeMax = 32767
+	}
 
 	return &Reconciler{
 		client:         client,
@@ -93,6 +114,11 @@ func DefaultOptions() Options {
 		SharedServiceName:         defaultSharedServiceName,
 		DataplaneSelector:         cloneStringMap(defaultDataplaneSelector),
 		EnableExperimentalGateway: true,
+		DataplaneAdminPort:        defaultAdminPort,
+		NodePortBasePrivileged:    30000,
+		NodePortBaseUDP:           31000,
+		NodePortBaseDefault:       32000,
+		NodePortRangeMax:          32767,
 	}
 }
 
