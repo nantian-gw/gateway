@@ -209,16 +209,20 @@ jobs:
         if: always()
         run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "$CLUSTER_NAME" || true
 
-  publish:
-    name: Publish Release Images
-    runs-on: ubuntu-latest
+  build-image:
+    name: Build and Push (${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     needs:
       - metadata
       - controlplane
       - kind-smoke
     timeout-minutes: 45
-    outputs:
-      control_digest: ${{ steps.build-controlplane.outputs.digest }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
 
     steps:
       - name: Checkout workflow helpers
@@ -247,13 +251,57 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push controlplane image
-        id: build-controlplane
         uses: docker/build-push-action@v7
         with:
           context: release-src
           file: release-src/Dockerfile
           push: true
-          tags: ${{ needs.metadata.outputs.control_image }}
+          tags: ${{ needs.metadata.outputs.control_image }}-${{ matrix.arch }}
+
+  publish:
+    name: Publish Multi-Arch Manifest
+    runs-on: ubuntu-latest
+    needs:
+      - metadata
+      - controlplane
+      - kind-smoke
+      - build-image
+    outputs:
+      control_digest: ${{ steps.merge-manifest.outputs.digest }}
+
+    steps:
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v6
+
+      - name: Checkout release source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.metadata.outputs.checkout_ref }}
+          path: release-src
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch manifest
+        id: merge-manifest
+        env:
+          CONTROL_IMAGE: ${{ needs.metadata.outputs.control_image }}
+          CONTROL_IMAGE_NAME: ${{ needs.metadata.outputs.control_image_name }}
+        run: |
+          IMAGE="${CONTROL_IMAGE}"
+          IMAGE_NAME="${CONTROL_IMAGE_NAME}"
+          docker buildx imagetools create -t "${IMAGE}" \
+            "${IMAGE}-amd64" \
+            "${IMAGE}-arm64"
+          docker buildx imagetools create -t "${IMAGE_NAME}" \
+            "${IMAGE}-amd64" \
+            "${IMAGE}-arm64"
+          digest=$(docker buildx imagetools inspect "${IMAGE}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
 
       - name: Prepare image metadata directory
         run: mkdir -p release-src/dist/image-metadata
@@ -261,7 +309,7 @@ jobs:
       - name: Generate image provenance
         env:
           RELEASE_TAG: ${{ needs.metadata.outputs.release_tag }}
-          CONTROL_DIGEST: ${{ steps.build-controlplane.outputs.digest }}
+          CONTROL_DIGEST: ${{ steps.merge-manifest.outputs.digest }}
           CONTROL_IMAGE: ${{ needs.metadata.outputs.control_image }}
           TIMESTAMP: ${{ github.event.repository.updated_at }}
         run: |
