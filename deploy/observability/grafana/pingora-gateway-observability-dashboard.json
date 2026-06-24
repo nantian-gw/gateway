@@ -344,7 +344,7 @@
       },
       "targets": [
         {
-          "expr": "sum(histogram_quantile(0.95, rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{job=~\"$job_controlplane\"}[5m])) by (le))",
           "refId": "A"
         }
       ],
@@ -379,7 +379,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m]))",
+          "expr": "sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -414,7 +414,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"})",
+          "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"})",
           "refId": "A"
         }
       ],
@@ -833,7 +833,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nantian_gateway_dataplane_traffic_failover_success_rate)",
+          "expr": "sum(nantian_gateway_dataplane_traffic_failover_success_rate{job=~\"$job_dataplane\"}) or vector(0)",
           "refId": "A"
         }
       ],
@@ -1187,12 +1187,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "nantian_gateway_dataplane_container_cpu_cores{namespace=~\"$namespace\"} or rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m])",
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[5m])",
           "legendFormat": "cores",
           "refId": "A"
         },
         {
-          "expr": "nantian_gateway_dataplane_container_cpu_request_cores{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\",resource=\"cpu\"})",
+          "expr": "avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\",resource=\"cpu\"})",
           "legendFormat": "request",
           "refId": "B"
         }
@@ -1220,7 +1220,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "nantian_gateway_dataplane_container_cpu_throttle_ratio{namespace=~\"$namespace\"} or rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"}[5m])",
+          "expr": "rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[5m]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[5m])",
           "legendFormat": "throttle",
           "refId": "A"
         }
@@ -1248,17 +1248,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum by (pod) (nantian_gateway_dataplane_container_memory_working_set_bytes{namespace=~\"$namespace\"} or container_memory_working_set_bytes{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"})",
           "legendFormat": "{{pod}}",
           "refId": "A"
         },
         {
-          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_limit_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\",resource=\"memory\"}))",
+          "expr": "avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\",resource=\"memory\"})",
           "legendFormat": "limit",
           "refId": "B"
         },
         {
-          "expr": "max by (pod) (nantian_gateway_dataplane_container_memory_request_bytes{namespace=~\"$namespace\"} or avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",pod=~\"nantian-gw-dataplane-.*\",resource=\"memory\"}))",
+          "expr": "avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\",resource=\"memory\"})",
           "legendFormat": "request",
           "refId": "C"
         }
@@ -1474,14 +1474,9 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{job=~\"$job_controlplane\"}[5m])) by (le))",
           "legendFormat": "ACK p99",
           "refId": "A"
-        },
-        {
-          "expr": "histogram_quantile(0.99, rate(nantian_gateway_controlplane_xds_publish_nack_lag_seconds_bucket[5m]))",
-          "legendFormat": "NACK p99",
-          "refId": "B"
         }
       ],
       "title": "xDS ACK/NACK Lag",
