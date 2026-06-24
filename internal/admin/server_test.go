@@ -31,6 +31,8 @@ import (
 	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
 
+const testAuthToken = "test-admin-token"
+
 func TestNewServerAppliesRuntimeTimeouts(t *testing.T) {
 	t.Parallel()
 
@@ -251,6 +253,10 @@ func newTestServerWithOptions(t *testing.T, opts Options) *Server {
 func newTestServerWithRepository(t *testing.T, repo nodeinfo.Repository, opts Options) *Server {
 	t.Helper()
 
+	if !authConfigured(opts) {
+		opts.BearerToken = testAuthToken
+	}
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	nodes := nodeinfo.NewRegistry(
@@ -432,6 +438,7 @@ func performRequest(t *testing.T, server *Server, method, path string, target an
 	t.Helper()
 
 	req := httptest.NewRequest(method, path, nil)
+	req.Header.Set("Authorization", "Bearer "+testAuthToken)
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
 

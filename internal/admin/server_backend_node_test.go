@@ -425,7 +425,7 @@ func TestNodeEndpointsFallbackToSharedLeaseState(t *testing.T) {
 		nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{PersistTimeout: time.Second}),
 		NewResourceManager(client, logger),
 		logger,
-		Options{},
+		Options{BearerToken: testAuthToken},
 	)
 
 	var nodes []ir.NodeStatus
@@ -516,7 +516,7 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 		nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{PersistTimeout: time.Second}),
 		NewResourceManager(client, logger),
 		logger,
-		Options{},
+		Options{BearerToken: testAuthToken},
 	)
 
 	var nodes []ir.NodeStatus

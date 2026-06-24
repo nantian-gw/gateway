@@ -56,6 +56,10 @@ func newTestServerWithResourceManagerAndLoggerAndOptions(
 ) *Server {
 	t.Helper()
 
+	if !authConfigured(opts) {
+		opts.BearerToken = testAuthToken
+	}
+
 	store := ir.NewSnapshotStore(logger)
 	nodes := nodeinfo.NewRegistry(
 		ir.NewNodeStatusStore(),
@@ -325,6 +329,7 @@ func performRequestWithBody(
 	t.Helper()
 
 	req := httptest.NewRequest(method, path, bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+testAuthToken)
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
 

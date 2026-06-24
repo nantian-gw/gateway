@@ -154,6 +154,7 @@ func TestAdminRateLimiterUsesBurstAndRecords429Metrics(t *testing.T) {
 	})
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req.Header.Set("Authorization", "Bearer "+testAuthToken)
 	req.RemoteAddr = "203.0.113.10:12345"
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)

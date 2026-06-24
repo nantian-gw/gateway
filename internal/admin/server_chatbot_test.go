@@ -52,7 +52,7 @@ func newChatbotTestServer(t *testing.T, k8sObjects ...client.Object) *Server {
 		nodes,
 		NewResourceManager(k8sClient, logger),
 		logger,
-		Options{},
+		Options{BearerToken: testAuthToken},
 	)
 }
 
