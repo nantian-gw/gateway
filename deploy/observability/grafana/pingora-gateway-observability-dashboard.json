@@ -298,7 +298,7 @@
       },
       "targets": [
         {
-          "expr": "sum(histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2|HTTP/2\",response_flag=\"none\"}[$__rate_interval])) by (le)))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_dataplane_traffic_request_latency_ms_bucket{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2\",response_flag=\"none\"}[$__rate_interval])) by (le))",
           "refId": "A"
         }
       ],
@@ -333,7 +333,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total[$__rate_interval]) / sum(rate(nantian_gateway_dataplane_traffic_request_events_total[$__rate_interval])) * 100)",
+          "expr": "sum(rate(nantian_gateway_dataplane_traffic_status_5xx_total{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2\"}[$__rate_interval])) / sum(rate(nantian_gateway_dataplane_traffic_request_events_total{protocol=~\"HTTP|HTTPS|GRPC|GRPCS|H2C|HTTP2\"}[$__rate_interval])) * 100",
           "refId": "A"
         }
       ],
@@ -403,7 +403,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]))",
+          "expr": "(sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -1244,7 +1244,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval])",
+          "expr": "(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval])) or vector(0)",
           "legendFormat": "throttle",
           "refId": "A"
         }
