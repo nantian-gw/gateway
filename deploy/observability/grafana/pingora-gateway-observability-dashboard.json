@@ -368,7 +368,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{job=~\"$job_controlplane\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{job=~\"${job_controlplane}\"}[$__rate_interval])) by (le))",
           "refId": "A"
         }
       ],
@@ -403,7 +403,7 @@
       },
       "targets": [
         {
-          "expr": "(sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]))) or vector(0)",
+          "expr": "(sum(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"}[$__rate_interval]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -438,7 +438,7 @@
       },
       "targets": [
         {
-          "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"})",
+          "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"})",
           "refId": "A"
         }
       ],
@@ -857,7 +857,7 @@
       },
       "targets": [
         {
-          "expr": "sum(nantian_gateway_dataplane_traffic_failover_success_rate{job=~\"$job_dataplane\"}) or vector(0)",
+          "expr": "sum(nantian_gateway_dataplane_traffic_failover_success_rate{job=~\"${job_dataplane}\"}) or vector(0)",
           "refId": "A"
         }
       ],
@@ -1211,12 +1211,12 @@
       "options": {},
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval])",
+          "expr": "rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"}[$__rate_interval])",
           "legendFormat": "cores",
           "refId": "A"
         },
         {
-          "expr": "avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\",resource=\"cpu\"})",
+          "expr": "avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\",resource=\"cpu\"})",
           "legendFormat": "request",
           "refId": "B"
         }
@@ -1244,7 +1244,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"}[$__rate_interval])) or vector(0)",
+          "expr": "(rate(container_cpu_cfs_throttled_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"}[$__rate_interval]) / rate(container_cpu_cfs_periods_total{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"}[$__rate_interval])) or vector(0)",
           "legendFormat": "throttle",
           "refId": "A"
         }
@@ -1272,17 +1272,17 @@
       "options": {},
       "targets": [
         {
-          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\"})",
           "legendFormat": "{{pod}}",
           "refId": "A"
         },
         {
-          "expr": "avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\",resource=\"memory\"})",
+          "expr": "avg by (pod) (kube_pod_container_resource_limits{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\",resource=\"memory\"})",
           "legendFormat": "limit",
           "refId": "B"
         },
         {
-          "expr": "avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",container!=\"\",pod=~\"$pod_dp\",resource=\"memory\"})",
+          "expr": "avg by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\",container!=\"\",pod=~\"${pod_dp}\",resource=\"memory\"})",
           "legendFormat": "request",
           "refId": "C"
         }
@@ -1498,7 +1498,7 @@
       "options": {},
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{job=~\"$job_controlplane\"}[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(nantian_gateway_controlplane_xds_publish_ack_lag_seconds_bucket{job=~\"${job_controlplane}\"}[$__rate_interval])) by (le))",
           "legendFormat": "ACK p99",
           "refId": "A"
         }
