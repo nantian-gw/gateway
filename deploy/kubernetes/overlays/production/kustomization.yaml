@@ -4,3 +4,8 @@ kind: Kustomization
 resources:
   - ../../base
   - ../../addons/dataplane-hpa
+
+patches:
+  - path: patch-controlplane-deployment.yaml
+  - path: patch-dataplane-deployment.yaml
+  - path: patch-dashboard-deployment.yaml

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nantian-gw-dashboard
+  namespace: nantian-gw
+spec:
+  template:
+    spec:
+      containers:
+        - name: dashboard
+          env:
+            - name: CONTROLPLANE_ADMIN_URL
+              value: "http://nantian-gw-controlplane-admin.nantian-gw.svc.cluster.local:18081"
+            - name: DATAPLANE_ADMIN_URL
+              value: "http://nantian-gw-dataplane-admin.nantian-gw.svc.cluster.local:19080"
+            # Inject the dataplane admin bearer token so the dashboard BFF can
+            # proxy to dataplane admin endpoints, which use a different token
+            # than the controlplane admin the dashboard session authenticates with.
+            - name: DATAPLANE_BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nantian-gw-dataplane-admin-auth
+                  key: token
+          resources:
+            requests:
+              cpu: "100m"
+              memory: 128Mi
+            limits:
+              cpu: "500m"
+              memory: 256Mi
