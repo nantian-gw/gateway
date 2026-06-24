@@ -22,10 +22,7 @@
         "name": "datasource",
         "type": "datasource",
         "label": "Prometheus",
-        "query": {
-          "query": "prometheus",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "prometheus",
         "regex": "",
         "refresh": 1
       },
@@ -33,10 +30,7 @@
         "name": "namespace",
         "type": "query",
         "label": "Namespace",
-        "query": {
-          "query": "label_values(nantian_gateway_dataplane_ready, namespace)",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "label_values(nantian_gateway_dataplane_ready, namespace)",
         "refresh": 1,
         "multi": false,
         "includeAll": false,
@@ -50,10 +44,7 @@
         "name": "pod_dp",
         "type": "query",
         "label": "Dataplane Pod",
-        "query": {
-          "query": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)",
         "refresh": 1,
         "multi": true,
         "includeAll": true,
@@ -67,10 +58,7 @@
         "name": "job_controlplane",
         "type": "query",
         "label": "Control Plane Job",
-        "query": {
-          "query": "label_values(nantian_gateway_controlplane_admin_requests_total, job)",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "label_values(nantian_gateway_controlplane_admin_requests_total, job)",
         "refresh": 1,
         "multi": true,
         "includeAll": true,
@@ -83,10 +71,7 @@
         "name": "instance_cp",
         "type": "query",
         "label": "CP Instance",
-        "query": {
-          "query": "label_values(nantian_gateway_controlplane_admin_requests_total{job=~\"$job_controlplane\"}, instance)",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "label_values(nantian_gateway_controlplane_admin_requests_total{job=~\"$job_controlplane\"}, instance)",
         "refresh": 1,
         "multi": true,
         "includeAll": true,
@@ -99,10 +84,7 @@
         "name": "job_dataplane",
         "type": "query",
         "label": "Data Plane Job",
-        "query": {
-          "query": "label_values(nantian_gateway_dataplane_admin_requests_total, job)",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "label_values(nantian_gateway_dataplane_admin_requests_total, job)",
         "refresh": 1,
         "multi": true,
         "includeAll": true,
@@ -115,10 +97,7 @@
         "name": "instance_dp",
         "type": "query",
         "label": "DP Instance",
-        "query": {
-          "query": "label_values(nantian_gateway_dataplane_admin_requests_total{job=~\"$job_dataplane\"}, instance)",
-          "refId": "StandardVariableQuery"
-        },
+        "query": "label_values(nantian_gateway_dataplane_admin_requests_total{job=~\"$job_dataplane\"}, instance)",
         "refresh": 1,
         "multi": true,
         "includeAll": true,
