@@ -12,7 +12,7 @@ COPY gen/ ./gen/
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=mod -ldflags="-s -w" -trimpath -o /out/nantian-controlplane ./cmd/manager
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=mod -ldflags="-s -w" -trimpath -o /out/nantian-controlplane ./cmd/manager
 
 FROM ${RUNTIME_IMAGE}
 
