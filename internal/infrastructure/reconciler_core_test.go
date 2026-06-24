@@ -362,7 +362,7 @@ func TestSharedNodePortForStaysInsideDefaultNodePortRange(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := sharedNodePortFor(tt.port, tt.protocol)
+			got := sharedNodePortFor(tt.port, tt.protocol, DefaultOptions())
 			if got != tt.want {
 				t.Fatalf("sharedNodePortFor(%d, %s) = %d, want %d", tt.port, tt.protocol, got, tt.want)
 			}
