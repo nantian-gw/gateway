@@ -37,7 +37,14 @@ func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
 		if opts.Logger != nil {
 			opts.Logger.Warn("admin API running without authentication — set adminAuth.bearerToken or adminAuth.bearerTokenFile in config")
 		}
-		return next
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if isProbePath(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+		})
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
