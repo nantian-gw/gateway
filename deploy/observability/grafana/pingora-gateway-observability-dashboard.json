@@ -38,7 +38,11 @@
           "text": "nantian-gw",
           "value": "nantian-gw"
         },
-        "definition": "label_values(nantian_gateway_dataplane_ready, namespace)"
+        "definition": "label_values(nantian_gateway_dataplane_ready, namespace)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$DS_PROMETHEUS"
+        }
       },
       {
         "name": "pod_dp",
@@ -52,7 +56,11 @@
           "text": "All",
           "value": "$__all"
         },
-        "definition": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)"
+        "definition": "label_values(nantian_gateway_dataplane_ready{namespace=~\"$namespace\"}, pod)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$DS_PROMETHEUS"
+        }
       },
       {
         "name": "job_controlplane",
@@ -65,6 +73,10 @@
         "current": {
           "text": "All",
           "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$DS_PROMETHEUS"
         }
       },
       {
@@ -78,6 +90,10 @@
         "current": {
           "text": "All",
           "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$DS_PROMETHEUS"
         }
       },
       {
@@ -91,6 +107,10 @@
         "current": {
           "text": "All",
           "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$DS_PROMETHEUS"
         }
       },
       {
@@ -104,6 +124,10 @@
         "current": {
           "text": "All",
           "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$DS_PROMETHEUS"
         }
       }
     ]
