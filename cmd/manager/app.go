@@ -196,6 +196,21 @@ func run(configPath string) error {
 	infraOptions.SnapshotStore = store
 	infraOptions.NodeStatus = nodes
 	infraOptions.EnableExperimentalGateway = cfg.Features.EnableExperimentalGateway
+	if v := cfg.Infra.DataplaneAdminPort; v != 0 {
+		infraOptions.DataplaneAdminPort = v
+	}
+	if v := cfg.Infra.NodePortBasePrivileged; v != 0 {
+		infraOptions.NodePortBasePrivileged = v
+	}
+	if v := cfg.Infra.NodePortBaseUDP; v != 0 {
+		infraOptions.NodePortBaseUDP = v
+	}
+	if v := cfg.Infra.NodePortBaseDefault; v != 0 {
+		infraOptions.NodePortBaseDefault = v
+	}
+	if v := cfg.Infra.NodePortRangeMax; v != 0 {
+		infraOptions.NodePortRangeMax = v
+	}
 	infra := infrastructure.NewWithOptions(mgr.GetClient(), mgr.GetAPIReader(), cfg.ControllerName, infraOptions, logger)
 	statusScopedReconcile := func(ctx context.Context, scope controller.ReconcilerRunnerScope) error {
 		switch scope {

@@ -46,6 +46,7 @@ type Config struct {
 	GRPCRuntime      GRPCRuntimeConfig      `yaml:"grpcRuntime"`
 	Namespace        string                 `yaml:"namespace"`
 	Features         FeaturesConfig         `yaml:"features"`
+	Infra            InfraConfig            `yaml:"infra"`
 	Dashboard        DashboardConfig        `yaml:"dashboard"`
 	Tracing          TracingConfig          `yaml:"tracing"`
 }
@@ -53,6 +54,14 @@ type Config struct {
 type FeaturesConfig struct {
 	EnableExperimentalGateway bool `yaml:"enableExperimentalGateway"`
 	EnableAiGateway           bool `yaml:"enableAiGateway"`
+}
+
+type InfraConfig struct {
+	DataplaneAdminPort    int32 `yaml:"dataplaneAdminPort"`
+	NodePortBasePrivileged int32 `yaml:"nodePortBasePrivileged"`
+	NodePortBaseUDP        int32 `yaml:"nodePortBaseUDP"`
+	NodePortBaseDefault    int32 `yaml:"nodePortBaseDefault"`
+	NodePortRangeMax       int32 `yaml:"nodePortRangeMax"`
 }
 
 type DashboardConfig struct {
