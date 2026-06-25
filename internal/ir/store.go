@@ -31,7 +31,7 @@ type SnapshotStoreHooks struct {
 func NewSnapshotStore(logger *slog.Logger) *SnapshotStore {
 	return &SnapshotStore{
 		logger:      logger,
-		subscribers: make(map[int]*snapshotSubscriber),
+		subscribers: make(map[int]*snapshotSubscriber, 8),
 	}
 }
 

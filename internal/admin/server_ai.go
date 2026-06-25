@@ -77,7 +77,7 @@ type AICostTrend struct {
 var (
 	aiTotalTokens   atomic.Uint64
 	aiTotalRequests atomic.Uint64
-	aiServices      = make(map[string]*AIServiceSummary)
+	aiServices      = make(map[string]*AIServiceSummary, 16)
 	aiTokenUsage    []AITokenUsage
 	aiTraces        []AITraceSummary
 	aiModelCosts    = make(map[string]float64)

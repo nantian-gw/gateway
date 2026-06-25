@@ -84,7 +84,7 @@ func New(
 		protoCache:    newSnapshotProtoCache(nil),
 		serverOptions: serverOptions,
 		shutdownCh:    make(chan struct{}),
-		activeStreams: make(map[string]*streamRegistration),
+		activeStreams: make(map[string]*streamRegistration, 64),
 	}, nil
 }
 

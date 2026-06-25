@@ -37,7 +37,7 @@ func (c *snapshotProtoCache) get(snapshot *ir.Snapshot, profile projectionProfil
 		c.snapshots = nil
 	}
 	if c.snapshots == nil {
-		c.snapshots = make(map[string]*controlv1.ConfigSnapshot)
+		c.snapshots = make(map[string]*controlv1.ConfigSnapshot, 32)
 	}
 	cached := c.snapshots[profile.projectionKey]
 	if cached == nil {
