@@ -36,10 +36,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          path: gateway
+      - uses: actions/checkout@v6
+        with:
+          repository: nantian-gw/proto
+          path: proto
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
       - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+          go-version-file: gateway/go.mod
+          cache-dependency-path: gateway/go.sum
       - name: Install Buf CLI
         env:
           BUF_VERSION: 1.70.0
@@ -52,15 +59,19 @@ jobs:
       - name: Buf generate
         env:
           BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
-        run: buf generate buf.build/nantian/proto
+        run: |
+          cd gateway
+          buf generate ../proto
       - name: Verify go mod tidy
         run: |
+          cd gateway
           go mod tidy
           git diff --exit-code
       - name: Verify generated code is up to date
         run: |
+          cd gateway
           if ! git diff --exit-code gen/; then
-            echo "::error::Generated Go code is out of date. Run 'buf generate buf.build/nantian/proto && go mod tidy' locally and commit the changes."
+            echo "::error::Generated Go code is out of date. Run 'buf generate ../proto && go mod tidy' locally and commit the changes."
             exit 1
           fi
 
