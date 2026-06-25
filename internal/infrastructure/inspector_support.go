@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -759,46 +760,40 @@ func finalizeInfrastructureReport(report *InfrastructureReport) {
 	if report.Summary.MissingCount > 0 {
 		report.Warnings = append(
 			report.Warnings,
-			fmt.Sprintf("%d derived infrastructure resources are missing", report.Summary.MissingCount),
+			strconv.Itoa(report.Summary.MissingCount)+" derived infrastructure resources are missing",
 		)
 	}
 	if report.Summary.DriftedCount > 0 {
 		report.Warnings = append(
 			report.Warnings,
-			fmt.Sprintf("%d derived infrastructure resources have drifted from desired state", report.Summary.DriftedCount),
+			strconv.Itoa(report.Summary.DriftedCount)+" derived infrastructure resources have drifted from desired state",
 		)
 	}
 	if report.Summary.OrphanCount > 0 {
 		report.Warnings = append(
 			report.Warnings,
-			fmt.Sprintf("%d managed infrastructure resources are orphaned", report.Summary.OrphanCount),
+			strconv.Itoa(report.Summary.OrphanCount)+" managed infrastructure resources are orphaned",
 		)
 	}
 	if report.Summary.GatewayConvergence.PendingServiceMetadataCount > 0 {
 		report.Warnings = append(
 			report.Warnings,
-			fmt.Sprintf(
-				"%d gateways are waiting for derived Service metadata convergence",
-				report.Summary.GatewayConvergence.PendingServiceMetadataCount,
-			),
+			strconv.Itoa(report.Summary.GatewayConvergence.PendingServiceMetadataCount)+
+				" gateways are waiting for derived Service metadata convergence",
 		)
 	}
 	if report.Summary.GatewayConvergence.PendingFrontendEndpointSliceCount > 0 {
 		report.Warnings = append(
 			report.Warnings,
-			fmt.Sprintf(
-				"%d gateways are waiting for derived frontend EndpointSlice convergence",
-				report.Summary.GatewayConvergence.PendingFrontendEndpointSliceCount,
-			),
+			strconv.Itoa(report.Summary.GatewayConvergence.PendingFrontendEndpointSliceCount)+
+				" gateways are waiting for derived frontend EndpointSlice convergence",
 		)
 	}
 	if report.Summary.GatewayConvergence.PendingProgrammedObservedGenerationCount > 0 {
 		report.Warnings = append(
 			report.Warnings,
-			fmt.Sprintf(
-				"%d gateways are waiting for Programmed observedGeneration convergence",
-				report.Summary.GatewayConvergence.PendingProgrammedObservedGenerationCount,
-			),
+			strconv.Itoa(report.Summary.GatewayConvergence.PendingProgrammedObservedGenerationCount)+
+				" gateways are waiting for Programmed observedGeneration convergence",
 		)
 	}
 }

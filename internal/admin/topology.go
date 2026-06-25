@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -108,7 +109,7 @@ func buildTopology(snapshot *ir.Snapshot, nodes []ir.NodeStatus) TopologyRespons
 			Type:      "listener",
 			Label:     listener.Name,
 			Status:    strings.ToLower(listener.Protocol),
-			Detail:    fmt.Sprintf("%s:%d", defaultAddress(listener.Address), listener.Port),
+			Detail:    defaultAddress(listener.Address) + ":" + strconv.FormatUint(uint64(listener.Port), 10),
 			Metadata:  map[string]string{"protocol": listener.Protocol, "hostnames": strings.Join(listener.Hostnames, ", ")},
 			Namespace: listener.Metadata["nantian.dev/frontend-namespace"],
 		})
@@ -152,7 +153,7 @@ func buildTopology(snapshot *ir.Snapshot, nodes []ir.NodeStatus) TopologyRespons
 			}
 			for _, routeNode := range routeNodes {
 				response.Edges = append(response.Edges, TopologyEdge{
-					ID:     fmt.Sprintf("edge:%s:%s", sourceID, routeNode.ID),
+					ID:     "edge:" + sourceID + ":" + routeNode.ID,
 					Source: sourceID,
 					Target: routeNode.ID,
 					Type:   "attach",
@@ -277,11 +278,11 @@ func topologyBackendEdges(
 		}
 		backendID := ensureBackendTopologyNode(namespace, item.ref.Name, item.ref.Port, backendNodeIDs, backends, response)
 		edges = append(edges, TopologyEdge{
-			ID:     fmt.Sprintf("edge:%s:%s", sourceID, backendID),
+			ID:     "edge:" + sourceID + ":" + backendID,
 			Source: sourceID,
 			Target: backendID,
 			Type:   "forward",
-			Label:  fmt.Sprintf("%s:%d", item.ref.Name, item.ref.Port),
+			Label:  item.ref.Name + ":" + strconv.FormatUint(uint64(item.ref.Port), 10),
 			Weight: item.weight,
 			Status: topologyBackendEdgeStatus(namespace, item.ref.Name, item.ref.Port, backends),
 		})
@@ -305,21 +306,21 @@ func ensureBackendTopologyNode(
 
 	nodeID := backendNodeID(namespace, name, port)
 	cluster, ok := findTopologyBackend(backends, namespace, name, port)
-	detail := fmt.Sprintf("%s:%d", name, port)
+	detail := name + ":" + strconv.FormatUint(uint64(port), 10)
 	status := "unknown"
-	metadata := map[string]string{"service": name, "port": fmt.Sprintf("%d", port)}
+	metadata := map[string]string{"service": name, "port": strconv.FormatUint(uint64(port), 10)}
 	if ok {
 		detail = fmt.Sprintf("%s · %d/%d healthy", cluster.Protocol, healthyEndpoints(cluster), len(cluster.Endpoints))
 		status = topologyBackendStatus(cluster)
 		metadata["protocol"] = cluster.Protocol
-		metadata["healthyEndpoints"] = fmt.Sprintf("%d", healthyEndpoints(cluster))
-		metadata["totalEndpoints"] = fmt.Sprintf("%d", len(cluster.Endpoints))
+		metadata["healthyEndpoints"] = strconv.Itoa(healthyEndpoints(cluster))
+		metadata["totalEndpoints"] = strconv.Itoa(len(cluster.Endpoints))
 	}
 
 	response.Nodes = append(response.Nodes, TopologyNode{
 		ID:        nodeID,
 		Type:      "backend",
-		Label:     fmt.Sprintf("%s:%d", name, port),
+		Label:     name + ":" + strconv.FormatUint(uint64(port), 10),
 		Namespace: namespace,
 		Name:      name,
 		Status:    status,
@@ -339,7 +340,7 @@ func ensureBackendTopologyNode(
 		Metadata:  metadata,
 	})
 	response.Edges = append(response.Edges, TopologyEdge{
-		ID:     fmt.Sprintf("edge:%s:%s", nodeID, endpointNodeID),
+		ID:     "edge:" + nodeID + ":" + endpointNodeID,
 		Source: nodeID,
 		Target: endpointNodeID,
 		Type:   "resolve",
@@ -353,7 +354,7 @@ func ensureBackendTopologyNode(
 }
 
 func findTopologyBackend(backends []ir.BackendCluster, namespace, service string, port uint32) (ir.BackendCluster, bool) {
-	exactName := fmt.Sprintf("%s:%d", service, port)
+	exactName := service + ":" + strconv.FormatUint(uint64(port), 10)
 	for _, backend := range backends {
 		if backend.Namespace == namespace && (backend.Name == exactName || backend.Metadata["service"] == service) {
 			return backend, true
@@ -457,19 +458,19 @@ func listenerNodeID(name string) string {
 }
 
 func routeNodeID(kind, namespace, name string) string {
-	return fmt.Sprintf("route:%s:%s/%s", kind, namespace, name)
+	return "route:" + kind + ":" + namespace + "/" + name
 }
 
 func backendNodeID(namespace, name string, port uint32) string {
-	return fmt.Sprintf("backend:%s/%s:%d", namespace, name, port)
+	return "backend:" + namespace + "/" + name + ":" + strconv.FormatUint(uint64(port), 10)
 }
 
 func endpointSetNodeID(namespace, name string, port uint32) string {
-	return fmt.Sprintf("endpoint-set:%s/%s:%d", namespace, name, port)
+	return "endpoint-set:" + namespace + "/" + name + ":" + strconv.FormatUint(uint64(port), 10)
 }
 
 func backendNodeKey(namespace, name string, port uint32) string {
-	return fmt.Sprintf("%s/%s:%d", namespace, name, port)
+	return namespace + "/" + name + ":" + strconv.FormatUint(uint64(port), 10)
 }
 
 func defaultAddress(address string) string {

@@ -3,6 +3,7 @@ package chatbot
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -70,7 +71,13 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 		b.WriteString("(none)\n\n")
 	} else {
 		for _, gw := range managedGateways {
-			fmt.Fprintf(&b, "- **%s/%s** (class: %s)\n", gw.Namespace, gw.Name, gw.Spec.GatewayClassName)
+			b.WriteString("- **")
+			b.WriteString(gw.Namespace)
+			b.WriteString("/")
+			b.WriteString(gw.Name)
+			b.WriteString("** (class: ")
+			b.WriteString(string(gw.Spec.GatewayClassName))
+			b.WriteString(")\n")
 			if len(gw.Spec.Listeners) > 0 {
 				b.WriteString("  Listeners:\n")
 				for _, l := range gw.Spec.Listeners {
@@ -78,8 +85,15 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 					if l.Hostname != nil {
 						hostname = string(*l.Hostname)
 					}
-					fmt.Fprintf(&b, "    - `%s`: port=%d proto=%s hostname=%s\n",
-						l.Name, l.Port, l.Protocol, hostname)
+			b.WriteString("    - `")
+				b.WriteString(string(l.Name))
+				b.WriteString("`: port=")
+				b.WriteString(strconv.Itoa(int(l.Port)))
+				b.WriteString(" proto=")
+				b.WriteString(string(l.Protocol))
+				b.WriteString(" hostname=")
+				b.WriteString(hostname)
+				b.WriteString("\n")
 				}
 			}
 		}
@@ -92,7 +106,11 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 		b.WriteString("(none)\n\n")
 	} else {
 		for _, r := range httpList.Items {
-			fmt.Fprintf(&b, "- **%s/%s**", r.Namespace, r.Name)
+			b.WriteString("- **")
+			b.WriteString(r.Namespace)
+			b.WriteString("/")
+			b.WriteString(r.Name)
+			b.WriteString("**")
 			fmtRouteParents(&b, r.Spec.ParentRefs, r.Namespace)
 			b.WriteString("\n")
 			for i, rule := range r.Spec.Rules {
@@ -102,10 +120,16 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 						if m.Path != nil && m.Path.Value != nil {
 							path = *m.Path.Value
 						}
-						fmt.Fprintf(&b, "  - rule[%d] match: path=%s\n", i, path)
+						b.WriteString("  - rule[")
+						b.WriteString(strconv.Itoa(i))
+						b.WriteString("] match: path=")
+						b.WriteString(path)
+						b.WriteString("\n")
 					}
 				} else {
-					fmt.Fprintf(&b, "  - rule[%d] match: (all)\n", i)
+					b.WriteString("  - rule[")
+					b.WriteString(strconv.Itoa(i))
+					b.WriteString("] match: (all)\n")
 				}
 				for _, br := range rule.BackendRefs {
 					ns := r.Namespace
@@ -116,8 +140,13 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 					if br.Port != nil {
 						port = int32(*br.Port)
 					}
-					fmt.Fprintf(&b, "    → backend: %s/%s (port=%d)\n",
-						string(br.Name), ns, port)
+					b.WriteString("    → backend: ")
+					b.WriteString(string(br.Name))
+					b.WriteString("/")
+					b.WriteString(ns)
+					b.WriteString(" (port=")
+					b.WriteString(strconv.Itoa(int(port)))
+					b.WriteString(")\n")
 				}
 			}
 		}
@@ -130,7 +159,11 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 		b.WriteString("(none)\n\n")
 	} else {
 		for _, r := range grpcList.Items {
-			fmt.Fprintf(&b, "- **%s/%s**", r.Namespace, r.Name)
+			b.WriteString("- **")
+			b.WriteString(r.Namespace)
+			b.WriteString("/")
+			b.WriteString(r.Name)
+			b.WriteString("**")
 			fmtRouteParents(&b, r.Spec.ParentRefs, r.Namespace)
 			b.WriteString("\n")
 			for i, rule := range r.Spec.Rules {
@@ -144,45 +177,68 @@ func BuildRAGContext(ctx context.Context, cl client.Client, controllerName strin
 						if m.Method.Method != nil {
 							method = *m.Method.Method
 						}
-						fmt.Fprintf(&b, "  - rule[%d] match: service=%s method=%s\n", i, svc, method)
+						b.WriteString("  - rule[")
+						b.WriteString(strconv.Itoa(i))
+						b.WriteString("] match: service=")
+						b.WriteString(svc)
+						b.WriteString(" method=")
+						b.WriteString(method)
+						b.WriteString("\n")
 					} else {
-						fmt.Fprintf(&b, "  - rule[%d] match: (all)\n", i)
+						b.WriteString("  - rule[")
+						b.WriteString(strconv.Itoa(i))
+						b.WriteString("] match: (all)\n")
 					}
 				}
 				if len(rule.Matches) == 0 {
-					fmt.Fprintf(&b, "  - rule[%d] match: (all)\n", i)
+					b.WriteString("  - rule[")
+					b.WriteString(strconv.Itoa(i))
+					b.WriteString("] match: (all)\n")
 				}
-				for _, br := range rule.BackendRefs {
-					ns := r.Namespace
-					if br.Namespace != nil {
-						ns = string(*br.Namespace)
-					}
-					port := int32(0)
-					if br.Port != nil {
-						port = int32(*br.Port)
-					}
-					fmt.Fprintf(&b, "    → backend: %s/%s (port=%d)\n",
-						string(br.Name), ns, port)
+			for _, br := range rule.BackendRefs {
+				ns := r.Namespace
+				if br.Namespace != nil {
+					ns = string(*br.Namespace)
 				}
+				port := int32(0)
+				if br.Port != nil {
+					port = int32(*br.Port)
+				}
+				b.WriteString("    → backend: ")
+				b.WriteString(string(br.Name))
+				b.WriteString("/")
+				b.WriteString(ns)
+				b.WriteString(" (port=")
+				b.WriteString(strconv.Itoa(int(port)))
+				b.WriteString(")\n")
 			}
 		}
-		b.WriteString("\n")
 	}
+	b.WriteString("\n")
+}
 
-	// Services
+// Services
 	b.WriteString("### Services\n\n")
 	if len(svcList.Items) == 0 {
 		b.WriteString("(none)\n\n")
 	} else {
 		for _, svc := range svcList.Items {
-			fmt.Fprintf(&b, "- **%s/%s** (type=%s)", svc.Namespace, svc.Name, svc.Spec.Type)
+			b.WriteString("- **")
+		b.WriteString(svc.Namespace)
+		b.WriteString("/")
+		b.WriteString(svc.Name)
+		b.WriteString("** (type=")
+		b.WriteString(string(svc.Spec.Type))
+		b.WriteString(")")
 			if len(svc.Spec.Ports) > 0 {
 				b.WriteString(" [")
 				for j, port := range svc.Spec.Ports {
 					if j > 0 {
 						b.WriteString(", ")
 					}
-					fmt.Fprintf(&b, "%d/%s", port.Port, port.Protocol)
+					b.WriteString(strconv.Itoa(int(port.Port)))
+				b.WriteString("/")
+				b.WriteString(string(port.Protocol))
 				}
 				b.WriteString("]")
 			}
@@ -203,6 +259,9 @@ func fmtRouteParents(b *strings.Builder, refs []gatewayv1.ParentReference, defau
 		if ref.Namespace != nil {
 			ns = string(*ref.Namespace)
 		}
-		fmt.Fprintf(b, " → %s/%s", ns, ref.Name)
+		b.WriteString(" → ")
+		b.WriteString(ns)
+		b.WriteString("/")
+		b.WriteString(string(ref.Name))
 	}
 }

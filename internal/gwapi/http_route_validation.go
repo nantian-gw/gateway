@@ -174,7 +174,7 @@ func httpRouteRuleMessage(prefix string, indexes []int, messages []string) strin
 		return ""
 	}
 	if len(indexes) == 1 && len(messages) == 1 {
-		return fmt.Sprintf("%s rule %d %s", prefix, indexes[0]+1, messages[0])
+		return prefix + " rule " + strconv.Itoa(indexes[0]+1) + " " + messages[0]
 	}
 	if len(messages) == len(indexes) && allStringsEqual(messages) {
 		return fmt.Sprintf(
