@@ -4120,7 +4120,8 @@ const file_gateway_control_v1_control_proto_rawDesc = "" +
 	"!CONSISTENT_HASH_KEY_TYPE_HOSTNAME\x10\x032\xd8\x01\n" +
 	"\x1dConfigurationDiscoveryService\x12f\n" +
 	"\x13StreamConfiguration\x12$.gateway.control.v1.DiscoveryRequest\x1a%.gateway.control.v1.DiscoveryResponse(\x010\x01\x12O\n" +
-	"\fReportStatus\x12 .gateway.control.v1.StatusReport\x1a\x1d.gateway.control.v1.StatusAckB:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\fReportStatus\x12 .gateway.control.v1.StatusReport\x1a\x1d.gateway.control.v1.StatusAckB\xca\x01\n" +
+	"\x16com.gateway.control.v1B\fControlProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_control_proto_rawDescOnce sync.Once
