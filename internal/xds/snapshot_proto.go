@@ -154,6 +154,7 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 			TlsValidation:      toProtoBackendTLSValidation(item.BackendTLSValidation),
 			SessionPersistence: toProtoSessionPersistence(item.SessionPersistence),
 			LoadBalancing:      toProtoLoadBalancing(item.LoadBalancing),
+			CircuitBreaker:     toProtoCircuitBreaker(item.CircuitBreaker),
 			Metadata:           item.Metadata,
 		}
 
@@ -236,6 +237,15 @@ func toProtoWasmPlugin(item *ir.WasmPluginConfig) *controlv1.WasmPluginConfig {
 			AllowNetwork:       item.Sandbox.AllowNetwork,
 			AllowFileSystem:    item.Sandbox.AllowFileSystem,
 		},
+	}
+}
+
+func toProtoCircuitBreaker(item *ir.CircuitBreakerConfig) *controlv1.CircuitBreakerConfig {
+	if item == nil {
+		return nil
+	}
+	return &controlv1.CircuitBreakerConfig{
+		MaxInflightRequests: uint32(item.MaxInflightRequests),
 	}
 }
 
