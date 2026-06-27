@@ -175,6 +175,9 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 	}
 
 	for _, item := range snapshot.Secrets {
+		// NOTE: SecretMaterial includes private key material (KeyPem).
+		// In production, the xDS channel must be encrypted with gRPC TLS
+		// (grpcTLS.enabled=true) to protect keys in transit.
 		out.Secrets = append(out.Secrets, &controlv1.SecretMaterial{
 			Namespace: item.Namespace,
 			Name:      item.Name,
