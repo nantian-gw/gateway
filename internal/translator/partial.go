@@ -740,8 +740,27 @@ func copyStringMap(items map[string]string) map[string]string {
 }
 
 func cloneListeners(items []ir.Listener) []ir.Listener {
-	snapshot := ir.Snapshot{Listeners: items}
-	return snapshot.Clone().Listeners
+	out := make([]ir.Listener, len(items))
+	for i, l := range items {
+		out[i] = l
+		if l.Hostnames != nil {
+			out[i].Hostnames = append([]string(nil), l.Hostnames...)
+		}
+		if l.AttachedRoutes != nil {
+			out[i].AttachedRoutes = append([]string(nil), l.AttachedRoutes...)
+		}
+		if l.Addresses != nil {
+			out[i].Addresses = append([]string(nil), l.Addresses...)
+		}
+		if l.Metadata != nil {
+			m := make(map[string]string, len(l.Metadata))
+			for k, v := range l.Metadata {
+				m[k] = v
+			}
+			out[i].Metadata = m
+		}
+	}
+	return out
 }
 
 func ApplyPartialSnapshot(
@@ -767,8 +786,17 @@ func ApplyPartialSnapshotWithSecrets(
 		}
 	}
 
-	next := current.Clone()
-	next.GeneratedAt = time.Now().UTC()
+	next := &ir.Snapshot{
+		ID:           current.ID,
+		GeneratedAt:  time.Now().UTC(),
+		Listeners:    current.Listeners,
+		HTTPRoutes:   current.HTTPRoutes,
+		GRPCRoutes:   current.GRPCRoutes,
+		StreamRoutes: current.StreamRoutes,
+		Backends:     current.Backends,
+		Secrets:      current.Secrets,
+		Workloads:    current.Workloads,
+	}
 	if backends != nil {
 		next.Backends = backends
 	}
