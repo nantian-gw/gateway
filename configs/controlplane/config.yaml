@@ -55,6 +55,11 @@ adminAuth:
 dashboardApi:
   enabled: true
   basePath: "/api/dashboard"
+  # The dataplane admin endpoint within the cluster. HTTP is acceptable
+  # for intra-cluster traffic when the underlying network layer provides
+  # encryption (e.g., service mesh with mTLS, CNI with WireGuard, or
+  # encrypted overlay). For plain networks, switch to HTTPS and configure
+  # TLS certificates on the dataplane admin listener.
   dataplaneAdminUrl: "http://nantian-gw-dataplane-admin.nantian-gw.svc.cluster.local:19080"
   requestTimeout: "5s"
   resourceMutationsEnabled: true
