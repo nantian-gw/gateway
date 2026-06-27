@@ -374,6 +374,11 @@ func (s *Server) recvInitialRequest(
 
 	resultCh := make(chan initialDiscoveryRequestResult, 1)
 	go func() {
+		// stream.Recv() blocks until the initial request arrives or the
+		// stream context is cancelled. When shutdownCh fires first, the
+		// goroutine remains blocked until StreamConfiguration returns and
+		// the gRPC framework cancels the stream context, which unblocks
+		// Recv() and allows the goroutine to exit.
 		req, err := stream.Recv()
 		resultCh <- initialDiscoveryRequestResult{req: req, err: err}
 	}()
