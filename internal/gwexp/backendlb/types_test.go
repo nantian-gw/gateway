@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestDeepCopyRoundtrip(t *testing.T) {
@@ -90,4 +91,48 @@ func TestBackendLBPolicyWithAllFeatures(t *testing.T) {
 func TestCircuitBreakerConfig_NilMaxInflight(t *testing.T) {
 	cfg := &CircuitBreakerConfig{}
 	assert.Nil(t, cfg.MaxInflightRequests)
+}
+
+func TestDeepCopyObject_Nil(t *testing.T) {
+	var policy *BackendLBPolicy
+	assert.Nil(t, policy.DeepCopyObject())
+	assert.Nil(t, policy.DeepCopy())
+
+	var list *BackendLBPolicyList
+	assert.Nil(t, list.DeepCopyObject())
+	assert.Nil(t, list.DeepCopy())
+}
+
+func TestBackendLBPolicyListDeepCopy(t *testing.T) {
+	list := &BackendLBPolicyList{
+		Items: []BackendLBPolicy{
+			{ObjectMeta: metav1.ObjectMeta{Name: "lb1", Namespace: "ns1"}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "lb2", Namespace: "ns2"}},
+		},
+	}
+	copied := list.DeepCopy()
+	assert.Equal(t, 2, len(copied.Items))
+	assert.Equal(t, "lb1", copied.Items[0].Name)
+	assert.NotSame(t, list, copied)
+}
+
+func TestAddToScheme(t *testing.T) {
+	scheme := runtime.NewScheme()
+	err := AddToScheme(scheme)
+	assert.NoError(t, err)
+	assert.True(t, scheme.Recognizes(GroupVersion.WithKind("BackendLBPolicy")))
+	assert.True(t, scheme.Recognizes(GroupVersion.WithKind("BackendLBPolicyList")))
+}
+
+func TestBackendLBPolicyDeepCopy_NilCircuitBreaker(t *testing.T) {
+	policy := &BackendLBPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "no-cb", Namespace: "default"},
+		Spec: BackendLBPolicySpec{
+			TargetRefs:    []LocalPolicyTargetReference{{Name: "svc"}},
+			LoadBalancing: &LoadBalancingPolicy{},
+		},
+	}
+	copied := policy.DeepCopy()
+	assert.Nil(t, copied.Spec.CircuitBreaker)
+	assert.NotNil(t, copied.Spec.LoadBalancing)
 }
