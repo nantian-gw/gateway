@@ -15,6 +15,7 @@ type rateLimiter struct {
 	now    func() time.Time
 	mu     sync.Mutex
 	client map[string]tokenBucket
+	done   chan struct{}
 }
 
 type tokenBucket struct {
@@ -62,6 +63,7 @@ func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
 		burst:  float64(burst),
 		now:    func() time.Time { return time.Now().UTC() },
 		client: make(map[string]tokenBucket),
+		done:   make(chan struct{}),
 	}
 	go rl.periodicCleanup()
 	return rl
@@ -70,7 +72,12 @@ func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
 func (rl *rateLimiter) periodicCleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	for range ticker.C {
+	for {
+		select {
+		case <-rl.done:
+			return
+		case <-ticker.C:
+		}
 		rl.mu.Lock()
 		now := rl.now()
 		for key, entry := range rl.client {
@@ -80,6 +87,10 @@ func (rl *rateLimiter) periodicCleanup() {
 		}
 		rl.mu.Unlock()
 	}
+}
+
+func (rl *rateLimiter) Stop() {
+	close(rl.done)
 }
 
 func (rl *rateLimiter) allow(remoteAddr string) bool {
