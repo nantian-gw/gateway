@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -273,16 +274,29 @@ func (r *ReconcilerRunner) runScope(ctx context.Context, scope ReconcilerRunnerS
 		if !reconciler.supports(scope) {
 			continue
 		}
-		if err := reconciler.reconcile(ctx, scope); err != nil {
-			failed = true
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			attrs := []any{"scope", scope.String(), "error", err}
-			if reconciler.name != "" {
-				attrs = append(attrs, "reconciler", reconciler.name)
+		func() {
+			defer func() {
+				if rec := recover(); rec != nil {
+					failed = true
+					span.RecordError(fmt.Errorf("panic: %v", rec))
+					r.logger.Error("reconciler panicked — recovered to keep control plane alive",
+						"scope", scope.String(),
+						"reconciler", reconciler.name,
+						"panic", rec,
+					)
+				}
+			}()
+			if err := reconciler.reconcile(ctx, scope); err != nil {
+				failed = true
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				attrs := []any{"scope", scope.String(), "error", err}
+				if reconciler.name != "" {
+					attrs = append(attrs, "reconciler", reconciler.name)
+				}
+				r.logger.Error("failed to reconcile controlplane state", attrs...)
 			}
-			r.logger.Error("failed to reconcile controlplane state", attrs...)
-		}
+		}()
 	}
 	return failed
 }

@@ -20,6 +20,7 @@ const snapshotSubscriberBufferSize = 1
 type snapshotSubscriber struct {
 	ch     chan *Snapshot
 	closed atomic.Bool
+	mu     sync.Mutex
 }
 
 type SnapshotStoreHooks struct {
@@ -125,7 +126,9 @@ func (s *SnapshotStore) Subscribe() (<-chan *Snapshot, func()) {
 		s.mu.Unlock()
 
 		if ok && current.closed.CompareAndSwap(false, true) {
+			current.mu.Lock()
 			close(current.ch)
+			current.mu.Unlock()
 		}
 	}
 }
@@ -139,20 +142,19 @@ func (s *SnapshotStore) snapshotSubscribersLocked() []*snapshotSubscriber {
 }
 
 func pushLatestSnapshotSafe(sub *snapshotSubscriber, snapshot *Snapshot) (replaced bool, delivered bool) {
-	if sub == nil || sub.closed.Load() {
+	if sub == nil {
 		return false, false
 	}
 
-	delivered = true
-	defer func() {
-		if recover() != nil {
-			replaced = false
-			delivered = false
-		}
-	}()
+	sub.mu.Lock()
+	defer sub.mu.Unlock()
+
+	if sub.closed.Load() {
+		return false, false
+	}
 
 	replaced = pushLatestSnapshot(sub.ch, snapshot)
-	return replaced, delivered
+	return replaced, true
 }
 
 func pushLatestSnapshot(ch chan *Snapshot, snapshot *Snapshot) bool {

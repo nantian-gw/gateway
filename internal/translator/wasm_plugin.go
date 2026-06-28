@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -106,9 +108,28 @@ func translateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.C
 	return result
 }
 
-func downloadWasmURL(url string) ([]byte, error) {
+func downloadWasmURL(rawURL string) ([]byte, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL: %w", err)
+	}
+	if u.Scheme != "https" {
+		// Allow HTTP only for loopback addresses (test/development).
+		// Production must use HTTPS.
+		ip := net.ParseIP(u.Hostname())
+		if ip == nil || !ip.IsLoopback() {
+			return nil, fmt.Errorf("only https scheme is allowed, got %q", u.Scheme)
+		}
+	}
+	if u.Host == "" {
+		return nil, fmt.Errorf("URL has no host")
+	}
+	ip := net.ParseIP(u.Hostname())
+	if ip != nil && (ip.IsPrivate() || ip.IsLinkLocalUnicast()) && !ip.IsLoopback() {
+		return nil, fmt.Errorf("URL points to restricted network address: %s", u.Host)
+	}
 	client := &http.Client{Timeout: wasmDownloadTimeout}
-	resp, err := client.Get(url)
+	resp, err := client.Get(u.String())
 	if err != nil {
 		return nil, err
 	}
