@@ -42,6 +42,13 @@ func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
+			// When no auth is configured, allow read-only access so the
+			// dashboard can function out of the box. Write operations still
+			// require a bearer token.
+			if r.Method == http.MethodGet || r.Method == http.MethodHead {
+				next.ServeHTTP(w, r)
+				return
+			}
 			w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 		})
