@@ -228,10 +228,13 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	chunkChan := make(chan string, 64)
 	errCh := make(chan error, 1)
 
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel() // ensure cancel is called on all exit paths
+
 	go func() {
 		// Prepend system prompt as first message when needed.
 		fullHistory := prependSystemMessage(history, systemPrompt)
-		errCh <- llm.ChatCompletionStream(r.Context(), req.Prompt, fullHistory, chunkChan)
+		errCh <- llm.ChatCompletionStream(ctx, req.Prompt, fullHistory, chunkChan)
 		close(chunkChan)
 	}()
 
@@ -240,13 +243,16 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 
 	for chunk := range chunkChan {
 		fullResponse.WriteString(chunk)
-		fmt.Fprintf(w, "data: %s\n\n", chunk)
+		if _, err := fmt.Fprintf(w, "data: %s\n\n", chunk); err != nil {
+			cancel() // cancel the LLM request context to stop token generation
+			return
+		}
 		flusher.Flush()
 	}
 
 	if err := <-errCh; err != nil {
 		s.logger.Error("chatbot streaming error", "error", err)
-		fmt.Fprintf(w, "event: error\ndata: %s\n\n", err.Error())
+		fmt.Fprintf(w, "event: error\ndata: %s\n\n", escapeSSEData(err.Error()))
 		flusher.Flush()
 		return
 	}
@@ -272,7 +278,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// Validation failed – stream auto-correction progress.
 			fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":false,\"error\":\"%s\"}\n\n",
-				strings.ReplaceAll(err.Error(), "\"", "\\\""))
+				escapeSSEData(err.Error()))
 			fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yamlBlock))
 			flusher.Flush()
 
@@ -331,7 +337,7 @@ func runAutoCorrectSSE(
 
 		if streamErr := <-errCh; streamErr != nil {
 			fmt.Fprintf(w, "event: correction_error\ndata: {\"error\":\"%s\"}\n\n",
-				strings.ReplaceAll(streamErr.Error(), "\"", "\\\""))
+				escapeSSEData(streamErr.Error()))
 			flusher.Flush()
 			return
 		}

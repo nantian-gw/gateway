@@ -160,6 +160,7 @@ func (a *openAIAdapter) ChatCompletionStream(
 
 func (a *openAIAdapter) readSSEStream(r io.Reader, chunkChan chan<- string) error {
 	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024) // 1MB max
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
