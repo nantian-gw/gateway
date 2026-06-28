@@ -158,6 +158,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		&filteredGateways, &listenerSets, &httpRoutes, &grpcRoutes,
 		&tcpRoutes, &udpRoutes, &tlsRoutes, &services, &serviceImports, &endpointSlices,
 	); err != nil {
+		metricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
 
@@ -238,6 +239,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		})
 	}
 	if err := transGroup.Wait(); err != nil {
+		metricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
 	for i := range tcpResults {

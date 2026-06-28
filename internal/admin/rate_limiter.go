@@ -161,7 +161,7 @@ func normalizeClientIP(remoteAddr string) string {
 
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if idx := strings.IndexByte(xff, ','); idx >= 0 {
+		if idx := strings.IndexByte(xff, ','); idx > 0 {
 			return strings.TrimSpace(xff[:idx])
 		}
 		return strings.TrimSpace(xff)
