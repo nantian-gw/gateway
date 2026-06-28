@@ -20,6 +20,7 @@ type rateLimiter struct {
 type tokenBucket struct {
 	tokens     float64
 	lastRefill time.Time
+	expiresAt  time.Time
 }
 
 func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
@@ -56,11 +57,28 @@ func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
 		// Unknown input types fall back to the RPS-derived burst.
 	}
 
-	return &rateLimiter{
+	rl := &rateLimiter{
 		rate:   rate,
 		burst:  float64(burst),
 		now:    func() time.Time { return time.Now().UTC() },
 		client: make(map[string]tokenBucket),
+	}
+	go rl.periodicCleanup()
+	return rl
+}
+
+func (rl *rateLimiter) periodicCleanup() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		rl.mu.Lock()
+		now := rl.now()
+		for key, entry := range rl.client {
+			if now.After(entry.expiresAt) {
+				delete(rl.client, key)
+			}
+		}
+		rl.mu.Unlock()
 	}
 }
 
@@ -86,6 +104,8 @@ func (rl *rateLimiter) allow(remoteAddr string) bool {
 		bucket.lastRefill = now
 	}
 
+	bucket.expiresAt = now.Add(5 * time.Minute)
+
 	if bucket.tokens < 1 {
 		rl.client[key] = bucket
 		return false
@@ -106,7 +126,7 @@ func (rl *rateLimiter) middleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if !rl.allow(r.RemoteAddr) {
+		if !rl.allow(clientIP(r)) {
 			http.Error(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
@@ -126,4 +146,18 @@ func normalizeClientIP(remoteAddr string) string {
 	}
 
 	return remoteAddr
+}
+
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if idx := strings.IndexByte(xff, ','); idx >= 0 {
+			return strings.TrimSpace(xff[:idx])
+		}
+		return strings.TrimSpace(xff)
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return strings.TrimSpace(r.RemoteAddr)
+	}
+	return host
 }
