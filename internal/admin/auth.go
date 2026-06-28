@@ -15,6 +15,8 @@ import (
 type Options struct {
 	BearerToken               string
 	BearerTokenFile           string
+	ReadOnlyBearerToken       string
+	ReadOnlyBearerTokenFile   string
 	ReadinessMode             string
 	NodeDriftWarningThreshold time.Duration
 	MaxRequestBodyBytes       int64
@@ -60,15 +62,28 @@ func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
 			return
 		}
 
-		token, ok := resolveBearerToken(opts)
-		if !ok || !isAuthorizedRequest(r, token) {
-			w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
+		fullToken, _ := resolveBearerToken(opts)
+		isWrite := r.Method != http.MethodGet && r.Method != http.MethodHead
+		if isWrite {
+			if !isAuthorizedRequest(r, fullToken) {
+				deny(w)
+				return
+			}
+		} else {
+			readOnlyToken, _ := resolveReadOnlyToken(opts)
+			if !isAuthorizedRequest(r, fullToken) && !isAuthorizedRequest(r, readOnlyToken) {
+				deny(w)
+				return
+			}
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func deny(w http.ResponseWriter) {
+	w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
+	http.Error(w, "unauthorized", http.StatusUnauthorized)
 }
 
 func authConfigured(opts Options) bool {
@@ -86,6 +101,20 @@ func resolveBearerToken(opts Options) (string, bool) {
 	}
 
 	token := strings.TrimSpace(opts.BearerToken)
+	return token, token != ""
+}
+
+func resolveReadOnlyToken(opts Options) (string, bool) {
+	if path := strings.TrimSpace(opts.ReadOnlyBearerTokenFile); path != "" {
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			return "", false
+		}
+		token := strings.TrimSpace(string(raw))
+		return token, token != ""
+	}
+
+	token := strings.TrimSpace(opts.ReadOnlyBearerToken)
 	return token, token != ""
 }
 

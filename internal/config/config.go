@@ -109,10 +109,12 @@ type LeaderElectionConfig struct {
 }
 
 type AdminAuthConfig struct {
-	BearerToken     string `yaml:"bearerToken"`
-	BearerTokenFile string `yaml:"bearerTokenFile"`
-	RateLimitRPS    int64  `yaml:"rateLimitRPS"`
-	RateLimitBurst  int64  `yaml:"rateLimitBurst"`
+	BearerToken              string `yaml:"bearerToken"`
+	BearerTokenFile          string `yaml:"bearerTokenFile"`
+	ReadOnlyBearerToken      string `yaml:"readOnlyBearerToken"`
+	ReadOnlyBearerTokenFile  string `yaml:"readOnlyBearerTokenFile"`
+	RateLimitRPS             int64  `yaml:"rateLimitRPS"`
+	RateLimitBurst           int64  `yaml:"rateLimitBurst"`
 }
 
 type PprofConfig struct {

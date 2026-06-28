@@ -56,6 +56,75 @@ func (t *Translator) ControllerName() string {
 	return t.controllerName
 }
 
+func (t *Translator) loadRoutesAndServices(
+	ctx context.Context,
+	cl client.Client,
+	filteredGateways *[]gatewayv1.Gateway,
+	listenerSets *gatewayv1.ListenerSetList,
+	httpRoutes *gatewayv1.HTTPRouteList,
+	grpcRoutes *gatewayv1.GRPCRouteList,
+	tcpRoutes *gatewayv1alpha2.TCPRouteList,
+	udpRoutes *gatewayv1alpha2.UDPRouteList,
+	tlsRoutes *gatewayv1alpha2.TLSRouteList,
+	services *[]corev1.Service,
+	serviceImports *[]mcsv1alpha1.ServiceImport,
+	endpointSlices *[]discoveryv1.EndpointSlice,
+) error {
+	group, ctx := errgroup.WithContext(ctx)
+	var svcList corev1.ServiceList
+	var siList mcsv1alpha1.ServiceImportList
+	var esList discoveryv1.EndpointSliceList
+
+	group.Go(func() error {
+		var err error
+		*filteredGateways, err = t.loadFilteredGateways(ctx, cl)
+		return err
+	})
+	group.Go(func() error { return cl.List(ctx, httpRoutes) })
+	group.Go(func() error { return cl.List(ctx, grpcRoutes) })
+	group.Go(func() error {
+		return listOptional(ctx, cl, tcpRoutes)
+	})
+	group.Go(func() error {
+		return listOptional(ctx, cl, udpRoutes)
+	})
+	group.Go(func() error {
+		return listOptional(ctx, cl, tlsRoutes)
+	})
+	group.Go(func() error {
+		return listOptional(ctx, cl, listenerSets)
+	})
+	group.Go(func() error {
+		if err := cl.List(ctx, &svcList); err != nil {
+			return err
+		}
+		*services = svcList.Items
+		return nil
+	})
+	group.Go(func() error {
+		if err := cl.List(ctx, &siList); err != nil && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
+			return err
+		}
+		*serviceImports = siList.Items
+		return nil
+	})
+	group.Go(func() error {
+		if err := cl.List(ctx, &esList); err != nil {
+			return err
+		}
+		*endpointSlices = esList.Items
+		return nil
+	})
+	return group.Wait()
+}
+
+func listOptional(ctx context.Context, cl client.Client, list client.ObjectList) error {
+	if err := cl.List(ctx, list); err != nil && !isOptionalResourceMissing(err) {
+		return err
+	}
+	return nil
+}
+
 func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot, error) {
 	snapshot := &ir.Snapshot{
 		GeneratedAt: time.Now().UTC(),
@@ -85,72 +154,14 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		wasmConfigMaps      []corev1.ConfigMap
 	)
 
-	group, groupCtx := errgroup.WithContext(ctx)
-
-	group.Go(func() error {
-		var err error
-		filteredGateways, err = t.loadFilteredGateways(groupCtx, cl)
-		return err
-	})
-	group.Go(func() error {
-		return cl.List(groupCtx, &httpRoutes)
-	})
-	group.Go(func() error {
-		return cl.List(groupCtx, &grpcRoutes)
-	})
-	group.Go(func() error {
-		if err := cl.List(groupCtx, &tcpRoutes); err != nil && !isOptionalResourceMissing(err) {
-			return err
-		}
-		return nil
-	})
-	group.Go(func() error {
-		if err := cl.List(groupCtx, &udpRoutes); err != nil && !isOptionalResourceMissing(err) {
-			return err
-		}
-		return nil
-	})
-	group.Go(func() error {
-		if err := cl.List(groupCtx, &tlsRoutes); err != nil && !isOptionalResourceMissing(err) {
-			return err
-		}
-		return nil
-	})
-	group.Go(func() error {
-		if err := cl.List(groupCtx, &listenerSets); err != nil && !isOptionalResourceMissing(err) {
-			return err
-		}
-		return nil
-	})
-	group.Go(func() error {
-		var list corev1.ServiceList
-		if err := cl.List(groupCtx, &list); err != nil {
-			return err
-		}
-		services = list.Items
-		return nil
-	})
-	group.Go(func() error {
-		var list mcsv1alpha1.ServiceImportList
-		if err := cl.List(groupCtx, &list); err != nil && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
-			return err
-		}
-		serviceImports = list.Items
-		return nil
-	})
-	group.Go(func() error {
-		var list discoveryv1.EndpointSliceList
-		if err := cl.List(groupCtx, &list); err != nil {
-			return err
-		}
-		endpointSlices = list.Items
-		return nil
-	})
-	if err := group.Wait(); err != nil {
+	if err := t.loadRoutesAndServices(ctx, cl,
+		&filteredGateways, &listenerSets, &httpRoutes, &grpcRoutes,
+		&tcpRoutes, &udpRoutes, &tlsRoutes, &services, &serviceImports, &endpointSlices,
+	); err != nil {
 		return nil, err
 	}
 
-	group, groupCtx = errgroup.WithContext(ctx)
+	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		var err error
 		httpRouteRawFilters, err = loadHTTPRouteRawFilterConfigs(groupCtx, cl, httpRoutes.Items)
