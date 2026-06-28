@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"strings"
 	"time"
 
@@ -135,6 +136,18 @@ const (
 	correctionPrompt  = "The YAML manifests you generated failed Kubernetes validation with the following error:\n\n%s\n\nPlease fix the manifests and regenerate them. Output ONLY the corrected YAML, no other text."
 )
 
+// backoffDuration returns an exponentially increasing duration with ±25% jitter,
+// capped at max.
+func backoffDuration(attempt int, base time.Duration, max time.Duration) time.Duration {
+	d := base * time.Duration(math.Pow(2, float64(attempt)))
+	if d > max {
+		d = max
+	}
+	// Add ±25% jitter
+	jitter := time.Duration(float64(d) * 0.25 * (2*float64(time.Now().UnixNano()%100)/100 - 1))
+	return d + jitter
+}
+
 // AutoCorrectGenerate sends a user query to the LLM, feeds the generated
 // YAML manifests through DryRunValidate, and auto-corrects on failure.
 //
@@ -174,7 +187,7 @@ func AutoCorrectGenerate(
 	}
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		time.Sleep(time.Duration(attempt) * time.Second)
+		time.Sleep(backoffDuration(attempt-1, 1*time.Second, 30*time.Second))
 
 		feedback := fmt.Sprintf(correctionPrompt, err.Error())
 

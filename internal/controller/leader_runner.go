@@ -53,11 +53,13 @@ type ReconcilerRunner struct {
 	settleSeq    uint64
 	settleScopes runnerScopeSet
 
-	retryMu      sync.Mutex
-	retryBackoff time.Duration
-	retryTimer   *time.Timer
-	retrySeq     uint64
-	retryScopes  runnerScopeSet
+	retryMu         sync.Mutex
+	retryBackoff    time.Duration
+	maxRetryBackoff time.Duration
+	retryCount      int
+	retryTimer      *time.Timer
+	retrySeq        uint64
+	retryScopes     runnerScopeSet
 }
 
 type runnerScopedReconciler interface {

@@ -1,9 +1,12 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -612,4 +615,30 @@ func (c *DataplaneAdminAggregationConfig) BearerToken() (string, error) {
 		return "", fmt.Errorf("read dataplane admin bearer token file: %w", err)
 	}
 	return strings.TrimSpace(string(token)), nil
+}
+
+func (c *Config) Validate() error {
+	var errs []error
+
+	if c.AdminAddr != "" {
+		_, portStr, err := net.SplitHostPort(c.AdminAddr)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("adminAddr: %w", err))
+		} else if port, _ := strconv.Atoi(portStr); port < 1 || port > 65535 {
+			errs = append(errs, fmt.Errorf("adminAddr port out of range: %d", port))
+		}
+	}
+
+	if c.AdminAuth.BearerToken != "" && c.AdminAuth.BearerTokenFile != "" {
+		errs = append(errs, fmt.Errorf("adminAuth: bearerToken and bearerTokenFile are mutually exclusive"))
+	}
+
+	level := strings.ToLower(c.Log.Level)
+	switch level {
+	case "debug", "info", "warn", "error":
+	default:
+		errs = append(errs, fmt.Errorf("log.level: invalid level %q (expected debug/info/warn/error)", c.Log.Level))
+	}
+
+	return errors.Join(errs...)
 }

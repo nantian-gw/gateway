@@ -28,6 +28,13 @@ func (r *ReconcilerRunner) SetRetryBackoff(backoff time.Duration) {
 	}
 }
 
+func (r *ReconcilerRunner) SetMaxRetryBackoff(maxBackoff time.Duration) {
+	r.retryMu.Lock()
+	defer r.retryMu.Unlock()
+
+	r.maxRetryBackoff = maxBackoff
+}
+
 func (r *ReconcilerRunner) QueueRun() {
 	r.QueueRunForScopes(ReconcilerRunnerScopeFull)
 }

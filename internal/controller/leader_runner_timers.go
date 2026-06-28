@@ -26,9 +26,11 @@ func (r *ReconcilerRunner) scheduleRetry(scopes ...ReconcilerRunnerScope) {
 	}))
 	r.updateRetryPending(true)
 	r.retrySeq++
+	r.retryCount++
 	seq := r.retrySeq
+	backoff := exponentialBackoff(r.retryCount, r.retryBackoff, r.maxRetryBackoff)
 
-	r.retryTimer = time.AfterFunc(r.retryBackoff, func() {
+	r.retryTimer = time.AfterFunc(backoff, func() {
 		retryScopes, ok := r.completeRetryTimer(seq)
 		if !ok || retryScopes.empty() {
 			return
@@ -105,6 +107,7 @@ func (r *ReconcilerRunner) stopRetryTimerLocked() {
 		r.retryTimer = nil
 	}
 	r.retrySeq++
+	r.retryCount = 0
 	r.retryScopes.clear()
 	r.updateRetryPending(false)
 }
@@ -121,4 +124,16 @@ func (r *ReconcilerRunner) completeRetryTimer(seq uint64) (runnerScopeSet, bool)
 		return scopes, true
 	}
 	return runnerScopeSet{}, false
+}
+
+func exponentialBackoff(attempt int, base time.Duration, max time.Duration) time.Duration {
+	if max <= 0 {
+		max = 5 * time.Minute
+	}
+	d := base * time.Duration(1<<min(attempt, 10))
+	if d > max {
+		d = max
+	}
+	jitter := time.Duration(float64(d) * 0.25 * (2*float64(time.Now().UnixNano()%100)/100 - 1))
+	return d + jitter
 }
