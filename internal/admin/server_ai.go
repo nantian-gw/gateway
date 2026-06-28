@@ -3,7 +3,7 @@ package admin
 import (
 	"encoding/json"
 	"net/http"
-	"sort"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -83,6 +83,7 @@ var (
 	aiModelCosts    = make(map[string]float64)
 	aiTotalCost     atomic.Value // stores float64
 	aiLatencySum    atomic.Uint64 // cumulative latency in microseconds
+	aiMu            sync.RWMutex
 )
 
 func init() {
@@ -126,12 +127,16 @@ func (s *Server) handleAIServices(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleAITokenUsage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	aiMu.RLock()
 	json.NewEncoder(w).Encode(aiTokenUsage)
+	aiMu.RUnlock()
 }
 
 func (s *Server) handleAITraces(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	aiMu.RLock()
 	json.NewEncoder(w).Encode(aiTraces)
+	aiMu.RUnlock()
 }
 
 func (s *Server) handleAICost(w http.ResponseWriter, r *http.Request) {
@@ -153,9 +158,11 @@ func (s *Server) listAIServices() []AIServiceSummary {
 	// Return in-memory services; in production, this would query the informer cache.
 	// For now, return the cached services map.
 	services := make([]AIServiceSummary, 0, len(aiServices))
+	aiMu.RLock()
 	for _, svc := range aiServices {
 		services = append(services, *svc)
 	}
+	aiMu.RUnlock()
 	sort.Slice(services, func(i, j int) bool {
 		if services[i].Namespace != services[j].Namespace {
 			return services[i].Namespace < services[j].Namespace
