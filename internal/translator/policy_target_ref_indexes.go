@@ -15,11 +15,13 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gwapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	routepolicy "github.com/nantian-gw/gateway/internal/gwexp/routepolicy"
 )
 
 const (
 	backendTLSPolicyTargetRefIndex = "nantian.dev/translator.backendtlspolicy.target-ref"
 	backendLBPolicyTargetRefIndex  = "nantian.dev/translator.backendlbpolicy.target-ref"
+	routePolicyTargetRefIndex      = "nantian.dev/translator.routepolicy.target-ref"
 )
 
 func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
@@ -38,6 +40,14 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 		backendLBPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
 		return fmt.Errorf("index BackendLBPolicy target refs: %w", err)
+	}
+	if err := indexer.IndexField(
+		ctx,
+		&routepolicy.RoutePolicy{},
+		routePolicyTargetRefIndex,
+		routePolicyTargetRefIndexKeys,
+	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
+		return fmt.Errorf("index RoutePolicy target refs: %w", err)
 	}
 
 	return nil
@@ -73,6 +83,14 @@ func backendLBPolicyTargetRefIndexKeys(object client.Object) []string {
 	return backendLBPolicyTargetRefValues(policy.Spec.TargetRefs)
 }
 
+func routePolicyTargetRefIndexKeys(object client.Object) []string {
+	policy, ok := object.(*routepolicy.RoutePolicy)
+	if !ok || policy == nil {
+		return nil
+	}
+	return routePolicyTargetRefValues(policy.Spec.TargetRefs)
+}
+
 func backendTLSPolicyTargetRefValues(
 	targetRefs []gatewayv1.LocalPolicyTargetReferenceWithSectionName,
 ) []string {
@@ -93,6 +111,24 @@ func backendTLSPolicyTargetRefValues(
 
 func backendLBPolicyTargetRefValues(
 	targetRefs []backendlb.LocalPolicyTargetReference,
+) []string {
+	values := make(map[string]struct{}, len(targetRefs))
+	for _, targetRef := range targetRefs {
+		value := backendPolicyTargetRefIndexValue(
+			string(targetRef.Group),
+			string(targetRef.Kind),
+			string(targetRef.Name),
+		)
+		if value == "" {
+			continue
+		}
+		values[value] = struct{}{}
+	}
+	return sortedIndexValues(values)
+}
+
+func routePolicyTargetRefValues(
+	targetRefs []gatewayv1.LocalPolicyTargetReference,
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {
