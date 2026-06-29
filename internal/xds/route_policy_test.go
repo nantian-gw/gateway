@@ -342,3 +342,94 @@ func checkRoutePolicyConnectionEqual(t *testing.T, expected, actual *controlv1.R
 		t.Errorf("connection.upstream_keepalive_idle: expected=%v, actual=%v", expected.UpstreamKeepaliveIdle.AsDuration(), actual.UpstreamKeepaliveIdle.AsDuration())
 	}
 }
+
+func TestToProtoRoutePolicy_BodyLimitOnly(t *testing.T) {
+	config := &ir.RoutePolicyConfig{
+		BodyLimit: &ir.RouteBodyLimitConfig{
+			MaxRequestBodyBytes: 52428800,
+		},
+	}
+	result := toProtoRoutePolicy(config)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.BodyLimit == nil {
+		t.Fatal("expected body_limit")
+	}
+	if result.BodyLimit.MaxRequestBodyBytes != 52428800 {
+		t.Errorf("expected 52428800, got %d", result.BodyLimit.MaxRequestBodyBytes)
+	}
+	if result.BodyLimit.RequestBodyBufferBytes != 0 {
+		t.Errorf("expected 0 request_body_buffer_bytes, got %d", result.BodyLimit.RequestBodyBufferBytes)
+	}
+	if result.Timeout != nil {
+		t.Error("expected timeout nil")
+	}
+	if result.Proxy != nil {
+		t.Error("expected proxy nil")
+	}
+	if result.Connection != nil {
+		t.Error("expected connection nil")
+	}
+}
+
+func TestToProtoRoutePolicy_ConnectionOnly(t *testing.T) {
+	config := &ir.RoutePolicyConfig{
+		Connection: &ir.RouteConnectionConfig{
+			KeepaliveRequests:         200,
+			UpstreamKeepalivePoolSize: 50,
+		},
+	}
+	result := toProtoRoutePolicy(config)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Connection == nil {
+		t.Fatal("expected connection")
+	}
+	if result.Connection.KeepaliveRequests != 200 {
+		t.Errorf("expected 200, got %d", result.Connection.KeepaliveRequests)
+	}
+	if result.Connection.UpstreamKeepalivePoolSize != 50 {
+		t.Errorf("expected 50, got %d", result.Connection.UpstreamKeepalivePoolSize)
+	}
+	if result.Connection.KeepaliveTime != nil {
+		t.Error("expected keepalive_time nil")
+	}
+	if result.Timeout != nil {
+		t.Error("expected timeout nil")
+	}
+	if result.BodyLimit != nil {
+		t.Error("expected body_limit nil")
+	}
+}
+
+func TestToProtoRoutePolicy_ProxyBothFalse(t *testing.T) {
+	config := &ir.RoutePolicyConfig{
+		Proxy: &ir.RouteProxyConfig{
+			RequestBuffering:  false,
+			ResponseBuffering: false,
+			BufferSize:        8192,
+			BufferCount:       4,
+		},
+	}
+	result := toProtoRoutePolicy(config)
+	if result == nil {
+		t.Fatal("expected non-nil")
+	}
+	if result.Proxy == nil {
+		t.Fatal("expected proxy")
+	}
+	if result.Proxy.RequestBuffering != nil {
+		t.Errorf("expected request_buffering nil (false not emitted), got %v", result.Proxy.RequestBuffering)
+	}
+	if result.Proxy.ResponseBuffering != nil {
+		t.Errorf("expected response_buffering nil (false not emitted), got %v", result.Proxy.ResponseBuffering)
+	}
+	if result.Proxy.BufferSize != 8192 {
+		t.Errorf("expected buffer_size=8192, got %d", result.Proxy.BufferSize)
+	}
+	if result.Proxy.BufferCount != 4 {
+		t.Errorf("expected buffer_count=4, got %d", result.Proxy.BufferCount)
+	}
+}

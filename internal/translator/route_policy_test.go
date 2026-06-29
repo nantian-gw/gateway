@@ -597,3 +597,203 @@ func TestMergeRoutePolicyConfig_Nils(t *testing.T) {
 		t.Fatal("expected nil when both are nil")
 	}
 }
+
+func TestBuildRoutePolicyIndexes_RouteLevelConflict(t *testing.T) {
+	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
+	reqDur2 := metav1.Duration{Duration: 15 * time.Second}
+
+	policies := []routepolicy.RoutePolicy{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "rp-1", Namespace: "default"},
+			Spec: routepolicy.RoutePolicySpec{
+				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
+					{Kind: "HTTPRoute", Name: "route1"},
+				},
+				Default: &routepolicy.RoutePolicyDefault{
+					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur1},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "rp-2", Namespace: "default"},
+			Spec: routepolicy.RoutePolicySpec{
+				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
+					{Kind: "HTTPRoute", Name: "route1"},
+				},
+				Default: &routepolicy.RoutePolicyDefault{
+					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur2},
+				},
+			},
+		},
+	}
+	httpRoutes := []ir.HTTPRoute{
+		{Name: "route1", Namespace: "default"},
+	}
+	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	if _, ok := result["default/route1"]; ok {
+		t.Fatal("route1 should NOT have a policy; conflict between rp-1 and rp-2")
+	}
+}
+
+func TestBuildRoutePolicyIndexes_GatewayLevelConflict(t *testing.T) {
+	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
+	reqDur2 := metav1.Duration{Duration: 15 * time.Second}
+
+	policies := []routepolicy.RoutePolicy{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw-1", Namespace: "default"},
+			Spec: routepolicy.RoutePolicySpec{
+				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
+					{Kind: "Gateway", Name: "my-gw"},
+				},
+				Default: &routepolicy.RoutePolicyDefault{
+					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur1},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "gw-2", Namespace: "default"},
+			Spec: routepolicy.RoutePolicySpec{
+				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
+					{Kind: "Gateway", Name: "my-gw"},
+				},
+				Default: &routepolicy.RoutePolicyDefault{
+					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur2},
+				},
+			},
+		},
+	}
+	httpRoutes := []ir.HTTPRoute{
+		{
+			Name: "route1", Namespace: "default",
+			ParentRefs: []ir.ParentRef{{Namespace: "default", Name: "my-gw"}},
+		},
+	}
+	gateways := []gatewayv1.Gateway{
+		{ObjectMeta: metav1.ObjectMeta{Name: "my-gw", Namespace: "default"}},
+	}
+	result := buildRoutePolicyIndexes(policies, httpRoutes, gateways)
+	if _, ok := result["default/route1"]; ok {
+		t.Fatal("route1 should NOT have a policy; conflict between gw-1 and gw-2")
+	}
+}
+
+func TestBuildRoutePolicyIndexes_RouteOverridesSingleFieldFromGateway(t *testing.T) {
+	gwReq := metav1.Duration{Duration: 15 * time.Second}
+	routeConn := metav1.Duration{Duration: 20 * time.Second}
+	gwBody := uint64(52428800)
+
+	gwPolicy := routepolicy.RoutePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "gw-policy", Namespace: "default"},
+		Spec: routepolicy.RoutePolicySpec{
+			TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "Gateway", Name: "my-gw"}},
+			Default: &routepolicy.RoutePolicyDefault{
+				Timeout:   &routepolicy.TimeoutConfig{Request: &gwReq},
+				BodyLimit: &routepolicy.BodyLimitConfig{MaxRequestBodyBytes: &gwBody},
+			},
+		},
+	}
+	routePolicy := routepolicy.RoutePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default"},
+		Spec: routepolicy.RoutePolicySpec{
+			TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "HTTPRoute", Name: "route1"}},
+			Default: &routepolicy.RoutePolicyDefault{
+				Connection: &routepolicy.ConnectionConfig{KeepaliveTimeout: &routeConn},
+			},
+		},
+	}
+	policies := []routepolicy.RoutePolicy{gwPolicy, routePolicy}
+	httpRoutes := []ir.HTTPRoute{
+		{
+			Name: "route1", Namespace: "default",
+			ParentRefs: []ir.ParentRef{{Namespace: "default", Name: "my-gw"}},
+		},
+	}
+	gateways := []gatewayv1.Gateway{
+		{ObjectMeta: metav1.ObjectMeta{Name: "my-gw", Namespace: "default"}},
+	}
+	result := buildRoutePolicyIndexes(policies, httpRoutes, gateways)
+	cfg := result["default/route1"]
+	// Route-level connection should be present
+	if cfg.Connection == nil || cfg.Connection.KeepaliveTimeout != routeConn.Duration {
+		t.Fatalf("expected route-level keepalive timeout %v, got %v", routeConn.Duration, cfg.Connection)
+	}
+	// Gateway-level timeout should still apply (not overridden)
+	if cfg.Timeout == nil || cfg.Timeout.Request != gwReq.Duration {
+		t.Fatalf("expected gateway-level request timeout %v, got %v", gwReq.Duration, cfg.Timeout)
+	}
+	// Gateway-level body limit should still apply
+	if cfg.BodyLimit == nil || cfg.BodyLimit.MaxRequestBodyBytes != gwBody {
+		t.Fatalf("expected gateway-level body limit %d, got %v", gwBody, cfg.BodyLimit)
+	}
+}
+
+func TestTranslateRoutePolicyDefault_PartialBodyLimit(t *testing.T) {
+	maxBody := uint64(1048576)
+	spec := &routepolicy.RoutePolicyDefault{
+		BodyLimit: &routepolicy.BodyLimitConfig{
+			MaxRequestBodyBytes: &maxBody,
+			// RequestBodyBufferBytes and MaxRequestHeaderBytes NOT set
+		},
+	}
+	result := translateRoutePolicyDefault(spec)
+	if result == nil || result.BodyLimit == nil {
+		t.Fatal("expected body limit config")
+	}
+	if result.BodyLimit.MaxRequestBodyBytes != 1048576 {
+		t.Fatalf("unexpected max request body: %d", result.BodyLimit.MaxRequestBodyBytes)
+	}
+	if result.BodyLimit.RequestBodyBufferBytes != 0 {
+		t.Fatalf("expected zero request body buffer bytes, got %d", result.BodyLimit.RequestBodyBufferBytes)
+	}
+	if result.BodyLimit.MaxRequestHeaderBytes != 0 {
+		t.Fatalf("expected zero max request header bytes, got %d", result.BodyLimit.MaxRequestHeaderBytes)
+	}
+}
+
+func TestTranslateRoutePolicyDefault_ProxyExplicitFalse(t *testing.T) {
+	reqBuf := false
+	respBuf := false
+	bufSize := uint64(0)
+	bufCount := uint32(0)
+
+	spec := &routepolicy.RoutePolicyDefault{
+		Proxy: &routepolicy.ProxyConfig{
+			RequestBuffering:  &reqBuf,
+			ResponseBuffering: &respBuf,
+			BufferSize:        &bufSize,
+			BufferCount:       &bufCount,
+		},
+	}
+	result := translateRoutePolicyDefault(spec)
+	if result == nil || result.Proxy == nil {
+		t.Fatal("expected proxy config even when all values are explicit false/zero")
+	}
+	if result.Proxy.RequestBuffering != false {
+		t.Fatal("expected request buffering false")
+	}
+	if result.Proxy.ResponseBuffering != false {
+		t.Fatal("expected response buffering false")
+	}
+}
+
+func TestBuildRoutePolicyIndexes_NamespacePolicyDoesNotCrossNamespace(t *testing.T) {
+	reqDur := metav1.Duration{Duration: 5 * time.Second}
+	policies := []routepolicy.RoutePolicy{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy", Namespace: "team-a"},
+			Spec: routepolicy.RoutePolicySpec{
+				Default: &routepolicy.RoutePolicyDefault{
+					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur},
+				},
+			},
+		},
+	}
+	httpRoutes := []ir.HTTPRoute{
+		{Name: "route1", Namespace: "team-b"},
+	}
+	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	if _, ok := result["team-b/route1"]; ok {
+		t.Fatal("route in team-b should not inherit namespace policy from team-a")
+	}
+}
