@@ -76,6 +76,7 @@ type HTTPRoute struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Status      *RouteStatus      `json:"status,omitempty"`
+	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
 }
 
 type HTTPRule struct {
@@ -86,6 +87,7 @@ type HTTPRule struct {
 	Timeouts           *RouteTimeouts            `json:"timeouts,omitempty"`
 	Retry              *RetryPolicy              `json:"retry,omitempty"`
 	SessionPersistence *SessionPersistencePolicy `json:"sessionPersistence,omitempty"`
+	RoutePolicy       *RoutePolicyConfig         `json:"routePolicy,omitempty"`
 }
 
 type HTTPMatch struct {
@@ -105,6 +107,7 @@ type GRPCRoute struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Status      *RouteStatus      `json:"status,omitempty"`
+	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
 }
 
 type GRPCRule struct {
@@ -113,6 +116,7 @@ type GRPCRule struct {
 	Filters            []Filter                  `json:"filters,omitempty"`
 	BackendRefs        []BackendRef              `json:"backendRefs,omitempty"`
 	SessionPersistence *SessionPersistencePolicy `json:"sessionPersistence,omitempty"`
+	RoutePolicy       *RoutePolicyConfig         `json:"routePolicy,omitempty"`
 }
 
 type GRPCMatch struct {
@@ -131,6 +135,7 @@ type StreamRoute struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Status      *RouteStatus      `json:"status,omitempty"`
+	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
 }
 
 type ConditionStatus struct {
@@ -716,4 +721,39 @@ type WasmSandboxConfig struct {
 	MaxExecutionTimeMs uint64 `json:"maxExecutionTimeMs,omitempty"`
 	AllowNetwork       bool   `json:"allowNetwork,omitempty"`
 	AllowFileSystem    bool   `json:"allowFileSystem,omitempty"`
+}
+
+type RoutePolicyConfig struct {
+	Timeout    *RouteTimeoutConfig    `json:"timeout,omitempty"`
+	BodyLimit  *RouteBodyLimitConfig  `json:"bodyLimit,omitempty"`
+	Proxy      *RouteProxyConfig      `json:"proxy,omitempty"`
+	Connection *RouteConnectionConfig `json:"connection,omitempty"`
+}
+
+type RouteTimeoutConfig struct {
+	Request        time.Duration `json:"request,omitempty"`
+	BackendRequest time.Duration `json:"backendRequest,omitempty"`
+	Connect        time.Duration `json:"connect,omitempty"`
+	NextUpstream   time.Duration `json:"nextUpstream,omitempty"`
+}
+
+type RouteBodyLimitConfig struct {
+	MaxRequestBodyBytes    uint64 `json:"maxRequestBodyBytes,omitempty"`
+	RequestBodyBufferBytes uint64 `json:"requestBodyBufferBytes,omitempty"`
+	MaxRequestHeaderBytes  uint64 `json:"maxRequestHeaderBytes,omitempty"`
+}
+
+type RouteProxyConfig struct {
+	RequestBuffering  bool   `json:"requestBuffering,omitempty"`
+	ResponseBuffering bool   `json:"responseBuffering,omitempty"`
+	BufferSize        uint64 `json:"bufferSize,omitempty"`
+	BufferCount       uint32 `json:"bufferCount,omitempty"`
+}
+
+type RouteConnectionConfig struct {
+	KeepaliveRequests         uint32        `json:"keepaliveRequests,omitempty"`
+	KeepaliveTime             time.Duration `json:"keepaliveTime,omitempty"`
+	KeepaliveTimeout          time.Duration `json:"keepaliveTimeout,omitempty"`
+	UpstreamKeepalivePoolSize uint32        `json:"upstreamKeepalivePoolSize,omitempty"`
+	UpstreamKeepaliveIdle     time.Duration `json:"upstreamKeepaliveIdle,omitempty"`
 }

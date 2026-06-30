@@ -53,6 +53,7 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 			ParentRefs:  toProtoParents(item.ParentRefs),
 			Labels:      item.Labels,
 			Annotations: item.Annotations,
+			RoutePolicy: toProtoRoutePolicy(item.RoutePolicy),
 		}
 
 		for _, rule := range item.Rules {
@@ -87,6 +88,7 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 			ParentRefs:  toProtoParents(item.ParentRefs),
 			Labels:      item.Labels,
 			Annotations: item.Annotations,
+			RoutePolicy: toProtoRoutePolicy(item.RoutePolicy),
 		}
 
 		for _, rule := range item.Rules {
