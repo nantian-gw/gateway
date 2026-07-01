@@ -106,7 +106,7 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "PathPrefix",
-						"value": "/a",
+						"value": "/echo/a",
 					},
 				},
 			},
@@ -123,7 +123,7 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "PathPrefix",
-						"value": "/b",
+						"value": "/echo/b",
 					},
 				},
 			},
@@ -158,23 +158,23 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	// Verify routing: PathPrefix /a → echo-a
-	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, fmt.Sprintf("http://%s/a/hello", gwAddr), 200)
+	// Verify routing: PathPrefix /echo/a → echo-a
+	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, fmt.Sprintf("http://%s/echo/a/hello", gwAddr), 200)
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		fmt.Sprintf("http://%s/a/hello", gwAddr))
+		fmt.Sprintf("http://%s/echo/a/hello", gwAddr))
 	if resp.StatusCode != 200 {
-		t.Errorf("expected 200 from /a/hello, got %d: %s", resp.StatusCode, resp.Body)
+		t.Errorf("expected 200 from /echo/a/hello, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
-		t.Logf("PathPrefix /a response: %d %s", resp.StatusCode, resp.Body)
+		t.Logf("PathPrefix /echo/a response: %d %s", resp.StatusCode, resp.Body)
 	}
 
-	// Verify routing: PathPrefix /b → echo-b
+	// Verify routing: PathPrefix /echo/b → echo-b
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod,
-		fmt.Sprintf("http://%s/b/world", gwAddr), 200)
+		fmt.Sprintf("http://%s/echo/b/world", gwAddr), 200)
 
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		fmt.Sprintf("http://%s/b/world", gwAddr))
+		fmt.Sprintf("http://%s/echo/b/world", gwAddr))
 	if resp2.StatusCode != 200 {
 		t.Errorf("expected 200 from /b/world, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {
@@ -207,7 +207,7 @@ func TestBasicRoutingPathExact(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "Exact",
-						"value": "/exact",
+						"value": "/echo/echo/exact",
 					},
 				},
 			},
@@ -226,25 +226,25 @@ func TestBasicRoutingPathExact(t *testing.T) {
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	// Verify /exact returns 200
+	// Verify /echo/exact returns 200
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/exact", 200)
+		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/echo/exact", 200)
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/exact")
+		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/echo/exact")
 	if resp.StatusCode != 200 {
-		t.Errorf("expected 200 from /exact, got %d: %s", resp.StatusCode, resp.Body)
+		t.Errorf("expected 200 from /echo/exact, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
-		t.Logf("PathExact /exact response: %d", resp.StatusCode)
+		t.Logf("PathExact /echo/exact response: %d", resp.StatusCode)
 	}
 
-	// Verify /exact/sub does NOT return 200 (different match, should not route)
+	// Verify /echo/exact/sub does NOT return 200 (different match, should not route)
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/exact/sub")
+		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/echo/exact/sub")
 	if resp2.StatusCode == 200 {
-		t.Errorf("expected non-200 from /exact/sub, got %d: %s", resp2.StatusCode, resp2.Body)
+		t.Errorf("expected non-200 from /echo/exact/sub, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {
-		t.Logf("PathExact /exact/sub correctly returned non-200: %d", resp2.StatusCode)
+		t.Logf("PathExact /echo/exact/sub correctly returned non-200: %d", resp2.StatusCode)
 	}
 
 	// Cleanup

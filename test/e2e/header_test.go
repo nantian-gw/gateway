@@ -33,7 +33,7 @@ func TestHeaderMatching(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "PathPrefix",
-						"value": "/api",
+						"value": "/echo/api",
 					},
 					"headers": []interface{}{
 						map[string]interface{}{
@@ -55,7 +55,7 @@ func TestHeaderMatching(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "PathPrefix",
-						"value": "/api",
+						"value": "/echo/api",
 					},
 					"headers": []interface{}{
 						map[string]interface{}{
@@ -78,7 +78,7 @@ func TestHeaderMatching(t *testing.T) {
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	url := "http://nantian-gw-e2e-gw-header.nantian-gw.svc.cluster.local/api/echo"
+	url := "http://nantian-gw-e2e-gw-header.nantian-gw.svc.cluster.local/echo/api/echo"
 
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200,
 		func(o *framework.HTTPGetOptions) {
@@ -146,7 +146,7 @@ func TestHeaderModification(t *testing.T) {
 							map[string]interface{}{
 								"path": map[string]interface{}{
 									"type":  "PathPrefix",
-									"value": "/modify",
+									"value": "/echo/modify",
 								},
 							},
 						},
@@ -182,7 +182,7 @@ func TestHeaderModification(t *testing.T) {
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	url := "http://nantian-gw-e2e-gw-modify.nantian-gw.svc.cluster.local/modify/headers"
+	url := "http://nantian-gw-e2e-gw-modify.nantian-gw.svc.cluster.local/echo/modify/headers"
 
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200)
 

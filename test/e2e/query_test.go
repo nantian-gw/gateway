@@ -37,7 +37,7 @@ func TestQueryMatching(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "PathPrefix",
-						"value": "/search",
+						"value": "/echo/search",
 					},
 					"queryParams": []interface{}{
 						map[string]interface{}{
@@ -60,7 +60,7 @@ func TestQueryMatching(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "PathPrefix",
-						"value": "/search",
+						"value": "/echo/search",
 					},
 					"queryParams": []interface{}{
 						map[string]interface{}{
@@ -116,7 +116,7 @@ func TestQueryMatching(t *testing.T) {
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, url+"?version=v1")
 	if resp.StatusCode != 200 {
-		t.Errorf("expected 200 from /search?version=v1, got %d: %s", resp.StatusCode, resp.Body)
+		t.Errorf("expected 200 from /echo/search?version=v1, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
 		t.Logf("query version=v1 route response: %d", resp.StatusCode)
 	}

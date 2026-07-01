@@ -72,7 +72,7 @@ func TestURLRewrite(t *testing.T) {
 							map[string]interface{}{
 								"path": map[string]interface{}{
 									"type":  "PathPrefix",
-									"value": "/api",
+									"value": "/echo/api",
 								},
 							},
 						},
@@ -117,8 +117,8 @@ func TestURLRewrite(t *testing.T) {
 	// Give the control plane a moment to reconcile.
 	time.Sleep(3 * time.Second)
 
-	// Send request and verify rewrite: /api/hello → /echo/hello
-	url := fmt.Sprintf("http://%s/api/hello", gwAddr)
+	// Send request and verify rewrite: /echo/api/hello → /echo/hello
+	url := fmt.Sprintf("http://%s/echo/api/hello", gwAddr)
 	probeUntilBodyContains(t, ns, curlPod, url, `"path":"/hello"`, 120*time.Second)
 }
 
@@ -170,7 +170,7 @@ func TestURLRewriteNonMatchingPath(t *testing.T) {
 							map[string]interface{}{
 								"path": map[string]interface{}{
 									"type":  "PathPrefix",
-									"value": "/api",
+									"value": "/echo/api",
 								},
 							},
 						},
@@ -214,7 +214,7 @@ func TestURLRewriteNonMatchingPath(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	// Request to /other should NOT match the /api PathPrefix rule.
-	url := fmt.Sprintf("http://%s/other/hello", gwAddr)
+	url := fmt.Sprintf("http://%s/echo/other/hello", gwAddr)
 	resp := framework.HTTPGetFromPod(t, ns, curlPod, url)
 	t.Logf("non-matching path response: status=%d body=%s", resp.StatusCode, resp.Body)
 

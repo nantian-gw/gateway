@@ -67,7 +67,7 @@ func TestWeightedTrafficSplit(t *testing.T) {
 							map[string]interface{}{
 								"path": map[string]interface{}{
 									"type":  "PathPrefix",
-									"value": "/split",
+									"value": "/echo/split",
 								},
 							},
 						},
@@ -110,7 +110,7 @@ func TestWeightedTrafficSplit(t *testing.T) {
 	successCount := 0
 	failCount := 0
 
-	url := fmt.Sprintf("http://%s/split/health", gwAddr)
+	url := fmt.Sprintf("http://%s/echo/split/health", gwAddr)
 
 	for i := 0; i < 30; i++ {
 		resp := framework.HTTPGetFromPod(t, ns, curlPod, url)
@@ -184,7 +184,7 @@ func TestWeightedTrafficSplitUnequal(t *testing.T) {
 							map[string]interface{}{
 								"path": map[string]interface{}{
 									"type":  "PathPrefix",
-									"value": "/split",
+									"value": "/echo/split",
 								},
 							},
 						},
@@ -223,7 +223,7 @@ func TestWeightedTrafficSplitUnequal(t *testing.T) {
 	time.Sleep(5 * time.Second)
 
 	successCount := 0
-	url := fmt.Sprintf("http://%s/split/health", gwAddr)
+	url := fmt.Sprintf("http://%s/echo/split/health", gwAddr)
 
 	for i := 0; i < 30; i++ {
 		resp := framework.HTTPGetFromPod(t, ns, curlPod, url)

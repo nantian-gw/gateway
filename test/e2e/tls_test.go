@@ -138,7 +138,7 @@ func TestTLSTermination(t *testing.T) {
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
 	// Send HTTPS request (curl -k equivalent).
-	url := "https://nantian-gw-e2e-gw-tls.nantian-gw.svc.cluster.local/tls/echo"
+	url := "https://nantian-gw-e2e-gw-tls.nantian-gw.svc.cluster.local/echo/tls/echo"
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200,
 		func(o *framework.HTTPGetOptions) {
 			o.Insecure = true

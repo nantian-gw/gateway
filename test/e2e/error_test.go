@@ -65,7 +65,7 @@ func TestBackendUnavailable(t *testing.T) {
 							map[string]interface{}{
 								"path": map[string]interface{}{
 									"type":  "PathPrefix",
-									"value": "/error",
+									"value": "/echo/error",
 								},
 							},
 						},
@@ -98,7 +98,7 @@ func TestBackendUnavailable(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	url := fmt.Sprintf("http://%s/error/health", gwAddr)
+	url := fmt.Sprintf("http://%s/echo/error/health", gwAddr)
 
 	// Verify the route works when backend is healthy.
 	probeUntilStatus(t, ns, curlPod, url, 200, 60*time.Second)
