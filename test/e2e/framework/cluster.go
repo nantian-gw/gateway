@@ -66,6 +66,21 @@ func GatewayRoot() string {
 	if p := os.Getenv("GATEWAY_ROOT"); p != "" {
 		return p
 	}
-	cwd, _ := os.Getwd()
-	return cwd
+	// Walk up from current directory to find go.mod, which marks the module root.
+	dir, err := os.Getwd()
+	if err != nil {
+		dir = "."
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root without finding go.mod; fall back to cwd.
+			cwd, _ := os.Getwd()
+			return cwd
+		}
+		dir = parent
+	}
 }
