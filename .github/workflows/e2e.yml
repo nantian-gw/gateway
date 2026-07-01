@@ -71,10 +71,122 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: e2e-diagnostics
+          name: e2e-diagnostics-smoke
           path: tmp/e2e-diagnostics/
           if-no-files-found: warn
 
       - name: Cleanup
         if: always()
         run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "$CLUSTER_NAME" || true
+
+  scenarios:
+    name: Scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Resolve dependency images
+        run: |
+          source scripts/ci/dependency-images.sh
+          {
+            echo "DATAPLANE_IMAGE=${DATAPLANE_IMAGE:-$DEFAULT_DATAPLANE_IMAGE}"
+            echo "DASHBOARD_IMAGE=${DASHBOARD_IMAGE:-$DEFAULT_DASHBOARD_IMAGE}"
+          } >>"${GITHUB_ENV}"
+
+      - name: Install Kind tooling
+        run: scripts/ci/install-kind-tools.sh
+
+      - name: Create kind cluster
+        run: CLUSTER_NAME="${CLUSTER_NAME}-scenarios" scripts/ci/create-kind-cluster.sh
+
+      - name: Install Gateway API CRDs
+        run: scripts/ci/install-gateway-api-crds.sh
+
+      - name: Build current control-plane image
+        run: scripts/ci/build-controlplane-image.sh
+
+      - name: Build echo test image
+        run: |
+          cd test/e2e/backend/echo
+          docker build -t nantian-echo:latest .
+          kind load docker-image nantian-echo:latest --name "${CLUSTER_NAME}-scenarios"
+
+      - name: Load images into kind
+        run: CLUSTER_NAME="${CLUSTER_NAME}-scenarios" scripts/ci/load-kind-images.sh
+
+      - name: Deploy Nantian Gateway
+        run: CLUSTER_NAME="${CLUSTER_NAME}-scenarios" scripts/ci/deploy-kind-conformance.sh
+
+      - name: Run e2e scenarios
+        run: |
+          export CLUSTER_NAME="${CLUSTER_NAME}-scenarios"
+          ECHO_IMAGE=nantian-echo:latest go test -tags=e2e -count=1 -v -timeout 30m ./test/e2e/...
+
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: ARTIFACT_DIR=tmp/e2e-diagnostics CLUSTER_NAME="${CLUSTER_NAME}-scenarios" scripts/ci/collect-kind-diagnostics.sh
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: e2e-diagnostics-scenarios
+          path: tmp/e2e-diagnostics/
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "${CLUSTER_NAME}-scenarios" || true
+
+  conformance:
+    name: Conformance
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Resolve dependency images
+        run: |
+          source scripts/ci/dependency-images.sh
+          {
+            echo "DATAPLANE_IMAGE=${DATAPLANE_IMAGE:-$DEFAULT_DATAPLANE_IMAGE}"
+            echo "DASHBOARD_IMAGE=${DASHBOARD_IMAGE:-$DEFAULT_DASHBOARD_IMAGE}"
+          } >>"${GITHUB_ENV}"
+
+      - name: Install Kind tooling
+        run: scripts/ci/install-kind-tools.sh
+
+      - name: Create kind cluster
+        run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" scripts/ci/create-kind-cluster.sh
+
+      - name: Install Gateway API CRDs
+        run: scripts/ci/install-gateway-api-crds.sh
+
+      - name: Build current control-plane image
+        run: scripts/ci/build-controlplane-image.sh
+
+      - name: Load images into kind
+        run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" scripts/ci/load-kind-images.sh
+
+      - name: Deploy Nantian Gateway
+        run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" scripts/ci/deploy-kind-conformance.sh
+
+      - name: Run conformance tests
+        run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
+
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: ARTIFACT_DIR=tmp/e2e-diagnostics CLUSTER_NAME="${CLUSTER_NAME}-conformance" scripts/ci/collect-kind-diagnostics.sh
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: e2e-diagnostics-conformance
+          path: tmp/e2e-diagnostics/
+          if-no-files-found: warn
+
+      - name: Cleanup
+        if: always()
+        run: command -v kind >/dev/null 2>&1 && kind delete cluster --name "${CLUSTER_NAME}-conformance" || true
