@@ -93,8 +93,8 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	framework.DeployEchoBackend(t, testNSRouting, "echo-b")
 	framework.WaitForBackendReady(t, testNSRouting, "echo-b")
 
-	// Create Gateway in control plane namespace
-	framework.CreateGateway(t, "e2e-gw", "nantian-gw")
+	// Reuse the nantian-gw Gateway that already exists from kind-conformance deployment
+	const gwName = "nantian-gw"
 
 	// Create ReferenceGrant to allow cross-namespace service references
 	framework.CreateReferenceGrant(t, testNSRouting, "allow-gw", framework.ControlPlaneNS)
@@ -136,25 +136,30 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 			},
 		},
 	}
-	createHTTPRouteCrossNS(t, testNSRouting, "echo-route", "e2e-gw", rules)
+	createHTTPRouteCrossNS(t, testNSRouting, "echo-route", gwName, rules)
 
 	// Cleanup
 	t.Cleanup(func() {
 		framework.CleanupResource(t, httpRouteGVR, testNSRouting, "echo-route")
 	})
 
-	// Allow time for the route to propagate to the data plane
-	time.Sleep(5 * time.Second)
+	// Get the data plane address for direct access
+	clientset, err := framework.ClientSet()
+	if err != nil {
+		t.Fatalf("create clientset: %v", err)
+	}
+	gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
 
-	// Deploy smoke-client pod in control plane namespace for internal access
+	// Deploy smoke-client pod in control plane namespace for internal HTTP calls
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
 	// Verify routing: PathPrefix /a → echo-a
-	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, "http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/a/hello", 200)
+	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, fmt.Sprintf("http://%s/a/hello", gwAddr), 200)
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/a/hello")
+		fmt.Sprintf("http://%s/a/hello", gwAddr))
 	if resp.StatusCode != 200 {
 		t.Errorf("expected 200 from /a/hello, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
@@ -163,10 +168,10 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 
 	// Verify routing: PathPrefix /b → echo-b
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/b/world", 200)
+		fmt.Sprintf("http://%s/b/world", gwAddr), 200)
 
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/b/world")
+		fmt.Sprintf("http://%s/b/world", gwAddr))
 	if resp2.StatusCode != 200 {
 		t.Errorf("expected 200 from /b/world, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {
