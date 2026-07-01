@@ -193,10 +193,10 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
 	// Verify routing: PathPrefix /a → echo-a
-	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, "http://e2e-gw.nantian-gw.svc.cluster.local/a/hello", 200)
+	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, "http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/a/hello", 200)
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://e2e-gw.nantian-gw.svc.cluster.local/a/hello")
+		"http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/a/hello")
 	if resp.StatusCode != 200 {
 		t.Errorf("expected 200 from /a/hello, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
@@ -205,10 +205,10 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 
 	// Verify routing: PathPrefix /b → echo-b
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod,
-		"http://e2e-gw.nantian-gw.svc.cluster.local/b/world", 200)
+		"http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/b/world", 200)
 
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://e2e-gw.nantian-gw.svc.cluster.local/b/world")
+		"http://nantian-gw-e2e-gw.nantian-gw.svc.cluster.local/b/world")
 	if resp2.StatusCode != 200 {
 		t.Errorf("expected 200 from /b/world, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {
@@ -262,10 +262,10 @@ func TestBasicRoutingPathExact(t *testing.T) {
 
 	// Verify /exact returns 200
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod,
-		"http://e2e-gw-exact.nantian-gw.svc.cluster.local/exact", 200)
+		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/exact", 200)
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://e2e-gw-exact.nantian-gw.svc.cluster.local/exact")
+		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/exact")
 	if resp.StatusCode != 200 {
 		t.Errorf("expected 200 from /exact, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
@@ -274,7 +274,7 @@ func TestBasicRoutingPathExact(t *testing.T) {
 
 	// Verify /exact/sub does NOT return 200 (different match, should not route)
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://e2e-gw-exact.nantian-gw.svc.cluster.local/exact/sub")
+		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/exact/sub")
 	if resp2.StatusCode == 200 {
 		t.Errorf("expected non-200 from /exact/sub, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {

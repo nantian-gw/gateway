@@ -110,7 +110,7 @@ func TestQueryMatching(t *testing.T) {
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	url := "http://e2e-gw-query.nantian-gw.svc.cluster.local/search"
+	url := "http://nantian-gw-e2e-gw-query.nantian-gw.svc.cluster.local/search"
 
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url+"?version=v1", 200)
 
