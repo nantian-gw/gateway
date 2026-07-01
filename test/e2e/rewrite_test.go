@@ -115,7 +115,7 @@ func TestURLRewrite(t *testing.T) {
 	})
 
 	// Give the control plane a moment to reconcile.
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Send request and verify rewrite: /echo/api/hello → /echo/hello
 	url := fmt.Sprintf("http://%s/echo/api/hello", gwAddr)
@@ -211,7 +211,7 @@ func TestURLRewriteNonMatchingPath(t *testing.T) {
 		framework.CleanupResource(t, httpRouteGVR, ns, name)
 	})
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Request to /other should NOT match the /api PathPrefix rule.
 	url := fmt.Sprintf("http://%s/echo/other/hello", gwAddr)

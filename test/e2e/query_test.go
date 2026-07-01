@@ -3,11 +3,9 @@
 package e2e
 
 import (
-	"context"
+	"fmt"
 	"testing"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"time"
 
 	"github.com/nantian-gw/gateway/test/e2e/framework"
 )
@@ -23,16 +21,11 @@ func TestQueryMatching(t *testing.T) {
 	framework.WaitForBackendReady(t, testNSQuery, "query-b")
 
 	framework.CreateGateway(t, "e2e-gw-query", "nantian-gw")
-
 	framework.CreateReferenceGrant(t, testNSQuery, "allow-gw-query", framework.ControlPlaneNS)
 
-	dc, err := framework.DynamicClient()
-	if err != nil {
-		t.Fatalf("create dynamic client: %v", err)
-	}
-
-	rules := []interface{}{
-		map[string]interface{}{
+	// Create HTTPRoute in test namespace with cross-namespace backend refs
+	rules := []map[string]interface{}{
+		{
 			"matches": []interface{}{
 				map[string]interface{}{
 					"path": map[string]interface{}{
@@ -55,7 +48,7 @@ func TestQueryMatching(t *testing.T) {
 				},
 			},
 		},
-		map[string]interface{}{
+		{
 			"matches": []interface{}{
 				map[string]interface{}{
 					"path": map[string]interface{}{
@@ -79,49 +72,46 @@ func TestQueryMatching(t *testing.T) {
 			},
 		},
 	}
+	createHTTPRouteCrossNS(t, testNSQuery, "query-route", "e2e-gw-query", rules)
 
-	route := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "gateway.networking.k8s.io/v1",
-			"kind":       "HTTPRoute",
-			"metadata": map[string]interface{}{
-				"name":      "query-route",
-				"namespace": framework.ControlPlaneNS,
-			},
-			"spec": map[string]interface{}{
-				"parentRefs": []interface{}{
-					map[string]interface{}{
-						"name":      "e2e-gw-query",
-						"namespace": framework.ControlPlaneNS,
-					},
-				},
-				"rules": rules,
-			},
-		},
-	}
+	t.Cleanup(func() {
+		framework.CleanupResource(t, httpRouteGVR, testNSQuery, "query-route")
+	})
 
-	ctx := context.Background()
-	_, err = dc.Resource(httpRouteGVR).Namespace(framework.ControlPlaneNS).Create(ctx, route, metav1.CreateOptions{})
+	// Get the data plane address for direct access
+	clientset, err := framework.ClientSet()
 	if err != nil {
-		t.Fatalf("create query HTTPRoute: %v", err)
+		t.Fatalf("create clientset: %v", err)
 	}
-	t.Logf("created HTTPRoute %s/query-route", framework.ControlPlaneNS)
+	gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
 
+	// Wait for route to propagate to data plane
+	time.Sleep(5 * time.Second)
+
+	// Deploy smoke-client pod in control plane namespace for internal HTTP calls
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	url := "http://nantian-gw-e2e-gw-query.nantian-gw.svc.cluster.local/search"
+	// Verify query version=v1 routes to query-a
+	urlV1 := fmt.Sprintf("http://%s/echo/search?version=v1", gwAddr)
+	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, urlV1, 200)
 
-	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url+"?version=v1", 200)
-
-	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, url+"?version=v1")
+	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, urlV1)
 	if resp.StatusCode != 200 {
 		t.Errorf("expected 200 from /echo/search?version=v1, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
 		t.Logf("query version=v1 route response: %d", resp.StatusCode)
 	}
 
-	t.Cleanup(func() {
-		framework.CleanupResource(t, httpRouteGVR, framework.ControlPlaneNS, "query-route")
-	})
+	// Verify query version=v2 routes to query-b
+	urlV2 := fmt.Sprintf("http://%s/echo/search?version=v2", gwAddr)
+	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, urlV2, 200)
+
+	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, urlV2)
+	if resp2.StatusCode != 200 {
+		t.Errorf("expected 200 from /echo/search?version=v2, got %d: %s", resp2.StatusCode, resp2.Body)
+	} else {
+		t.Logf("query version=v2 route response: %d", resp2.StatusCode)
+	}
 }

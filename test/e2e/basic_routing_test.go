@@ -258,9 +258,4 @@ func TestBasicRoutingPathExact(t *testing.T) {
 	} else {
 		t.Logf("PathExact /echo/exact/sub correctly returned non-200: %d", resp2.StatusCode)
 	}
-
-	// Cleanup
-	t.Cleanup(func() {
-		framework.CleanupResource(t, httpRouteGVR, framework.ControlPlaneNS, "exact-route")
-	})
 }
