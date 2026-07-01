@@ -114,7 +114,7 @@ func TestWeightedTrafficSplit(t *testing.T) {
 
 	for i := 0; i < 30; i++ {
 		resp := framework.HTTPGetFromPod(t, ns, curlPod, url)
-		if resp.StatusCode > 0 {
+		if resp.StatusCode == 200 {
 			successCount++
 		} else {
 			failCount++
@@ -227,7 +227,7 @@ func TestWeightedTrafficSplitUnequal(t *testing.T) {
 
 	for i := 0; i < 30; i++ {
 		resp := framework.HTTPGetFromPod(t, ns, curlPod, url)
-		if resp.StatusCode > 0 {
+		if resp.StatusCode == 200 {
 			successCount++
 		}
 		time.Sleep(200 * time.Millisecond)

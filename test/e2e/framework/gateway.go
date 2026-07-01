@@ -68,6 +68,11 @@ func CreateGateway(t T, name, gwClass string) {
 						"name":     "http",
 						"port":     int64(80),
 						"protocol": "HTTP",
+						"allowedRoutes": map[string]interface{}{
+							"namespaces": map[string]interface{}{
+								"from": "All",
+							},
+						},
 					},
 				},
 			},
