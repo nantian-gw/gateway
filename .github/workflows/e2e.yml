@@ -110,10 +110,12 @@ jobs:
         run: |
           cd test/e2e/backend/echo
           docker build -t nantian-echo:latest .
-          kind load docker-image nantian-echo:latest --name "${CLUSTER_NAME}-scenarios"
 
       - name: Load images into kind
         run: CLUSTER_NAME="${CLUSTER_NAME}-scenarios" scripts/ci/load-kind-images.sh
+
+      - name: Load echo image into kind
+        run: kind load docker-image nantian-echo:latest --name "${CLUSTER_NAME}-scenarios"
 
       - name: Deploy Nantian Gateway
         run: CLUSTER_NAME="${CLUSTER_NAME}-scenarios" scripts/ci/deploy-kind-conformance.sh

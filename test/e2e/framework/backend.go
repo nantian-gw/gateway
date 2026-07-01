@@ -59,8 +59,9 @@ func DeployEchoBackend(t T, ns, name string) {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "echo",
-							Image: EchoImage(),
+							Name:            "echo",
+							Image:           EchoImage(),
+							ImagePullPolicy: corev1.PullNever,
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 8080, Name: "http"},
 							},
@@ -124,7 +125,29 @@ func WaitForBackendReady(t T, ns, name string) {
 			return
 		}
 
+		if deploy.Status.Replicas > 0 && deploy.Status.ReadyReplicas == 0 {
+			t.Logf("backend %s/%s: %d replicas, %d ready, %d available, %d unavailable",
+				ns, name, deploy.Status.Replicas, deploy.Status.ReadyReplicas,
+				deploy.Status.AvailableReplicas, deploy.Status.UnavailableReplicas)
+		}
+
 		time.Sleep(2 * time.Second)
+	}
+
+	// Log pod status on timeout for debugging
+	pods, err := clientset.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("app=%s", name),
+	})
+	if err == nil {
+		for _, pod := range pods.Items {
+			t.Logf("pod %s/%s: phase=%s", ns, pod.Name, pod.Status.Phase)
+			for _, cs := range pod.Status.ContainerStatuses {
+				t.Logf("  container %s: ready=%v, restartCount=%d, state=%v",
+					cs.Name, cs.Ready, cs.RestartCount, cs.State)
+			}
+		}
+	} else {
+		t.Logf("failed to list pods for %s/%s: %v", ns, name, err)
 	}
 
 	t.Fatalf("backend %s/%s did not become ready within timeout", ns, name)
