@@ -13,26 +13,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/nantian-gw/gateway/test/e2e/framework"
 )
 
 const testNSRouting = "e2e-routing"
-
-var (
-	httpRouteGVR = schema.GroupVersionResource{
-		Group:    "gateway.networking.k8s.io",
-		Version:  "v1",
-		Resource: "httproutes",
-	}
-	gatewayGVR = schema.GroupVersionResource{
-		Group:    "gateway.networking.k8s.io",
-		Version:  "v1",
-		Resource: "gateways",
-	}
-)
 
 func ensureNamespace(t *testing.T, ns string) {
 	t.Helper()
@@ -97,41 +82,6 @@ func deploySmokeClient(t *testing.T, ns string) string {
 	}
 	t.Fatalf("smoke-client pod did not become ready within timeout")
 	return ""
-}
-
-func createHTTPRouteCrossNS(t *testing.T, ns, name, parentGatewayName string, rules []map[string]interface{}) {
-	t.Helper()
-	dc, err := framework.DynamicClient()
-	if err != nil {
-		t.Fatalf("create dynamic client: %v", err)
-	}
-
-	route := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "gateway.networking.k8s.io/v1",
-			"kind":       "HTTPRoute",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": ns,
-			},
-			"spec": map[string]interface{}{
-				"parentRefs": []interface{}{
-					map[string]interface{}{
-						"name":      parentGatewayName,
-						"namespace": framework.ControlPlaneNS,
-					},
-				},
-				"rules": rules,
-			},
-		},
-	}
-
-	ctx := context.Background()
-	_, err = dc.Resource(httpRouteGVR).Namespace(ns).Create(ctx, route, metav1.CreateOptions{})
-	if err != nil {
-		t.Fatalf("create HTTPRoute %s/%s: %v", ns, name, err)
-	}
-	t.Logf("created HTTPRoute %s/%s", ns, name)
 }
 
 func TestBasicRoutingPathPrefix(t *testing.T) {

@@ -56,3 +56,9 @@ var httpRouteGVR = schema.GroupVersionResource{
 	Version:  "v1",
 	Resource: "httproutes",
 }
+
+var gatewayGVR = schema.GroupVersionResource{
+	Group:    "gateway.networking.k8s.io",
+	Version:  "v1",
+	Resource: "gateways",
+}
