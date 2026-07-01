@@ -12,6 +12,7 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/nantian-gw/gateway/test/e2e/framework"
@@ -63,8 +64,11 @@ func deploySmokeClient(t *testing.T, ns string) string {
 	}
 
 	_, err = clientset.CoreV1().Pods(ns).Create(ctx, pod, metav1.CreateOptions{})
-	if err != nil {
+	if err != nil && !apierrors.IsAlreadyExists(err) {
 		t.Fatalf("create smoke-client pod in %s: %v", ns, err)
+	}
+	if apierrors.IsAlreadyExists(err) {
+		t.Logf("smoke-client pod %s/%s already exists, reusing", ns, podName)
 	}
 
 	deadline := time.Now().Add(120 * time.Second)
