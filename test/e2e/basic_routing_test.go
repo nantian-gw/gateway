@@ -151,6 +151,9 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	gwAddr := gatewayAddress(t, clientset)
 	t.Logf("gateway address: %s", gwAddr)
 
+	// Wait for route to propagate to data plane
+	time.Sleep(5 * time.Second)
+
 	// Deploy smoke-client pod in control plane namespace for internal HTTP calls
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
