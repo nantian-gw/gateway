@@ -119,7 +119,7 @@ func TestURLRewrite(t *testing.T) {
 
 	// Send request and verify rewrite: /echo/api/hello → /echo/hello
 	url := fmt.Sprintf("http://%s/echo/api/hello", gwAddr)
-	probeUntilBodyContains(t, ns, curlPod, url, `"path":"/hello"`, 120*time.Second)
+	probeUntilBodyContains(t, ns, curlPod, url, `"path":"/echo/hello"`, 120*time.Second)
 }
 
 func TestURLRewriteNonMatchingPath(t *testing.T) {
