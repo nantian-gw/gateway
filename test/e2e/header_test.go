@@ -4,8 +4,10 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -75,10 +77,18 @@ func TestHeaderMatching(t *testing.T) {
 	}
 	createHTTPRouteCrossNS(t, testNSHeader, "header-route", "e2e-gw-header", rules)
 
+	clientset, err := framework.ClientSet()
+	if err != nil {
+		t.Fatalf("create clientset: %v", err)
+	}
+	gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
+	time.Sleep(5 * time.Second)
+
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	url := "http://nantian-gw-e2e-gw-header.nantian-gw.svc.cluster.local/echo/api/echo"
+	url := fmt.Sprintf("http://%s/echo/api/echo", gwAddr)
 
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200,
 		func(o *framework.HTTPGetOptions) {
@@ -179,10 +189,18 @@ func TestHeaderModification(t *testing.T) {
 		t.Fatalf("create HTTPRoute: %v", err)
 	}
 
+	clientset2, err := framework.ClientSet()
+	if err != nil {
+		t.Fatalf("create clientset: %v", err)
+	}
+	gwAddr2 := gatewayAddress(t, clientset2)
+	t.Logf("gateway address: %s", gwAddr2)
+	time.Sleep(5 * time.Second)
+
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
-	url := "http://nantian-gw-e2e-gw-modify.nantian-gw.svc.cluster.local/echo/modify/headers"
+	url := fmt.Sprintf("http://%s/echo/modify/headers", gwAddr2)
 
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200)
 

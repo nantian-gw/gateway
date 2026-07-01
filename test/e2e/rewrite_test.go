@@ -38,7 +38,9 @@ func TestURLRewrite(t *testing.T) {
 	curlPod := "curl-client"
 	deployCurlPod(t, clientset, ns, curlPod)
 	waitForPodReady(t, clientset, ns, curlPod)
-
+gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
+	time.Sleep(5 * time.Second)
 	// Deploy gateway and wait for ready.
 	framework.CreateGateway(t, gwName, "nantian-gw")
 	gwAddr := gatewayAddress(t, clientset)
@@ -139,7 +141,9 @@ func TestURLRewriteNonMatchingPath(t *testing.T) {
 	curlPod := "curl-client"
 	deployCurlPod(t, clientset, ns, curlPod)
 	waitForPodReady(t, clientset, ns, curlPod)
-
+gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
+	time.Sleep(5 * time.Second)
 	framework.CreateGateway(t, gwName, "nantian-gw")
 	gwAddr := gatewayAddress(t, clientset)
 
@@ -279,7 +283,7 @@ func deployCurlPod(t *testing.T, clientset *kubernetes.Clientset, ns, name strin
 		},
 	}
 	if pod.Spec.Containers[0].Image == "" {
-		pod.Spec.Containers[0].Image = "curlimages/curl:latest"
+		pod.Spec.Containers[0].Image = "curlimages/curl:8.16.0"
 	}
 
 	_, err := clientset.CoreV1().Pods(ns).Create(ctx, pod, metav1.CreateOptions{})

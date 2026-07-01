@@ -207,7 +207,7 @@ func TestBasicRoutingPathExact(t *testing.T) {
 				map[string]interface{}{
 					"path": map[string]interface{}{
 						"type":  "Exact",
-						"value": "/echo/echo/exact",
+						"value": "/echo/exact",
 					},
 				},
 			},
@@ -220,7 +220,19 @@ func TestBasicRoutingPathExact(t *testing.T) {
 			},
 		},
 	}
-	createHTTPRouteCrossNS(t, framework.ControlPlaneNS, "exact-route", "e2e-gw-exact", rules)
+	createHTTPRouteCrossNS(t, testNSRouting, "exact-route", "e2e-gw-exact", rules)
+
+	t.Cleanup(func() {
+		framework.CleanupResource(t, httpRouteGVR, testNSRouting, "exact-route")
+	})
+
+	clientset, err := framework.ClientSet()
+	if err != nil {
+		t.Fatalf("create clientset: %v", err)
+	}
+	gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
+	time.Sleep(5 * time.Second)
 
 	// Deploy smoke-client
 	ensureNamespace(t, framework.ControlPlaneNS)
@@ -228,19 +240,19 @@ func TestBasicRoutingPathExact(t *testing.T) {
 
 	// Verify /echo/exact returns 200
 	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/echo/exact", 200)
+		fmt.Sprintf("http://%s/echo/exact", gwAddr), 200)
 
 	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/echo/exact")
+		fmt.Sprintf("http://%s/echo/exact", gwAddr))
 	if resp.StatusCode != 200 {
 		t.Errorf("expected 200 from /echo/exact, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
 		t.Logf("PathExact /echo/exact response: %d", resp.StatusCode)
 	}
 
-	// Verify /echo/exact/sub does NOT return 200 (different match, should not route)
+	// Verify /echo/exact/sub does NOT return 200
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod,
-		"http://nantian-gw-e2e-gw-exact.nantian-gw.svc.cluster.local/echo/exact/sub")
+		fmt.Sprintf("http://%s/echo/exact/sub", gwAddr))
 	if resp2.StatusCode == 200 {
 		t.Errorf("expected non-200 from /echo/exact/sub, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {

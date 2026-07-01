@@ -108,6 +108,13 @@ func TestQueryMatching(t *testing.T) {
 	t.Logf("created HTTPRoute %s/query-route", framework.ControlPlaneNS)
 
 	ensureNamespace(t, framework.ControlPlaneNS)
+	clientset, err := framework.ClientSet()
+	if err != nil {
+		t.Fatalf("create clientset: %v", err)
+	}
+	gwAddr := gatewayAddress(t, clientset)
+	t.Logf("gateway address: %s", gwAddr)
+	time.Sleep(5 * time.Second)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
 	url := "http://nantian-gw-e2e-gw-query.nantian-gw.svc.cluster.local/search"

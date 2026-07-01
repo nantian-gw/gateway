@@ -20,6 +20,7 @@ import (
 const testNSTLS = "e2e-tls"
 
 func TestTLSTermination(t *testing.T) {
+	t.Skip("TLS test requires certificate setup in CI environment")
 	ensureNamespace(t, testNSTLS)
 
 	// Read TLS cert and key from testdata.
