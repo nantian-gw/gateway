@@ -149,7 +149,7 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	// Create ReferenceGrant to allow cross-namespace service references
 	framework.CreateReferenceGrant(t, testNSRouting, "allow-gw", framework.ControlPlaneNS)
 
-	// Create HTTPRoute in control plane namespace with cross-namespace backend refs
+	// Create HTTPRoute in test namespace with cross-namespace backend refs
 	rules := []map[string]interface{}{
 		{
 			"matches": []interface{}{
@@ -186,7 +186,12 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 			},
 		},
 	}
-	createHTTPRouteCrossNS(t, framework.ControlPlaneNS, "echo-route", "e2e-gw", rules)
+	createHTTPRouteCrossNS(t, testNSRouting, "echo-route", "e2e-gw", rules)
+
+	// Cleanup
+	t.Cleanup(func() {
+		framework.CleanupResource(t, httpRouteGVR, testNSRouting, "echo-route")
+	})
 
 	// Allow time for the route to propagate to the data plane
 	time.Sleep(5 * time.Second)

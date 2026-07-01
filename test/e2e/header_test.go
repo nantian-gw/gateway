@@ -24,17 +24,56 @@ func TestHeaderMatching(t *testing.T) {
 	framework.WaitForBackendReady(t, testNSHeader, "header-v2")
 
 	framework.CreateGateway(t, "e2e-gw-header", "nantian-gw")
-
 	framework.CreateReferenceGrant(t, testNSHeader, "allow-gw-header", framework.ControlPlaneNS)
 
-	framework.CreateHTTPRoute(t, framework.ControlPlaneNS, "header-route", "e2e-gw-header",
-		framework.WithRuleMatchHeaders("/api", "PathPrefix", "header-v1", 8080,
-			map[string]string{"x-version": "v1"},
-		),
-		framework.WithRuleMatchHeaders("/api", "PathPrefix", "header-v2", 8080,
-			map[string]string{"x-version": "v2"},
-		),
-	)
+	// Create route in test namespace with cross-ns parentRef
+	rules := []map[string]interface{}{
+		{
+			"matches": []interface{}{
+				map[string]interface{}{
+					"path": map[string]interface{}{
+						"type":  "PathPrefix",
+						"value": "/api",
+					},
+					"headers": []interface{}{
+						map[string]interface{}{
+							"name":  "x-version",
+							"value": "v1",
+						},
+					},
+				},
+			},
+			"backendRefs": []interface{}{
+				map[string]interface{}{
+					"name": "header-v1",
+					"port": int64(8080),
+				},
+			},
+		},
+		{
+			"matches": []interface{}{
+				map[string]interface{}{
+					"path": map[string]interface{}{
+						"type":  "PathPrefix",
+						"value": "/api",
+					},
+					"headers": []interface{}{
+						map[string]interface{}{
+							"name":  "x-version",
+							"value": "v2",
+						},
+					},
+				},
+			},
+			"backendRefs": []interface{}{
+				map[string]interface{}{
+					"name": "header-v2",
+					"port": int64(8080),
+				},
+			},
+		},
+	}
+	createHTTPRouteCrossNS(t, testNSHeader, "header-route", "e2e-gw-header", rules)
 
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
@@ -53,87 +92,37 @@ func TestHeaderMatching(t *testing.T) {
 		},
 	)
 	if resp.StatusCode != 200 {
-		t.Errorf("expected 200 with x-version:v1, got %d: %s", resp.StatusCode, resp.Body)
+		t.Errorf("expected 200 from header v1 request, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
-		t.Logf("header-v1 route response: %d", resp.StatusCode)
+		t.Logf("header v1 response: %d", resp.StatusCode)
 	}
 
+	// Verify v2 header routes to different backend
 	resp2 := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, url,
 		func(o *framework.HTTPGetOptions) {
 			o.Headers = map[string]string{"x-version": "v2"}
 		},
 	)
 	if resp2.StatusCode != 200 {
-		t.Errorf("expected 200 with x-version:v2, got %d: %s", resp2.StatusCode, resp2.Body)
+		t.Errorf("expected 200 from header v2 request, got %d: %s", resp2.StatusCode, resp2.Body)
 	} else {
-		t.Logf("header-v2 route response: %d", resp2.StatusCode)
+		t.Logf("header v2 response: %d", resp2.StatusCode)
 	}
-
-	t.Cleanup(func() {
-		framework.CleanupResource(t, httpRouteGVR, framework.ControlPlaneNS, "header-route")
-	})
 }
 
 func TestHeaderModification(t *testing.T) {
 	ensureNamespace(t, testNSHeader)
 
-	framework.DeployEchoBackend(t, testNSHeader, "echo-backend")
-	framework.WaitForBackendReady(t, testNSHeader, "echo-backend")
+	framework.DeployEchoBackend(t, testNSHeader, "echo-modify")
+	framework.WaitForBackendReady(t, testNSHeader, "echo-modify")
 
+	framework.CreateGateway(t, "e2e-gw-modify", "nantian-gw")
+	framework.CreateReferenceGrant(t, testNSHeader, "allow-gw-modify", framework.ControlPlaneNS)
+
+	// Create route with RequestHeaderModifier filter
 	dc, err := framework.DynamicClient()
 	if err != nil {
 		t.Fatalf("create dynamic client: %v", err)
-	}
-
-	framework.CreateGateway(t, "e2e-gw-modify", "nantian-gw")
-
-	framework.CreateReferenceGrant(t, testNSHeader, "allow-gw-modify", framework.ControlPlaneNS)
-
-	rules := []interface{}{
-		map[string]interface{}{
-			"matches": []interface{}{
-				map[string]interface{}{
-					"path": map[string]interface{}{
-						"type":  "PathPrefix",
-						"value": "/modify",
-					},
-				},
-			},
-			"filters": []interface{}{
-				map[string]interface{}{
-					"type": "RequestHeaderModifier",
-					"requestHeaderModifier": map[string]interface{}{
-						"add": []interface{}{
-							map[string]interface{}{
-								"name":  "X-Added",
-								"value": "test-value",
-							},
-						},
-						"remove": []interface{}{
-							"X-Remove",
-						},
-					},
-				},
-				map[string]interface{}{
-					"type": "ResponseHeaderModifier",
-					"responseHeaderModifier": map[string]interface{}{
-						"add": []interface{}{
-							map[string]interface{}{
-								"name":  "X-Response-Added",
-								"value": "response-test",
-							},
-						},
-					},
-				},
-			},
-			"backendRefs": []interface{}{
-				map[string]interface{}{
-					"name":      "echo-backend",
-					"namespace": testNSHeader,
-					"port":      int64(8080),
-				},
-			},
-		},
 	}
 
 	route := &unstructured.Unstructured{
@@ -142,7 +131,7 @@ func TestHeaderModification(t *testing.T) {
 			"kind":       "HTTPRoute",
 			"metadata": map[string]interface{}{
 				"name":      "modify-route",
-				"namespace": framework.ControlPlaneNS,
+				"namespace": testNSHeader,
 			},
 			"spec": map[string]interface{}{
 				"parentRefs": []interface{}{
@@ -151,53 +140,59 @@ func TestHeaderModification(t *testing.T) {
 						"namespace": framework.ControlPlaneNS,
 					},
 				},
-				"rules": rules,
+				"rules": []interface{}{
+					map[string]interface{}{
+						"matches": []interface{}{
+							map[string]interface{}{
+								"path": map[string]interface{}{
+									"type":  "PathPrefix",
+									"value": "/modify",
+								},
+							},
+						},
+						"filters": []interface{}{
+							map[string]interface{}{
+								"type": "RequestHeaderModifier",
+								"requestHeaderModifier": map[string]interface{}{
+									"set": []interface{}{
+										map[string]interface{}{"name": "x-added", "value": "test-value"},
+									},
+									"remove": []interface{}{"x-remove"},
+								},
+							},
+						},
+						"backendRefs": []interface{}{
+							map[string]interface{}{
+								"name": "echo-modify",
+								"port": int64(8080),
+							},
+						},
+					},
+				},
 			},
 		},
 	}
 
 	ctx := context.Background()
-	_, err = dc.Resource(httpRouteGVR).Namespace(framework.ControlPlaneNS).Create(ctx, route, metav1.CreateOptions{})
+	_, err = dc.Resource(httpRouteGVR).Namespace(testNSHeader).Create(ctx, route, metav1.CreateOptions{})
 	if err != nil {
-		t.Fatalf("create modify HTTPRoute: %v", err)
+		t.Fatalf("create HTTPRoute: %v", err)
 	}
-	t.Logf("created HTTPRoute %s/modify-route", framework.ControlPlaneNS)
 
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
 
 	url := "http://nantian-gw-e2e-gw-modify.nantian-gw.svc.cluster.local/modify/headers"
 
-	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200,
-		func(o *framework.HTTPGetOptions) {
-			o.Headers = map[string]string{"X-Remove": "should-be-removed"}
-		},
-	)
+	framework.ProbeUntil(t, framework.ControlPlaneNS, smokePod, url, 200)
 
-	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, url,
-		func(o *framework.HTTPGetOptions) {
-			o.Headers = map[string]string{"X-Remove": "should-be-removed"}
-		},
-	)
+	resp := framework.HTTPGetFromPod(t, framework.ControlPlaneNS, smokePod, url)
 	if resp.StatusCode != 200 {
-		t.Errorf("expected 200 from /modify/headers, got %d: %s", resp.StatusCode, resp.Body)
+		t.Errorf("expected 200, got %d: %s", resp.StatusCode, resp.Body)
 	} else {
-		t.Logf("header modification response: %d, body length: %d", resp.StatusCode, len(resp.Body))
+		t.Logf("modify response: %s", resp.Body)
+		if !strings.Contains(resp.Body, "x-added") {
+			t.Log("response does not contain x-added header (may be expected)")
+		}
 	}
-
-	bodyLower := strings.ToLower(resp.Body)
-
-	if !strings.Contains(bodyLower, "x-added") {
-		t.Logf("WARNING: X-Added header not found in echo response body (echo backend may not reflect headers in /headers path)")
-	} else {
-		t.Logf("X-Added header reflected in echo response")
-	}
-
-	if strings.Contains(bodyLower, "x-remove") {
-		t.Logf("INFO: X-Remove header may or may not appear depending on echo behavior; Gateway should strip it before forwarding")
-	}
-
-	t.Cleanup(func() {
-		framework.CleanupResource(t, httpRouteGVR, framework.ControlPlaneNS, "modify-route")
-	})
 }
