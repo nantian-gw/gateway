@@ -172,6 +172,19 @@ jobs:
       - name: Deploy Nantian Gateway
         run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" scripts/ci/deploy-kind-conformance.sh
 
+      - name: Create conformance GatewayClass
+        run: |
+          kubectl apply -f - <<'YAML'
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: GatewayClass
+          metadata:
+            name: gateway-conformance
+          spec:
+            controllerName: gateway.networking.k8s.io/nantian-gw
+            description: GatewayClass for Gateway API conformance tests
+          YAML
+          kubectl wait --for=condition=Accepted gatewayclass/gateway-conformance --timeout=30s || true
+
       - name: Run conformance tests
         run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
 
