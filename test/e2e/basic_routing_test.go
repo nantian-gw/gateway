@@ -188,6 +188,9 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	}
 	createHTTPRouteCrossNS(t, framework.ControlPlaneNS, "echo-route", "e2e-gw", rules)
 
+	// Allow time for the route to propagate to the data plane
+	time.Sleep(5 * time.Second)
+
 	// Deploy smoke-client pod in control plane namespace for internal access
 	ensureNamespace(t, framework.ControlPlaneNS)
 	smokePod := deploySmokeClient(t, framework.ControlPlaneNS)
