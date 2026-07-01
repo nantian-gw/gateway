@@ -93,8 +93,8 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 	framework.DeployEchoBackend(t, testNSRouting, "echo-b")
 	framework.WaitForBackendReady(t, testNSRouting, "echo-b")
 
-	// Reuse the nantian-gw Gateway that already exists from kind-conformance deployment
-	const gwName = "nantian-gw"
+	// Create Gateway in control plane namespace
+	framework.CreateGateway(t, "e2e-gw", "nantian-gw")
 
 	// Create ReferenceGrant to allow cross-namespace service references
 	framework.CreateReferenceGrant(t, testNSRouting, "allow-gw", framework.ControlPlaneNS)
@@ -136,7 +136,7 @@ func TestBasicRoutingPathPrefix(t *testing.T) {
 			},
 		},
 	}
-	createHTTPRouteCrossNS(t, testNSRouting, "echo-route", gwName, rules)
+	createHTTPRouteCrossNS(t, testNSRouting, "echo-route", "e2e-gw", rules)
 
 	// Cleanup
 	t.Cleanup(func() {
