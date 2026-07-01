@@ -121,6 +121,7 @@ jobs:
       - name: Run e2e scenarios
         run: |
           export CLUSTER_NAME="${CLUSTER_NAME}-scenarios"
+          export SKIP_SETUP=true
           ECHO_IMAGE=nantian-echo:latest go test -tags=e2e -count=1 -v -timeout 30m ./test/e2e/...
 
       - name: Collect diagnostics on failure
