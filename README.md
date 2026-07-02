@@ -79,13 +79,21 @@ For a local smoke test with Kind, run:
 make e2e-smoke
 ```
 
-The smoke test creates a local cluster, installs required resources, deploys the gateway stack, and verifies a basic route path. For Gateway API conformance testing, run:
+The smoke test creates a local cluster, installs required resources, deploys the gateway stack, and verifies a basic route path.
+
+For comprehensive e2e scenario testing (multi-route, header/query matching, URL rewrite, traffic splitting, TLS, error handling), run:
+
+```bash
+make e2e
+```
+
+For Gateway API conformance testing, run:
 
 ```bash
 make conformance
 ```
 
-Both commands require local Kubernetes tooling such as Kind, kubectl, and kustomize.
+All commands require local Kubernetes tooling such as Kind, kubectl, and kustomize.
 
 ## Gateway API Support
 
@@ -134,6 +142,7 @@ make build
 make test
 go test ./internal/translator
 make e2e-smoke
+make e2e
 make conformance
 ```
 

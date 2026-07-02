@@ -32,7 +32,7 @@ accessLog:
   sampleRate: 0.01
   routeAnnotationPrefix: "gateway.nantian.dev/access-log-"
 runtime:
-  httpListenAddr: "0.0.0.0:80"
+  httpListenAddr: ""
   enableIpv6: true
   enableHttp3: false
   tlsMinVersion: "1.2"
