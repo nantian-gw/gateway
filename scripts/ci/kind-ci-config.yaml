@@ -5,10 +5,10 @@ networking:
 nodes:
   - role: control-plane
     extraPortMappings:
-      - containerPort: 30080
+      - containerPort: 30180
         hostPort: 80
         protocol: TCP
-      - containerPort: 30443
+      - containerPort: 30543
         hostPort: 443
         protocol: TCP
       - containerPort: 32080
