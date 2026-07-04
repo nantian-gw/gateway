@@ -193,6 +193,14 @@ For agent-specific repository guidance, see [AGENTS.md](AGENTS.md). For communit
 
 Nantian Gateway is under active development. It has a working control plane, data plane integration, admin APIs, Kind smoke tests, conformance workflows, and production deployment overlays. It is not yet an officially recognized Gateway API implementation.
 
+## Community
+
+- [Discussions](https://github.com/nantian-gw/gateway/discussions) — Questions, ideas, and help
+- [Contributing](CONTRIBUTING.md) — Development setup, PR guidelines
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Roadmap](ROADMAP.md) — What we're building next
+- [Conformance Reports](https://github.com/nantian-gw/platform-release) — Nightly Gateway API conformance results
+
 ## License
 
 Apache 2.0. See [LICENSE](LICENSE).
