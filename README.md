@@ -8,8 +8,37 @@
   <a href="https://github.com/nantian-gw/gateway/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go" alt="Go"></a>
   <a href="https://gateway-api.sigs.k8s.io/"><img src="https://img.shields.io/badge/Gateway_API-v1.5.1-326ce5?logo=kubernetes" alt="Gateway API"></a>
+  <a href="https://github.com/nantian-gw/gateway/actions/workflows/e2e.yml"><img src="https://img.shields.io/github/actions/workflow/status/nantian-gw/gateway/e2e.yml?branch=main&label=e2e" alt="E2E"></a>
+  <a href="https://github.com/nantian-gw/gateway/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/nantian-gw/gateway/ci.yml?branch=main&label=CI" alt="CI"></a>
   <a href="https://nantian.dev"><img src="https://img.shields.io/badge/docs-nantian.dev-7c3aed" alt="Docs"></a>
 </p>
+
+## Performance
+
+Nightly conformance + load test results (600s vegeta, via Gateway → dataplane):
+
+| Metric | Value |
+|--------|-------|
+| Throughput | 7,800–9,400 RPS |
+| P50 latency | 3–4 ms |
+| P99 latency | 13–15 ms |
+| CPU (dataplane) | ~1,100m |
+| Success rate | 100% |
+
+> See [platform-release](https://github.com/nantian-gw/platform-release) for full nightly history.
+
+## Why Nantian Gateway?
+
+| | Nantian Gateway | Envoy Gateway | Istio | Traefik |
+|---|---|---|---|---|
+| **Control plane** | Go | Go | Go | Go |
+| **Data plane** | Rust (Pingora) | Envoy (C++) | Envoy (C++) | Traefik (Go) |
+| **AI Gateway** | ✅ Native (model routing, caching, PII, cost) | ❌ | ❌ | ❌ |
+| **Wasm plugins** | ✅ (wasmtime) | ✅ (proxy-wasm) | ✅ (proxy-wasm) | ✅ (yaegi) |
+| **Gateway API** | v1.5.1 | v1.2+ | v1.2+ | v1.2+ |
+| **L4 (TCP/UDP)** | ✅ | ✅ | ✅ | ✅ |
+| **Dashboard** | ✅ Next.js | ❌ | Kiali | ✅ |
+| **License** | Apache 2.0 | Apache 2.0 | Apache 2.0 | MIT |
 
 > [Chinese README](README.zh-CN.md)
 
