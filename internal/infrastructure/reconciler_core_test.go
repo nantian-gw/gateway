@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -481,4 +482,50 @@ func TestReconcileTwoGatewaysSamePortNoConflict(t *testing.T) {
 		t.Fatalf("Get gateway-b Service returned error: %v", err)
 	}
 	assertServicePort(t, gatewayBService.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+}
+
+func TestReconcileSkipsGatewayServiceForUnsupportedProtocol(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	k8sClient := newInfrastructureClientBuilder(scheme).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gateway-unsupported-proto",
+					Namespace: "default",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{
+						{
+							Name:     "custom",
+							Protocol: gatewayv1.ProtocolType("CUSTOM"),
+							Port:     9999,
+						},
+					},
+				},
+			},
+		).
+		Build()
+
+	reconciler := New(k8sClient, string(controllerName), discardLogger())
+	if err := reconciler.Reconcile(context.Background()); err != nil {
+		t.Fatalf("Reconcile returned error: %v", err)
+	}
+
+	err := k8sClient.Get(
+		context.Background(),
+		client.ObjectKey{Namespace: "default", Name: gatewayServiceName("gateway-unsupported-proto")},
+		&corev1.Service{},
+	)
+	if !apierrors.IsNotFound(err) {
+		t.Fatalf("expected gateway Service to not exist for unsupported protocol, got err=%v", err)
+	}
 }
