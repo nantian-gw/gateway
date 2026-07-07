@@ -407,3 +407,78 @@ func spanHasAttr(span tracetest.SpanStub, key string) bool {
 	}
 	return false
 }
+
+func TestReconcileTwoGatewaysSamePortNoConflict(t *testing.T) {
+	scheme := newScheme(t)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+
+	k8sClient := newInfrastructureClientBuilder(scheme).
+		WithObjects(
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gateway-a",
+					Namespace: "default",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{
+						{Name: "http-a", Protocol: gatewayv1.HTTPProtocolType, Port: 80},
+					},
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "gateway-b",
+					Namespace: "default",
+				},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{
+						{Name: "http-b", Protocol: gatewayv1.HTTPProtocolType, Port: 80},
+					},
+				},
+			},
+		).
+		Build()
+
+	reconciler := New(k8sClient, string(controllerName), discardLogger())
+	if err := reconciler.Reconcile(context.Background()); err != nil {
+		t.Fatalf("Reconcile returned error: %v", err)
+	}
+
+	shared, err := mustGetService(
+		context.Background(),
+		k8sClient,
+		client.ObjectKey{Namespace: defaultDataplaneNamespace, Name: defaultSharedServiceName},
+	)
+	if err != nil {
+		t.Fatalf("Get shared Service returned error: %v", err)
+	}
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+
+	gatewayAService, err := mustGetService(
+		context.Background(),
+		k8sClient,
+		client.ObjectKey{Namespace: "default", Name: gatewayServiceName("gateway-a")},
+	)
+	if err != nil {
+		t.Fatalf("Get gateway-a Service returned error: %v", err)
+	}
+	assertServicePort(t, gatewayAService.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+
+	gatewayBService, err := mustGetService(
+		context.Background(),
+		k8sClient,
+		client.ObjectKey{Namespace: "default", Name: gatewayServiceName("gateway-b")},
+	)
+	if err != nil {
+		t.Fatalf("Get gateway-b Service returned error: %v", err)
+	}
+	assertServicePort(t, gatewayBService.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+}
