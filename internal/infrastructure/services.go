@@ -62,7 +62,7 @@ func desiredSharedService(
 	if len(options.DataplaneSelector) > 0 {
 		desired.Spec.Selector = options.DataplaneSelector
 	}
-	desired.Spec.Ports = mergeServicePorts(current.Spec.Ports, ports, true)
+	desired.Spec.Ports = assignSharedNodePorts(mergeServicePorts(current.Spec.Ports, ports, true), options)
 	return desired
 }
 
