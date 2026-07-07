@@ -30,14 +30,14 @@ Nightly conformance + load test results (600s vegeta, via Gateway → dataplane)
 ## Why Nantian Gateway?
 
 | | Nantian Gateway | Envoy Gateway | Istio | Traefik |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | **Control plane** | Go | Go | Go | Go |
 | **Data plane** | Rust (Pingora) | Envoy (C++) | Envoy (C++) | Traefik (Go) |
-| **AI Gateway** | ✅ Native (model routing, caching, PII, cost) | ❌ | ❌ | ❌ |
-| **Wasm plugins** | ✅ (wasmtime) | ✅ (proxy-wasm) | ✅ (proxy-wasm) | ✅ (yaegi) |
+| **AI Gateway** | Yes (native) | — | — | — |
+| **Wasm plugins** | Yes (wasmtime) | Yes (proxy-wasm) | Yes (proxy-wasm) | Yes (yaegi) |
 | **Gateway API** | v1.5.1 | v1.2+ | v1.2+ | v1.2+ |
-| **L4 (TCP/UDP)** | ✅ | ✅ | ✅ | ✅ |
-| **Dashboard** | ✅ Next.js | ❌ | Kiali | ✅ |
+| **L4 (TCP/UDP)** | Yes | Yes | Yes | Yes |
+| **Dashboard** | Yes (Next.js) | — | Kiali | Yes |
 | **License** | Apache 2.0 | Apache 2.0 | Apache 2.0 | MIT |
 
 > [Chinese README](README.zh-CN.md)

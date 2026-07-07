@@ -19,7 +19,7 @@
 
 Nantian Gateway 是 [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/) 的一种实现，用于处理入口流量、API 路由和 AI 网关功能 —— 全部通过标准 Kubernetes 资源管理。没有自定义 CRD 用于路由，没有私有配置语言，只有 Gateway API。
 
-**如果你用过 nginx ingress 或 Envoy Gateway** —— Nantian Gateway 做同样的事，但采用 Go 控制面 + Rust 数据面，目标是完整的 Gateway API v1.5.1 兼容性，支持 55 项特性。
+**如果你用过 nginx ingress 或 Envoy Gateway** —— Nantian Gateway 做同样的事，但采用 Go 控制面 + Rust 数据面，目标是完整的 Gateway API v1.5.1 兼容性，支持 54 项特性。
 
 ### 为什么选择 Nantian Gateway？
 
