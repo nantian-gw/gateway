@@ -23,13 +23,13 @@ Nantian Gateway 是 [Kubernetes Gateway API](https://gateway-api.sigs.k8s.io/) �
 
 ### 为什么选择 Nantian Gateway？
 
-| 痛点 | Nantian Gateway 的解决方案 |
+| 特性 | 说明 |
 |---|---|
-| **厂商锁定** | 标准 Gateway API —— 无需修改路由定义即可切换实现 |
-| **复杂的 AI 路由** | 内置 AI Gateway：多提供商代理、API 密钥、速率限制、PII 脱敏 |
-| **可观测性不足** | Prometheus 指标 + Grafana 仪表板 + Admin API，开箱即用 |
-| **大规模性能** | Rust 数据面 + xDS 推送 —— 亚毫秒级配置下发 |
-| **自定义逻辑** | Wasm 插件系统，无需重新编译即可实现请求/响应钩子 |
+| **标准 Gateway API** | 无需修改路由定义即可切换实现，无厂商锁定 |
+| **内置 AI Gateway** | 多提供商代理、API 密钥、速率限制、PII 脱敏 |
+| **可观测性** | Prometheus 指标 + Grafana 仪表板 + Admin API，开箱即用 |
+| **高性能** | Rust 数据面 + xDS 推送 —— 亚毫秒级配置下发 |
+| **可扩展** | Wasm 插件系统，无需重新编译即可实现请求/响应钩子 |
 
 ### 架构总览
 
