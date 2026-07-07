@@ -17,7 +17,6 @@ images:
 
 patches:
   - path: dataplane-replicas.yaml
-  - path: dataplane-hostnetwork.yaml
   - target:
       kind: Deployment
     patch: |-
