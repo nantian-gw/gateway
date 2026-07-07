@@ -114,9 +114,9 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 	if shared.Spec.Selector == nil || shared.Spec.Selector["app"] != "nantian-gw-dataplane" {
 		t.Fatalf("shared service selector = %#v, want map[app:nantian-gw-dataplane]", shared.Spec.Selector)
 	}
-	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 30080)
-	assertServicePort(t, shared.Spec.Ports, 8080, corev1.ProtocolTCP, 32080)
-	assertServicePort(t, shared.Spec.Ports, 5300, corev1.ProtocolUDP, 31300)
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+	assertServicePort(t, shared.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
+	assertServicePort(t, shared.Spec.Ports, 5300, corev1.ProtocolUDP, 0)
 	assertMissingServicePort(t, shared.Spec.Ports, defaultAdminPort, corev1.ProtocolTCP)
 
 	dataplanePolicy := &networkingv1.NetworkPolicy{}

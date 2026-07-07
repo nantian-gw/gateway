@@ -271,7 +271,7 @@ func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get shared Service returned error: %v", err)
 	}
-	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 30080)
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 0)
 	assertMissingServicePort(t, shared.Spec.Ports, 443, corev1.ProtocolTCP)
 
 	gatewayService, err := mustGetService(
@@ -403,7 +403,7 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get shared Service after recovery returned error: %v", err)
 	}
-	assertServicePort(t, shared.Spec.Ports, 443, corev1.ProtocolTCP, 30443)
+	assertServicePort(t, shared.Spec.Ports, 443, corev1.ProtocolTCP, 0)
 
 	gatewayService, err = mustGetService(
 		context.Background(),

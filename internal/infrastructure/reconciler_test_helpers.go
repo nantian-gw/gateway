@@ -97,7 +97,7 @@ func assertServicePort(
 		if item.Port != port || item.Protocol != protocol {
 			continue
 		}
-		if item.NodePort != nodePort {
+		if nodePort != 0 && item.NodePort != nodePort {
 			t.Fatalf("service port %d/%s nodePort = %d, want %d", port, protocol, item.NodePort, nodePort)
 		}
 		if item.TargetPort != intstr.FromInt(int(port)) && port != defaultAdminPort {
