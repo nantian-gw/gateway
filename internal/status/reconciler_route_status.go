@@ -31,7 +31,7 @@ func (r *Reconciler) reconcileHTTPRouteStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
 
@@ -56,7 +56,7 @@ func (r *Reconciler) reconcileGRPCRouteStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
 
@@ -81,7 +81,7 @@ func (r *Reconciler) reconcileTCPRouteStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
 
@@ -106,7 +106,7 @@ func (r *Reconciler) reconcileUDPRouteStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
 
@@ -131,6 +131,6 @@ func (r *Reconciler) reconcileTLSRouteStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }

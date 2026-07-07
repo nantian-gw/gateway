@@ -63,6 +63,6 @@ func (r *Reconciler) reconcileBackendLBPolicyStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }

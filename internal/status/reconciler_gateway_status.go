@@ -64,7 +64,7 @@ func (r *Reconciler) reconcileGatewayClassStatusWithSupportResolver(
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			return nil
 		}
-		return r.client.Status().Update(ctx, desired)
+		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
 
@@ -128,7 +128,7 @@ func (r *Reconciler) reconcileGatewayStatusWithSeed(
 			updateGatewayConvergenceStageMetric(key, eval)
 			return nil
 		}
-		if err := r.client.Status().Update(ctx, desired); err != nil {
+		if err := r.client.Status().Patch(ctx, desired, client.MergeFrom(&current)); err != nil {
 			if apierrors.IsNotFound(err) {
 				deleteGatewayConvergenceStageMetric(key)
 				return nil
