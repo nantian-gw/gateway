@@ -2,82 +2,138 @@ package metrics
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestInstantQuerySuccess(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/v1/query" {
-			t.Errorf("unexpected path: %s", r.URL.Path)
+func TestInstantQuery(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if got := r.URL.Query().Get("query"); got != "up" {
+				t.Errorf("query = %q, want up", got)
+			}
+			w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[]}}`))
+		}))
+		defer srv.Close()
+
+		client := NewPrometheusClient(srv.URL)
+		resp, err := client.InstantQuery(context.Background(), "up")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
 		}
-		if r.URL.Query().Get("query") != "up" {
-			t.Errorf("unexpected query: %s", r.URL.Query().Get("query"))
+		if resp.Status != "success" {
+			t.Errorf("status = %q, want success", resp.Status)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(PrometheusResponse{
-			Status: "success",
-			Data:   json.RawMessage(`{"resultType":"vector","result":[]}`),
-		})
-	}))
-	defer server.Close()
+	})
 
-	client := NewPrometheusClient(server.URL)
-	resp, err := client.InstantQuery(context.Background(), "up")
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
-	if resp.Status != "success" {
-		t.Errorf("expected status success, got %s", resp.Status)
-	}
+	t.Run("empty query", func(t *testing.T) {
+		client := NewPrometheusClient("http://localhost:9090")
+		_, err := client.InstantQuery(context.Background(), "")
+		if err == nil {
+			t.Fatal("expected error for empty query")
+		}
+	})
+
+	t.Run("non-200 status", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer srv.Close()
+
+		client := NewPrometheusClient(srv.URL)
+		_, err := client.InstantQuery(context.Background(), "up")
+		if err == nil {
+			t.Fatal("expected error for non-200")
+		}
+	})
+
+	t.Run("invalid json", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`not json`))
+		}))
+		defer srv.Close()
+
+		client := NewPrometheusClient(srv.URL)
+		_, err := client.InstantQuery(context.Background(), "up")
+		if err == nil {
+			t.Fatal("expected error for invalid json")
+		}
+	})
+
+	t.Run("prometheus error status", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`{"status":"error","error":"parse error"}`))
+		}))
+		defer srv.Close()
+
+		client := NewPrometheusClient(srv.URL)
+		_, err := client.InstantQuery(context.Background(), "up")
+		if err == nil {
+			t.Fatal("expected error for prometheus error response")
+		}
+	})
+
+	t.Run("connection refused", func(t *testing.T) {
+		client := NewPrometheusClient("http://127.0.0.1:1")
+		_, err := client.InstantQuery(context.Background(), "up")
+		if err == nil {
+			t.Fatal("expected error for connection refused")
+		}
+	})
 }
 
-func TestInstantQueryPrometheusError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(PrometheusResponse{
-			Status: "error",
-			Error:  "bad_data",
-		})
-	}))
-	defer server.Close()
+func TestRangeQuery(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			q := r.URL.Query()
+			if got := q.Get("query"); got != "rate(http_requests_total[5m])" {
+				t.Errorf("query = %q", got)
+			}
+			if got := q.Get("start"); got != "2024-01-01T00:00:00Z" {
+				t.Errorf("start = %q", got)
+			}
+			if got := q.Get("end"); got != "2024-01-01T01:00:00Z" {
+				t.Errorf("end = %q", got)
+			}
+			if got := q.Get("step"); got != "60s" {
+				t.Errorf("step = %q", got)
+			}
+			w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[]}}`))
+		}))
+		defer srv.Close()
 
-	client := NewPrometheusClient(server.URL)
-	_, err := client.InstantQuery(context.Background(), "invalid{")
-	if err == nil {
-		t.Fatal("expected error for Prometheus error response")
-	}
+		client := NewPrometheusClient(srv.URL)
+		resp, err := client.RangeQuery(
+			context.Background(),
+			"rate(http_requests_total[5m])",
+			"2024-01-01T00:00:00Z",
+			"2024-01-01T01:00:00Z",
+			"60s",
+		)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if resp.Status != "success" {
+			t.Errorf("status = %q, want success", resp.Status)
+		}
+	})
+
+	t.Run("empty query", func(t *testing.T) {
+		client := NewPrometheusClient("http://localhost:9090")
+		_, err := client.RangeQuery(context.Background(), "", "start", "end", "60s")
+		if err == nil {
+			t.Fatal("expected error for empty query")
+		}
+	})
 }
 
-func TestInstantQueryConnectionRefused(t *testing.T) {
-	client := NewPrometheusClient("http://127.0.0.1:1")
-	_, err := client.InstantQuery(context.Background(), "up")
-	if err == nil {
-		t.Fatal("expected error for connection refused")
+func TestNewPrometheusClient(t *testing.T) {
+	client := NewPrometheusClient("http://prometheus:9090")
+	if client.baseURL != "http://prometheus:9090" {
+		t.Errorf("baseURL = %q, want http://prometheus:9090", client.baseURL)
 	}
-}
-
-func TestInstantQueryEmptyQuery(t *testing.T) {
-	client := NewPrometheusClient("http://example.com")
-	_, err := client.InstantQuery(context.Background(), "")
-	if err == nil {
-		t.Fatal("expected error for empty query")
-	}
-}
-
-func TestInstantQueryNonOKStatus(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
-	}))
-	defer server.Close()
-
-	client := NewPrometheusClient(server.URL)
-	_, err := client.InstantQuery(context.Background(), "up")
-	if err == nil {
-		t.Fatal("expected error for non-200 status")
+	if client.httpClient == nil {
+		t.Fatal("httpClient should not be nil")
 	}
 }
