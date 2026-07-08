@@ -190,6 +190,7 @@ jobs:
 
       - name: Run conformance tests
         run: |
+          go mod download sigs.k8s.io/gateway-api/conformance@v1.5.1
           apply_file="$(go env GOMODCACHE)/sigs.k8s.io/gateway-api/conformance@v1.5.1/utils/kubernetes/apply.go"
           chmod u+w "$apply_file"
           python3 - "$apply_file" << 'PYEOF'
