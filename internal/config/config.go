@@ -109,12 +109,22 @@ type LeaderElectionConfig struct {
 }
 
 type AdminAuthConfig struct {
+	AuthMode                 string `yaml:"authMode"` // "static" (default) or "kubernetes"
 	BearerToken              string `yaml:"bearerToken"`
 	BearerTokenFile          string `yaml:"bearerTokenFile"`
 	ReadOnlyBearerToken      string `yaml:"readOnlyBearerToken"`
 	ReadOnlyBearerTokenFile  string `yaml:"readOnlyBearerTokenFile"`
 	RateLimitRPS             int64  `yaml:"rateLimitRPS"`
 	RateLimitBurst           int64  `yaml:"rateLimitBurst"`
+}
+
+// NormalizeAuthMode returns the effective auth mode, defaulting to "static".
+func (c AdminAuthConfig) NormalizeAuthMode() string {
+	mode := strings.TrimSpace(c.AuthMode)
+	if mode == "" {
+		return "static"
+	}
+	return mode
 }
 
 type PprofConfig struct {
