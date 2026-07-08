@@ -322,8 +322,12 @@ func run(configPath string) error {
 		admin.NewResourceManager(mgr.GetClient(), logger),
 		logger,
 		admin.Options{
+			AuthMode:                  cfg.AdminAuth.NormalizeAuthMode(),
 			BearerToken:               cfg.AdminAuth.BearerToken,
 			BearerTokenFile:           cfg.AdminAuth.BearerTokenFile,
+			ReadOnlyBearerToken:       cfg.AdminAuth.ReadOnlyBearerToken,
+			ReadOnlyBearerTokenFile:   cfg.AdminAuth.ReadOnlyBearerTokenFile,
+			RestConfig:                restCfg,
 			ReadinessMode:             cfg.AdminReadiness.Mode,
 			NodeDriftWarningThreshold: cfg.NodeDriftWarningThreshold(),
 			MaxRequestBodyBytes:       cfg.AdminMaxRequestBodyBytes(),

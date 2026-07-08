@@ -1,13 +1,20 @@
 package admin
 
 import (
+	"context"
 	"crypto/subtle"
 	"crypto/tls"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/nantian-gw/gateway/internal/observability"
 )
@@ -17,6 +24,8 @@ type Options struct {
 	BearerTokenFile           string
 	ReadOnlyBearerToken       string
 	ReadOnlyBearerTokenFile   string
+	AuthMode                  string // "static" (default) or "kubernetes"
+	RestConfig                *rest.Config
 	ReadinessMode             string
 	NodeDriftWarningThreshold time.Duration
 	MaxRequestBodyBytes       int64
@@ -125,6 +134,49 @@ func isAuthorizedRequest(r *http.Request, token string) bool {
 	}
 
 	return subtle.ConstantTimeCompare([]byte(provided), []byte(token)) == 1
+}
+
+func tokenReviewVerify(token string, restCfg *rest.Config, logger *slog.Logger) (bool, error) {
+	if restCfg == nil {
+		return false, fmt.Errorf("rest config is nil; cannot perform TokenReview")
+	}
+
+	clientset, err := kubernetes.NewForConfig(restCfg)
+	if err != nil {
+		return false, fmt.Errorf("failed to create kubernetes clientset: %w", err)
+	}
+
+	tr := &authenticationv1.TokenReview{
+		Spec: authenticationv1.TokenReviewSpec{
+			Token: token,
+		},
+	}
+
+	result, err := clientset.AuthenticationV1().TokenReviews().Create(
+		context.Background(), tr, metav1.CreateOptions{},
+	)
+	if err != nil {
+		if logger != nil {
+			logger.Error("TokenReview request failed", "error", err)
+		}
+		return false, fmt.Errorf("TokenReview request failed: %w", err)
+	}
+
+	if !result.Status.Authenticated {
+		if logger != nil {
+			logger.Warn("token not authenticated by TokenReview",
+				"error", result.Status.Error)
+		}
+		return false, nil
+	}
+
+	if logger != nil {
+		logger.Debug("token authenticated via TokenReview",
+			"user", result.Status.User.Username,
+			"groups", result.Status.User.Groups)
+	}
+
+	return true, nil
 }
 
 func bearerTokenFromHeader(value string) (string, bool) {
