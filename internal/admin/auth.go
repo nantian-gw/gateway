@@ -44,27 +44,86 @@ type Options struct {
 }
 
 func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
-	if !authConfigured(opts) {
-		if opts.Logger != nil {
-			opts.Logger.Warn("admin API running without authentication — set adminAuth.bearerToken or adminAuth.bearerTokenFile in config")
-		}
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if isProbePath(r.URL.Path) {
-				next.ServeHTTP(w, r)
-				return
-			}
-			// When no auth is configured, allow read-only access so the
-			// dashboard can function out of the box. Write operations still
-			// require a bearer token.
-			if r.Method == http.MethodGet || r.Method == http.MethodHead {
-				next.ServeHTTP(w, r)
-				return
-			}
-			w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-		})
+	mode := strings.TrimSpace(opts.AuthMode)
+	if mode == "" {
+		mode = "static"
 	}
 
+	switch mode {
+	case "kubernetes":
+		if opts.RestConfig == nil {
+			if opts.Logger != nil {
+				opts.Logger.Error("authMode=kubernetes requires a valid RestConfig; falling back to no-auth mode")
+			}
+			return noAuthHandler(next, opts)
+		}
+		return kubernetesAuthHandler(next, opts)
+	case "static":
+		if !authConfigured(opts) {
+			return noAuthHandler(next, opts)
+		}
+		return staticAuthHandler(next, opts)
+	default:
+		if opts.Logger != nil {
+			opts.Logger.Warn("unknown authMode, falling back to no-auth mode", "mode", mode)
+		}
+		return noAuthHandler(next, opts)
+	}
+}
+
+// noAuthHandler allows GET/HEAD but blocks writes when no auth is configured.
+func noAuthHandler(next http.Handler, opts Options) http.Handler {
+	if opts.Logger != nil {
+		opts.Logger.Warn("admin API running without authentication — set adminAuth.authMode=kubernetes or adminAuth.bearerToken in config")
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isProbePath(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if r.Method == http.MethodGet || r.Method == http.MethodHead {
+			next.ServeHTTP(w, r)
+			return
+		}
+		w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	})
+}
+
+// kubernetesAuthHandler validates tokens via the Kubernetes TokenReview API.
+func kubernetesAuthHandler(next http.Handler, opts Options) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isProbePath(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		token, ok := bearerTokenFromHeader(r.Header.Get("Authorization"))
+		if !ok {
+			deny(w)
+			return
+		}
+
+		authenticated, err := tokenReviewVerify(token, opts.RestConfig, opts.Logger)
+		if err != nil {
+			if opts.Logger != nil {
+				opts.Logger.Error("TokenReview verification error", "error", err)
+			}
+			w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
+			http.Error(w, "authentication service unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if !authenticated {
+			deny(w)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// staticAuthHandler validates tokens against pre-configured static bearer tokens.
+func staticAuthHandler(next http.Handler, opts Options) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isProbePath(r.URL.Path) {
 			next.ServeHTTP(w, r)
