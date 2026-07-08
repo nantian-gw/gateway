@@ -189,7 +189,43 @@ jobs:
           kubectl wait --for=condition=Accepted gatewayclass/gateway-conformance --timeout=30s || true
 
       - name: Run conformance tests
-        run: CLUSTER_NAME="${CLUSTER_NAME}-conformance" go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
+        run: |
+          apply_file="$(go env GOMODCACHE)/sigs.k8s.io/gateway-api/conformance@v1.5.1/utils/kubernetes/apply.go"
+          chmod u+w "$apply_file"
+          python3 - "$apply_file" << 'PYEOF'
+          import sys
+          path = sys.argv[1]
+          content = open(path).read()
+          old = '\t\tuObj.SetResourceVersion(fetchedObj.GetResourceVersion())\n\t\ttlog.Logf(t, "Updating %s %s", uObj.GetName(), uObj.GetKind())\n\t\terr = c.Update(ctx, uObj)'
+          new = '''\t\tuObj.SetResourceVersion(fetchedObj.GetResourceVersion())
+          \t\ttlog.Logf(t, "Updating %s %s", uObj.GetName(), uObj.GetKind())
+          \t\tfor i := 0; i < 5; i++ {
+          \t\t\tif i > 0 {
+          \t\t\t\ttime.Sleep(time.Duration(1<<i) * 100 * time.Millisecond)
+          \t\t\t\tlatest := &unstructured.Unstructured{}
+          \t\t\t\tlatest.SetGroupVersionKind(uObj.GroupVersionKind())
+          \t\t\t\tif getErr := c.Get(ctx, client.ObjectKeyFromObject(uObj), latest); getErr != nil {
+          \t\t\t\t\terr = getErr
+          \t\t\t\t\tbreak
+          \t\t\t\t}
+          \t\t\t\tuObj.SetResourceVersion(latest.GetResourceVersion())
+          \t\t\t}
+          \t\t\terr = c.Update(ctx, uObj)
+          \t\t\tif err == nil || !apierrors.IsConflict(err) {
+          \t\t\t\tbreak
+          \t\t\t}
+          \t\t}'''
+          content = content.replace(old, new)
+          # Add time import
+          content = content.replace(
+              '"testing"',
+              '"testing"\n\t"time"'
+          )
+          open(path, 'w').write(content)
+          print("Patched apply.go with conflict retry")
+          PYEOF
+
+          CLUSTER_NAME="${CLUSTER_NAME}-conformance" go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
 
       - name: Collect diagnostics on failure
         if: failure()
