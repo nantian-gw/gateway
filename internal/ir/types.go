@@ -687,6 +687,7 @@ type AIServiceConfig struct {
 	Provider string        `json:"provider"`
 	Format   string        `json:"format,omitempty"`
 	Model    string        `json:"model"`
+	Endpoint string        `json:"endpoint,omitempty"`
 	Auth     AIServiceAuth `json:"auth,omitempty"`
 	Timeout  time.Duration `json:"timeout,omitempty"`
 }
