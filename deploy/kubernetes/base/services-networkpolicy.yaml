@@ -140,6 +140,21 @@ spec:
   policyTypes:
     - Ingress
   ingress:
+    # Data-plane listener traffic. The dataplane binds Gateway listeners on
+    # these ports; clients/LoadBalancers reach them from anywhere. Add any
+    # additional listener ports here if Gateways use non-standard ports.
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+    # Admin/metrics port stays restricted to in-namespace callers
+    # (control-plane admin aggregation, Prometheus scrape).
     - from:
         - namespaceSelector:
             matchLabels:

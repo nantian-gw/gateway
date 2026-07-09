@@ -1,0 +1,13 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: nantian-gw-critical
+  labels:
+    app.kubernetes.io/name: nantian-gw
+    app.kubernetes.io/part-of: nantian-gw
+# High priority for gateway infrastructure so control/data plane pods are
+# scheduled ahead of, and evicted after, ordinary workloads. Kept below the
+# built-in system-cluster-critical (2000000000) tier.
+value: 1000000000
+globalDefault: false
+description: "Priority class for nantian-gw control-plane and data-plane pods."

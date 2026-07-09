@@ -29,6 +29,7 @@ spec:
         app.kubernetes.io/component: controlplane
     spec:
       serviceAccountName: nantian-gw-controlplane
+      priorityClassName: nantian-gw-critical
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
@@ -67,14 +68,14 @@ spec:
               containerPort: 18083
           startupProbe:
             httpGet:
-              path: /livez
-              port: admin
+              path: /readyz
+              port: healthz
             periodSeconds: 2
             failureThreshold: 30
           livenessProbe:
             httpGet:
-              path: /livez
-              port: admin
+              path: /healthz
+              port: healthz
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3

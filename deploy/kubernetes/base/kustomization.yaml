@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - namespace-gatewayclass.yaml
+  - priorityclass.yaml
   - rbac.yaml
   - controlplane.yaml
   - dataplane.yaml

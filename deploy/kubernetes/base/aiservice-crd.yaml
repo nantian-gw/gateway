@@ -14,6 +14,8 @@ spec:
   - name: v1alpha1
     served: true
     storage: true
+    subresources:
+      status: {}
     schema:
       openAPIV3Schema:
         type: object
@@ -75,6 +77,32 @@ spec:
             properties:
               conditions:
                 type: array
+                x-kubernetes-list-type: map
+                x-kubernetes-list-map-keys:
+                  - type
                 items:
                   type: object
-                  x-kubernetes-preserve-unknown-fields: true
+                  required: [type, status, lastTransitionTime, reason, message]
+                  properties:
+                    type:
+                      type: string
+                      maxLength: 316
+                      pattern: "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
+                    status:
+                      type: string
+                      enum: ["True", "False", "Unknown"]
+                    observedGeneration:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 1024
+                      pattern: "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$"
+                    message:
+                      type: string
+                      maxLength: 32768

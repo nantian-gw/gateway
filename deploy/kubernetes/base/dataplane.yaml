@@ -30,13 +30,13 @@ spec:
     spec:
       serviceAccountName: nantian-gw-dataplane
       automountServiceAccountToken: false
+      priorityClassName: nantian-gw-critical
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
         runAsGroup: 65532
         fsGroup: 65532
-        sysctls:
         seccompProfile:
           type: RuntimeDefault
       topologySpreadConstraints:
@@ -99,7 +99,7 @@ spec:
             limits:
               memory: 1Gi
           securityContext:
-            allowPrivilegeEscalation: true
+            allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
@@ -142,7 +142,10 @@ metadata:
     app.kubernetes.io/part-of: nantian-gw
     app.kubernetes.io/component: dataplane
 spec:
-  minAvailable: 1
+  # maxUnavailable (not minAvailable) so availability guarantees scale with the
+  # HPA: at most one dataplane pod is voluntarily disrupted at a time, whether
+  # running at 2 or 10 replicas.
+  maxUnavailable: 1
   selector:
     matchLabels:
       app: nantian-gw-dataplane
