@@ -2,6 +2,8 @@ package observability
 
 import (
 	"net/http"
+	"runtime"
+	"runtime/debug"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,6 +20,7 @@ const (
 
 type Metrics struct {
 	registry                              *prometheus.Registry
+	BuildInfo                             *prometheus.GaugeVec
 	BuildsTotal                           prometheus.Counter
 	BuildFailures                         prometheus.Counter
 	PublishedTotal                        prometheus.Counter
@@ -27,6 +30,7 @@ type Metrics struct {
 	SnapshotListenerAttachedRoutes        prometheus.Histogram
 	AdminAPIRequestsTotal                 *prometheus.CounterVec
 	AdminAPIRequestDurationSeconds        *prometheus.HistogramVec
+	XDSActiveStreams                      prometheus.Gauge
 	XDSSnapshotFanoutCoalescedTotal       prometheus.Counter
 	XDSStreamTerminationsTotal            *prometheus.CounterVec
 	XDSStatusReportRejectionsTotal        *prometheus.CounterVec
@@ -59,6 +63,13 @@ func NewMetrics() *Metrics {
 	registry := prometheus.NewRegistry()
 	m := &Metrics{
 		registry: registry,
+		BuildInfo: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "nantian_gateway_build_info",
+				Help: "Controlplane build information. Always 1; labels carry the module version, VCS revision, and Go version.",
+			},
+			[]string{"version", "revision", "go_version"},
+		),
 		BuildsTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "nantian_gateway_snapshot_builds_total",
 			Help: "Total number of snapshot rebuild attempts.",
@@ -108,6 +119,10 @@ func NewMetrics() *Metrics {
 			},
 			[]string{"method", "route", "status_class"},
 		),
+		XDSActiveStreams: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "nantian_gateway_controlplane_xds_active_streams",
+			Help: "Current number of connected dataplane xDS streams.",
+		}),
 		XDSSnapshotFanoutCoalescedTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "nantian_gateway_controlplane_xds_snapshot_fanout_coalesced_total",
 			Help: "Total number of per-subscriber pending snapshots replaced by newer published snapshots because a dataplane xDS stream was not keeping up with publish fanout.",
@@ -229,6 +244,8 @@ func NewMetrics() *Metrics {
 	}
 
 	registry.MustRegister(
+		m.BuildInfo,
+		m.XDSActiveStreams,
 		m.BuildsTotal,
 		m.BuildFailures,
 		m.PublishedTotal,
@@ -265,7 +282,31 @@ func NewMetrics() *Metrics {
 		m.ReconcilerRunnerRetriesScheduledTotal,
 		m.ReconcilerRunnerRetryPending,
 	)
+
+	version, revision := readBuildIdentity()
+	m.BuildInfo.WithLabelValues(version, revision, runtime.Version()).Set(1)
+
 	return m
+}
+
+// readBuildIdentity returns the module version and VCS revision recorded in the
+// binary. Go embeds these automatically when building from a module and a VCS
+// checkout; missing values fall back to "unknown" so the metric always reports.
+func readBuildIdentity() (version, revision string) {
+	version, revision = "unknown", "unknown"
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return version, revision
+	}
+	if info.Main.Version != "" {
+		version = info.Main.Version
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == "vcs.revision" && setting.Value != "" {
+			revision = setting.Value
+		}
+	}
+	return version, revision
 }
 
 func Handler(metrics *Metrics) http.Handler {

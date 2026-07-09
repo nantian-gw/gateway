@@ -28,6 +28,7 @@ func (s *Server) registerStream(nodeID string) *streamRegistration {
 	}
 	previous := s.activeStreams[nodeID]
 	s.activeStreams[nodeID] = registration
+	s.recordActiveStreamCount(len(s.activeStreams))
 	s.streamsMu.Unlock()
 
 	if previous != nil {
@@ -35,6 +36,12 @@ func (s *Server) registerStream(nodeID string) *streamRegistration {
 	}
 
 	return registration
+}
+
+func (s *Server) recordActiveStreamCount(count int) {
+	if s.metrics != nil && s.metrics.XDSActiveStreams != nil {
+		s.metrics.XDSActiveStreams.Set(float64(count))
+	}
 }
 
 func (s *Server) unregisterStream(registration *streamRegistration) {
@@ -48,6 +55,7 @@ func (s *Server) unregisterStream(registration *streamRegistration) {
 	if current != nil && current.id == registration.id {
 		delete(s.activeStreams, registration.nodeID)
 	}
+	s.recordActiveStreamCount(len(s.activeStreams))
 }
 
 func (s *Server) isActiveStream(registration *streamRegistration) bool {

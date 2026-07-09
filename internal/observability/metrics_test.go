@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -125,6 +126,30 @@ func TestHandlerExposesCustomMetricValuesAndPrometheusContentType(t *testing.T) 
 		if !strings.Contains(body, sample) {
 			t.Fatalf("expected metric sample %q in response body", sample)
 		}
+	}
+}
+
+func TestHandlerExposesBuildInfoAndActiveStreamGauges(t *testing.T) {
+	metrics := NewMetrics()
+	metrics.XDSActiveStreams.Set(3)
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	Handler(metrics).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d, body=%q", http.StatusOK, recorder.Code, recorder.Body.String())
+	}
+
+	body := recorder.Body.String()
+	if !strings.Contains(body, "nantian_gateway_build_info{") {
+		t.Fatalf("expected build_info metric with labels in response, body=%q", body)
+	}
+	if !strings.Contains(body, "go_version=\""+runtime.Version()+"\"") {
+		t.Fatalf("expected build_info to carry go_version=%q", runtime.Version())
+	}
+	if !strings.Contains(body, "\nnantian_gateway_controlplane_xds_active_streams 3") {
+		t.Fatalf("expected active streams gauge value in response, body=%q", body)
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"sync"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
@@ -11,12 +13,15 @@ import (
 type snapshotProtoBuilder func(*ir.Snapshot, projectionProfile, *slog.Logger) *controlv1.ConfigSnapshot
 
 type snapshotProtoCache struct {
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	version string
 	// Cached snapshots are treated as immutable after construction. Stream
 	// handlers only hand them to gRPC for serialization and never mutate them.
 	snapshots map[string]*controlv1.ConfigSnapshot
-	build     snapshotProtoBuilder
+	// group deduplicates concurrent builds of the same (version, profile) so a
+	// slow projection cannot serialize unrelated profiles or block cache hits.
+	group singleflight.Group
+	build snapshotProtoBuilder
 }
 
 func newSnapshotProtoCache(build snapshotProtoBuilder) *snapshotProtoCache {
@@ -31,20 +36,44 @@ func (c *snapshotProtoCache) get(snapshot *ir.Snapshot, profile projectionProfil
 		return &controlv1.ConfigSnapshot{}
 	}
 
-	c.mu.Lock()
-	if c.version != snapshot.ID {
-		c.version = snapshot.ID
-		c.snapshots = nil
+	// Fast path: a read-locked cache hit for the current version lets many
+	// streams read concurrently without serializing on a single mutex.
+	if cached := c.lookup(snapshot.ID, profile.projectionKey); cached != nil {
+		return cached
 	}
-	if c.snapshots == nil {
-		c.snapshots = make(map[string]*controlv1.ConfigSnapshot, 32)
-	}
-	cached := c.snapshots[profile.projectionKey]
-	if cached == nil {
-		cached = c.build(snapshot, profile, logger)
-		c.snapshots[profile.projectionKey] = cached
-	}
-	c.mu.Unlock()
 
-	return cached
+	// Miss (or version change): build outside the cache lock. singleflight keys
+	// on (version, profile) so identical requests collapse into one build while
+	// distinct profiles build in parallel.
+	key := snapshot.ID + "\x00" + profile.projectionKey
+	result, _, _ := c.group.Do(key, func() (interface{}, error) {
+		// Re-check under the lock in case another goroutine populated the cache
+		// while this call was waiting to enter the singleflight.
+		if cached := c.lookup(snapshot.ID, profile.projectionKey); cached != nil {
+			return cached, nil
+		}
+
+		built := c.build(snapshot, profile, logger)
+
+		c.mu.Lock()
+		if c.version != snapshot.ID || c.snapshots == nil {
+			c.version = snapshot.ID
+			c.snapshots = make(map[string]*controlv1.ConfigSnapshot, 32)
+		}
+		c.snapshots[profile.projectionKey] = built
+		c.mu.Unlock()
+
+		return built, nil
+	})
+
+	return result.(*controlv1.ConfigSnapshot)
+}
+
+func (c *snapshotProtoCache) lookup(version, projectionKey string) *controlv1.ConfigSnapshot {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.version != version || c.snapshots == nil {
+		return nil
+	}
+	return c.snapshots[projectionKey]
 }
