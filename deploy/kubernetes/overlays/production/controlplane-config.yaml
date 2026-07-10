@@ -34,8 +34,23 @@ leaderElection:
   renewDeadline: "10s"
   retryPeriod: "2s"
 adminAuth:
+  # authMode: "static" (default) uses the bearer tokens below. Set to
+  # "kubernetes" to validate caller tokens via the TokenReview API.
   bearerToken: ""
   bearerTokenFile: "/etc/nantian-gw/admin-auth/token"
+  # The following keys apply only when authMode: "kubernetes":
+  #   tokenReviewAudiences: audiences a token must be issued for; requests
+  #     bearing tokens minted for other audiences are rejected.
+  #   allowedUsers / allowedGroups: identities permitted to perform writes.
+  #     Reads require only authentication; writes fail closed (403) when both
+  #     lists are empty, so at least one must be set to enable mutations.
+  # tokenReviewAudiences: ["nantian-controlplane-admin"]
+  # allowedGroups: ["platform:admins"]
+  # allowedUsers: []
+  # trustedProxies: X-Forwarded-For is honored only when the direct peer falls
+  #   within one of these CIDRs; otherwise the connection's RemoteAddr is used
+  #   as the rate-limit key. Leave empty when clients connect directly.
+  # trustedProxies: ["10.0.0.0/8"]
 dashboard:
   enabled: true
   capabilities:
@@ -57,3 +72,11 @@ grpcTLS:
   keyPath: "/etc/nantian-gw/grpc-tls/tls.key"
   clientCAPath: "/etc/nantian-gw/grpc-tls/ca.crt"
   requireClientCert: true
+grpcRuntime:
+  maxConcurrentStreams: 250
+  gracefulStopTimeout: "5s"
+  # Flow-control window sizes are opt-in. Setting an explicit value disables
+  # gRPC's automatic BDP window tuning — only override after measuring.
+  # initialWindowSize: 4194304      # 4 MB per-stream receive window
+  # initialConnWindowSize: 16777216 # 16 MB per-connection receive window
+  # maxRecvMsgSize: 16777216        # 16 MB max inbound message

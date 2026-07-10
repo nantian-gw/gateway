@@ -24,6 +24,7 @@ func TestServerOptionsFromConfigIncludesRuntimeConstraintsWithoutTLS(t *testing.
 			MaxConnectionAgeGrace: "90s",
 			SnapshotSendTimeout:   "35s",
 			SnapshotAckTimeout:    "45s",
+			GracefulStopTimeout:   "7s",
 			PermitWithoutStream:   true,
 		},
 	)
@@ -59,6 +60,9 @@ func TestServerOptionsFromConfigIncludesRuntimeConstraintsWithoutTLS(t *testing.
 	if settings.streamIdleHeartbeat != 15*time.Second {
 		t.Fatalf("unexpected stream idle heartbeat interval: %s", settings.streamIdleHeartbeat)
 	}
+	if settings.gracefulStopTimeout != 7*time.Second {
+		t.Fatalf("unexpected graceful stop timeout: %s", settings.gracefulStopTimeout)
+	}
 	if !snapshot.permitWithoutStream {
 		t.Fatal("expected permitWithoutStream to be enabled")
 	}
@@ -86,6 +90,9 @@ func TestRuntimeServerOptionsFromConfigFallsBackForNonPositiveSnapshotSendTimeou
 	if settings.streamIdleHeartbeat != 10*time.Second {
 		t.Fatalf("unexpected stream idle heartbeat fallback: %s", settings.streamIdleHeartbeat)
 	}
+	if settings.gracefulStopTimeout != 3*time.Second {
+		t.Fatalf("unexpected graceful stop timeout fallback: %s", settings.gracefulStopTimeout)
+	}
 }
 
 func TestRuntimeServerOptionsFromConfigIncludesTracingStatsHandler(t *testing.T) {
@@ -94,6 +101,21 @@ func TestRuntimeServerOptionsFromConfigIncludesTracingStatsHandler(t *testing.T)
 	opts, _ := runtimeServerOptionsFromConfig(config.GRPCRuntimeConfig{})
 	if len(opts) != 3 {
 		t.Fatalf("unexpected runtime server option count: %d", len(opts))
+	}
+}
+
+func TestRuntimeServerOptionsFromConfigAppendsOptInFlowControlKnobs(t *testing.T) {
+	t.Parallel()
+
+	base, _ := runtimeServerOptionsFromConfig(config.GRPCRuntimeConfig{})
+	tuned, _ := runtimeServerOptionsFromConfig(config.GRPCRuntimeConfig{
+		InitialWindowSize:     2 * 1024 * 1024,
+		InitialConnWindowSize: 16 * 1024 * 1024,
+		MaxConcurrentStreams:  250,
+		MaxRecvMsgSize:        4 * 1024 * 1024,
+	})
+	if len(tuned) != len(base)+4 {
+		t.Fatalf("expected 4 opt-in knobs to be appended, got %d extra", len(tuned)-len(base))
 	}
 }
 

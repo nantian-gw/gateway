@@ -22,6 +22,7 @@ type grpcRuntimeSettings struct {
 	snapshotSendTimeout time.Duration
 	snapshotAckTimeout  time.Duration
 	streamIdleHeartbeat time.Duration
+	gracefulStopTimeout time.Duration
 }
 
 func runtimeServerOptionsFromConfig(cfg config.GRPCRuntimeConfig) ([]grpc.ServerOption, grpcRuntimeSettings) {
@@ -32,6 +33,10 @@ func runtimeServerOptionsFromConfig(cfg config.GRPCRuntimeConfig) ([]grpc.Server
 	snapshotAckTimeout := parseDurationOrDefault(cfg.SnapshotAckTimeout, 30*time.Second)
 	if snapshotAckTimeout <= 0 {
 		snapshotAckTimeout = 30 * time.Second
+	}
+	gracefulStopTimeout := parseDurationOrDefault(cfg.GracefulStopTimeout, 3*time.Second)
+	if gracefulStopTimeout <= 0 {
+		gracefulStopTimeout = 3 * time.Second
 	}
 
 	settings := grpcRuntimeSettings{
@@ -48,14 +53,33 @@ func runtimeServerOptionsFromConfig(cfg config.GRPCRuntimeConfig) ([]grpc.Server
 		},
 		snapshotSendTimeout: snapshotSendTimeout,
 		snapshotAckTimeout:  snapshotAckTimeout,
+		gracefulStopTimeout: gracefulStopTimeout,
 	}
 	settings.streamIdleHeartbeat = deriveStreamIdleHeartbeatInterval(settings.keepaliveParams.Time)
 
-	return []grpc.ServerOption{
+	options := []grpc.ServerOption{
 		grpc.KeepaliveParams(settings.keepaliveParams),
 		grpc.KeepaliveEnforcementPolicy(settings.keepalivePolicy),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
-	}, settings
+	}
+
+	// Flow-control and message-size knobs are opt-in: a zero value leaves the
+	// gRPC defaults in place. Setting an explicit window disables gRPC's BDP
+	// autotuning, so only override after measuring.
+	if cfg.InitialWindowSize > 0 {
+		options = append(options, grpc.InitialWindowSize(cfg.InitialWindowSize))
+	}
+	if cfg.InitialConnWindowSize > 0 {
+		options = append(options, grpc.InitialConnWindowSize(cfg.InitialConnWindowSize))
+	}
+	if cfg.MaxConcurrentStreams > 0 {
+		options = append(options, grpc.MaxConcurrentStreams(cfg.MaxConcurrentStreams))
+	}
+	if cfg.MaxRecvMsgSize > 0 {
+		options = append(options, grpc.MaxRecvMsgSize(cfg.MaxRecvMsgSize))
+	}
+
+	return options, settings
 }
 
 func parseDurationOrDefault(raw string, fallback time.Duration) time.Duration {

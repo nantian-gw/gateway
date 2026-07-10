@@ -18,8 +18,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
-const gracefulStopTimeout = 3 * time.Second
-
 type Server struct {
 	controlv1.UnimplementedConfigurationDiscoveryServiceServer
 	addr          string
@@ -111,7 +109,7 @@ func (s *Server) Serve(ctx context.Context, lis net.Listener, markStarted func()
 
 		select {
 		case <-stopped:
-		case <-time.After(gracefulStopTimeout):
+		case <-time.After(s.runtime.gracefulStopTimeout):
 			grpcServer.Stop()
 		}
 	}()

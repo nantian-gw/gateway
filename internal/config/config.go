@@ -219,6 +219,11 @@ type GRPCRuntimeConfig struct {
 	MaxConnectionAgeGrace string `yaml:"maxConnectionAgeGrace"`
 	SnapshotSendTimeout   string `yaml:"snapshotSendTimeout"`
 	SnapshotAckTimeout    string `yaml:"snapshotAckTimeout"`
+	GracefulStopTimeout   string `yaml:"gracefulStopTimeout"`
+	InitialWindowSize     int32  `yaml:"initialWindowSize"`
+	InitialConnWindowSize int32  `yaml:"initialConnWindowSize"`
+	MaxConcurrentStreams  uint32 `yaml:"maxConcurrentStreams"`
+	MaxRecvMsgSize        int    `yaml:"maxRecvMsgSize"`
 	PermitWithoutStream   bool   `yaml:"permitWithoutStream"`
 }
 
@@ -322,6 +327,9 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.GRPCRuntime.SnapshotAckTimeout == "" {
 		cfg.GRPCRuntime.SnapshotAckTimeout = "30s"
+	}
+	if cfg.GRPCRuntime.GracefulStopTimeout == "" {
+		cfg.GRPCRuntime.GracefulStopTimeout = "3s"
 	}
 	if cfg.Pprof.Addr == "" {
 		cfg.Pprof.Addr = "127.0.0.1:6060"
