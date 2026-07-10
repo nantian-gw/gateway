@@ -10,12 +10,13 @@ import (
 )
 
 type rateLimiter struct {
-	rate   float64
-	burst  float64
-	now    func() time.Time
-	mu     sync.Mutex
-	client map[string]tokenBucket
-	done   chan struct{}
+	rate           float64
+	burst          float64
+	now            func() time.Time
+	trustedProxies []*net.IPNet
+	mu             sync.Mutex
+	client         map[string]tokenBucket
+	done           chan struct{}
 }
 
 type tokenBucket struct {
@@ -24,7 +25,7 @@ type tokenBucket struct {
 	expiresAt  time.Time
 }
 
-func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
+func newRateLimiter(rps int64, burstOrWindow any, trustedProxies []string) *rateLimiter {
 	if rps <= 0 {
 		return nil
 	}
@@ -59,11 +60,12 @@ func newRateLimiter(rps int64, burstOrWindow any) *rateLimiter {
 	}
 
 	rl := &rateLimiter{
-		rate:   rate,
-		burst:  float64(burst),
-		now:    func() time.Time { return time.Now().UTC() },
-		client: make(map[string]tokenBucket),
-		done:   make(chan struct{}),
+		rate:           rate,
+		burst:          float64(burst),
+		now:            func() time.Time { return time.Now().UTC() },
+		trustedProxies: parseTrustedProxies(trustedProxies),
+		client:         make(map[string]tokenBucket),
+		done:           make(chan struct{}),
 	}
 	go rl.periodicCleanup()
 	return rl
@@ -137,7 +139,7 @@ func (rl *rateLimiter) middleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		if !rl.allow(clientIP(r)) {
+		if !rl.allow(rl.clientIP(r)) {
 			http.Error(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
@@ -159,16 +161,60 @@ func normalizeClientIP(remoteAddr string) string {
 	return remoteAddr
 }
 
-func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if idx := strings.IndexByte(xff, ','); idx > 0 {
-			return strings.TrimSpace(xff[:idx])
+// clientIP resolves the rate-limit key. X-Forwarded-For is only honored when the
+// direct peer (RemoteAddr) is a configured trusted proxy; otherwise the header is
+// spoofable and would let clients evade limits or explode the per-key map, so the
+// direct peer address is used instead.
+func (rl *rateLimiter) clientIP(r *http.Request) string {
+	host := normalizeClientIP(r.RemoteAddr)
+	if rl.trustsPeer(host) {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			if idx := strings.IndexByte(xff, ','); idx > 0 {
+				return strings.TrimSpace(xff[:idx])
+			}
+			return strings.TrimSpace(xff)
 		}
-		return strings.TrimSpace(xff)
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return strings.TrimSpace(r.RemoteAddr)
 	}
 	return host
+}
+
+func (rl *rateLimiter) trustsPeer(host string) bool {
+	if len(rl.trustedProxies) == 0 {
+		return false
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	for _, network := range rl.trustedProxies {
+		if network.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
+func parseTrustedProxies(entries []string) []*net.IPNet {
+	nets := make([]*net.IPNet, 0, len(entries))
+	for _, raw := range entries {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+		if _, network, err := net.ParseCIDR(raw); err == nil {
+			nets = append(nets, network)
+			continue
+		}
+		if ip := net.ParseIP(raw); ip != nil {
+			bits := 32
+			if ip.To4() == nil {
+				bits = 128
+			}
+			nets = append(nets, &net.IPNet{IP: ip, Mask: net.CIDRMask(bits, bits)})
+		}
+	}
+	if len(nets) == 0 {
+		return nil
+	}
+	return nets
 }

@@ -176,7 +176,7 @@ func TestAdminRateLimiterUsesBurstAndRecords429Metrics(t *testing.T) {
 func TestAdminRateLimiterBucketsByClientIPWithoutPort(t *testing.T) {
 	t.Parallel()
 
-	rl := newRateLimiter(1, 1)
+	rl := newRateLimiter(1, 1, nil)
 	now := time.Unix(1, 0).UTC()
 	rl.now = func() time.Time { return now }
 

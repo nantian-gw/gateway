@@ -340,6 +340,11 @@ func run(configPath string) error {
 			TLSConfig:                 adminTLSConfig,
 			Logger:                    logger,
 			RateLimitRPS:              cfg.AdminAuth.RateLimitRPS,
+			RateLimitBurst:            cfg.AdminAuth.RateLimitBurst,
+			TokenReviewAudiences:      cfg.AdminAuth.TokenReviewAudiences,
+			AllowedUsers:              cfg.AdminAuth.AllowedUsers,
+			AllowedGroups:             cfg.AdminAuth.AllowedGroups,
+			TrustedProxies:            cfg.AdminAuth.TrustedProxies,
 			DashboardCapabilities:     admin.ResolveDashboardCapabilities(cfg),
 		},
 	)

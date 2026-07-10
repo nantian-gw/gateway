@@ -8,7 +8,7 @@ import (
 )
 
 func TestRateLimiterMiddlewareLimitsRequestsPerRemoteAddress(t *testing.T) {
-	limiter := newRateLimiter(2, time.Minute)
+	limiter := newRateLimiter(2, time.Minute, nil)
 	var calls int
 	handler := limiter.middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -46,7 +46,7 @@ func TestRateLimiterMiddlewareLimitsRequestsPerRemoteAddress(t *testing.T) {
 }
 
 func TestRateLimiterMiddlewareResetsAfterWindow(t *testing.T) {
-	limiter := newRateLimiter(1, time.Nanosecond)
+	limiter := newRateLimiter(1, time.Nanosecond, nil)
 	var calls int
 	handler := limiter.middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++

@@ -109,13 +109,17 @@ type LeaderElectionConfig struct {
 }
 
 type AdminAuthConfig struct {
-	AuthMode                 string `yaml:"authMode"` // "static" (default) or "kubernetes"
-	BearerToken              string `yaml:"bearerToken"`
-	BearerTokenFile          string `yaml:"bearerTokenFile"`
-	ReadOnlyBearerToken      string `yaml:"readOnlyBearerToken"`
-	ReadOnlyBearerTokenFile  string `yaml:"readOnlyBearerTokenFile"`
-	RateLimitRPS             int64  `yaml:"rateLimitRPS"`
-	RateLimitBurst           int64  `yaml:"rateLimitBurst"`
+	AuthMode                string   `yaml:"authMode"` // "static" (default) or "kubernetes"
+	BearerToken             string   `yaml:"bearerToken"`
+	BearerTokenFile         string   `yaml:"bearerTokenFile"`
+	ReadOnlyBearerToken     string   `yaml:"readOnlyBearerToken"`
+	ReadOnlyBearerTokenFile string   `yaml:"readOnlyBearerTokenFile"`
+	RateLimitRPS            int64    `yaml:"rateLimitRPS"`
+	RateLimitBurst          int64    `yaml:"rateLimitBurst"`
+	TokenReviewAudiences    []string `yaml:"tokenReviewAudiences"`
+	AllowedUsers            []string `yaml:"allowedUsers"`
+	AllowedGroups           []string `yaml:"allowedGroups"`
+	TrustedProxies          []string `yaml:"trustedProxies"`
 }
 
 // NormalizeAuthMode returns the effective auth mode, defaulting to "static".

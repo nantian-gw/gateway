@@ -104,7 +104,7 @@ func NewServer(
 	s.registerRoutes(mux)
 
 	handler := wrapAuthHandler(mux, opts)
-	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst); rl != nil {
+	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst, opts.TrustedProxies); rl != nil {
 		handler = rl.middleware(handler)
 	}
 	handler = wrapTracingHandler(handler, "admin")
