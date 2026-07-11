@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+// detailBlockCap bounds a single resource's rendered detail block so one large
+// resource cannot starve the budget or blow up a single block.
+const detailBlockCap = 2500
+
 // renderContext produces the two-section Markdown RAG context: a lightweight
 // index of every resource, then detailed blocks for selected resources up to
 // a character budget.
@@ -50,11 +54,11 @@ func renderContext(index ClusterIndex, selected []ResourceRef, budget int, usedF
 		if !ok {
 			continue
 		}
-		block := fmt.Sprintf("### %s %s/%s\n%s\n", e.Ref.Kind, e.Ref.Namespace, e.Ref.Name, e.Summary)
-		if e.StatusSummary != "" {
-			block += "status: " + e.StatusSummary + "\n"
+		body := renderDetail(index.objects[ref], e)
+		if len(body) > detailBlockCap {
+			body = strings.ToValidUTF8(body[:detailBlockCap], "") + "…(truncated)\n"
 		}
-		block += "\n"
+		block := fmt.Sprintf("### %s %s/%s\n%s\n", e.Ref.Kind, e.Ref.Namespace, e.Ref.Name, body)
 		if detailUsed+len(block) > detailBudget {
 			truncated = true
 			break
