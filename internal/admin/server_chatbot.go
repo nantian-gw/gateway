@@ -194,7 +194,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build dynamic RAG context from the live cluster.
-	ragContext, err := chatbot.BuildRAGContext(r.Context(), s.resources.client, "gateway.networking.k8s.io/nantian-gw")
+	ragContext, err := chatbot.BuildRAGContext(r.Context(), s.resources.client, "gateway.networking.k8s.io/nantian-gw", req.Prompt)
 	if err != nil {
 		s.logger.Warn("failed to build RAG context, continuing without it", "error", err)
 		ragContext = ""
