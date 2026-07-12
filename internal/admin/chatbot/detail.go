@@ -75,7 +75,7 @@ func backendLine(sb *strings.Builder, routeNS string, br gatewayv1.BackendRef) {
 	if br.Port != nil {
 		port = int32(*br.Port)
 	}
-	fmt.Fprintf(sb, "    -> %s/%s:%d", ns, string(br.Name), port)
+	fmt.Fprintf(sb, "    -> %s/%s:%d", sanitizeUntrusted(ns), sanitizeUntrusted(string(br.Name)), port)
 	if br.Weight != nil {
 		fmt.Fprintf(sb, " weight=%d", *br.Weight)
 	}
@@ -84,13 +84,13 @@ func backendLine(sb *strings.Builder, routeNS string, br gatewayv1.BackendRef) {
 
 func renderGateway(gw *gatewayv1.Gateway) string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "class=%s\n", gw.Spec.GatewayClassName)
+	fmt.Fprintf(&sb, "class=%s\n", sanitizeUntrusted(string(gw.Spec.GatewayClassName)))
 	for _, l := range gw.Spec.Listeners {
 		host := "-"
 		if l.Hostname != nil {
 			host = string(*l.Hostname)
 		}
-		fmt.Fprintf(&sb, "- %s: %d/%s hostname=%s", l.Name, l.Port, l.Protocol, host)
+		fmt.Fprintf(&sb, "- %s: %d/%s hostname=%s", sanitizeUntrusted(string(l.Name)), l.Port, l.Protocol, sanitizeUntrusted(host))
 		if l.TLS != nil {
 			mode := "-"
 			if l.TLS.Mode != nil {
@@ -109,7 +109,7 @@ func renderService(svc *corev1.Service) string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "type=%s clusterIP=%s\n", svc.Spec.Type, svc.Spec.ClusterIP)
 	for _, p := range svc.Spec.Ports {
-		fmt.Fprintf(&sb, "- %s: %d/%s -> %s\n", p.Name, p.Port, p.Protocol, p.TargetPort.String())
+		fmt.Fprintf(&sb, "- %s: %d/%s -> %s\n", sanitizeUntrusted(p.Name), p.Port, p.Protocol, sanitizeUntrusted(p.TargetPort.String()))
 	}
 	return sb.String()
 }
@@ -120,7 +120,7 @@ func writeHostnames(sb *strings.Builder, hostnames []gatewayv1.Hostname) {
 	}
 	hs := make([]string, 0, len(hostnames))
 	for _, h := range hostnames {
-		hs = append(hs, string(h))
+		hs = append(hs, sanitizeUntrusted(string(h)))
 	}
 	fmt.Fprintf(sb, "hostnames=[%s]\n", strings.Join(hs, ","))
 }
@@ -132,13 +132,13 @@ func renderHTTPRoute(r *gatewayv1.HTTPRoute) string {
 		fmt.Fprintf(&sb, "rule[%d]:\n", i)
 		for _, m := range rule.Matches {
 			if m.Path != nil && m.Path.Type != nil && m.Path.Value != nil {
-				fmt.Fprintf(&sb, "  match: path %s=%s\n", *m.Path.Type, *m.Path.Value)
+				fmt.Fprintf(&sb, "  match: path %s=%s\n", *m.Path.Type, sanitizeUntrusted(*m.Path.Value))
 			}
 			if m.Method != nil {
 				fmt.Fprintf(&sb, "  match: method=%s\n", *m.Method)
 			}
 			for _, h := range m.Headers {
-				fmt.Fprintf(&sb, "  match: header %s=%s\n", h.Name, h.Value)
+				fmt.Fprintf(&sb, "  match: header %s=%s\n", sanitizeUntrusted(string(h.Name)), sanitizeUntrusted(h.Value))
 			}
 		}
 		for _, br := range rule.BackendRefs {
@@ -166,7 +166,7 @@ func renderGRPCRoute(r *gatewayv1.GRPCRoute) string {
 				if m.Method.Method != nil {
 					meth = *m.Method.Method
 				}
-				fmt.Fprintf(&sb, "  match: service=%s method=%s\n", svc, meth)
+				fmt.Fprintf(&sb, "  match: service=%s method=%s\n", sanitizeUntrusted(svc), sanitizeUntrusted(meth))
 			}
 		}
 		for _, br := range rule.BackendRefs {
@@ -220,18 +220,18 @@ func renderUDPRoute(r *gatewayv1alpha2.UDPRoute) string {
 
 func renderAIService(s *aiservice.AIService) string {
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "provider=%s model=%s", s.Spec.Provider, s.Spec.Model)
+	fmt.Fprintf(&sb, "provider=%s model=%s", sanitizeUntrusted(s.Spec.Provider), sanitizeUntrusted(s.Spec.Model))
 	if s.Spec.Format != "" {
-		fmt.Fprintf(&sb, " format=%s", s.Spec.Format)
+		fmt.Fprintf(&sb, " format=%s", sanitizeUntrusted(s.Spec.Format))
 	}
 	if s.Spec.Endpoint != "" {
-		fmt.Fprintf(&sb, " endpoint=%s", s.Spec.Endpoint)
+		fmt.Fprintf(&sb, " endpoint=%s", sanitizeUntrusted(s.Spec.Endpoint))
 	}
 	if s.Spec.Auth.Type != "" {
-		fmt.Fprintf(&sb, " auth=%s", s.Spec.Auth.Type)
+		fmt.Fprintf(&sb, " auth=%s", sanitizeUntrusted(s.Spec.Auth.Type))
 	}
 	if s.Spec.Timeout != "" {
-		fmt.Fprintf(&sb, " timeout=%s", s.Spec.Timeout)
+		fmt.Fprintf(&sb, " timeout=%s", sanitizeUntrusted(s.Spec.Timeout))
 	}
 	sb.WriteString("\n")
 	status, _ := summarizeConditions(s.Status.Conditions)
@@ -242,10 +242,10 @@ func renderAIService(s *aiservice.AIService) string {
 func renderTokenPolicy(p *tokenpolicy.TokenPolicy) string {
 	var sb strings.Builder
 	for _, tr := range p.Spec.TargetRefs {
-		fmt.Fprintf(&sb, "targetRef=%s/%s\n", tr.Kind, tr.Name)
+		fmt.Fprintf(&sb, "targetRef=%s/%s\n", sanitizeUntrusted(string(tr.Kind)), sanitizeUntrusted(string(tr.Name)))
 	}
 	fmt.Fprintf(&sb, "tpm=%d rpm=%d burst=%.2f onLimit=%s scope=%s\n",
-		p.Spec.TokensPerMinute, p.Spec.RequestsPerMinute, p.Spec.Burst, p.Spec.OnLimit, p.Spec.Scope)
+		p.Spec.TokensPerMinute, p.Spec.RequestsPerMinute, p.Spec.Burst, sanitizeUntrusted(p.Spec.OnLimit), sanitizeUntrusted(p.Spec.Scope))
 	status, _ := summarizeConditions(p.Status.Conditions)
 	writeConditions(&sb, status)
 	return sb.String()
@@ -262,7 +262,7 @@ func renderWasmPlugin(p *wasmplugin.WasmPlugin) string {
 	case p.Spec.Wasm.ConfigMap != nil:
 		src = "configMap/" + p.Spec.Wasm.ConfigMap.Name
 	}
-	fmt.Fprintf(&sb, "source=%s\n", src)
+	fmt.Fprintf(&sb, "source=%s\n", sanitizeUntrusted(src))
 	hooks := make([]string, 0, len(p.Spec.Hooks))
 	for _, h := range p.Spec.Hooks {
 		hooks = append(hooks, string(h))
@@ -271,7 +271,7 @@ func renderWasmPlugin(p *wasmplugin.WasmPlugin) string {
 	fmt.Fprintf(&sb, "sandbox: maxMemoryBytes=%d maxExecutionTimeMs=%d allowNetwork=%t allowFileSystem=%t\n",
 		p.Spec.Sandbox.MaxMemoryBytes, p.Spec.Sandbox.MaxExecutionTimeMs, p.Spec.Sandbox.AllowNetwork, p.Spec.Sandbox.AllowFileSystem)
 	for _, tr := range p.Spec.TargetRefs {
-		fmt.Fprintf(&sb, "targetRef=%s/%s\n", tr.Kind, tr.Name)
+		fmt.Fprintf(&sb, "targetRef=%s/%s\n", sanitizeUntrusted(string(tr.Kind)), sanitizeUntrusted(string(tr.Name)))
 	}
 	status, _ := summarizeConditions(p.Status.Conditions)
 	writeConditions(&sb, status)
@@ -281,7 +281,7 @@ func renderWasmPlugin(p *wasmplugin.WasmPlugin) string {
 func renderBackendLBPolicy(p *backendlb.BackendLBPolicy) string {
 	var sb strings.Builder
 	for _, tr := range p.Spec.TargetRefs {
-		fmt.Fprintf(&sb, "targetRef=%s/%s\n", tr.Kind, tr.Name)
+		fmt.Fprintf(&sb, "targetRef=%s/%s\n", sanitizeUntrusted(string(tr.Kind)), sanitizeUntrusted(string(tr.Name)))
 	}
 	if p.Spec.LoadBalancing != nil && p.Spec.LoadBalancing.Type != nil {
 		fmt.Fprintf(&sb, "lb=%s", *p.Spec.LoadBalancing.Type)

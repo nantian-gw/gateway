@@ -21,9 +21,9 @@ func summarizeConditions(conds []metav1.Condition) (string, bool) {
 	for _, c := range conds {
 		if c.Status != metav1.ConditionTrue {
 			abnormal = true
-			parts = append(parts, fmt.Sprintf("%s=%s(%s)", c.Type, c.Status, c.Reason))
+			parts = append(parts, fmt.Sprintf("%s=%s(%s)", sanitizeUntrusted(c.Type), c.Status, sanitizeUntrusted(c.Reason)))
 		} else {
-			parts = append(parts, fmt.Sprintf("%s=%s", c.Type, c.Status))
+			parts = append(parts, fmt.Sprintf("%s=%s", sanitizeUntrusted(c.Type), c.Status))
 		}
 	}
 	return strings.Join(parts, ", "), abnormal
@@ -44,7 +44,7 @@ func summarizeRouteParents(parents []gatewayv1.RouteParentStatus) (string, bool)
 		if i > 0 {
 			sb.WriteString("; ")
 		}
-		sb.WriteString(fmt.Sprintf("parent[%s]: %s", p.ParentRef.Name, s))
+		sb.WriteString(fmt.Sprintf("parent[%s]: %s", sanitizeUntrusted(string(p.ParentRef.Name)), s))
 	}
 	return sb.String(), anyAbnormal
 }
@@ -64,7 +64,7 @@ func summarizeAncestors(ancestors []gatewayv1.PolicyAncestorStatus) (string, boo
 		if i > 0 {
 			sb.WriteString("; ")
 		}
-		sb.WriteString(fmt.Sprintf("ancestor[%s]: %s", a.AncestorRef.Name, s))
+		sb.WriteString(fmt.Sprintf("ancestor[%s]: %s", sanitizeUntrusted(string(a.AncestorRef.Name)), s))
 	}
 	return sb.String(), anyAbnormal
 }

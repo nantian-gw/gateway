@@ -126,7 +126,7 @@ func collectGateways(ctx context.Context, cl client.Client, idx *ClusterIndex, m
 		status, abnormal := summarizeConditions(gw.Status.Conditions)
 		idx.add(IndexEntry{
 			Ref:           ResourceRef{Kind: kindGateway, Namespace: gw.Namespace, Name: gw.Name},
-			Summary:       fmt.Sprintf("class=%s, listeners=%d", gw.Spec.GatewayClassName, len(gw.Spec.Listeners)),
+			Summary:       fmt.Sprintf("class=%s, listeners=%d", sanitizeUntrusted(string(gw.Spec.GatewayClassName)), len(gw.Spec.Listeners)),
 			StatusSummary: status,
 			Abnormal:      abnormal,
 		}, gw.DeepCopy())
@@ -313,7 +313,7 @@ func collectAIServices(ctx context.Context, cl client.Client, idx *ClusterIndex)
 		status, abnormal := summarizeConditions(s.Status.Conditions)
 		idx.add(IndexEntry{
 			Ref:           ResourceRef{Kind: kindAIService, Namespace: s.Namespace, Name: s.Name},
-			Summary:       fmt.Sprintf("provider=%s, model=%s, endpoint=%s", s.Spec.Provider, s.Spec.Model, s.Spec.Endpoint),
+			Summary:       fmt.Sprintf("provider=%s, model=%s, endpoint=%s", sanitizeUntrusted(s.Spec.Provider), sanitizeUntrusted(s.Spec.Model), sanitizeUntrusted(s.Spec.Endpoint)),
 			StatusSummary: status,
 			Abnormal:      abnormal,
 		}, s.DeepCopy())
