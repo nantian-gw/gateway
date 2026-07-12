@@ -20,7 +20,7 @@ func renderContext(index ClusterIndex, selected []ResourceRef, budget int, usedF
 	indexUsed := 0
 	indexTruncated := false
 	for _, e := range index.Entries {
-		line := fmt.Sprintf("- %s %s/%s", e.Ref.Kind, e.Ref.Namespace, e.Ref.Name)
+		line := fmt.Sprintf("- %s %s/%s", e.Ref.Kind, sanitizeUntrusted(e.Ref.Namespace), sanitizeUntrusted(e.Ref.Name))
 		if e.StatusSummary != "" {
 			line += " [" + e.StatusSummary + "]"
 		}
@@ -58,7 +58,7 @@ func renderContext(index ClusterIndex, selected []ResourceRef, budget int, usedF
 		if len(body) > detailBlockCap {
 			body = strings.ToValidUTF8(body[:detailBlockCap], "") + "…(truncated)\n"
 		}
-		block := fmt.Sprintf("### %s %s/%s\n%s\n", e.Ref.Kind, e.Ref.Namespace, e.Ref.Name, body)
+		block := fmt.Sprintf("### %s %s/%s\n%s\n", e.Ref.Kind, sanitizeUntrusted(e.Ref.Namespace), sanitizeUntrusted(e.Ref.Name), body)
 		if detailUsed+len(block) > detailBudget {
 			truncated = true
 			break
