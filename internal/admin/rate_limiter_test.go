@@ -57,6 +57,7 @@ func TestRateLimiterMiddlewareResetsAfterWindow(t *testing.T) {
 	req.RemoteAddr = "192.0.2.10:12345"
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 
+	// sleep to allow rate limiter window to expire
 	time.Sleep(time.Millisecond)
 
 	recorder := httptest.NewRecorder()

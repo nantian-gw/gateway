@@ -87,6 +87,7 @@ func TestSnapshotProtoCacheBuildsOnceForConcurrentReaders(t *testing.T) {
 	var builds atomic.Int32
 	cache := newSnapshotProtoCache(func(snapshot *ir.Snapshot, _ projectionProfile, _ *slog.Logger) *controlv1.ConfigSnapshot {
 		builds.Add(1)
+		// sleep to simulate slow config snapshot build
 		time.Sleep(10 * time.Millisecond)
 		return &controlv1.ConfigSnapshot{Id: snapshot.ID}
 	})

@@ -79,11 +79,11 @@ func TestDesiredGatewayServiceIncludesOwnershipAndParameterAnnotations(t *testin
 			service.Annotations["nantian.dev/infrastructure-parameters-ref"],
 		)
 	}
-	if service.Annotations["nantian.dev/service-parameters-hash"] != testGatewayServiceParametersHash(params) {
+	if service.Annotations["nantian.dev/service-parameters-hash"] != testGatewayServiceParametersHash(t, params) {
 		t.Fatalf(
 			"service-parameters-hash annotation = %q, want %q",
 			service.Annotations["nantian.dev/service-parameters-hash"],
-			testGatewayServiceParametersHash(params),
+			testGatewayServiceParametersHash(t, params),
 		)
 	}
 }
@@ -163,7 +163,7 @@ func TestReconcileRemovesStaleInfrastructureParameterAnnotationOnRollback(t *tes
 	if service.Annotations["nantian.dev/owner-uid"] != "gateway-uid-456" {
 		t.Fatalf("owner-uid annotation = %q", service.Annotations["nantian.dev/owner-uid"])
 	}
-	if service.Annotations["nantian.dev/service-parameters-hash"] != testGatewayServiceParametersHash(gatewayServiceParameters{}) {
+	if service.Annotations["nantian.dev/service-parameters-hash"] != testGatewayServiceParametersHash(t, gatewayServiceParameters{}) {
 		t.Fatalf("unexpected service-parameters-hash annotation %#v", service.Annotations)
 	}
 	if _, ok := service.Annotations["example.com/trace"]; ok {
@@ -290,7 +290,7 @@ func TestReconcilePropagatesOwnershipAnnotationsToGatewayEndpointSlices(t *testi
 			endpointSlice.Annotations["nantian.dev/gatewayclass-parameters-ref"],
 		)
 	}
-	if endpointSlice.Annotations["nantian.dev/service-parameters-hash"] != testGatewayServiceParametersHash(gatewayServiceParameters{
+	if endpointSlice.Annotations["nantian.dev/service-parameters-hash"] != testGatewayServiceParametersHash(t, gatewayServiceParameters{
 		Type:                     corev1.ServiceTypeLoadBalancer,
 		PublishNotReadyAddresses: ptrBool(true),
 	}) {
@@ -302,10 +302,11 @@ func ptrBool(value bool) *bool {
 	return &value
 }
 
-func testGatewayServiceParametersHash(params gatewayServiceParameters) string {
+func testGatewayServiceParametersHash(t *testing.T, params gatewayServiceParameters) string {
+	t.Helper()
 	raw, err := json.Marshal(params)
 	if err != nil {
-		panic(err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	sum := sha256.Sum256(raw)
 	return hex.EncodeToString(sum[:])

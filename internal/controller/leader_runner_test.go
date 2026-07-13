@@ -469,6 +469,7 @@ func TestReconcilerRunnerSuccessCancelsPendingRetry(t *testing.T) {
 		t.Fatalf("retry pending after success = %v, want 0", got)
 	}
 
+	// sleep to allow retry backoff timer to fire and be canceled
 	time.Sleep(80 * time.Millisecond)
 	if got := testutil.ToFloat64(runner.metrics.ReconcilerRunnerQueueDepth); got != 0 {
 		t.Fatalf("queue depth after canceled retry = %v, want 0", got)
@@ -639,6 +640,7 @@ func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool
 		if condition() {
 			return
 		}
+		// poll interval for condition check
 		time.Sleep(5 * time.Millisecond)
 	}
 	t.Fatal(message)

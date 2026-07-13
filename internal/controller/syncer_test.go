@@ -1094,6 +1094,7 @@ func TestSyncerRunSkipsTickerBuildWhenNoRetryPending(t *testing.T) {
 	waitForPublishedSnapshot(t, store)
 	initialGatewayClassLists := retryClient.listCount(typeName(&gatewayv1.GatewayClassList{}))
 
+	// sleep to allow multiple periodic retry ticker cycles to run
 	time.Sleep(80 * time.Millisecond)
 	cancel()
 
@@ -1121,6 +1122,7 @@ func TestSyncerRunRetriesStartupFailureFromPendingScope(t *testing.T) {
 
 	waitForPublishedSnapshot(t, store)
 	recoveredGatewayClassLists := retryClient.listCount(typeName(&gatewayv1.GatewayClassList{}))
+	// sleep to allow retry recovery cycle to complete
 	time.Sleep(80 * time.Millisecond)
 	cancel()
 
@@ -1501,6 +1503,7 @@ func waitForPublishedSnapshot(t *testing.T, store *ir.SnapshotStore) *ir.Snapsho
 		if snapshot := store.Current(); snapshot != nil && snapshot.ID != "" {
 			return snapshot
 		}
+		// poll interval for published snapshot check
 		time.Sleep(10 * time.Millisecond)
 	}
 
