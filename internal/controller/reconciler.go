@@ -2,9 +2,12 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	"k8s.io/client-go/util/workqueue"
+	"golang.org/x/time/rate"
 	k8sptr "k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -12,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -64,6 +68,27 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
+	maxConcurrent := s.options.MaxConcurrentReconciles
+	if maxConcurrent <= 0 {
+		maxConcurrent = 1
+	}
+	baseDelay := s.options.RateLimiterBaseDelay
+	if baseDelay <= 0 {
+		baseDelay = 200 * time.Millisecond
+	}
+	maxDelay := s.options.RateLimiterMaxDelay
+	if maxDelay <= 0 {
+		maxDelay = 30 * time.Second
+	}
+	qps := s.options.RateLimiterQPS
+	if qps <= 0 {
+		qps = 10
+	}
+	bucketSize := s.options.RateLimiterBucketSize
+	if bucketSize <= 0 {
+		bucketSize = 100
+	}
+
 	snapshotMutationPredicate := builder.WithPredicates(snapshotInputMutationPredicate())
 	listenerSetMutationPredicate := builder.WithPredicates(snapshotListenerSetMutationPredicate())
 	snapshotInputPredicate := builder.WithPredicates(
@@ -74,11 +99,14 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("snapshot-syncer").
 		WithOptions(controller.Options{
-			MaxConcurrentReconciles: 1,
-			// Each controlplane replica still rebuilds local snapshots, but reconcile
-			// events are debounced through settleRun so bursty resource updates
-			// converge to a stable snapshot before xDS clients apply it.
-			NeedLeaderElection: k8sptr.To(false),
+			MaxConcurrentReconciles: maxConcurrent,
+			NeedLeaderElection:      k8sptr.To(false),
+			RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
+				workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](baseDelay, maxDelay),
+				&workqueue.TypedBucketRateLimiter[reconcile.Request]{
+					Limiter: rate.NewLimiter(rate.Limit(qps), bucketSize),
+				},
+			),
 		}).
 		Watches(&gatewayv1.GatewayClass{}, snapshotRequests, snapshotMutationPredicate).
 		Watches(&gatewayv1.Gateway{}, snapshotRequests, snapshotMutationPredicate).

@@ -4,11 +4,14 @@ import (
 	"context"
 	"reflect"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/workqueue"
+	"golang.org/x/time/rate"
 	k8sptr "k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -63,10 +66,37 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 	return controllers
 }
 
-func statusControllerOptions(maxConcurrentReconciles int) controller.Options {
+func statusControllerOptions(opts Options) controller.Options {
+	maxConcurrent := opts.MaxConcurrentReconciles
+	if maxConcurrent <= 0 {
+		maxConcurrent = 5
+	}
+	baseDelay := opts.RateLimiterBaseDelay
+	if baseDelay <= 0 {
+		baseDelay = 200 * time.Millisecond
+	}
+	maxDelay := opts.RateLimiterMaxDelay
+	if maxDelay <= 0 {
+		maxDelay = 30 * time.Second
+	}
+	qps := opts.RateLimiterQPS
+	if qps <= 0 {
+		qps = 10
+	}
+	bucketSize := opts.RateLimiterBucketSize
+	if bucketSize <= 0 {
+		bucketSize = 100
+	}
+
 	return controller.Options{
-		MaxConcurrentReconciles: maxConcurrentReconciles,
+		MaxConcurrentReconciles: maxConcurrent,
 		NeedLeaderElection:      k8sptr.To(true),
+		RateLimiter: workqueue.NewTypedMaxOfRateLimiter(
+			workqueue.NewTypedItemExponentialFailureRateLimiter[reconcile.Request](baseDelay, maxDelay),
+			&workqueue.TypedBucketRateLimiter[reconcile.Request]{
+				Limiter: rate.NewLimiter(rate.Limit(qps), bucketSize),
+			},
+		),
 	}
 }
 
@@ -108,7 +138,7 @@ func (c *gatewayClassController) Reconcile(
 func (c *gatewayClassController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("gatewayclass-status").
-		WithOptions(statusControllerOptions(1)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1.GatewayClass{}, generationChanged).
 		Complete(c)
 }
@@ -135,7 +165,7 @@ func (c *gatewayController) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("gateway-status").
-		WithOptions(statusControllerOptions(2)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1.Gateway{}, generationChanged).
 		Watches(
 			&corev1.Service{},
@@ -318,7 +348,7 @@ func (c *httpRouteController) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("httproute-status").
-		WithOptions(statusControllerOptions(4)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1.HTTPRoute{}, generationChanged).
 		Watches(
 			&corev1.Service{},
@@ -358,7 +388,7 @@ func (c *grpcRouteController) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("grpcroute-status").
-		WithOptions(statusControllerOptions(4)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1.GRPCRoute{}, generationChanged).
 		Watches(
 			&corev1.Service{},
@@ -398,7 +428,7 @@ func (c *tcpRouteController) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("tcproute-status").
-		WithOptions(statusControllerOptions(4)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1alpha2.TCPRoute{}, generationChanged).
 		Watches(
 			&corev1.Service{},
@@ -438,7 +468,7 @@ func (c *udpRouteController) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("udproute-status").
-		WithOptions(statusControllerOptions(4)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1alpha2.UDPRoute{}, generationChanged).
 		Watches(
 			&corev1.Service{},
@@ -478,7 +508,7 @@ func (c *tlsRouteController) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		Named("tlsroute-status").
-		WithOptions(statusControllerOptions(4)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1alpha2.TLSRoute{}, generationChanged).
 		Watches(
 			&corev1.Service{},
@@ -511,7 +541,7 @@ func (c *listenerSetController) Reconcile(
 func (c *listenerSetController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("listenerset-status").
-		WithOptions(statusControllerOptions(1)).
+		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1.ListenerSet{}, generationChanged).
 		Complete(c)
 }

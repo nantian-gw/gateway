@@ -45,10 +45,22 @@ type ComponentReconciler interface {
 
 type SyncerOptions struct {
 	EnableExperimentalGateway bool
+	MaxConcurrentReconciles   int
+	RateLimiterBaseDelay      time.Duration
+	RateLimiterMaxDelay       time.Duration
+	RateLimiterQPS            int
+	RateLimiterBucketSize     int
 }
 
 func defaultSyncerOptions() SyncerOptions {
-	return SyncerOptions{EnableExperimentalGateway: true}
+	return SyncerOptions{
+		EnableExperimentalGateway: true,
+		MaxConcurrentReconciles:   1,
+		RateLimiterBaseDelay:      200 * time.Millisecond,
+		RateLimiterMaxDelay:       30 * time.Second,
+		RateLimiterQPS:            10,
+		RateLimiterBucketSize:     100,
+	}
 }
 
 func NewSyncer(

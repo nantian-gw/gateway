@@ -52,6 +52,7 @@ type Config struct {
 	Infra            InfraConfig            `yaml:"infra"`
 	Dashboard        DashboardConfig        `yaml:"dashboard"`
 	Tracing          TracingConfig          `yaml:"tracing"`
+	Controller       ControllerConfig       `yaml:"controller"`
 }
 
 type FeaturesConfig struct {
@@ -92,6 +93,15 @@ type ResolvedDashboardCapabilities struct {
 	AIUsage         bool
 	WasmPlugins     bool
 	Chatbot         bool
+}
+
+// ControllerConfig controls reconciliation behavior (concurrency, rate limiting).
+type ControllerConfig struct {
+	MaxConcurrentReconciles int    `yaml:"maxConcurrentReconciles"`
+	RateLimiterBaseDelay    string `yaml:"rateLimiterBaseDelay"`
+	RateLimiterMaxDelay     string `yaml:"rateLimiterMaxDelay"`
+	RateLimiterQPS          int    `yaml:"rateLimiterQPS"`
+	RateLimiterBucketSize   int    `yaml:"rateLimiterBucketSize"`
 }
 
 type LogConfig struct {
@@ -337,6 +347,21 @@ func Load(path string) (*Config, error) {
 	if cfg.Tracing.SamplerRatio == nil {
 		ratio := 1.0
 		cfg.Tracing.SamplerRatio = &ratio
+	}
+	if cfg.Controller.MaxConcurrentReconciles <= 0 {
+		cfg.Controller.MaxConcurrentReconciles = 5
+	}
+	if cfg.Controller.RateLimiterBaseDelay == "" {
+		cfg.Controller.RateLimiterBaseDelay = "200ms"
+	}
+	if cfg.Controller.RateLimiterMaxDelay == "" {
+		cfg.Controller.RateLimiterMaxDelay = "30s"
+	}
+	if cfg.Controller.RateLimiterQPS <= 0 {
+		cfg.Controller.RateLimiterQPS = 10
+	}
+	if cfg.Controller.RateLimiterBucketSize <= 0 {
+		cfg.Controller.RateLimiterBucketSize = 100
 	}
 
 	return &cfg, nil
@@ -639,6 +664,14 @@ func (c *DataplaneAdminAggregationConfig) BearerToken() (string, error) {
 		return "", fmt.Errorf("read dataplane admin bearer token file: %w", err)
 	}
 	return strings.TrimSpace(string(token)), nil
+}
+
+func (c *Config) RateLimiterBaseDelayDuration() time.Duration {
+	return parseDurationOrDefault(c.Controller.RateLimiterBaseDelay, 200*time.Millisecond)
+}
+
+func (c *Config) RateLimiterMaxDelayDuration() time.Duration {
+	return parseDurationOrDefault(c.Controller.RateLimiterMaxDelay, 30*time.Second)
 }
 
 func (c *Config) Validate() error {

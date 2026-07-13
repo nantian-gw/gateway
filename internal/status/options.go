@@ -1,12 +1,25 @@
 package status
 
-// Options controls optional Gateway API runtime integrations.
+import "time"
+
 type Options struct {
 	EnableExperimentalGateway bool
+	MaxConcurrentReconciles   int
+	RateLimiterBaseDelay      time.Duration
+	RateLimiterMaxDelay       time.Duration
+	RateLimiterQPS            int
+	RateLimiterBucketSize     int
 }
 
 func defaultOptions() Options {
-	return Options{EnableExperimentalGateway: true}
+	return Options{
+		EnableExperimentalGateway: true,
+		MaxConcurrentReconciles:   5,
+		RateLimiterBaseDelay:      200 * time.Millisecond,
+		RateLimiterMaxDelay:       30 * time.Second,
+		RateLimiterQPS:            10,
+		RateLimiterBucketSize:     100,
+	}
 }
 
 func normalizeOptions(options []Options) Options {

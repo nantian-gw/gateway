@@ -14,6 +14,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -64,6 +65,9 @@ func controlplaneManagerOptions(
 		LeaseDuration:          ptr(cfg.LeaderElectionLeaseDuration()),
 		RenewDeadline:          ptr(cfg.LeaderElectionRenewDeadline()),
 		RetryPeriod:            ptr(cfg.LeaderElectionRetryPeriod()),
+		Controller: ctrlcfg.Controller{
+			MaxConcurrentReconciles: cfg.Controller.MaxConcurrentReconciles,
+		},
 	}
 }
 
@@ -168,7 +172,14 @@ func run(configPath string) error {
 			},
 		},
 	)
-	statusOptions := status.Options{EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway}
+	statusOptions := status.Options{
+		EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway,
+		MaxConcurrentReconciles:   cfg.Controller.MaxConcurrentReconciles,
+		RateLimiterBaseDelay:      cfg.RateLimiterBaseDelayDuration(),
+		RateLimiterMaxDelay:       cfg.RateLimiterMaxDelayDuration(),
+		RateLimiterQPS:            cfg.Controller.RateLimiterQPS,
+		RateLimiterBucketSize:     cfg.Controller.RateLimiterBucketSize,
+	}
 	statuser := status.NewWithAddressesAndReaderOptions(
 		mgr.GetClient(),
 		mgr.GetAPIReader(),
@@ -257,7 +268,14 @@ func run(configPath string) error {
 		logger,
 		reconcilerRunner.QueueRunForScopes,
 	)
-	syncer.SetOptions(controller.SyncerOptions{EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway})
+	syncer.SetOptions(controller.SyncerOptions{
+		EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway,
+		MaxConcurrentReconciles:   cfg.Controller.MaxConcurrentReconciles,
+		RateLimiterBaseDelay:      cfg.RateLimiterBaseDelayDuration(),
+		RateLimiterMaxDelay:       cfg.RateLimiterMaxDelayDuration(),
+		RateLimiterQPS:            cfg.Controller.RateLimiterQPS,
+		RateLimiterBucketSize:     cfg.Controller.RateLimiterBucketSize,
+	})
 	syncer.SetSettleDelay(cfg.SyncSettleDelayDuration())
 	if err := syncer.SetupWithManager(mgr); err != nil {
 		return fmt.Errorf("set up snapshot sync controller: %w", err)
