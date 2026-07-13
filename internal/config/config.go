@@ -235,6 +235,7 @@ type GRPCRuntimeConfig struct {
 	MaxConcurrentStreams  uint32 `yaml:"maxConcurrentStreams"`
 	MaxRecvMsgSize        int    `yaml:"maxRecvMsgSize"`
 	PermitWithoutStream   bool   `yaml:"permitWithoutStream"`
+	EnableCompression     bool   `yaml:"enableCompression"`
 }
 
 func Load(path string) (*Config, error) {
