@@ -49,7 +49,7 @@ type ResourceListFilter struct {
 type ResourceManager struct {
 	client    client.Client
 	logger    *slog.Logger
-	listCache *adminListCache
+	listCache *listCache
 }
 
 func NewResourceManager(k8sClient client.Client, logger *slog.Logger) *ResourceManager {
@@ -60,7 +60,7 @@ func NewResourceManager(k8sClient client.Client, logger *slog.Logger) *ResourceM
 	return &ResourceManager{
 		client:    k8sClient,
 		logger:    logger,
-		listCache: newAdminListCache(defaultAdminListCacheTTL),
+		listCache: newListCache(defaultListCacheTTL),
 	}
 }
 

@@ -43,7 +43,7 @@ func (s *Server) handleDataplaneSummary(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var targetEndpoint *DataplaneAdminEndpoint
+	var targetEndpoint *DataplaneEndpoint
 	for _, ep := range endpoints {
 		if ep.NodeID == nodeID {
 			targetEndpoint = &ep

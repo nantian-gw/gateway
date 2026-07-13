@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-const defaultAdminListCacheTTL = time.Second
+const defaultListCacheTTL = time.Second
 
-type adminListCache struct {
+type listCache struct {
 	mu              sync.Mutex
 	ttl             time.Duration
 	now             func() time.Time
@@ -33,8 +33,8 @@ type cachedStrings struct {
 	items     []string
 }
 
-func newAdminListCache(ttl time.Duration) *adminListCache {
-	return &adminListCache{
+func newListCache(ttl time.Duration) *listCache {
+	return &listCache{
 		ttl:             ttl,
 		now:             time.Now,
 		resourceLists:   make(map[string]cachedManagedResources),
@@ -43,7 +43,7 @@ func newAdminListCache(ttl time.Duration) *adminListCache {
 	}
 }
 
-func (c *adminListCache) getManagedResources(key string) ([]ManagedResource, bool) {
+func (c *listCache) getManagedResources(key string) ([]ManagedResource, bool) {
 	if c == nil || c.ttl <= 0 {
 		return nil, false
 	}
@@ -62,7 +62,7 @@ func (c *adminListCache) getManagedResources(key string) ([]ManagedResource, boo
 	return entry.items, true
 }
 
-func (c *adminListCache) putManagedResources(key string, items []ManagedResource) {
+func (c *listCache) putManagedResources(key string, items []ManagedResource) {
 	if c == nil || c.ttl <= 0 {
 		return
 	}
@@ -76,7 +76,7 @@ func (c *adminListCache) putManagedResources(key string, items []ManagedResource
 	}
 }
 
-func (c *adminListCache) getServiceCatalogEntries(key string) ([]ServiceCatalogEntry, bool) {
+func (c *listCache) getServiceCatalogEntries(key string) ([]ServiceCatalogEntry, bool) {
 	if c == nil || c.ttl <= 0 {
 		return nil, false
 	}
@@ -95,7 +95,7 @@ func (c *adminListCache) getServiceCatalogEntries(key string) ([]ServiceCatalogE
 	return entry.items, true
 }
 
-func (c *adminListCache) putServiceCatalogEntries(key string, items []ServiceCatalogEntry) {
+func (c *listCache) putServiceCatalogEntries(key string, items []ServiceCatalogEntry) {
 	if c == nil || c.ttl <= 0 {
 		return
 	}
@@ -109,7 +109,7 @@ func (c *adminListCache) putServiceCatalogEntries(key string, items []ServiceCat
 	}
 }
 
-func (c *adminListCache) getStrings(key string) ([]string, bool) {
+func (c *listCache) getStrings(key string) ([]string, bool) {
 	if c == nil || c.ttl <= 0 {
 		return nil, false
 	}
@@ -128,7 +128,7 @@ func (c *adminListCache) getStrings(key string) ([]string, bool) {
 	return append([]string(nil), entry.items...), true
 }
 
-func (c *adminListCache) putStrings(key string, items []string) {
+func (c *listCache) putStrings(key string, items []string) {
 	if c == nil || c.ttl <= 0 {
 		return
 	}
@@ -142,7 +142,7 @@ func (c *adminListCache) putStrings(key string, items []string) {
 	}
 }
 
-func (c *adminListCache) clear() {
+func (c *listCache) clear() {
 	if c == nil {
 		return
 	}

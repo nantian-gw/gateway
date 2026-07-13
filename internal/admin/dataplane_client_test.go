@@ -18,7 +18,7 @@ func TestDataplaneAdminClientGetJSONAddsBearerToken(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewDataplaneAdminClient(DataplaneAdminClientConfig{
+	client := NewDataplaneClient(DataplaneClientConfig{
 		Timeout:     time.Second,
 		BearerToken: "secret",
 	})
@@ -39,7 +39,7 @@ func TestDataplaneAdminClientReturnsErrorOnNon2xx(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewDataplaneAdminClient(DataplaneAdminClientConfig{
+	client := NewDataplaneClient(DataplaneClientConfig{
 		Timeout: time.Second,
 	})
 
@@ -58,7 +58,7 @@ func TestDataplaneAdminClientTimeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewDataplaneAdminClient(DataplaneAdminClientConfig{
+	client := NewDataplaneClient(DataplaneClientConfig{
 		Timeout: 50 * time.Millisecond,
 	})
 

@@ -72,8 +72,8 @@ type Server struct {
 	now                   func() time.Time
 	infra                 *infrastructure.Reconciler
 	detailIndex           *snapshotDetailIndexCache
-	dataplaneDiscovery    *DataplaneAdminDiscovery
-	dataplaneClient       *DataplaneAdminClient
+	dataplaneDiscovery    *DataplaneDiscovery
+	dataplaneClient       *DataplaneClient
 }
 
 func NewServer(
@@ -323,7 +323,7 @@ func (s *Server) SetInfrastructureInspector(reconciler *infrastructure.Reconcile
 	s.infra = reconciler
 }
 
-func (s *Server) SetDataplaneComponents(discovery *DataplaneAdminDiscovery, client *DataplaneAdminClient) {
+func (s *Server) SetDataplaneComponents(discovery *DataplaneDiscovery, client *DataplaneClient) {
 	s.dataplaneDiscovery = discovery
 	s.dataplaneClient = client
 }

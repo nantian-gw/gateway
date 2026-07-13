@@ -8,18 +8,18 @@ import (
 	"time"
 )
 
-type DataplaneAdminClientConfig struct {
+type DataplaneClientConfig struct {
 	Timeout     time.Duration
 	BearerToken string
 }
 
-type DataplaneAdminClient struct {
+type DataplaneClient struct {
 	client *http.Client
 	token  string
 }
 
-func NewDataplaneAdminClient(config DataplaneAdminClientConfig) *DataplaneAdminClient {
-	return &DataplaneAdminClient{
+func NewDataplaneClient(config DataplaneClientConfig) *DataplaneClient {
+	return &DataplaneClient{
 		client: &http.Client{
 			Timeout: config.Timeout,
 		},
@@ -27,7 +27,7 @@ func NewDataplaneAdminClient(config DataplaneAdminClientConfig) *DataplaneAdminC
 	}
 }
 
-func (c *DataplaneAdminClient) GetJSON(ctx context.Context, baseURL, path string, out any) error {
+func (c *DataplaneClient) GetJSON(ctx context.Context, baseURL, path string, out any) error {
 	url := baseURL + path
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

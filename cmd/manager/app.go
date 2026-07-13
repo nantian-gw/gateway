@@ -355,7 +355,7 @@ func run(configPath string) error {
 		if namespace == "" {
 			namespace = "nantian-gw"
 		}
-		discovery := admin.NewDataplaneAdminDiscovery(mgr.GetClient(), admin.DataplaneAdminDiscoveryConfig{
+		discovery := admin.NewDataplaneDiscovery(mgr.GetClient(), admin.DataplaneDiscoveryConfig{
 			Namespace:   namespace,
 			ServiceName: dpCfg.ServiceName,
 			PortName:    dpCfg.PortName,
@@ -365,7 +365,7 @@ func run(configPath string) error {
 		if err != nil {
 			return fmt.Errorf("configure dataplane admin aggregation: %w", err)
 		}
-		client := admin.NewDataplaneAdminClient(admin.DataplaneAdminClientConfig{
+		client := admin.NewDataplaneClient(admin.DataplaneClientConfig{
 			Timeout:     dpCfg.TimeoutDuration(),
 			BearerToken: token,
 		})

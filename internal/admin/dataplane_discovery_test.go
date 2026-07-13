@@ -43,7 +43,7 @@ func TestDiscoverDataplaneAdminEndpointsFromEndpointSlices(t *testing.T) {
 		},
 	}).Build()
 
-	discovery := NewDataplaneAdminDiscovery(client, DataplaneAdminDiscoveryConfig{
+	discovery := NewDataplaneDiscovery(client, DataplaneDiscoveryConfig{
 		Namespace:   "nantian-gw",
 		ServiceName: "nantian-gw-dataplane-admin",
 		PortName:    "admin",

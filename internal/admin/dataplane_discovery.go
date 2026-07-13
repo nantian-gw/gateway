@@ -11,29 +11,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type DataplaneAdminDiscoveryConfig struct {
+type DataplaneDiscoveryConfig struct {
 	Namespace   string
 	ServiceName string
 	PortName    string
 }
 
-type DataplaneAdminEndpoint struct {
+type DataplaneEndpoint struct {
 	NodeID  string `json:"nodeId"`
 	Address string `json:"address"`
 	URL     string `json:"url"`
 	Ready   bool   `json:"ready"`
 }
 
-type DataplaneAdminDiscovery struct {
+type DataplaneDiscovery struct {
 	client client.Client
-	config DataplaneAdminDiscoveryConfig
+	config DataplaneDiscoveryConfig
 }
 
-func NewDataplaneAdminDiscovery(c client.Client, config DataplaneAdminDiscoveryConfig) *DataplaneAdminDiscovery {
-	return &DataplaneAdminDiscovery{client: c, config: config}
+func NewDataplaneDiscovery(c client.Client, config DataplaneDiscoveryConfig) *DataplaneDiscovery {
+	return &DataplaneDiscovery{client: c, config: config}
 }
 
-func (d *DataplaneAdminDiscovery) List(ctx context.Context) ([]DataplaneAdminEndpoint, error) {
+func (d *DataplaneDiscovery) List(ctx context.Context) ([]DataplaneEndpoint, error) {
 	var slices discoveryv1.EndpointSliceList
 	if err := d.client.List(ctx, &slices,
 		client.InNamespace(d.config.Namespace),
@@ -42,7 +42,7 @@ func (d *DataplaneAdminDiscovery) List(ctx context.Context) ([]DataplaneAdminEnd
 		return nil, fmt.Errorf("list dataplane endpoint slices: %w", err)
 	}
 
-	out := make([]DataplaneAdminEndpoint, 0)
+	out := make([]DataplaneEndpoint, 0)
 	for i := range slices.Items {
 		port, ok := endpointSlicePort(slices.Items[i], d.config.PortName)
 		if !ok {
@@ -57,7 +57,7 @@ func (d *DataplaneAdminDiscovery) List(ctx context.Context) ([]DataplaneAdminEnd
 			}
 			nodeID := endpointNodeID(endpoint.TargetRef)
 			address := fmt.Sprintf("%s:%d", endpoint.Addresses[0], port)
-			out = append(out, DataplaneAdminEndpoint{
+			out = append(out, DataplaneEndpoint{
 				NodeID:  nodeID,
 				Address: address,
 				URL:     "http://" + address,
