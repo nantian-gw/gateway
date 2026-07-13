@@ -1,3 +1,6 @@
+# NOTE: For production deployments, pin base images to a digest (e.g., debian:bookworm-slim@sha256:...)
+# The ARG defaults below allow CI to override, but pinned digests prevent supply-chain attacks.
+# Use Renovate/Dependabot to auto-update digest references in CI.
 ARG GO_IMAGE=docker.io/library/golang:1.26-bookworm
 ARG RUNTIME_IMAGE=gcr.io/distroless/static:nonroot
 FROM ${GO_IMAGE} AS builder
