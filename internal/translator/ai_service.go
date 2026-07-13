@@ -1,6 +1,7 @@
 package translator
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/gwexp/aiservice"
@@ -22,6 +23,8 @@ func translateAIService(svc aiservice.AIService) ir.AIServiceConfig {
 	if svc.Spec.Timeout != "" {
 		if d, err := time.ParseDuration(svc.Spec.Timeout); err == nil {
 			cfg.Timeout = d
+		} else {
+			slog.Warn("ai service has invalid timeout, ignoring", "service", svc.Name, "namespace", svc.Namespace, "timeout", svc.Spec.Timeout)
 		}
 	}
 	return cfg

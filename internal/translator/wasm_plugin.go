@@ -131,7 +131,7 @@ func downloadWasmURL(rawURL string) ([]byte, error) {
 	client := &http.Client{Timeout: wasmDownloadTimeout}
 	resp, err := client.Get(u.String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("download wasm plugin from %s: %w", rawURL, err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {

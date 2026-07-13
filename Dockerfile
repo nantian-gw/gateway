@@ -2,7 +2,7 @@ ARG GO_IMAGE=docker.io/library/golang:1.26-bookworm
 ARG RUNTIME_IMAGE=gcr.io/distroless/static:nonroot
 FROM ${GO_IMAGE} AS builder
 
-ARG GOPROXY=https://goproxy.cn,direct
+ARG GOPROXY
 ENV GOPROXY=${GOPROXY}
 
 WORKDIR /src

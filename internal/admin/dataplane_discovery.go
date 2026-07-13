@@ -39,7 +39,7 @@ func (d *DataplaneAdminDiscovery) List(ctx context.Context) ([]DataplaneAdminEnd
 		client.InNamespace(d.config.Namespace),
 		client.MatchingLabels{"kubernetes.io/service-name": d.config.ServiceName},
 	); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list dataplane endpoint slices: %w", err)
 	}
 
 	out := make([]DataplaneAdminEndpoint, 0)

@@ -187,7 +187,12 @@ func AutoCorrectGenerate(
 	}
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		time.Sleep(backoffDuration(attempt-1, 1*time.Second, 30*time.Second))
+		delay := backoffDuration(attempt-1, 1*time.Second, 30*time.Second)
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(delay):
+		}
 
 		feedback := fmt.Sprintf(correctionPrompt, err.Error())
 

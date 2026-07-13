@@ -1,6 +1,8 @@
 package translator
 
 import (
+	"log/slog"
+
 	corev1 "k8s.io/api/core/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
@@ -9,6 +11,10 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
+// NOTE: "RejectClientCertificate" is a project-specific mode string,
+// not a standard sigs.k8s.io/gateway-api constant. Standard Gateway API
+// constants are FrontendTLSValidationModeAccept, FrontendTLSValidationModeReject,
+// and FrontendTLSValidationModeRequestClientCertificate (v1).
 const frontendValidationRejectMode = "RejectClientCertificate"
 
 func frontendValidationForListener(
@@ -77,6 +83,10 @@ func frontendValidationForListenerWithIndexes(
 	}
 
 	if len(out.ClientCAPEMs) == 0 {
+		originalMode := out.Mode
+		slog.Warn("no CA PEMs found for frontend validation, forcing reject mode",
+			"originalMode", originalMode,
+		)
 		out.Mode = frontendValidationRejectMode
 	}
 	return out

@@ -32,6 +32,29 @@ jobs:
       - name: Test
         run: go test ./...
 
+  go-test-race:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Test with race detection
+        run: go test -race -count=1 -timeout 10m ./...
+
+  go-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - uses: golangci/golangci-lint-action@1481404843c368bc19ca9406f87d6e0fc97bdc18
+        with:
+          version: v2
+
   proto-check:
     runs-on: ubuntu-latest
     steps:
