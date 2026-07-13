@@ -76,7 +76,10 @@ func (idx *ClusterIndex) add(entry IndexEntry, obj client.Object) {
 // managed-class cascade (managed Gateways -> their attached Routes -> those
 // Routes' backend Services). Nantian CRDs are always included when the scheme
 // recognizes them. A single kind's List failure is tolerated (logged, skipped).
-func collectIndex(ctx context.Context, cl client.Client, controllerName string) (ClusterIndex, error) {
+func collectIndex(ctx context.Context, cl client.Client, controllerName string, logger *slog.Logger) (ClusterIndex, error) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	idx := newIndex()
 
 	var gcList gatewayv1.GatewayClassList
@@ -94,27 +97,30 @@ func collectIndex(ctx context.Context, cl client.Client, controllerName string) 
 		return *idx, nil
 	}
 
-	managedGW := collectGateways(ctx, cl, idx, managed)
+	managedGW := collectGateways(ctx, cl, idx, managed, logger)
 	keptSvc := make(map[types.NamespacedName]bool)
-	collectHTTPRoutes(ctx, cl, idx, managedGW, keptSvc)
-	collectGRPCRoutes(ctx, cl, idx, managedGW, keptSvc)
-	collectL4Routes(ctx, cl, idx, managedGW, keptSvc)
-	collectServices(ctx, cl, idx, keptSvc)
+	collectHTTPRoutes(ctx, cl, idx, managedGW, keptSvc, logger)
+	collectGRPCRoutes(ctx, cl, idx, managedGW, keptSvc, logger)
+	collectL4Routes(ctx, cl, idx, managedGW, keptSvc, logger)
+	collectServices(ctx, cl, idx, keptSvc, logger)
 
-	collectAIServices(ctx, cl, idx)
-	collectTokenPolicies(ctx, cl, idx)
-	collectWasmPlugins(ctx, cl, idx)
-	collectBackendLBPolicies(ctx, cl, idx)
+	collectAIServices(ctx, cl, idx, logger)
+	collectTokenPolicies(ctx, cl, idx, logger)
+	collectWasmPlugins(ctx, cl, idx, logger)
+	collectBackendLBPolicies(ctx, cl, idx, logger)
 
 	linkAssociations(idx)
 	return *idx, nil
 }
 
-func collectGateways(ctx context.Context, cl client.Client, idx *ClusterIndex, managed map[string]bool) map[types.NamespacedName]bool {
+func collectGateways(ctx context.Context, cl client.Client, idx *ClusterIndex, managed map[string]bool, logger *slog.Logger) map[types.NamespacedName]bool {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	managedGW := make(map[types.NamespacedName]bool)
 	var list gatewayv1.GatewayList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list gateways", "error", err)
+		logger.Warn("chatbot rag: list gateways", "error", err)
 		return managedGW
 	}
 	for i := range list.Items {
@@ -193,10 +199,13 @@ func (idx *ClusterIndex) addRoute(kind, ns, name string, parentRefs []gatewayv1.
 	}, obj)
 }
 
-func collectHTTPRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool) {
+func collectHTTPRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var list gatewayv1.HTTPRouteList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list httproutes", "error", err)
+		logger.Warn("chatbot rag: list httproutes", "error", err)
 		return
 	}
 	for i := range list.Items {
@@ -211,10 +220,13 @@ func collectHTTPRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex,
 	}
 }
 
-func collectGRPCRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool) {
+func collectGRPCRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var list gatewayv1.GRPCRouteList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list grpcroutes", "error", err)
+		logger.Warn("chatbot rag: list grpcroutes", "error", err)
 		return
 	}
 	for i := range list.Items {
@@ -229,10 +241,13 @@ func collectGRPCRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex,
 	}
 }
 
-func collectL4Routes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool) {
+func collectL4Routes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var tlsList gatewayv1alpha2.TLSRouteList
 	if err := cl.List(ctx, &tlsList); err != nil {
-		slog.Warn("chatbot rag: list tlsroutes", "error", err)
+		logger.Warn("chatbot rag: list tlsroutes", "error", err)
 	} else {
 		for i := range tlsList.Items {
 			r := &tlsList.Items[i]
@@ -246,7 +261,7 @@ func collectL4Routes(ctx context.Context, cl client.Client, idx *ClusterIndex, m
 
 	var tcpList gatewayv1alpha2.TCPRouteList
 	if err := cl.List(ctx, &tcpList); err != nil {
-		slog.Warn("chatbot rag: list tcproutes", "error", err)
+		logger.Warn("chatbot rag: list tcproutes", "error", err)
 	} else {
 		for i := range tcpList.Items {
 			r := &tcpList.Items[i]
@@ -260,7 +275,7 @@ func collectL4Routes(ctx context.Context, cl client.Client, idx *ClusterIndex, m
 
 	var udpList gatewayv1alpha2.UDPRouteList
 	if err := cl.List(ctx, &udpList); err != nil {
-		slog.Warn("chatbot rag: list udproutes", "error", err)
+		logger.Warn("chatbot rag: list udproutes", "error", err)
 	} else {
 		for i := range udpList.Items {
 			r := &udpList.Items[i]
@@ -273,10 +288,13 @@ func collectL4Routes(ctx context.Context, cl client.Client, idx *ClusterIndex, m
 	}
 }
 
-func collectServices(ctx context.Context, cl client.Client, idx *ClusterIndex, keptSvc map[types.NamespacedName]bool) {
+func collectServices(ctx context.Context, cl client.Client, idx *ClusterIndex, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	var list corev1.ServiceList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list services", "error", err)
+		logger.Warn("chatbot rag: list services", "error", err)
 		return
 	}
 	for i := range list.Items {
@@ -299,13 +317,16 @@ func recognizes(cl client.Client, gv schema.GroupVersion, kind string) bool {
 	return cl.Scheme().Recognizes(gv.WithKind(kind))
 }
 
-func collectAIServices(ctx context.Context, cl client.Client, idx *ClusterIndex) {
+func collectAIServices(ctx context.Context, cl client.Client, idx *ClusterIndex, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	if !recognizes(cl, aiservice.GroupVersion, "AIService") {
 		return
 	}
 	var list aiservice.AIServiceList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list aiservices", "error", err)
+		logger.Warn("chatbot rag: list aiservices", "error", err)
 		return
 	}
 	for i := range list.Items {
@@ -320,13 +341,16 @@ func collectAIServices(ctx context.Context, cl client.Client, idx *ClusterIndex)
 	}
 }
 
-func collectTokenPolicies(ctx context.Context, cl client.Client, idx *ClusterIndex) {
+func collectTokenPolicies(ctx context.Context, cl client.Client, idx *ClusterIndex, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	if !recognizes(cl, tokenpolicy.GroupVersion, "TokenPolicy") {
 		return
 	}
 	var list tokenpolicy.TokenPolicyList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list tokenpolicies", "error", err)
+		logger.Warn("chatbot rag: list tokenpolicies", "error", err)
 		return
 	}
 	for i := range list.Items {
@@ -341,13 +365,16 @@ func collectTokenPolicies(ctx context.Context, cl client.Client, idx *ClusterInd
 	}
 }
 
-func collectWasmPlugins(ctx context.Context, cl client.Client, idx *ClusterIndex) {
+func collectWasmPlugins(ctx context.Context, cl client.Client, idx *ClusterIndex, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	if !recognizes(cl, wasmplugin.GroupVersion, "WasmPlugin") {
 		return
 	}
 	var list wasmplugin.WasmPluginList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list wasmplugins", "error", err)
+		logger.Warn("chatbot rag: list wasmplugins", "error", err)
 		return
 	}
 	for i := range list.Items {
@@ -362,13 +389,16 @@ func collectWasmPlugins(ctx context.Context, cl client.Client, idx *ClusterIndex
 	}
 }
 
-func collectBackendLBPolicies(ctx context.Context, cl client.Client, idx *ClusterIndex) {
+func collectBackendLBPolicies(ctx context.Context, cl client.Client, idx *ClusterIndex, logger *slog.Logger) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	if !recognizes(cl, backendlb.GroupVersion, "BackendLBPolicy") {
 		return
 	}
 	var list backendlb.BackendLBPolicyList
 	if err := cl.List(ctx, &list); err != nil {
-		slog.Warn("chatbot rag: list backendlbpolicies", "error", err)
+		logger.Warn("chatbot rag: list backendlbpolicies", "error", err)
 		return
 	}
 	for i := range list.Items {

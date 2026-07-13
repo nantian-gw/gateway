@@ -38,9 +38,8 @@ const (
 	gatewayNamespaceSelectorIndexMarker   = "selector"
 )
 
-func (s *Syncer) setupReferenceIndexes(mgr ctrl.Manager) error {
+func (s *Syncer) setupReferenceIndexes(ctx context.Context, mgr ctrl.Manager) error {
 	indexer := mgr.GetFieldIndexer()
-	ctx := context.Background()
 
 	s.setBackendTLSPolicyConfigMapIndexAvailable(false)
 	for _, contract := range controllerReferenceIndexContracts(backendTLSPolicyV1Supported(mgr)) {

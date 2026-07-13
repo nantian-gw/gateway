@@ -530,7 +530,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 			snapshot.Backends[i].TokenPolicy = &cfgCopy
 		}
 	}
-	wasmPluginConfigs := translateWasmPlugins(wasmPlugins, mergedConfigMaps)
+	wasmPluginConfigs := translateWasmPlugins(wasmPlugins, mergedConfigMaps, t.logger)
 	for i := range snapshot.Backends {
 		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := wasmPluginConfigs[key]; ok {

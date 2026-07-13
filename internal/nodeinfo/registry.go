@@ -53,7 +53,7 @@ type Registry struct {
 	persistSignal    chan struct{}
 	persistImmediate []persistRequest
 	persistDebounced map[string]persistRequest
-	persistMu        sync.Mutex
+	persistMu        sync.RWMutex
 	persistClosed    bool
 	persistDone      chan struct{}
 	closeOnce        sync.Once

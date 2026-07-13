@@ -33,7 +33,7 @@ func TestBuildRAGContext_EmptyCluster(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithScheme(ragTestScheme()).Build()
 	controllerName := "gateway.networking.k8s.io/nantian-gw"
 
-	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "list gateways")
+	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "list gateways", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -106,7 +106,7 @@ func TestBuildRAGContext_ManagedTopology(t *testing.T) {
 
 	k8sClient := fake.NewClientBuilder().WithScheme(ragTestScheme()).WithObjects(gwc, gw, route, svc).Build()
 
-	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "public api backend-svc")
+	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "public api backend-svc", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -149,7 +149,7 @@ func TestBuildRAGContext_UnmanagedGatewayClass(t *testing.T) {
 
 	k8sClient := fake.NewClientBuilder().WithScheme(ragTestScheme()).WithObjects(gwc, gw).Build()
 
-	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "private")
+	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "private", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestBuildRAGContext_MultipleNamespaces(t *testing.T) {
 		gwc, gw, routeDefault, routeStaging, svcDefault, svcStaging,
 	).Build()
 
-	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "api staging-api backend-svc staging-svc")
+	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "api staging-api backend-svc staging-svc", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -292,7 +292,7 @@ func TestBuildRAGContext_GRPCRouteIncluded(t *testing.T) {
 
 	k8sClient := fake.NewClientBuilder().WithScheme(ragTestScheme()).WithObjects(gwc, gw, grpcRoute).Build()
 
-	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "grpc users route")
+	result, err := BuildRAGContext(context.Background(), k8sClient, controllerName, "grpc users route", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -354,7 +354,7 @@ func TestBuildRAGContext_LargeClusterStaysBounded(t *testing.T) {
 
 	cl := fake.NewClientBuilder().WithScheme(ragTestScheme()).WithObjects(objs...).Build()
 
-	out, err := BuildRAGContext(context.Background(), cl, controllerName, "tell me about checkout-svc in shop")
+	out, err := BuildRAGContext(context.Background(), cl, controllerName, "tell me about checkout-svc in shop", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

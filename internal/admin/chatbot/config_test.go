@@ -24,7 +24,7 @@ func TestLoadConfig_SecretNotFound(t *testing.T) {
 	t.Parallel()
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).Build()
-	_, err := LoadConfig(context.Background(), k8sClient, "nantian-gw")
+	_, err := LoadConfig(context.Background(), k8sClient, "nantian-gw", nil)
 	if err == nil {
 		t.Fatal("expected error when secret is missing, got nil")
 	}
@@ -49,7 +49,7 @@ func TestLoadConfig_NamespaceFallback(t *testing.T) {
 	}
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).WithObjects(secret).Build()
-	cfg, err := LoadConfig(context.Background(), k8sClient, "")
+	cfg, err := LoadConfig(context.Background(), k8sClient, "", nil)
 	if err != nil {
 		t.Fatalf("unexpected error with empty namespace (should fallback): %v", err)
 	}
@@ -76,7 +76,7 @@ func TestLoadConfig_ValidSecret(t *testing.T) {
 	}
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).WithObjects(secret).Build()
-	cfg, err := LoadConfig(context.Background(), k8sClient, "nantian-gw")
+	cfg, err := LoadConfig(context.Background(), k8sClient, "nantian-gw", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestLoadConfig_DefaultModelAndTemperature(t *testing.T) {
 	}
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).WithObjects(secret).Build()
-	cfg, err := LoadConfig(context.Background(), k8sClient, "nantian-gw")
+	cfg, err := LoadConfig(context.Background(), k8sClient, "nantian-gw", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestLoadConfig_EmptySecretData(t *testing.T) {
 	}
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).WithObjects(secret).Build()
-	_, err := LoadConfig(context.Background(), k8sClient, "nantian-gw")
+	_, err := LoadConfig(context.Background(), k8sClient, "nantian-gw", nil)
 	if err == nil {
 		t.Fatal("expected error for secret with nil data, got nil")
 	}
@@ -164,7 +164,7 @@ func TestLoadConfig_InvalidTemperatureFallsBack(t *testing.T) {
 	}
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).WithObjects(secret).Build()
-	cfg, err := LoadConfig(context.Background(), k8sClient, "nantian-gw")
+	cfg, err := LoadConfig(context.Background(), k8sClient, "nantian-gw", nil)
 	if err != nil {
 		t.Fatalf("expected no error (invalid temp should fall back to default), got: %v", err)
 	}
@@ -190,12 +190,12 @@ func TestLoadConfig_CustomNamespace(t *testing.T) {
 
 	k8sClient := fake.NewClientBuilder().WithScheme(testScheme()).WithObjects(secret).Build()
 
-	_, err := LoadConfig(context.Background(), k8sClient, "nantian-gw")
+	_, err := LoadConfig(context.Background(), k8sClient, "nantian-gw", nil)
 	if err == nil {
 		t.Fatal("expected error when secret is in different namespace")
 	}
 
-	cfg, err := LoadConfig(context.Background(), k8sClient, "gateway-system")
+	cfg, err := LoadConfig(context.Background(), k8sClient, "gateway-system", nil)
 	if err != nil {
 		t.Fatalf("unexpected error for correct namespace: %v", err)
 	}

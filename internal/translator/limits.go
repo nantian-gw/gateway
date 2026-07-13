@@ -18,12 +18,14 @@ type Limits struct {
 	DefaultConnectTimeout time.Duration
 }
 
+const DefaultConnectTimeout = 5 * time.Second
+
 func normalizeLimits(limits Limits) Limits {
 	return Limits{
 		MaxInputObjects:            positiveIntOrZero(limits.MaxInputObjects),
 		MaxSnapshotObjects:         positiveIntOrZero(limits.MaxSnapshotObjects),
 		MaxSnapshotEndpoints:       positiveIntOrZero(limits.MaxSnapshotEndpoints),
-		DefaultConnectTimeout:      defaultDurationIfZero(limits.DefaultConnectTimeout, 5*time.Second),
+		DefaultConnectTimeout:      defaultDurationIfZero(limits.DefaultConnectTimeout, DefaultConnectTimeout),
 	}
 }
 

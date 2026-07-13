@@ -48,7 +48,10 @@ func wasmConfigMapData(configMaps []corev1.ConfigMap, namespace, name, key strin
 	return nil
 }
 
-func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap) ir.WasmPluginConfig {
+func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) ir.WasmPluginConfig {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	cfg := ir.WasmPluginConfig{
 		Name:       p.Name,
 		Namespace:  p.Namespace,
@@ -67,7 +70,7 @@ func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap)
 	if p.Spec.Wasm.Inline != "" {
 		decoded, err := base64.StdEncoding.DecodeString(p.Spec.Wasm.Inline)
 		if err != nil {
-			slog.Warn("wasm plugin: failed to decode inline wasm bytes",
+			logger.Warn("wasm plugin: failed to decode inline wasm bytes",
 				"namespace", p.Namespace,
 				"name", p.Name,
 				"error", err,
@@ -79,7 +82,7 @@ func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap)
 	if p.Spec.Wasm.URL != "" {
 		wasmBytes, err := downloadWasmURL(p.Spec.Wasm.URL)
 		if err != nil {
-			slog.Warn("wasm plugin: failed to download wasm from URL",
+			logger.Warn("wasm plugin: failed to download wasm from URL",
 				"namespace", p.Namespace,
 				"name", p.Name,
 				"url", p.Spec.Wasm.URL,
@@ -99,11 +102,14 @@ func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap)
 	return cfg
 }
 
-func translateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap) map[string]ir.WasmPluginConfig {
+func translateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) map[string]ir.WasmPluginConfig {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	result := make(map[string]ir.WasmPluginConfig, len(plugins))
 	for _, p := range plugins {
 		key := backendObjectKey(p.Namespace, p.Name)
-		result[key] = translateWasmPlugin(p, configMaps)
+		result[key] = translateWasmPlugin(p, configMaps, logger)
 	}
 	return result
 }

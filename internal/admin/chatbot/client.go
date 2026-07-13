@@ -38,6 +38,7 @@ type openAIAdapter struct {
 	model    string
 	temp     float64
 	client   *http.Client
+	logger   *slog.Logger
 }
 
 const (
@@ -66,14 +67,18 @@ type openAIStreamDelta struct {
 }
 
 // NewOpenAIAdapter creates an LLMClient backed by an OpenAI-compatible API.
-func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64) LLMClient {
+func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64, logger *slog.Logger) LLMClient {
 	endpoint = strings.TrimRight(endpoint, "/")
 
 	// CHATBOT_INSECURE_TLS is for development only. Production deployments
 	// must configure proper CA certificates instead.
 	insecureSkipVerify := os.Getenv("CHATBOT_INSECURE_TLS") == "true"
 	if insecureSkipVerify {
-		slog.Warn("CHATBOT_INSECURE_TLS is enabled — TLS certificate verification is disabled for LLM API calls. This is a development-only setting.")
+		warnLogger := logger
+		if warnLogger == nil {
+			warnLogger = slog.Default()
+		}
+		warnLogger.Warn("CHATBOT_INSECURE_TLS is enabled — TLS certificate verification is disabled for LLM API calls. This is a development-only setting.")
 	}
 
 	transport := defaultLLMTransport
@@ -90,6 +95,7 @@ func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64) LLMCl
 		apiKey:   apiKey,
 		model:    model,
 		temp:     temperature,
+		logger:   logger,
 		client: &http.Client{
 			Transport: transport,
 			Timeout:   defaultLLMTimeout,

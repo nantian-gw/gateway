@@ -64,7 +64,10 @@ func (c *ChatbotConfig) Validate() error {
 //
 //	model       - Model name (default: "gpt-4o")
 //	temperature - Sampling temperature (default: 0.1)
-func LoadConfig(ctx context.Context, cl client.Client, namespace string) (*ChatbotConfig, error) {
+func LoadConfig(ctx context.Context, cl client.Client, namespace string, logger *slog.Logger) (*ChatbotConfig, error) {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	if namespace == "" {
 		namespace = defaultChatbotConfigNamespace
 	}
@@ -100,14 +103,14 @@ func LoadConfig(ctx context.Context, cl client.Client, namespace string) (*Chatb
 		cfg.Model = string(v)
 	} else {
 		cfg.Model = defaultModel
-		slog.Debug("chatbot config: model not set, defaulting", "model", cfg.Model)
+		logger.Debug("chatbot config: model not set, defaulting", "model", cfg.Model)
 	}
 
 	// Temperature – default to 0.1 when absent or unparseable.
 	if v, ok := secret.Data["temperature"]; ok && len(v) > 0 {
 		t, err := strconv.ParseFloat(string(v), 64)
 		if err != nil {
-			slog.Warn("chatbot config: invalid temperature, defaulting",
+			logger.Warn("chatbot config: invalid temperature, defaulting",
 				"raw", string(v),
 				"error", err,
 				"temperature", defaultTemperature,

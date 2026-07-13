@@ -41,15 +41,15 @@ func isMaskedKey(key string) bool {
 // handleChatbotConfig (GET) reads the chatbot configuration from the Kubernetes
 // Secret and returns it as JSON with the API key masked for security.
 func (s *Server) handleChatbotConfig(w http.ResponseWriter, r *http.Request) {
-	cfg, err := chatbot.LoadConfig(r.Context(), s.resources.client, chatbotConfigNamespace)
+	cfg, err := chatbot.LoadConfig(r.Context(), s.resources.client, chatbotConfigNamespace, s.logger)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			s.respondJSON(w, map[string]any{
-				"configured": false,
-				"provider":   "",
+				"configured":  false,
+				"provider":    "",
 				"apiEndpoint": "",
-				"apiKey":     "",
-				"model":      "",
+				"apiKey":      "",
+				"model":       "",
 				"temperature": 0.0,
 			})
 			return
@@ -178,7 +178,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load chatbot configuration.
-	cfg, err := chatbot.LoadConfig(r.Context(), s.resources.client, chatbotConfigNamespace)
+	cfg, err := chatbot.LoadConfig(r.Context(), s.resources.client, chatbotConfigNamespace, s.logger)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			http.Error(w, "chatbot not configured", http.StatusBadRequest)
@@ -196,7 +196,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build dynamic RAG context from the live cluster.
-	ragContext, err := chatbot.BuildRAGContext(r.Context(), s.resources.client, "gateway.networking.k8s.io/nantian-gw", req.Prompt)
+	ragContext, err := chatbot.BuildRAGContext(r.Context(), s.resources.client, "gateway.networking.k8s.io/nantian-gw", req.Prompt, s.logger)
 	if err != nil {
 		s.logger.Warn("failed to build RAG context, continuing without it", "error", err)
 		ragContext = ""
@@ -212,7 +212,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the LLM adapter.
-	llm := chatbot.NewOpenAIAdapter(cfg.APIEndpoint, cfg.APIKey, cfg.Model, cfg.Temperature)
+	llm := chatbot.NewOpenAIAdapter(cfg.APIEndpoint, cfg.APIKey, cfg.Model, cfg.Temperature, s.logger)
 
 	// Set SSE headers.
 	w.Header().Set("Content-Type", "text/event-stream")

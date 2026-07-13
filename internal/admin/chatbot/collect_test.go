@@ -93,7 +93,7 @@ func TestCollectIndex_L4RouteCascade(t *testing.T) {
 
 	cl := fake.NewClientBuilder().WithScheme(fullScheme()).WithObjects(managedGatewayClass(), gw, tcpRoute, svc, orphan).Build()
 
-	index, err := collectIndex(context.Background(), cl, ragControllerName)
+	index, err := collectIndex(context.Background(), cl, ragControllerName, nil)
 	if err != nil {
 		t.Fatalf("collectIndex error: %v", err)
 	}
@@ -123,7 +123,7 @@ func TestCollectIndex_FeatureGatedPresent(t *testing.T) {
 
 	cl := fake.NewClientBuilder().WithScheme(fullScheme()).WithObjects(managedGatewayClass(), ai, tp, wp, lb).Build()
 
-	index, err := collectIndex(context.Background(), cl, ragControllerName)
+	index, err := collectIndex(context.Background(), cl, ragControllerName, nil)
 	if err != nil {
 		t.Fatalf("collectIndex error: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestCollectIndex_FeatureGatedAbsent(t *testing.T) {
 	// ragTestScheme registers core + gateway v1/v1alpha2 but NOT the Nantian CRDs.
 	cl := fake.NewClientBuilder().WithScheme(ragTestScheme()).WithObjects(managedGatewayClass()).Build()
 
-	index, err := collectIndex(context.Background(), cl, ragControllerName)
+	index, err := collectIndex(context.Background(), cl, ragControllerName, nil)
 	if err != nil {
 		t.Fatalf("collectIndex should tolerate unregistered CRD types: %v", err)
 	}

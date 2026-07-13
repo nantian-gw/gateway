@@ -40,7 +40,7 @@ func TestChatCompletionStream_ReceivesChunks(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -81,7 +81,7 @@ func TestChatCompletionStream_WithHistory(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -121,7 +121,7 @@ func TestChatCompletionStream_ServerError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -160,7 +160,7 @@ func TestChatCompletionStream_EmptyStream(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -200,7 +200,7 @@ func TestChatCompletionStream_MalformedJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -243,7 +243,7 @@ func TestChatCompletionStream_NoAuthWhenAPIKeyEmpty(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -280,7 +280,7 @@ func TestChatCompletionStream_SSECommentsIgnored(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1)
+	client := NewOpenAIAdapter(server.URL, "sk-test", "gpt-4o", 0.1, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

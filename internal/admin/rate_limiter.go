@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const defaultCleanupInterval = 5 * time.Minute
+
 type rateLimiter struct {
 	rate           float64
 	burst          float64
@@ -72,7 +74,7 @@ func newRateLimiter(rps int64, burstOrWindow any, trustedProxies []string) *rate
 }
 
 func (rl *rateLimiter) periodicCleanup() {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(defaultCleanupInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -117,7 +119,7 @@ func (rl *rateLimiter) allow(remoteAddr string) bool {
 		bucket.lastRefill = now
 	}
 
-	bucket.expiresAt = now.Add(5 * time.Minute)
+	bucket.expiresAt = now.Add(defaultCleanupInterval)
 
 	if bucket.tokens < 1 {
 		rl.client[key] = bucket

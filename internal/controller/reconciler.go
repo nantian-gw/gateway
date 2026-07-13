@@ -60,7 +60,7 @@ func (s *Syncer) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Resu
 }
 
 func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
-	if err := s.setupReferenceIndexes(mgr); err != nil {
+	if err := s.setupReferenceIndexes(context.Background(), mgr); err != nil {
 		return err
 	}
 
