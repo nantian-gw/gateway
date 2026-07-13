@@ -259,7 +259,7 @@ func normalizeResourceKind(raw string) string {
 	return normalized
 }
 
-func sameResourceKind(left, right string) bool {
+func IsSameResourceKind(left, right string) bool {
 	return normalizeResourceKind(left) == normalizeResourceKind(right)
 }
 

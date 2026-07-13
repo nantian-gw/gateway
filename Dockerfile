@@ -21,3 +21,14 @@ COPY --from=builder /out/nantian-controlplane /usr/local/bin/nantian-controlplan
 USER 65532:65532
 
 ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]
+
+# ──────────────────────────────────────────────
+# Debug image (for troubleshooting, not for production)
+# Build with: docker build --target=debug -t nantian-controlplane:debug .
+# ──────────────────────────────────────────────
+FROM debian:bookworm-slim AS debug
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl dnsutils iproute2 netcat-openbsd procps tcpdump \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /out/nantian-controlplane /usr/local/bin/nantian-controlplane
+ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]

@@ -253,7 +253,7 @@ func newTestServerWithOptions(t *testing.T, opts Options) *Server {
 func newTestServerWithRepository(t *testing.T, repo nodeinfo.Repository, opts Options) *Server {
 	t.Helper()
 
-	if !authConfigured(opts) {
+	if !IsAuthConfigured(opts) {
 		opts.BearerToken = testAuthToken
 	}
 

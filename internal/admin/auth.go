@@ -66,7 +66,7 @@ func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
 		}
 		return kubernetesAuthHandler(next, opts)
 	case "static":
-		if !authConfigured(opts) {
+		if !IsAuthConfigured(opts) {
 			return noAuthHandler(next, opts)
 		}
 		return staticAuthHandler(next, opts)
@@ -303,7 +303,7 @@ func deny(w http.ResponseWriter) {
 	http.Error(w, "unauthorized", http.StatusUnauthorized)
 }
 
-func authConfigured(opts Options) bool {
+func IsAuthConfigured(opts Options) bool {
 	return strings.TrimSpace(opts.BearerTokenFile) != "" || strings.TrimSpace(opts.BearerToken) != ""
 }
 

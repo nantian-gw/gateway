@@ -60,6 +60,41 @@ The translator package is the highest-risk package in this repository. When chan
 
 Use English by default for documentation and code comments. Add localized text only when editing existing localized user-facing content.
 
+## Naming Conventions
+
+### Getters
+
+This codebase follows the Go convention that getter methods do not use a `Get` prefix:
+
+```go
+// Correct — no Get prefix
+func (c *Config) SyncPeriodDuration() time.Duration { ... }
+func (s *SnapshotStore) Current() *Snapshot           { ... }
+func (t *Translator) ControllerName() string          { ... }
+
+// Avoid — Get prefix is non-idiomatic in Go
+func (c *Config) GetSyncPeriodDuration() time.Duration { ... }
+```
+
+The `Get` prefix is reserved for methods that perform non-trivial work beyond returning a field value (e.g., I/O, computation, or error handling). When the method simply returns a stored or derived value, omit the prefix.
+
+### Boolean Functions
+
+Functions and methods returning `bool` should use an `Is`, `Has`, `Can`, `Should`, or `Does` prefix that makes the caller read as a natural English question:
+
+```go
+// Correct
+func (c *Config) DashboardEnabled() bool     { ... }
+func IsAuthConfigured(opts Options) bool     { ... }
+func HasAnyManagedParent(...) bool           { ... }
+func IsSameResourceKind(left, right string) bool  { ... }
+
+// Avoid — returns bool but name doesn't indicate a boolean result
+func authConfigured(opts Options) bool       { ... }
+func anyManagedParent(...) bool              { ... }
+func sameResourceKind(left, right string) bool    { ... }
+```
+
 ## Acceptance
 
 Every change needs a spec, plan, and strict acceptance criteria. Record exact verification commands and results before marking work complete.

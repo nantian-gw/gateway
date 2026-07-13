@@ -68,7 +68,7 @@ func summarizeNodeSync(snapshot *ir.Snapshot, nodes []ir.NodeStatus, driftWarnin
 		}
 	}
 
-	if summary.driftedNodeCount > 0 && driftWarningTriggered(snapshot, driftWarningThreshold, now) {
+	if summary.driftedNodeCount > 0 && IsDriftWarningTriggered(snapshot, driftWarningThreshold, now) {
 		sort.Strings(driftedNodeIDs)
 		summary.warnings = append(summary.warnings, fmt.Sprintf(
 			"snapshot %s has been published for %s and %d connected dataplane node(s) are still on older versions: %s",
@@ -85,7 +85,7 @@ func summarizeNodeSync(snapshot *ir.Snapshot, nodes []ir.NodeStatus, driftWarnin
 	return summary
 }
 
-func driftWarningTriggered(snapshot *ir.Snapshot, threshold time.Duration, now time.Time) bool {
+func IsDriftWarningTriggered(snapshot *ir.Snapshot, threshold time.Duration, now time.Time) bool {
 	if snapshot == nil {
 		return false
 	}

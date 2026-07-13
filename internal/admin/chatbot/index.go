@@ -155,7 +155,7 @@ func parentGatewayRefs(routeNS string, refs []gatewayv1.ParentReference) []Resou
 	return out
 }
 
-func anyManagedParent(parents []ResourceRef, managedGW map[types.NamespacedName]bool) bool {
+func HasAnyManagedParent(parents []ResourceRef, managedGW map[types.NamespacedName]bool) bool {
 	for _, p := range parents {
 		if managedGW[types.NamespacedName{Namespace: p.Namespace, Name: p.Name}] {
 			return true
@@ -179,7 +179,7 @@ func backendServiceRef(routeNS string, ref gatewayv1.BackendObjectReference) (Re
 // entry plus its backend Services into keptSvc for the cascade.
 func (idx *ClusterIndex) addRoute(kind, ns, name string, parentRefs []gatewayv1.ParentReference, backendRefs []gatewayv1.BackendRef, parentStatus []gatewayv1.RouteParentStatus, ruleCount int, managedGW, keptSvc map[types.NamespacedName]bool, obj client.Object) {
 	parents := parentGatewayRefs(ns, parentRefs)
-	if !anyManagedParent(parents, managedGW) {
+	if !HasAnyManagedParent(parents, managedGW) {
 		return
 	}
 	var backends []ResourceRef

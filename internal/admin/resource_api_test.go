@@ -56,7 +56,7 @@ func newTestServerWithResourceManagerAndLoggerAndOptions(
 ) *Server {
 	t.Helper()
 
-	if !authConfigured(opts) {
+	if !IsAuthConfigured(opts) {
 		opts.BearerToken = testAuthToken
 	}
 

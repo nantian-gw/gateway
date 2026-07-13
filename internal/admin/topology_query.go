@@ -83,7 +83,7 @@ func filterTopology(response TopologyResponse, filter topologyQueryFilter) Topol
 	anchors := make([]string, 0)
 
 	for _, node := range response.Nodes {
-		if !topologyNodeMatches(node, filter) {
+		if !DoesTopologyNodeMatch(node, filter) {
 			continue
 		}
 		retainedNodes[node.ID] = node
@@ -133,7 +133,7 @@ func (f topologyQueryFilter) hasSelectors() bool {
 	return f.Type != "" || f.RouteKind != "" || f.Namespace != "" || f.Name != "" || f.Status != ""
 }
 
-func topologyNodeMatches(node TopologyNode, filter topologyQueryFilter) bool {
+func DoesTopologyNodeMatch(node TopologyNode, filter topologyQueryFilter) bool {
 	if filter.Type != "" && node.Type != filter.Type {
 		return false
 	}

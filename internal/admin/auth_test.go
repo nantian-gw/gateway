@@ -72,8 +72,8 @@ func TestAuthConfigured(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := authConfigured(tt.opts); got != tt.want {
-				t.Errorf("authConfigured() = %v, want %v", got, tt.want)
+			if got := IsAuthConfigured(tt.opts); got != tt.want {
+				t.Errorf("IsAuthConfigured() = %v, want %v", got, tt.want)
 			}
 		})
 	}

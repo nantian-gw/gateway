@@ -58,7 +58,7 @@ func decodeManagedResource(raw []byte, expectedKind string) (resourceKindSpec, c
 	if expectedKind != "" {
 		if kind == "" {
 			kind = expectedKind
-		} else if !sameResourceKind(kind, expectedKind) {
+		} else if !IsSameResourceKind(kind, expectedKind) {
 			return resourceKindSpec{}, nil, errInvalidRequest("resource kind does not match request path")
 		}
 	}
