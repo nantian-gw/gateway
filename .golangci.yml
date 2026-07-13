@@ -8,9 +8,6 @@ linters:
     - ineffassign
     - staticcheck
     - unused
-    - gosimple
-    - gofmt
-    - goimports
     - gocritic
     - misspell
     - unconvert
@@ -27,7 +24,6 @@ linters:
     - goconst
     - unparam
     - dupl
-    - gofumpt
     - whitespace
     - nolintlint
     - wrapcheck
@@ -35,8 +31,6 @@ linters:
   settings:
     errcheck:
       check-blank: true
-    goimports:
-      local-prefixes: github.com/nantian-gw/gateway
     gocritic:
       enabled-tags:
         - diagnostic
@@ -62,6 +56,15 @@ linters:
       - internal/gen
       - third_party
       - vendor
+
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: github.com/nantian-gw/gateway
 
 issues:
   max-issues-per-linter: 0
