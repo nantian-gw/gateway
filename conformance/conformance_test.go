@@ -27,16 +27,18 @@ const (
 func TestGatewayAPIConformance(t *testing.T) {
 	options := applyEnvFeatureOptions(gatewayconformance.DefaultOptions(t))
 	options, expandedAllFeatures := patchAllFeatures(options)
-	options.TimeoutConfig.TestIsolation = 3 * time.Second
+
+	// Kind cluster timing: resource propagation delay requires generous timeouts.
+	options.TimeoutConfig.CreateTimeout = 30 * time.Second
+	options.TimeoutConfig.DeleteTimeout = 30 * time.Second
+	options.TimeoutConfig.GetTimeout = 30 * time.Second
+	options.TimeoutConfig.UpdateTimeout = 30 * time.Second
+	options.TimeoutConfig.TestIsolation = 30 * time.Second
 
 	options.SkipTests = []string{
 		// Kind cluster timing: resource propagation delay causes false negatives.
-		"BackendTLSPolicyConflictResolution",
-		"GatewayModifyListeners",
-		"HTTPRouteCORS",
 		"HTTPRouteHostnameIntersection",
 		"HTTPRouteListenerPortMatching",
-		"ListenerSetAllowedRoutesSupportedKinds",
 	}
 
 	manifestFS, err := gatewayAPIManifestFS()

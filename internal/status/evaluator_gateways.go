@@ -50,6 +50,9 @@ func evaluateGatewayListener(
 			policy.supportedKinds = []gatewayv1.RouteGroupKind{}
 		} else if reason, message, ok := evaluateListenerConflict(allListeners, listener); !ok {
 			accepted = rejectedListenerCondition(gateway.Generation, reason, message)
+			resolved.Status = metav1.ConditionFalse
+			resolved.Reason = string(gatewayv1.ListenerReasonInvalid)
+			resolved.Message = message
 			extraConditions = append(extraConditions, conditionSpec{
 				Type:               string(gatewayv1.ListenerConditionConflicted),
 				Status:             metav1.ConditionTrue,
