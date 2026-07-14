@@ -340,6 +340,59 @@ Phases 1 and 2 are independent; Phase 3 depends on Phase 2. Phases 4-6 have no d
 
 **Next action**: Select and execute Phase 1 (`gwapi` → `gatewayapi`) as the highest-impact rename.
 
+### Item 4: Status Update Batching (P2)
+
+**Current State:**
+- **Two trigger paths**: (a) Full batch reconciliation via `ReconcilerRunner` (periodic ticker + external triggers + settle-debounced), (b) Per-object controllers driven by Kubernetes watches with controller-runtime workqueues.
+- **Evaluation IS batched**: `loadState()` fetches all Gateway API resources in one etcd read; `evaluateRoutes()`/`evaluateGateways()` evaluate everything from that snapshot.
+- **Writes are NOT batched**: Each object gets an individual `client.Status().Patch(ctx, desired, client.MergeFrom(&current))` call. 100 HTTPRoutes = 100 separate Patch calls, 50 Gateways = 50 separate Patch calls. Writes are sequential (not parallel).
+- **Within a single object**, all conditions ARE coalesced — Accepted, Programmed, ResolvedRefs all go into one Patch. There is one write per object, not one per condition.
+- **DeepEqual skip**: `apiequality.Semantic.DeepEqual(current.Status, desired.Status)` checked before every write — unchanged objects skip the API call entirely. This is the most impactful existing optimization.
+- **Existing rate-limit mechanisms**:
+  - `ReconcilerRunner` settle delay: debounces rapid-fire `QueueRun()` calls into a single reconciliation (configurable `SettleDelay`).
+  - Trigger channel (cap 1): multiple concurrent triggers coalesce into one signal.
+  - Retry with exponential backoff for failed scopes (25% jitter, 5 min max).
+  - Per-object controllers: `workqueue.MaxOfRateLimiter` with exponential failure backoff (200ms base, 30s max) and bucket rate limiter (10 QPS, 100 burst).
+  - Conflict retry: `retry.RetryOnConflict(retry.DefaultRetry, ...)` wraps every Patch call (10-step exponential backoff, ~30s max).
+- **No dedicated status update queue/buffer**: Status writes happen synchronously and inline during reconciliation. The trigger channel at the ReconcilerRunner level is only a coalescing signal, not a work queue.
+- **Metrics** (`status_update_metrics.go`): `statusUpdateConflictsTotal`, `statusUpdateRetriesTotal`, `statusUpdateErrorsTotal` — no batching-specific metrics (no batch size, batch latency, objects-skipped-via-DeepEqual count).
+- **All writes use server-side merge patch** (`client.MergeFrom`): Only changed fields are sent, which is already the most efficient single-object write strategy Kubernetes provides.
+
+**Key files**: `internal/status/reconciler.go` (Reconcile orchestration), `internal/status/reconciler_collections.go` (batch iterate-all-objects loops), `internal/status/reconciler_gateway_status.go` (per-gateway Patch), `internal/status/reconciler_route_status.go` (per-route Patch), `internal/status/reconciler_policy_status.go` (per-policy Patch), `internal/status/status_update_metrics.go` (prometheus counters), `internal/status/controllers.go` (per-object controllers + workqueue), `internal/controller/leader_runner_queue.go` (settle delay, trigger coalescing), `internal/controller/leader_runner_timers.go` (exponential retry backoff).
+
+**Recommendations:**
+1. **Parallelize status writes** (low risk, immediate impact): Change the sequential `for` loops in `reconciler_collections.go` to use a worker pool (e.g., `errgroup` with `SetLimit`). Route and policy status writes are trivially parallelizable — they share no mutable state. Reduces end-to-end reconciliation latency from O(N) to O(N/parallelism).
+2. **Add batch metrics**: `status_updates_written_total` (actual Patch calls), `status_updates_skipped_total` (DeepEqual skip count), `status_batch_duration_seconds` (histogram of batch write phase duration).
+3. **Evaluate server-side apply** (`client.Apply` with `ForceOwnership`): Eliminates Get-before-Patch pattern, reducing API calls by 50% per object.
+4. **Pre-serialize Patch payloads** (if parallelizing): Compute all patches in parallel, send sequentially — decouples compute from I/O.
+
+### Item 5: Incremental xDS Updates (P2)
+
+**Current State:**
+- **Purely SotW (State of the World)**: Every config change pushes the full snapshot to all subscribed data planes. No incremental/delta mechanism exists.
+- **Proto definition** (`proto/gateway/control/v1/control.proto`, line 113-114): `ConfigSnapshot` comment explicitly states "Every field is replaced wholesale on each push (full-state snapshot, not delta)".
+- **gRPC service**: Single `ConfigurationDiscoveryService` with `StreamConfiguration` (bidirectional streaming) + `ReportStatus` (unary). **No `DeltaDiscoveryService`**, no `DeltaDiscoveryRequest`/`DeltaDiscoveryResponse` messages, no delta-variant RPCs anywhere.
+- **Snapshot flow**: Translator builds IR `Snapshot` → `SnapshotStore.Publish()` fans out to subscribers (buffer size 1, coalescing) → `StreamConfiguration` handler receives full `*ir.Snapshot` → `protoCache.get()` → `buildProjectedProtoSnapshot()` (Clone + project + proto-convert) → gRPC Send → data plane ACKs/NACKs.
+- **Snapshot ID**: SHA-256 content digest of entire IR state (JSON-marshaled, status-stripped). `Publish()` deduplicates by ID — if content hasn't changed, no push occurs.
+- **Proto cache** (`snapshot_proto_cache.go`): Caches `*controlv1.ConfigSnapshot` proto objects per `(snapshot.ID, projectionProfile)` key. Uses `sync.RWMutex` for read path, `singleflight.Group` to deduplicate concurrent builds. Cache is invalidated on version change. **Only caches proto structs, not wire bytes** — gRPC re-encodes on every `Send()`.
+- **No diff logic**: No comparison between old and new snapshots. The word "diff" appears only in infrastructure inspector code (comparing service specs), not in xDS delivery.
+- **`subscriptions` field unused for filtering**: The `DiscoveryRequest.subscriptions` field is passed to `nodeinfo.Registry` for observability only — all subscribers receive all snapshots regardless of their declared subscriptions.
+- **No Envoy-style typed discovery services** (LDS/RDS/CDS/EDS/SDS): Everything bundled into one monolithic `ConfigSnapshot` in one stream.
+- **Per-stream state**: One bidirectional stream per nodeID. New stream for same nodeID supersedes the old one. ACK timeout monitoring terminates stale streams.
+- **Snapshot cost** (typical scale from benchmarks): ~96 Listeners, ~600 HTTPRoutes, ~300 GRPCRoutes, ~300 StreamRoutes, ~600 BackendClusters (×4 endpoints each), ~96 Secrets (with PEM material), ~1,200 Workloads.
+
+**Key files**: `internal/xds/server.go` (gRPC service registration, Server struct), `internal/xds/server_stream.go` (StreamConfiguration handler, subscribe, build, send, ACK/NACK), `internal/xds/server_send.go` (serialized send channel with timeout/supersede), `internal/xds/snapshot_proto_cache.go` (proto cache with singleflight dedup), `internal/xds/snapshot_projection.go` (Clone + feature-filter projection), `internal/xds/snapshot_proto.go` (full IR→proto conversion), `internal/xds/features.go` (projection profiles), `internal/xds/server_registry.go` (per-nodeID stream dedup), `internal/ir/store.go` (SnapshotStore pub-sub), `internal/ir/clone.go` (deep-copy for projection), `internal/ir/types.go` (Snapshot struct), `proto/gateway/control/v1/control.proto` (protobuf definitions).
+
+**What Delta xDS Would Require:**
+1. **Proto changes**: Add `DeltaDiscoveryService` with `DeltaStreamConfiguration` RPC; add `DeltaDiscoveryRequest`/`DeltaDiscoveryResponse` messages with `resource_names_subscribe`, `resource_names_unsubscribe`, `initial_resource_versions`, `type_url`, `resources`, `removed_resources`, and a `Resource` wrapper (`name`, `version`, `resource` as `google.protobuf.Any`).
+2. **Per-resource versioning**: Each resource (listener, route, backend, etc.) needs its own version identifier. Currently only a single snapshot-level ID exists. Requires changes in the translator/IR layer.
+3. **Diff engine**: Between old and new IR snapshots, compute which resources were added, removed, or changed. Could live in new `internal/xds/delta_diff.go`.
+4. **Per-stream resource state**: Each stream must track what resources it has (`xDS state-of-the-world per client`) — a per-stream resource map keyed by `type_url` and resource name.
+5. **Cache extension**: Extend `snapshotProtoCache` to cache per-resource proto objects (not just whole snapshots) for targeted sends.
+6. **Gradual rollout**: Delta as an additional service alongside existing SotW. Both share the same `SnapshotStore` subscription.
+
+**Effort estimate**: Large. Hardest pieces are per-resource versioning in IR/translator and per-stream state tracking. Proto changes and cache extension are relatively straightforward. Priority: start with proto definitions and per-resource versioning.
+
 ---
 
 ### Verification
