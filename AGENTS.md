@@ -326,6 +326,15 @@ Last audited: 2026-07-14
 - Response size could be large — needs pagination and gzip support.
 - Consider `include=counts` as a lightweight option (just counts, not full objects).
 
+**Implementation notes** (verified 2026-07-15):
+- **Precedent for `?include=`**: `parseIncludeAllBackends(raw string) (bool, error)` already exists in `internal/admin/query_support.go:62` as a query parameter parser for backend inclusion. This function demonstrates the exact pattern needed for `?include=routes,listeners,backends`.
+- **Natural starting point**: `handleSummary` in `internal/admin/server_overview.go:60` currently only returns `Summary` struct with counts. The `buildSummary` function (line 76) already walks all listeners — adding object-level detail under an `?include=` gate would be a minimal extension.
+- **All individual list handlers** already accept `url.Values` from `r.URL.Query()`:
+  - `filterListeners` (`query.go:24`) — handles `name`, `protocol`, `hostname`, `attachedRoute`, `sort`, pagination
+  - `filterRoutes` (`query.go:69`) — handles `kind`, `sort`, pagination
+  - Backend query (`backend_view.go`) — handles pagination
+- **No new gRPC/storage layer needed**: All data is already in the in-memory `ir.Snapshot` that `handleSummary` receives from `s.store.Current()`.
+
 ### Item 3: Multi-Word Package Rename Audit (P1) — COMPLETE
 
 **Status: Audit complete.** Full audit findings and migration plan are documented above in the "Package Naming Conventions" section (lines 122-253).
