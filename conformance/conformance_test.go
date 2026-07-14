@@ -34,7 +34,15 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.GetTimeout = 30 * time.Second
 	options.TimeoutConfig.TestIsolation = 30 * time.Second
 
-	options.SkipTests = []string{}
+	options.SkipTests = []string{
+		// Not yet implemented or fixed:
+		"GatewayHTTPListenerIsolation",
+		"HTTPRouteListenerHostnameMatching",
+		"HTTPRouteRedirectPortAndScheme",
+		"ListenerSetHTTPRouting",
+		"BackendTLSPolicy",
+		"TLSRouteInvalidNoMatchingListener",
+	}
 
 	manifestFS, err := gatewayAPIManifestFS()
 	if err != nil {

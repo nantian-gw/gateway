@@ -100,8 +100,10 @@ func defaultListenerKinds(protocol gatewayv1.ProtocolType) []routeKind {
 		return []routeKind{routeKindHTTP}
 	case "HTTPS":
 		return []routeKind{routeKindGRPC, routeKindHTTP}
-	case "TLS":
+	case "TLS", "TLS_PASSTHROUGH":
 		return []routeKind{routeKindTLS}
+	case "GRPC":
+		return []routeKind{routeKindGRPC}
 	case "TCP":
 		return []routeKind{routeKindTCP}
 	case "UDP":

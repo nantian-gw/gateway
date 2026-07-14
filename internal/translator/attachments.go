@@ -374,8 +374,10 @@ func attachmentDefaultKinds(protocol gatewayv1.ProtocolType) []attachmentRouteKi
 		return []attachmentRouteKind{attachmentRouteKindHTTP}
 	case "HTTPS":
 		return []attachmentRouteKind{attachmentRouteKindGRPC, attachmentRouteKindHTTP}
-	case "TLS":
+	case "TLS", "TLS_PASSTHROUGH":
 		return []attachmentRouteKind{attachmentRouteKindTLS}
+	case "GRPC":
+		return []attachmentRouteKind{attachmentRouteKindGRPC}
 	case "TCP":
 		return []attachmentRouteKind{attachmentRouteKindTCP}
 	case "UDP":
