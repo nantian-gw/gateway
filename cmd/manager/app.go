@@ -364,6 +364,7 @@ func run(configPath string) error {
 			AllowedGroups:             cfg.AdminAuth.AllowedGroups,
 			TrustedProxies:            cfg.AdminAuth.TrustedProxies,
 			DashboardCapabilities:     admin.ResolveDashboardCapabilities(cfg),
+			AllowFromCIDRs:            cfg.AdminAuth.AllowFromCIDRs,
 		},
 	)
 	adminServer.SetInfrastructureInspector(infra)

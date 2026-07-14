@@ -130,6 +130,7 @@ type AdminAuthConfig struct {
 	AllowedUsers            []string `yaml:"allowedUsers"`
 	AllowedGroups           []string `yaml:"allowedGroups"`
 	TrustedProxies          []string `yaml:"trustedProxies"`
+	AllowFromCIDRs          []string `yaml:"allowFromCIDRs"`
 }
 
 // NormalizeAuthMode returns the effective auth mode, defaulting to "static".

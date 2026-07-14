@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -48,6 +49,7 @@ type Options struct {
 	AllowedGroups             []string
 	TrustedProxies            []string
 	DashboardCapabilities     DashboardCapabilities
+	AllowFromCIDRs            []string
 }
 
 func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
@@ -56,26 +58,112 @@ func wrapAuthHandler(next http.Handler, opts Options) http.Handler {
 		mode = "static"
 	}
 
+	var handler http.Handler
+
 	switch mode {
 	case "kubernetes":
 		if opts.RestConfig == nil {
 			if opts.Logger != nil {
 				opts.Logger.Error("authMode=kubernetes requires a valid RestConfig; falling back to no-auth mode")
 			}
-			return noAuthHandler(next, opts)
+			handler = noAuthHandler(next, opts)
+		} else {
+			handler = kubernetesAuthHandler(next, opts)
 		}
-		return kubernetesAuthHandler(next, opts)
 	case "static":
 		if !IsAuthConfigured(opts) {
-			return noAuthHandler(next, opts)
+			handler = noAuthHandler(next, opts)
+		} else {
+			handler = staticAuthHandler(next, opts)
 		}
-		return staticAuthHandler(next, opts)
 	default:
 		if opts.Logger != nil {
 			opts.Logger.Warn("unknown authMode, falling back to no-auth mode", "mode", mode)
 		}
-		return noAuthHandler(next, opts)
+		handler = noAuthHandler(next, opts)
 	}
+
+	return ipWhitelistMiddleware(handler, opts)
+}
+
+// ipWhitelistMiddleware wraps a handler to restrict access by client IP.  Probes
+// (/livez, /readyz) are allowed through regardless.  When AllowFromCIDRs is empty
+// (the default) no IP restriction is applied.  When CIDRs are configured, the
+// middleware extracts the client IP from X-Forwarded-For, X-Real-IP, or RemoteAddr
+// and returns 403 if the IP does not match any configured CIDR.
+func ipWhitelistMiddleware(next http.Handler, opts Options) http.Handler {
+	cidrs := opts.AllowFromCIDRs
+	if len(cidrs) == 0 {
+		return next
+	}
+
+	parsed := parseCIDRs(cidrs)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isProbePath(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ip := clientIP(r)
+		if ip == nil || !cidrContains(parsed, ip) {
+			if opts.Logger != nil {
+				opts.Logger.Warn("admin API request denied by IP whitelist",
+					"remote", r.RemoteAddr,
+					"xff", r.Header.Get("X-Forwarded-For"),
+				)
+			}
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// clientIP extracts the client IP from the request, checking X-Forwarded-For,
+// X-Real-IP, and RemoteAddr in that order.
+func clientIP(r *http.Request) net.IP {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		// Use the leftmost (original client) IP.
+		parts := strings.SplitN(xff, ",", 2)
+		addr := strings.TrimSpace(parts[0])
+		if ip := net.ParseIP(addr); ip != nil {
+			return ip
+		}
+	}
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		addr := strings.TrimSpace(xri)
+		if ip := net.ParseIP(addr); ip != nil {
+			return ip
+		}
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return nil
+	}
+	return net.ParseIP(host)
+}
+
+func parseCIDRs(entries []string) []*net.IPNet {
+	parsed := make([]*net.IPNet, 0, len(entries))
+	for _, raw := range entries {
+		_, cidr, err := net.ParseCIDR(strings.TrimSpace(raw))
+		if err != nil {
+			continue
+		}
+		parsed = append(parsed, cidr)
+	}
+	return parsed
+}
+
+func cidrContains(cidrs []*net.IPNet, ip net.IP) bool {
+	for _, cidr := range cidrs {
+		if cidr.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 // noAuthHandler allows GET/HEAD but blocks writes when no auth is configured.
