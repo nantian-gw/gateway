@@ -25,7 +25,7 @@ func TestBuildSummaryAggregatesSnapshotAndNodes(t *testing.T) {
 		{NodeID: "dp-2", Connected: false, Ready: false},
 	}
 
-	summary := buildSummary(snapshot, nodes, 15*time.Second, now)
+	summary := buildSummary(snapshot, nodes, 15*time.Second, now, false)
 	if summary.SnapshotVersion != "v1" {
 		t.Fatalf("unexpected snapshot version: %s", summary.SnapshotVersion)
 	}
@@ -57,7 +57,7 @@ func TestBuildSummaryWarnsOnPersistentVersionDrift(t *testing.T) {
 		{NodeID: "dp-2", Connected: true, Ready: false, LastAckVersion: "v2"},
 	}
 
-	summary := buildSummary(snapshot, nodes, 15*time.Second, now)
+	summary := buildSummary(snapshot, nodes, 15*time.Second, now, false)
 	if summary.DriftedNodeCount != 1 {
 		t.Fatalf("expected 1 drifted node, got %+v", summary)
 	}

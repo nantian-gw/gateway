@@ -2,6 +2,7 @@ package admin
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/ir"
@@ -59,7 +60,8 @@ func (s *Server) handleSnapshot(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 	snapshot := s.store.Current()
-	s.respondJSON(w, buildSummary(snapshot, s.currentNodes(r.Context(), snapshot), s.driftWarningThreshold, s.now()))
+	includeRoutes := strings.Contains(r.URL.Query().Get("include"), "routes")
+	s.respondJSON(w, buildSummary(snapshot, s.currentNodes(r.Context(), snapshot), s.driftWarningThreshold, s.now(), includeRoutes))
 }
 
 func (s *Server) handleSnapshotSync(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +75,7 @@ func (s *Server) handleSnapshotSync(w http.ResponseWriter, r *http.Request) {
 	))
 }
 
-func buildSummary(snapshot *ir.Snapshot, nodes []ir.NodeStatus, driftWarningThreshold time.Duration, now time.Time) Summary {
+func buildSummary(snapshot *ir.Snapshot, nodes []ir.NodeStatus, driftWarningThreshold time.Duration, now time.Time, includeRoutes bool) Summary {
 	summary := Summary{
 		NodeCount: len(nodes),
 	}
@@ -119,6 +121,12 @@ func buildSummary(snapshot *ir.Snapshot, nodes []ir.NodeStatus, driftWarningThre
 	summary.CurrentVersionReadyCount = sync.currentVersionReadyCount
 	summary.DriftedNodeCount = sync.driftedNodeCount
 	summary.Warnings = sync.warnings
+
+	if includeRoutes {
+		for _, r := range snapshot.HTTPRoutes {
+			summary.RouteEntries = append(summary.RouteEntries, r.Name)
+		}
+	}
 
 	return summary
 }

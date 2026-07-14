@@ -42,6 +42,9 @@ type Summary struct {
 	WarningListenerCount     int       `json:"warningListenerCount"`
 	FailedListenerCount      int       `json:"failedListenerCount"`
 	Warnings                 []string  `json:"warnings,omitempty"`
+
+	// Optional fields populated when ?include=routes
+	RouteEntries []string `json:"routeEntries,omitempty"`
 }
 
 type routeContract struct {

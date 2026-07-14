@@ -12,12 +12,12 @@ import (
 
 func TestBuildSummaryStableAcrossPermutationsProperty(t *testing.T) {
 	now := time.Unix(1_700_000_900, 0).UTC()
-	expected := buildSummary(summaryPropertySnapshotFixture(), summaryPropertyNodesFixture(), 15*time.Second, now)
+	expected := buildSummary(summaryPropertySnapshotFixture(), summaryPropertyNodesFixture(), 15*time.Second, now, false)
 
 	cfg := &quick.Config{MaxCount: 64}
 	if err := quick.Check(func(seed uint64) bool {
 		snapshot, nodes := shuffledSummaryPropertyInputs(seed)
-		got := buildSummary(snapshot, nodes, 15*time.Second, now)
+		got := buildSummary(snapshot, nodes, 15*time.Second, now, false)
 		return reflect.DeepEqual(expected, got)
 	}, cfg); err != nil {
 		t.Fatalf("buildSummary permutation property failed: %v", err)
