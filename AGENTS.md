@@ -263,3 +263,87 @@ For documentation-only changes in this repository, run at least:
 - `git diff --check origin/main...HEAD`.
 
 For behavior changes, add focused tests first and then run all affected package checks.
+
+---
+
+## Pending Improvements & Audit Findings
+
+Last audited: 2026-07-14
+
+### Item 1: Control Plane Memory Optimization (P2)
+
+**Current State:**
+- **pprof enabled**: Separate HTTP server at configurable `pprof.addr` (default `127.0.0.1:6060`). Exposes `/debug/pprof/` endpoints with optional bearer-token auth. Defined in `cmd/manager/pprof.go`, wired in `cmd/manager/app.go` as a managed component (graceful serve/shutdown).
+- **No custom memory metrics**: No `nantian_gw_controlplane_mem_*` or Go `runtime.MemStats` metrics are registered. Only admin API request metrics exist (`AdminAPIRequestsTotal`, `AdminAPIRequestDurationSeconds`).
+- **In-memory indexing structures**:
+  - `internal/admin/detail_index.go`: `snapshotDetailIndex` holds hash maps for listeners (by name), backends (by namespace+name), and routes (by kind+namespace+name). Rebuilt from scratch on every snapshot version change.
+  - `internal/admin/list_cache.go`: TTL-based response cache (default 1s) for resource lists and service catalogs to avoid repeated Kubernetes API calls.
+  - `internal/infrastructure/route_indexes.go`: Kubernetes field indexes (GatewayClass by controllerName, Gateway by gatewayClassName, Route by service parents) used by the infrastructure reconciler. These are server-side indexes on the API server, not in-process.
+  - `internal/ir/types.go`: Full `Snapshot` materialized in memory with all Listeners, HTTPRoutes, GRPCRoutes, StreamRoutes, Backends, Secrets, Workloads as in-process slices.
+  - `internal/infrastructure/inspector.go`: Infrastructure report uses maps (`serviceIndex`, `sliceIndex`) for observed vs. expected comparison during inspections.
+- **Memory threats identified**:
+  - `snapshotDetailIndex` rebuilds all three lookup maps (listeners, backends, routes) per snapshot — old snapshots are GC'd but intermediate copies exist during rebuild.
+  - List endpoints (`/v1/listeners`, `/v1/routes`, `/v1/backends`) return full unfiltered slice copies with no pagination enforcement at the snapshot layer.
+  - No buffer pool or `sync.Pool` usage for the frequent slice allocations in `filterListeners`/`filterRoutes`/`filterBackends`.
+  - `Snapshot.Clone()` (in `internal/ir/clone.go`) performs deep copies for xDS distribution but doesn't use arena allocators.
+
+**Recommendations:**
+1. **Add Go runtime memory metrics**: Expose `go_memstats_alloc_bytes`, `go_memstats_heap_inuse_bytes`, `go_memstats_gc_cpu_fraction` as Prometheus metrics to establish baseline and detect regressions.
+2. **Add snapshot memory metrics**: Track `snapshot_size_bytes` (approximate JSON serialized size) and `detail_index_build_duration_seconds`.
+3. **Profile snapshot lifecycle**: Use existing pprof endpoints to capture heap profiles during steady state and full-rebuild cycles.
+4. **Consider `sync.Pool` for slice buffers** in admin filter functions that allocate new slices per request.
+5. **Evaluate arena allocator** for `Snapshot` clone paths (requires Go 1.22+ `arena` package).
+
+### Item 2: API Aggregation — Control Plane Aggregated Endpoint (P1)
+
+**Current State:**
+- `/v1/summary` exists as an aggregated overview: returns `Summary` struct with counts (listeners, routes, backends, secrets), node status distribution, listener health, and snapshot sync state. It computes route/backend/listener counts from the snapshot but doesn't return object details.
+- `/v1/dashboard/capabilities` returns feature-flag toggles (AI overview, services, etc.).
+- **Individual list endpoints** exist for each resource type:
+  - `GET /v1/listeners` — returns full listener list with optional filter (name, protocol, hostname, attachedRoute, sort, pagination).
+  - `GET /v1/listeners/{name}` — single listener detail.
+  - `GET /v1/routes` — returns HTTP+GRPC+Stream routes with optional kind filter, sort, pagination.
+  - `GET /v1/routes/{kind}/{namespace}/{name}` — single route detail.
+  - `GET /v1/backends` — returns backends with pagination.
+  - `GET /v1/backends/{namespace}/{name}` — single backend detail.
+  - `GET /v1/nodes` — returns node list with pagination.
+  - `GET /v1/nodes/{nodeId}` — single node detail.
+  - `GET /v1/infrastructure` — infrastructure report with filtering (state, role, kind, namespace, name, sort, pagination).
+  - `GET /v1/service-catalog` — service catalog with filtering.
+- **No `?include=` parameter exists** on any endpoint. Each resource type requires a separate API call.
+- **No composite/aggregated endpoint** that returns multiple resource types in a single response.
+
+**What's Needed:**
+1. **`GET /v1/gateways`** — list all managed gateways with optional `?include=routes,listeners,backends,summary` parameter.
+2. **`include=summary` mode**: Return the existing `/v1/summary` data embedded in each gateway resource (gateway-level summary, not cluster-wide).
+3. **`include=routes` mode**: Embed route lists filtered by gateway parentRef.
+4. **`include=listeners` mode**: Embed listener config with status.
+5. **`include=backends` mode**: Embed backend references used by this gateway's routes.
+
+**Design considerations:**
+- Gateway-to-route parentRef mapping already exists in translator (routes reference gateways via parentRefs). Need a reverse index for filtering.
+- Per-gateway summary would be a new subset of the existing `Summary` struct scoped to one gateway.
+- Response size could be large — needs pagination and gzip support.
+- Consider `include=counts` as a lightweight option (just counts, not full objects).
+
+### Item 3: Multi-Word Package Rename Audit (P1) — COMPLETE
+
+**Status: Audit complete.** Full audit findings and migration plan are documented above in the "Package Naming Conventions" section (lines 122-253).
+
+Summary: 6 packages identified for rename across ~205 files in 6 phases:
+- Phase 1: `gwapi` → `gatewayapi` (CRITICAL, 56 files)
+- Phase 2: `gwexp` → `gatewayexp` (HIGH, 65 files)
+- Phase 3: `backendlb` → `backend` (LOW, 48 files)
+- Phase 4-6: `lbpolicy`, `tlspolicy`, `nodeinfo` (LOW, 36 files total)
+
+Phases 1 and 2 are independent; Phase 3 depends on Phase 2. Phases 4-6 have no dependencies.
+
+**Next action**: Select and execute Phase 1 (`gwapi` → `gatewayapi`) as the highest-impact rename.
+
+---
+
+### Verification
+
+```bash
+go build ./...  # PASSES (no errors)
+```
