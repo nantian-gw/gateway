@@ -164,6 +164,11 @@ func hostnamesIntersect(a, b string) bool {
 	a = normalizeHostname(a)
 	b = normalizeHostname(b)
 
+	// "*" matches any hostname per Gateway API spec
+	if a == "*" || b == "*" {
+		return true
+	}
+
 	aWildcard, aSuffix := wildcardSuffix(a)
 	bWildcard, bSuffix := wildcardSuffix(b)
 

@@ -160,6 +160,9 @@ func recordRouteAttachments(
 				if !serviceListenerMatchesParent(listener, parentRef) {
 					continue
 				}
+				if !attachmentKindAllowedByProtocol(gatewayv1.ProtocolType(listener.Protocol), kind) {
+					continue
+				}
 
 				if attachments[listener.Name] == nil {
 					attachments[listener.Name] = make(map[string]struct{})

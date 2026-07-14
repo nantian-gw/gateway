@@ -32,7 +32,6 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.CreateTimeout = 30 * time.Second
 	options.TimeoutConfig.DeleteTimeout = 30 * time.Second
 	options.TimeoutConfig.GetTimeout = 30 * time.Second
-	options.TimeoutConfig.UpdateTimeout = 30 * time.Second
 	options.TimeoutConfig.TestIsolation = 30 * time.Second
 
 	options.SkipTests = []string{}
