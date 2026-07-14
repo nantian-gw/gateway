@@ -324,7 +324,7 @@ func tlsRouteModesForHostname(
 		}
 	}
 	if len(modes) == 0 {
-		return []ir.TlsRouteMode{ir.TlsRouteModePassthrough}
+		return nil
 	}
 
 	out := make([]ir.TlsRouteMode, 0, len(modes))
