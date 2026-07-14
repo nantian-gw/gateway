@@ -443,6 +443,11 @@ func attachmentHostnamesIntersect(a, b string) bool {
 	a = normalizeAttachmentHostname(a)
 	b = normalizeAttachmentHostname(b)
 
+	// "*" matches any hostname per Gateway API spec
+	if a == "*" || b == "*" {
+		return true
+	}
+
 	aWildcard, aSuffix := attachmentWildcardSuffix(a)
 	bWildcard, bSuffix := attachmentWildcardSuffix(b)
 

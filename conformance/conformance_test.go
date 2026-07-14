@@ -35,11 +35,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.UpdateTimeout = 30 * time.Second
 	options.TimeoutConfig.TestIsolation = 30 * time.Second
 
-	options.SkipTests = []string{
-		// Kind cluster timing: resource propagation delay causes false negatives.
-		"HTTPRouteHostnameIntersection",
-		"HTTPRouteListenerPortMatching",
-	}
+	options.SkipTests = []string{}
 
 	manifestFS, err := gatewayAPIManifestFS()
 	if err != nil {
