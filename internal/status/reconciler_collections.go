@@ -183,7 +183,7 @@ func conditionObservedGenerationCurrent(
 	generation int64,
 ) bool {
 	condition := meta.FindStatusCondition(conditions, conditionType)
-	return condition != nil && condition.ObservedGeneration == generation
+	return condition != nil && condition.ObservedGeneration == generation && condition.ObservedGeneration != 0
 }
 
 func (r *Reconciler) currentGatewayGenerations(
