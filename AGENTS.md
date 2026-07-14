@@ -95,6 +95,30 @@ func anyManagedParent(...) bool              { ... }
 func sameResourceKind(left, right string) bool    { ... }
 ```
 
+## Experimental Packages (`internal/gwexp`)
+
+The `internal/gwexp/` directory contains experimental Gateway API extension types that are not yet stable. Each package defines a CRD with an alpha API version:
+
+| Package | CRD | API Group | API Version |
+|---------|-----|-----------|-------------|
+| `aiservice` | AIService | `gateway.nantian.dev` | `v1alpha1` |
+| `backendlb` | BackendLBPolicy | `gateway.networking.k8s.io` | `v1alpha2` |
+| `tokenpolicy` | TokenPolicy | `gateway.nantian.dev` | `v1alpha1` |
+| `wasmplugin` | WasmPlugin | `gateway.nantian.dev` | `v1alpha1` |
+| `routepolicy` | RoutePolicy | `gateway.nantian.dev` | `v1alpha1` |
+
+The `v1alpha1` / `v1alpha2` suffix lives in the `GroupVersion.Version` string within each package — there are no version suffixes in Go package import paths. Package paths remain flat (e.g., `internal/gwexp/aiservice`).
+
+### Version Stability Plan
+
+When a package stabilizes to v1:
+
+1. **If the API is unchanged**: update `GroupVersion.Version` to `"v1"`.
+2. **If the API changed**: create a new canonical package under `internal/gwexp/<name>_v1/` with the `v1` GroupVersion, keep the alpha package for backward compatibility during a deprecation window, then remove the alpha package once all consumers have migrated.
+3. Each package is promoted independently — no single flag-day for all five.
+
+The `backendlb` package uses `v1alpha2` from `gateway.networking.k8s.io` (the upstream Gateway API group), following upstream stability. Promotion to `v1` depends on the upstream Gateway API specification.
+
 ## Acceptance
 
 Every change needs a spec, plan, and strict acceptance criteria. Record exact verification commands and results before marking work complete.
