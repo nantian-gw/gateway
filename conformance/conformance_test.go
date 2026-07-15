@@ -29,10 +29,10 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options, expandedAllFeatures := patchAllFeatures(options)
 
 	// Kind cluster timing: resource propagation delay requires generous timeouts.
-	options.TimeoutConfig.CreateTimeout = 30 * time.Second
-	options.TimeoutConfig.DeleteTimeout = 30 * time.Second
-	options.TimeoutConfig.GetTimeout = 30 * time.Second
-	options.TimeoutConfig.TestIsolation = 30 * time.Second
+	options.TimeoutConfig.CreateTimeout = 10 * time.Second
+	options.TimeoutConfig.DeleteTimeout = 10 * time.Second
+	options.TimeoutConfig.GetTimeout = 10 * time.Second
+	options.TimeoutConfig.TestIsolation = 10 * time.Second
 
 	options.SkipTests = []string{
 		// Not yet implemented or fixed:
