@@ -25,7 +25,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func TestBuildLoadsReferencedSecretsAndConfigMapsOnDemand(t *testing.T) {
@@ -421,7 +421,7 @@ func buildSupportScheme(t *testing.T) *runtime.Scheme {
 	must(gatewayv1alpha2.Install(scheme), t)
 	must(gatewayv1alpha3.Install(scheme), t)
 	must(gatewayv1beta1.Install(scheme), t)
-	must(backendlb.Install(scheme), t)
+	must(backend.Install(scheme), t)
 	must(mcsv1alpha1.AddToScheme(scheme), t)
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
@@ -474,7 +474,7 @@ func (c scopedBuildDependencyValidatingTranslatorClient) List(
 		if listOptions.Namespace == "" {
 			return fmt.Errorf("ReferenceGrant list must be namespace-scoped")
 		}
-	case *backendlb.BackendLBPolicyList:
+	case *backend.BackendLBPolicyList:
 		if listOptions.Namespace == "" {
 			return fmt.Errorf("BackendLBPolicy list must be namespace-scoped")
 		}
@@ -503,7 +503,7 @@ func (c fakeScopedPolicyListValidatingTranslatorClient) List(
 ) error {
 	namespace := listNamespace(opts)
 	switch typed := list.(type) {
-	case *backendlb.BackendLBPolicyList:
+	case *backend.BackendLBPolicyList:
 		if namespace == "" {
 			return fmt.Errorf("BackendLBPolicy list must be namespace-scoped")
 		}
@@ -555,7 +555,7 @@ func (c fakeIndexedPolicyListValidatingTranslatorClient) List(
 	opts ...client.ListOption,
 ) error {
 	switch typed := list.(type) {
-	case *backendlb.BackendLBPolicyList:
+	case *backend.BackendLBPolicyList:
 		if err := requireMatchingAnyField(opts, backendLBPolicyTargetRefIndex, c.expectedBackendLBTargets); err != nil {
 			return err
 		}
@@ -597,7 +597,7 @@ func requireMatchingAnyField(
 	return fmt.Errorf("field selector %q does not match any expected %s value", listOptions.FieldSelector.String(), field)
 }
 
-func testBackendLBPolicyTargetRefIndexKeys(policy *backendlb.BackendLBPolicy) []string {
+func testBackendLBPolicyTargetRefIndexKeys(policy *backend.BackendLBPolicy) []string {
 	if policy == nil {
 		return nil
 	}

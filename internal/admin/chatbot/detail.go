@@ -10,7 +10,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
@@ -41,7 +41,7 @@ func renderDetail(obj client.Object, entry IndexEntry) string {
 		return renderTokenPolicy(o)
 	case *wasmplugin.WasmPlugin:
 		return renderWasmPlugin(o)
-	case *backendlb.BackendLBPolicy:
+	case *backend.BackendLBPolicy:
 		return renderBackendLBPolicy(o)
 	default:
 		return fallbackDetail(entry)
@@ -278,7 +278,7 @@ func renderWasmPlugin(p *wasmplugin.WasmPlugin) string {
 	return sb.String()
 }
 
-func renderBackendLBPolicy(p *backendlb.BackendLBPolicy) string {
+func renderBackendLBPolicy(p *backend.BackendLBPolicy) string {
 	var sb strings.Builder
 	for _, tr := range p.Spec.TargetRefs {
 		fmt.Fprintf(&sb, "targetRef=%s/%s\n", sanitizeUntrusted(string(tr.Kind)), sanitizeUntrusted(string(tr.Name)))

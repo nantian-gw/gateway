@@ -18,7 +18,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
@@ -30,7 +30,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 		serviceImports     mcsv1alpha1.ServiceImportList
 		endpointSlices     discoveryv1.EndpointSliceList
 		backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy
-		backendLBPolicies  backendlb.BackendLBPolicyList
+		backendLBPolicies  backend.BackendLBPolicyList
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)

@@ -19,7 +19,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -294,7 +294,7 @@ func newInfrastructureBenchmarkScheme(tb testing.TB) *runtime.Scheme {
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, gatewayv1alpha2.Install)
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, gatewayv1alpha3.Install)
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, gatewayv1beta1.Install)
-	infrastructureBenchmarkMustAddToScheme(tb, scheme, backendlb.Install)
+	infrastructureBenchmarkMustAddToScheme(tb, scheme, backend.Install)
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, mcsv1alpha1.AddToScheme)
 	return scheme
 }

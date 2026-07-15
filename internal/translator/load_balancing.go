@@ -4,11 +4,11 @@ import (
 	"strings"
 
 	"github.com/nantian-gw/gateway/internal/lbpolicy"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func backendLoadBalancing(source *backendlb.LoadBalancingPolicy) *ir.LoadBalancingPolicy {
+func backendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancingPolicy {
 	if source == nil {
 		return nil
 	}
@@ -20,7 +20,7 @@ func backendLoadBalancing(source *backendlb.LoadBalancingPolicy) *ir.LoadBalanci
 		Type: string(lbpolicy.EffectiveLoadBalancingType(source)),
 	}
 
-	if out.Type == string(backendlb.LoadBalancingStrategyTypeConsistentHash) {
+	if out.Type == string(backend.LoadBalancingStrategyTypeConsistentHash) {
 		hash := source.ConsistentHash
 		headerName := ""
 		if hash != nil && hash.HeaderName != nil {

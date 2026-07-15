@@ -1,4 +1,4 @@
-package backendlb
+package backend
 
 import (
 	"testing"

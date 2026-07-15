@@ -17,7 +17,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/config"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
@@ -46,7 +46,7 @@ func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
 				name string
 				fn   func(*runtime.Scheme) error
 			}{
-				{name: "gateway.experimental/v1alpha2", fn: backendlb.Install},
+				{name: "gateway.experimental/v1alpha2", fn: backend.Install},
 				{name: "wasmplugin/v1alpha1", fn: wasmplugin.AddToScheme},
 				{name: "tokenpolicy/v1alpha1", fn: tokenpolicy.AddToScheme},
 			}...,

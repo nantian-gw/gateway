@@ -26,7 +26,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/nodeinfo"
 )
@@ -119,7 +119,7 @@ func resourceManagerForTestWithLogger(t *testing.T, logger *slog.Logger) *Resour
 	if err := gatewayv1alpha2.Install(scheme); err != nil {
 		t.Fatalf("install gateway v1alpha2 scheme: %v", err)
 	}
-	if err := backendlb.Install(scheme); err != nil {
+	if err := backend.Install(scheme); err != nil {
 		t.Fatalf("install backendlb v1alpha2 scheme: %v", err)
 	}
 	if err := gatewayv1alpha3.Install(scheme); err != nil {
@@ -207,7 +207,7 @@ type noMatchListClient struct {
 
 func (c noMatchListClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	switch list.(type) {
-	case *backendlb.BackendLBPolicyList:
+	case *backend.BackendLBPolicyList:
 		return &meta.NoKindMatchError{
 			GroupKind:        schema.GroupKind{Group: gatewayv1.GroupName, Kind: "BackendLBPolicy"},
 			SearchedVersions: []string{"v1alpha2"},

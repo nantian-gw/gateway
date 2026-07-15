@@ -4,18 +4,18 @@ import (
 	"testing"
 	"time"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestPolicyPrecedesUsesOldestTimestampFirst(t *testing.T) {
-	older := backendlb.BackendLBPolicy{
+	older := backend.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "newer-name",
 			CreationTimestamp: metav1.NewTime(time.Unix(10, 0)),
 		},
 	}
-	newer := backendlb.BackendLBPolicy{
+	newer := backend.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "older-name",
 			CreationTimestamp: metav1.NewTime(time.Unix(20, 0)),
@@ -31,13 +31,13 @@ func TestPolicyPrecedesUsesOldestTimestampFirst(t *testing.T) {
 }
 
 func TestPolicyPrecedesUsesNameAsTieBreaker(t *testing.T) {
-	left := backendlb.BackendLBPolicy{
+	left := backend.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "alpha",
 			CreationTimestamp: metav1.NewTime(time.Unix(10, 0)),
 		},
 	}
-	right := backendlb.BackendLBPolicy{
+	right := backend.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "beta",
 			CreationTimestamp: metav1.NewTime(time.Unix(10, 0)),

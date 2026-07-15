@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 type fakeFieldIndexer struct {
@@ -35,10 +35,10 @@ func TestSetupIndexesIgnoresMissingBackendLBPolicyCRD(t *testing.T) {
 		errs: map[string]error{
 			backendLBPolicyTargetRefIndex: &metav1.NoKindMatchError{
 				GroupKind: schema.GroupKind{
-					Group: backendlb.GroupVersion.Group,
+					Group: backend.GroupVersion.Group,
 					Kind:  "BackendLBPolicy",
 				},
-				SearchedVersions: []string{backendlb.GroupVersion.Version},
+				SearchedVersions: []string{backend.GroupVersion.Version},
 			},
 		},
 	}

@@ -26,7 +26,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -704,10 +704,10 @@ func TestSnapshotReconcileRequestsQueueServiceImportEndpointSliceBackendRefresh(
 
 func TestSnapshotReconcileRequestsQueueBackendLBPolicyNamespaceRefresh(t *testing.T) {
 	syncer := newIndexedWatchTestSyncer(t)
-	policy := &backendlb.BackendLBPolicy{
+	policy := &backend.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "default"},
-		Spec: backendlb.BackendLBPolicySpec{
-			TargetRefs: []backendlb.LocalPolicyTargetReference{
+		Spec: backend.BackendLBPolicySpec{
+			TargetRefs: []backend.LocalPolicyTargetReference{
 				{
 					Kind: "Service",
 					Name: "echo",
@@ -1830,7 +1830,7 @@ func newIndexedWatchTestSyncer(t *testing.T, objects ...client.Object) *Syncer {
 	mustAddToScheme(t, scheme, gatewayv1.Install)
 	mustAddToScheme(t, scheme, gatewayv1alpha2.Install)
 	mustAddToScheme(t, scheme, gatewayv1alpha3.Install)
-	mustAddToScheme(t, scheme, backendlb.Install)
+	mustAddToScheme(t, scheme, backend.Install)
 
 	clientBuilder := fake.NewClientBuilder().
 		WithScheme(scheme).

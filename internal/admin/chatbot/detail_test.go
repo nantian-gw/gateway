@@ -11,7 +11,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
@@ -172,10 +172,10 @@ func TestRenderDetail_WasmPlugin(t *testing.T) {
 }
 
 func TestRenderDetail_BackendLBPolicy(t *testing.T) {
-	typ := backendlb.LoadBalancingStrategyTypeConsistentHash
-	lb := &backendlb.BackendLBPolicy{
+	typ := backend.LoadBalancingStrategyTypeConsistentHash
+	lb := &backend.BackendLBPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "lb", Namespace: "ai"},
-		Spec:       backendlb.BackendLBPolicySpec{LoadBalancing: &backendlb.LoadBalancingPolicy{Type: &typ}},
+		Spec:       backend.BackendLBPolicySpec{LoadBalancing: &backend.LoadBalancingPolicy{Type: &typ}},
 	}
 	out := renderDetail(lb, IndexEntry{})
 	if !strings.Contains(out, "lb=ConsistentHash") {

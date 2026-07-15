@@ -16,7 +16,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 
@@ -185,7 +185,7 @@ func collectRouteTrafficRefs(
 func collectBackendLBPolicyTrafficRefs(
 	services map[string]client.ObjectKey,
 	serviceImports map[string]client.ObjectKey,
-	policies []backendlb.BackendLBPolicy,
+	policies []backend.BackendLBPolicy,
 ) {
 	for _, policy := range policies {
 		for _, targetRef := range policy.Spec.TargetRefs {

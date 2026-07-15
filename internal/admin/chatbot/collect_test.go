@@ -14,7 +14,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
@@ -32,7 +32,7 @@ func fullScheme() *runtime.Scheme {
 	utilruntime.Must(aiservice.AddToScheme(s))
 	utilruntime.Must(tokenpolicy.AddToScheme(s))
 	utilruntime.Must(wasmplugin.AddToScheme(s))
-	utilruntime.Must(backendlb.Install(s))
+	utilruntime.Must(backend.Install(s))
 	return s
 }
 
@@ -119,7 +119,7 @@ func TestCollectIndex_FeatureGatedPresent(t *testing.T) {
 	}
 	tp := &tokenpolicy.TokenPolicy{ObjectMeta: metav1.ObjectMeta{Name: "tp", Namespace: "ai"}}
 	wp := &wasmplugin.WasmPlugin{ObjectMeta: metav1.ObjectMeta{Name: "wp", Namespace: "ai"}}
-	lb := &backendlb.BackendLBPolicy{ObjectMeta: metav1.ObjectMeta{Name: "lb", Namespace: "ai"}}
+	lb := &backend.BackendLBPolicy{ObjectMeta: metav1.ObjectMeta{Name: "lb", Namespace: "ai"}}
 
 	cl := fake.NewClientBuilder().WithScheme(fullScheme()).WithObjects(managedGatewayClass(), ai, tp, wp, lb).Build()
 

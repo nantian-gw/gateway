@@ -17,14 +17,14 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 	scheme := runtime.NewScheme()
 	must(gatewayv1.Install(scheme), t)
 	must(gatewayv1alpha2.Install(scheme), t)
-	must(backendlb.Install(scheme), t)
+	must(backend.Install(scheme), t)
 	must(gatewayv1alpha3.Install(scheme), t)
 	must(gatewayv1beta1.Install(scheme), t)
 	must(corev1.AddToScheme(scheme), t)
@@ -44,10 +44,10 @@ func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 					Ports: []corev1.ServicePort{{Name: "http", Port: 8080}},
 				},
 			},
-			&backendlb.BackendLBPolicy{
+			&backend.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "orders-sticky", Namespace: "default"},
-				Spec: backendlb.BackendLBPolicySpec{
-					TargetRefs: []backendlb.LocalPolicyTargetReference{{
+				Spec: backend.BackendLBPolicySpec{
+					TargetRefs: []backend.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "orders",
@@ -100,7 +100,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 	scheme := runtime.NewScheme()
 	must(gatewayv1.Install(scheme), t)
 	must(gatewayv1alpha2.Install(scheme), t)
-	must(backendlb.Install(scheme), t)
+	must(backend.Install(scheme), t)
 	must(gatewayv1alpha3.Install(scheme), t)
 	must(gatewayv1beta1.Install(scheme), t)
 	must(corev1.AddToScheme(scheme), t)
@@ -121,10 +121,10 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 					}},
 				},
 			},
-			&backendlb.BackendLBPolicy{
+			&backend.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "payments-sticky", Namespace: "default"},
-				Spec: backendlb.BackendLBPolicySpec{
-					TargetRefs: []backendlb.LocalPolicyTargetReference{{
+				Spec: backend.BackendLBPolicySpec{
+					TargetRefs: []backend.LocalPolicyTargetReference{{
 						Group: mcsv1alpha1.GroupName,
 						Kind:  "ServiceImport",
 						Name:  "payments",
@@ -163,14 +163,14 @@ func TestBuildSnapshotIncludesBackendLBPolicyConsistentHash(t *testing.T) {
 	scheme := runtime.NewScheme()
 	must(gatewayv1.Install(scheme), t)
 	must(gatewayv1alpha2.Install(scheme), t)
-	must(backendlb.Install(scheme), t)
+	must(backend.Install(scheme), t)
 	must(gatewayv1alpha3.Install(scheme), t)
 	must(gatewayv1beta1.Install(scheme), t)
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	strategyType := backendlb.LoadBalancingStrategyTypeConsistentHash
-	keyType := backendlb.HashKeyTypeHeader
+	strategyType := backend.LoadBalancingStrategyTypeConsistentHash
+	keyType := backend.HashKeyTypeHeader
 	headerName := "x-user-id"
 
 	client := newTranslatorClientBuilder(scheme).
@@ -182,17 +182,17 @@ func TestBuildSnapshotIncludesBackendLBPolicyConsistentHash(t *testing.T) {
 					Ports: []corev1.ServicePort{{Name: "http", Port: 8080}},
 				},
 			},
-			&backendlb.BackendLBPolicy{
+			&backend.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "orders-hash", Namespace: "default"},
-				Spec: backendlb.BackendLBPolicySpec{
-					TargetRefs: []backendlb.LocalPolicyTargetReference{{
+				Spec: backend.BackendLBPolicySpec{
+					TargetRefs: []backend.LocalPolicyTargetReference{{
 						Group: "",
 						Kind:  "Service",
 						Name:  "orders",
 					}},
-					LoadBalancing: &backendlb.LoadBalancingPolicy{
+					LoadBalancing: &backend.LoadBalancingPolicy{
 						Type: &strategyType,
-						ConsistentHash: &backendlb.ConsistentHashPolicy{
+						ConsistentHash: &backend.ConsistentHashPolicy{
 							KeyType:    &keyType,
 							HeaderName: &headerName,
 						},

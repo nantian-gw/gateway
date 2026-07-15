@@ -21,7 +21,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
 )
@@ -523,7 +523,7 @@ func newSnapshotBenchmarkScheme(b *testing.B) *runtime.Scheme {
 	snapshotBenchmarkMustAddToScheme(b, scheme, gatewayv1alpha2.Install)
 	snapshotBenchmarkMustAddToScheme(b, scheme, gatewayv1alpha3.Install)
 	snapshotBenchmarkMustAddToScheme(b, scheme, gatewayv1beta1.Install)
-	snapshotBenchmarkMustAddToScheme(b, scheme, backendlb.Install)
+	snapshotBenchmarkMustAddToScheme(b, scheme, backend.Install)
 	snapshotBenchmarkMustAddToScheme(b, scheme, mcsv1alpha1.AddToScheme)
 	return scheme
 }

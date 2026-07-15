@@ -20,7 +20,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func BenchmarkReconcileFullStatusRouteFanout(b *testing.B) {
@@ -289,7 +289,7 @@ func newBackendPolicyStatusBenchmarkClient(b *testing.B, policyCount int) client
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
 		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
-		WithIndex(&backendlb.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
+		WithIndex(&backend.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
 		WithObjects(objects...).
 		Build()
 }
@@ -385,7 +385,7 @@ func backendPolicyBenchmarkObjects(b *testing.B, policyCount int) []client.Objec
 
 	for i := 0; i < policyCount; i++ {
 		serviceName := "echo-" + strconv.Itoa(i)
-		lbType := backendlb.LoadBalancingStrategyTypeRoundRobin
+		lbType := backend.LoadBalancingStrategyTypeRoundRobin
 		objects = append(
 			objects,
 			&corev1.Service{
@@ -417,14 +417,14 @@ func backendPolicyBenchmarkObjects(b *testing.B, policyCount int) []client.Objec
 				},
 			},
 			backendPolicyBenchmarkTLSPolicy(b, serviceName+"-tls", serviceName, caBundle),
-			&backendlb.BackendLBPolicy{
+			&backend.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: serviceName + "-lb", Namespace: "default"},
-				Spec: backendlb.BackendLBPolicySpec{
-					TargetRefs: []backendlb.LocalPolicyTargetReference{{
+				Spec: backend.BackendLBPolicySpec{
+					TargetRefs: []backend.LocalPolicyTargetReference{{
 						Kind: "Service",
 						Name: gatewayv1.ObjectName(serviceName),
 					}},
-					LoadBalancing: &backendlb.LoadBalancingPolicy{
+					LoadBalancing: &backend.LoadBalancingPolicy{
 						Type: &lbType,
 					},
 				},
@@ -657,7 +657,7 @@ func newStatusBenchmarkScheme(b *testing.B) *runtime.Scheme {
 	benchmarkMustAddToScheme(b, scheme, apiextensionsv1.AddToScheme)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1alpha2.Install)
-	benchmarkMustAddToScheme(b, scheme, backendlb.Install)
+	benchmarkMustAddToScheme(b, scheme, backend.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1alpha3.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1beta1.Install)
 	benchmarkMustAddToScheme(b, scheme, mcsv1alpha1.AddToScheme)

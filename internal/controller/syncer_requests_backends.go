@@ -13,7 +13,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func endpointSliceBackendReconcileRequests(slice *discoveryv1.EndpointSlice) []reconcile.Request {
@@ -228,7 +228,7 @@ func splitNamespacedIndexValue(value string) (string, string) {
 	return "", value
 }
 
-func backendLBPolicyReconcileRequests(policy *backendlb.BackendLBPolicy) []reconcile.Request {
+func backendLBPolicyReconcileRequests(policy *backend.BackendLBPolicy) []reconcile.Request {
 	if policy == nil {
 		return nil
 	}

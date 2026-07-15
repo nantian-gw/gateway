@@ -19,7 +19,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 
@@ -46,7 +46,7 @@ type clusterState struct {
 	tcpRoutes          []gatewayv1alpha2.TCPRoute
 	udpRoutes          []gatewayv1alpha2.UDPRoute
 	tlsRoutes          []gatewayv1alpha2.TLSRoute
-	backendLBPolicies  []backendlb.BackendLBPolicy
+	backendLBPolicies  []backend.BackendLBPolicy
 	backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy
 	listenerSets       []gatewayv1.ListenerSet
 	listenerSetByKey   map[string]gatewayv1.ListenerSet

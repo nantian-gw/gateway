@@ -19,7 +19,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
@@ -142,7 +142,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		tlsRoutes           gatewayv1alpha2.TLSRouteList
 		referenceGrants     []gatewayv1beta1.ReferenceGrant
 		backendTLSPolicies  []gatewayv1alpha3.BackendTLSPolicy
-		backendLBPolicies   []backendlb.BackendLBPolicy
+		backendLBPolicies   []backend.BackendLBPolicy
 		routePolicies       []routepolicy.RoutePolicy
 		aiServices          []aiservice.AIService
 		tokenPolicies       []tokenpolicy.TokenPolicy

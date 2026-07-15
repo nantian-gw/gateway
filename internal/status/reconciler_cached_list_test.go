@@ -19,7 +19,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/resources"
 )
 
@@ -749,7 +749,7 @@ func TestReconcileLoadsReferencedServicesAndServiceImportsOnDemand(t *testing.T)
 			&gatewayv1.GatewayClass{},
 			&gatewayv1.Gateway{},
 			&gatewayv1.HTTPRoute{},
-			&backendlb.BackendLBPolicy{},
+			&backend.BackendLBPolicy{},
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
@@ -807,10 +807,10 @@ func TestReconcileLoadsReferencedServicesAndServiceImportsOnDemand(t *testing.T)
 					}},
 				},
 			},
-			&backendlb.BackendLBPolicy{
+			&backend.BackendLBPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "payments-sticky", Namespace: "default", Generation: 1},
-				Spec: backendlb.BackendLBPolicySpec{
-					TargetRefs: []backendlb.LocalPolicyTargetReference{{
+				Spec: backend.BackendLBPolicySpec{
+					TargetRefs: []backend.LocalPolicyTargetReference{{
 						Group: mcsv1alpha1.GroupName,
 						Kind:  "ServiceImport",
 						Name:  "payments",
@@ -855,14 +855,14 @@ func TestReconcileLoadsReferencedServicesAndServiceImportsOnDemand(t *testing.T)
 	}
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 1)
 
-	var policy backendlb.BackendLBPolicy
+	var policy backend.BackendLBPolicy
 	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "payments-sticky"}, &policy); err != nil {
 		t.Fatalf("Get BackendLBPolicy returned error: %v", err)
 	}
 	if len(policy.Status.Ancestors) != 1 {
 		t.Fatalf("expected 1 ancestor, got %d", len(policy.Status.Ancestors))
 	}
-	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backendlb.PolicyConditionAccepted), metav1.ConditionTrue, string(backendlb.PolicyReasonAccepted), 1)
+	assertCondition(t, policy.Status.Ancestors[0].Conditions, string(backend.PolicyConditionAccepted), metav1.ConditionTrue, string(backend.PolicyReasonAccepted), 1)
 	assertCondition(t, policy.Status.Ancestors[0].Conditions, backendLBPolicyConditionResolvedRefs, metav1.ConditionTrue, backendLBPolicyReasonResolvedRefs, 1)
 }
 
@@ -1103,7 +1103,7 @@ func blockedStatusListTypesForFullReconcile() map[reflect.Type]string {
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):          "full reconcile should not use the object reader for UDPRoute list scans",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):          "full reconcile should not use the object reader for TLSRoute list scans",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}):     "full reconcile should not use the object reader for ReferenceGrant list scans",
-		reflect.TypeOf(&backendlb.BackendLBPolicyList{}): "full reconcile should not use the object reader for BackendLBPolicy list scans",
+		reflect.TypeOf(&backend.BackendLBPolicyList{}): "full reconcile should not use the object reader for BackendLBPolicy list scans",
 		reflect.TypeOf(&unstructured.UnstructuredList{}):         "full reconcile should not use the object reader for BackendTLSPolicy list scans",
 		reflect.TypeOf(&corev1.ServiceList{}):                    "full reconcile should not use the object reader for Service list scans",
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):         "full reconcile should not use the object reader for EndpointSlice list scans",

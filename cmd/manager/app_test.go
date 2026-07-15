@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/nantian-gw/gateway/internal/config"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
@@ -27,11 +27,11 @@ func TestBuildSchemeIncludesBackendLBPolicy(t *testing.T) {
 	}
 
 	want := schema.GroupVersionKind{
-		Group:   backendlb.GroupVersion.Group,
-		Version: backendlb.GroupVersion.Version,
+		Group:   backend.GroupVersion.Group,
+		Version: backend.GroupVersion.Version,
 		Kind:    "BackendLBPolicy",
 	}
-	gvks, _, err := scheme.ObjectKinds(&backendlb.BackendLBPolicy{})
+	gvks, _, err := scheme.ObjectKinds(&backend.BackendLBPolicy{})
 	if err != nil {
 		t.Fatalf("BackendLBPolicy is not registered in the manager scheme: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestBuildSchemeFeaturesDisabled(t *testing.T) {
 	}
 
 	// BackendLBPolicy should NOT be registered when feature is disabled
-	_, _, err = scheme.ObjectKinds(&backendlb.BackendLBPolicy{})
+	_, _, err = scheme.ObjectKinds(&backend.BackendLBPolicy{})
 	if err == nil {
 		t.Fatal("BackendLBPolicy should not be registered when enableExperimentalGateway is false")
 	}
@@ -176,7 +176,7 @@ func TestBuildSchemeFeatureFlagsGated(t *testing.T) {
 	}
 
 	// BackendLBPolicy should be registered
-	_, _, err = scheme.ObjectKinds(&backendlb.BackendLBPolicy{})
+	_, _, err = scheme.ObjectKinds(&backend.BackendLBPolicy{})
 	if err != nil {
 		t.Fatalf("BackendLBPolicy should be registered: %v", err)
 	}

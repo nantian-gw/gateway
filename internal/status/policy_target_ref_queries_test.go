@@ -17,7 +17,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 type fakeFieldIndexer struct {
@@ -83,10 +83,10 @@ func TestSetupIndexesIgnoresMissingStatusBackendLBPolicyCRD(t *testing.T) {
 		errs: map[string]error{
 			statusBackendLBPolicyTargetRefIndex: &meta.NoKindMatchError{
 				GroupKind: schema.GroupKind{
-					Group: backendlb.GroupVersion.Group,
+					Group: backend.GroupVersion.Group,
 					Kind:  "BackendLBPolicy",
 				},
-				SearchedVersions: []string{backendlb.GroupVersion.Version},
+				SearchedVersions: []string{backend.GroupVersion.Version},
 			},
 		},
 	}
@@ -168,9 +168,9 @@ func TestStatusBackendPolicyTargetRefIndexKeysDeduplicateAndSortValues(t *testin
 		t.Fatalf("statusBackendTLSPolicyTargetRefIndexKeys() = %#v, want %#v", gotTLS, wantTLS)
 	}
 
-	gotLB := statusBackendLBPolicyTargetRefIndexKeys(&backendlb.BackendLBPolicy{
-		Spec: backendlb.BackendLBPolicySpec{
-			TargetRefs: []backendlb.LocalPolicyTargetReference{
+	gotLB := statusBackendLBPolicyTargetRefIndexKeys(&backend.BackendLBPolicy{
+		Spec: backend.BackendLBPolicySpec{
+			TargetRefs: []backend.LocalPolicyTargetReference{
 				{Group: mcsv1alpha1.GroupName, Kind: "ServiceImport", Name: "imported"},
 				{Kind: "Service", Name: "echo"},
 				{Kind: "Service", Name: "echo"},
@@ -287,7 +287,7 @@ func TestBackendPolicyTouchesKeys(t *testing.T) {
 		t.Fatal("expected BackendTLSPolicy to touch orders service")
 	}
 
-	lbRefs := []backendlb.LocalPolicyTargetReference{
+	lbRefs := []backend.LocalPolicyTargetReference{
 		{Group: mcsv1alpha1.GroupName, Kind: "ServiceImport", Name: "catalog"},
 	}
 	if !backendLBPolicyTouchesKeys("apps", lbRefs, serviceKeys, serviceImportKeys) {
@@ -296,7 +296,7 @@ func TestBackendPolicyTouchesKeys(t *testing.T) {
 
 	if backendLBPolicyTouchesKeys(
 		"apps",
-		[]backendlb.LocalPolicyTargetReference{{Kind: "Service", Name: "missing"}},
+		[]backend.LocalPolicyTargetReference{{Kind: "Service", Name: "missing"}},
 		serviceKeys,
 		serviceImportKeys,
 	) {

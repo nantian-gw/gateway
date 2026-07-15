@@ -14,7 +14,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 )
 
@@ -35,7 +35,7 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	}
 	if err := indexer.IndexField(
 		ctx,
-		&backendlb.BackendLBPolicy{},
+		&backend.BackendLBPolicy{},
 		backendLBPolicyTargetRefIndex,
 		backendLBPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
@@ -76,7 +76,7 @@ func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 }
 
 func backendLBPolicyTargetRefIndexKeys(object client.Object) []string {
-	policy, ok := object.(*backendlb.BackendLBPolicy)
+	policy, ok := object.(*backend.BackendLBPolicy)
 	if !ok || policy == nil {
 		return nil
 	}
@@ -110,7 +110,7 @@ func backendTLSPolicyTargetRefValues(
 }
 
 func backendLBPolicyTargetRefValues(
-	targetRefs []backendlb.LocalPolicyTargetReference,
+	targetRefs []backend.LocalPolicyTargetReference,
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {

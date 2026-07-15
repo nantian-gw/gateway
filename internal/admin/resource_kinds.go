@@ -13,7 +13,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
@@ -129,8 +129,8 @@ var supportedResourceKinds = []resourceKindSpec{
 			Namespaced:  true,
 		},
 		aliases:    []string{"backendlbpolicy", "backendlbpolicies", "blbpolicy"},
-		newObject:  func() client.Object { return &backendlb.BackendLBPolicy{} },
-		newList:    func() client.ObjectList { return &backendlb.BackendLBPolicyList{} },
+		newObject:  func() client.Object { return &backend.BackendLBPolicy{} },
+		newList:    func() client.ObjectList { return &backend.BackendLBPolicyList{} },
 		namespaced: true,
 	},
 	{

@@ -4,23 +4,23 @@ import (
 	"strings"
 	"testing"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func TestValidateLoadBalancing(t *testing.T) {
-	roundRobin := backendlb.LoadBalancingStrategyTypeRoundRobin
-	leastRequest := backendlb.LoadBalancingStrategyTypeLeastRequest
-	random := backendlb.LoadBalancingStrategyTypeRandom
-	consistentHash := backendlb.LoadBalancingStrategyTypeConsistentHash
-	sourceIP := backendlb.HashKeyTypeSourceIP
-	header := backendlb.HashKeyTypeHeader
-	hostname := backendlb.HashKeyTypeHostname
-	unsupportedType := backendlb.LoadBalancingStrategyType("Maglev")
-	unsupportedKey := backendlb.HashKeyType("Cookie")
+	roundRobin := backend.LoadBalancingStrategyTypeRoundRobin
+	leastRequest := backend.LoadBalancingStrategyTypeLeastRequest
+	random := backend.LoadBalancingStrategyTypeRandom
+	consistentHash := backend.LoadBalancingStrategyTypeConsistentHash
+	sourceIP := backend.HashKeyTypeSourceIP
+	header := backend.HashKeyTypeHeader
+	hostname := backend.HashKeyTypeHostname
+	unsupportedType := backend.LoadBalancingStrategyType("Maglev")
+	unsupportedKey := backend.HashKeyType("Cookie")
 
 	tests := []struct {
 		name    string
-		policy  *backendlb.LoadBalancingPolicy
+		policy  *backend.LoadBalancingPolicy
 		wantErr string
 	}{
 		{
@@ -28,58 +28,58 @@ func TestValidateLoadBalancing(t *testing.T) {
 		},
 		{
 			name:   "empty policy defaults to round robin",
-			policy: &backendlb.LoadBalancingPolicy{},
+			policy: &backend.LoadBalancingPolicy{},
 		},
 		{
 			name: "round robin rejects consistent hash config",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &roundRobin,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &sourceIP},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &sourceIP},
 			},
 			wantErr: "round robin strategy does not accept consistentHash config",
 		},
 		{
 			name: "least request rejects consistent hash config",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &leastRequest,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &sourceIP},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &sourceIP},
 			},
 			wantErr: "least request strategy does not accept consistentHash config",
 		},
 		{
 			name: "random rejects consistent hash config",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &random,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &sourceIP},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &sourceIP},
 			},
 			wantErr: "random strategy does not accept consistentHash config",
 		},
 		{
 			name: "consistent hash requires config",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type: &consistentHash,
 			},
 			wantErr: "consistent hash strategy requires consistentHash config",
 		},
 		{
 			name: "consistent hash source ip is valid without header name",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &consistentHash,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &sourceIP},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &sourceIP},
 			},
 		},
 		{
 			name: "consistent hash hostname is valid without header name",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &consistentHash,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &hostname},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &hostname},
 			},
 		},
 		{
 			name: "consistent hash source ip rejects header name",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type: &consistentHash,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{
+				ConsistentHash: &backend.ConsistentHashPolicy{
 					KeyType:    &sourceIP,
 					HeaderName: ptr("x-session"),
 				},
@@ -88,17 +88,17 @@ func TestValidateLoadBalancing(t *testing.T) {
 		},
 		{
 			name: "consistent hash header requires header name",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &consistentHash,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &header},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &header},
 			},
 			wantErr: "header strategy requires headerName",
 		},
 		{
 			name: "consistent hash header accepts non-empty header name",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type: &consistentHash,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{
+				ConsistentHash: &backend.ConsistentHashPolicy{
 					KeyType:    &header,
 					HeaderName: ptr("x-session"),
 				},
@@ -106,16 +106,16 @@ func TestValidateLoadBalancing(t *testing.T) {
 		},
 		{
 			name: "unsupported strategy is rejected",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type: &unsupportedType,
 			},
 			wantErr: "load balancing type \"Maglev\" is not supported",
 		},
 		{
 			name: "unsupported consistent hash key is rejected",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type:           &consistentHash,
-				ConsistentHash: &backendlb.ConsistentHashPolicy{KeyType: &unsupportedKey},
+				ConsistentHash: &backend.ConsistentHashPolicy{KeyType: &unsupportedKey},
 			},
 			wantErr: "consistent hash key type \"Cookie\" is not supported",
 		},
@@ -141,12 +141,12 @@ func TestValidateLoadBalancing(t *testing.T) {
 }
 
 func TestEffectiveLoadBalancingType(t *testing.T) {
-	randomWithSpaces := backendlb.LoadBalancingStrategyType(" Random ")
+	randomWithSpaces := backend.LoadBalancingStrategyType(" Random ")
 
 	tests := []struct {
 		name   string
-		policy *backendlb.LoadBalancingPolicy
-		want   backendlb.LoadBalancingStrategyType
+		policy *backend.LoadBalancingPolicy
+		want   backend.LoadBalancingStrategyType
 	}{
 		{
 			name: "nil policy returns empty type",
@@ -154,22 +154,22 @@ func TestEffectiveLoadBalancingType(t *testing.T) {
 		},
 		{
 			name:   "empty policy defaults to round robin",
-			policy: &backendlb.LoadBalancingPolicy{},
-			want:   backendlb.LoadBalancingStrategyTypeRoundRobin,
+			policy: &backend.LoadBalancingPolicy{},
+			want:   backend.LoadBalancingStrategyTypeRoundRobin,
 		},
 		{
 			name: "explicit type is trimmed",
-			policy: &backendlb.LoadBalancingPolicy{
+			policy: &backend.LoadBalancingPolicy{
 				Type: &randomWithSpaces,
 			},
-			want: backendlb.LoadBalancingStrategyTypeRandom,
+			want: backend.LoadBalancingStrategyTypeRandom,
 		},
 		{
 			name: "consistent hash config implies consistent hash strategy",
-			policy: &backendlb.LoadBalancingPolicy{
-				ConsistentHash: &backendlb.ConsistentHashPolicy{},
+			policy: &backend.LoadBalancingPolicy{
+				ConsistentHash: &backend.ConsistentHashPolicy{},
 			},
-			want: backendlb.LoadBalancingStrategyTypeConsistentHash,
+			want: backend.LoadBalancingStrategyTypeConsistentHash,
 		},
 	}
 
@@ -183,15 +183,15 @@ func TestEffectiveLoadBalancingType(t *testing.T) {
 }
 
 func TestEffectiveConsistentHashKeyType(t *testing.T) {
-	headerWithSpaces := backendlb.HashKeyType(" Header ")
+	headerWithSpaces := backend.HashKeyType(" Header ")
 
 	if got := EffectiveConsistentHashKeyType(nil); got != "" {
 		t.Fatalf("EffectiveConsistentHashKeyType(nil) = %q, want empty", got)
 	}
-	if got := EffectiveConsistentHashKeyType(&backendlb.ConsistentHashPolicy{}); got != "" {
+	if got := EffectiveConsistentHashKeyType(&backend.ConsistentHashPolicy{}); got != "" {
 		t.Fatalf("EffectiveConsistentHashKeyType(empty) = %q, want empty", got)
 	}
-	if got := EffectiveConsistentHashKeyType(&backendlb.ConsistentHashPolicy{KeyType: &headerWithSpaces}); got != backendlb.HashKeyTypeHeader {
-		t.Fatalf("EffectiveConsistentHashKeyType() = %q, want %q", got, backendlb.HashKeyTypeHeader)
+	if got := EffectiveConsistentHashKeyType(&backend.ConsistentHashPolicy{KeyType: &headerWithSpaces}); got != backend.HashKeyTypeHeader {
+		t.Fatalf("EffectiveConsistentHashKeyType() = %q, want %q", got, backend.HashKeyTypeHeader)
 	}
 }

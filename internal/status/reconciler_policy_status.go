@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func (r *Reconciler) reconcileBackendTLSPolicyStatus(
@@ -45,7 +45,7 @@ func (r *Reconciler) reconcileBackendLBPolicyStatus(
 	eval backendLBPolicyEvaluation,
 ) error {
 	return r.retryStatusUpdate(ctx, statusUpdateResourceBackendLBPolicy, func() error {
-		var current backendlb.BackendLBPolicy
+		var current backend.BackendLBPolicy
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil

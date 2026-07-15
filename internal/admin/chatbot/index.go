@@ -15,7 +15,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
@@ -393,10 +393,10 @@ func collectBackendLBPolicies(ctx context.Context, cl client.Client, idx *Cluste
 	if logger == nil {
 		logger = slog.Default()
 	}
-	if !recognizes(cl, backendlb.GroupVersion, "BackendLBPolicy") {
+	if !recognizes(cl, backend.GroupVersion, "BackendLBPolicy") {
 		return
 	}
-	var list backendlb.BackendLBPolicyList
+	var list backend.BackendLBPolicyList
 	if err := cl.List(ctx, &list); err != nil {
 		logger.Warn("chatbot rag: list backendlbpolicies", "error", err)
 		return

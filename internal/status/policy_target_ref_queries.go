@@ -16,7 +16,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 const (
@@ -35,7 +35,7 @@ func setupPolicyTargetRefIndexes(ctx context.Context, indexer client.FieldIndexe
 	}
 	if err := indexer.IndexField(
 		ctx,
-		&backendlb.BackendLBPolicy{},
+		&backend.BackendLBPolicy{},
 		statusBackendLBPolicyTargetRefIndex,
 		statusBackendLBPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
@@ -67,7 +67,7 @@ func statusBackendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 }
 
 func statusBackendLBPolicyTargetRefIndexKeys(object client.Object) []string {
-	policy, ok := object.(*backendlb.BackendLBPolicy)
+	policy, ok := object.(*backend.BackendLBPolicy)
 	if !ok || policy == nil {
 		return nil
 	}
@@ -93,7 +93,7 @@ func statusBackendTLSPolicyTargetRefValues(
 }
 
 func statusBackendLBPolicyTargetRefValues(
-	targetRefs []backendlb.LocalPolicyTargetReference,
+	targetRefs []backend.LocalPolicyTargetReference,
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {
@@ -118,7 +118,7 @@ func (r *Reconciler) loadRouteReferencedBackendPolicies(
 }
 
 func (r *Reconciler) loadAllBackendPolicies(ctx context.Context, state *clusterState) error {
-	var backendLBPolicies backendlb.BackendLBPolicyList
+	var backendLBPolicies backend.BackendLBPolicyList
 	if err := r.listReader.List(ctx, &backendLBPolicies); err != nil && !apierrors.IsNotFound(err) && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 		return err
 	}
@@ -258,13 +258,13 @@ func loadBackendLBPoliciesForNamespaces(
 	namespaces []string,
 	serviceKeys map[string]client.ObjectKey,
 	serviceImportKeys map[string]client.ObjectKey,
-) ([]backendlb.BackendLBPolicy, error) {
+) ([]backend.BackendLBPolicy, error) {
 	if len(namespaces) == 0 {
 		return nil, nil
 	}
 
 	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
-	policies := make([]backendlb.BackendLBPolicy, 0)
+	policies := make([]backend.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 	for _, namespace := range namespaces {
 		items, err := listBackendLBPoliciesForNamespaceTargets(
@@ -358,7 +358,7 @@ func listBackendLBPoliciesForNamespaceTargets(
 	reader client.Reader,
 	namespace string,
 	targetValues []string,
-) ([]backendlb.BackendLBPolicy, error) {
+) ([]backend.BackendLBPolicy, error) {
 	if len(targetValues) == 0 {
 		return nil, nil
 	}
@@ -371,7 +371,7 @@ func listBackendLBPoliciesForNamespaceTargets(
 		return items, nil
 	}
 
-	var list backendlb.BackendLBPolicyList
+	var list backend.BackendLBPolicyList
 	if err := reader.List(ctx, &list, client.InNamespace(namespace)); err != nil {
 		return nil, err
 	}
@@ -383,12 +383,12 @@ func listBackendLBPoliciesByTargetRefIndex(
 	reader client.Reader,
 	namespace string,
 	targetValues []string,
-) ([]backendlb.BackendLBPolicy, bool, error) {
-	policies := make([]backendlb.BackendLBPolicy, 0)
+) ([]backend.BackendLBPolicy, bool, error) {
+	policies := make([]backend.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
-		var list backendlb.BackendLBPolicyList
+		var list backend.BackendLBPolicyList
 		if err := reader.List(
 			ctx,
 			&list,
@@ -438,7 +438,7 @@ func backendTLSPolicyTouchesKeys(
 
 func backendLBPolicyTouchesKeys(
 	namespace string,
-	targetRefs []backendlb.LocalPolicyTargetReference,
+	targetRefs []backend.LocalPolicyTargetReference,
 	serviceKeys map[string]client.ObjectKey,
 	serviceImportKeys map[string]client.ObjectKey,
 ) bool {

@@ -10,7 +10,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -22,7 +22,7 @@ func translateBackends(
 	slices []discoveryv1.EndpointSlice,
 	configMaps []corev1.ConfigMap,
 	backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy,
-	backendLBPolicies []backendlb.BackendLBPolicy,
+	backendLBPolicies []backend.BackendLBPolicy,
 	connectTimeout time.Duration,
 ) []ir.BackendCluster {
 	return translateBackendsWithIndexes(
@@ -39,7 +39,7 @@ func translateBackendsWithIndexes(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 	backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy,
-	backendLBPolicies []backendlb.BackendLBPolicy,
+	backendLBPolicies []backend.BackendLBPolicy,
 	connectTimeout time.Duration,
 	indexes translatorIndexes,
 ) []ir.BackendCluster {

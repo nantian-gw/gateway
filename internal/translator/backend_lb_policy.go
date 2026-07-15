@@ -7,7 +7,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/lbpolicy"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -16,7 +16,7 @@ type translatedBackendLBPolicy struct {
 	sessionPersistence *ir.SessionPersistencePolicy
 	loadBalancing      *ir.LoadBalancingPolicy
 	circuitBreaker     *ir.CircuitBreakerConfig
-	policy             backendlb.BackendLBPolicy
+	policy             backend.BackendLBPolicy
 }
 
 type backendLBPolicyIndexes struct {
@@ -28,7 +28,7 @@ type backendLBPolicyIndexes struct {
 func buildBackendLBPolicyIndexes(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
-	policies []backendlb.BackendLBPolicy,
+	policies []backend.BackendLBPolicy,
 ) backendLBPolicyIndexes {
 	return buildBackendLBPolicyIndexesWithIndexes(
 		policies,
@@ -37,7 +37,7 @@ func buildBackendLBPolicyIndexes(
 }
 
 func buildBackendLBPolicyIndexesWithIndexes(
-	policies []backendlb.BackendLBPolicy,
+	policies []backend.BackendLBPolicy,
 	indexes translatorIndexes,
 ) backendLBPolicyIndexes {
 	translations := make([]translatedBackendLBPolicy, 0, len(policies))
@@ -106,7 +106,7 @@ func buildBackendLBPolicyIndexesWithIndexes(
 }
 
 func backendLBPolicyBackendKeys(
-	policy backendlb.BackendLBPolicy,
+	policy backend.BackendLBPolicy,
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 ) ([]string, bool) {
@@ -117,7 +117,7 @@ func backendLBPolicyBackendKeys(
 }
 
 func backendLBPolicyBackendKeysWithIndexes(
-	policy backendlb.BackendLBPolicy,
+	policy backend.BackendLBPolicy,
 	indexes translatorIndexes,
 ) ([]string, bool) {
 	keys := make([]string, 0)
@@ -165,7 +165,7 @@ func backendLBPolicyBackendKeysWithIndexes(
 	return compactStrings(keys), true
 }
 
-func backendCircuitBreaker(cb *backendlb.CircuitBreakerConfig) *ir.CircuitBreakerConfig {
+func backendCircuitBreaker(cb *backend.CircuitBreakerConfig) *ir.CircuitBreakerConfig {
 	if cb == nil || cb.MaxInflightRequests == nil {
 		return nil
 	}

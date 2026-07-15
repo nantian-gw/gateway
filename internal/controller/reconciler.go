@@ -23,7 +23,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/resources"
@@ -156,9 +156,9 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &backendlb.BackendLBPolicy{}) {
+	if resourceSupported(mgr, &backend.BackendLBPolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
-			&backendlb.BackendLBPolicy{},
+			&backend.BackendLBPolicy{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
