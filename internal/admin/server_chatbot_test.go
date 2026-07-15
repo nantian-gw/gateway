@@ -21,7 +21,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 )
 
 func newChatbotTestServer(t *testing.T, k8sObjects ...client.Object) *Server {
@@ -39,11 +39,11 @@ func newChatbotTestServer(t *testing.T, k8sObjects ...client.Object) *Server {
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodeinfo.NewRegistry(
+	nodes := noderegistry.NewRegistry(
 		ir.NewNodeStatusStore(),
 		nil,
 		logger,
-		nodeinfo.Options{PersistTimeout: time.Second},
+		noderegistry.Options{PersistTimeout: time.Second},
 	)
 
 	return NewServer(

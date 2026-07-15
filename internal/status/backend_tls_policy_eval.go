@@ -11,7 +11,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/tlspolicy"
+	"github.com/nantian-gw/gateway/internal/backendtls"
 )
 
 func evaluateBackendTLSPolicies(
@@ -35,7 +35,7 @@ func evaluateBackendTLSPolicies(
 		}
 		for _, claimKey := range eval.claimKeys {
 			currentWinner, exists := winners[claimKey]
-			if !exists || tlspolicy.PolicyPrecedes(policy, policyByKey[currentWinner]) {
+			if !exists || backendtls.PolicyPrecedes(policy, policyByKey[currentWinner]) {
 				winners[claimKey] = key
 			}
 		}
@@ -261,11 +261,11 @@ func backendTLSPolicyValidationSupported(
 			return invalidAcceptedPolicyCondition(policy.Generation, "BackendTLSPolicy wellKnownCACertificates value is not supported"), resolvedRefs, false
 		}
 	}
-	if _, err := tlspolicy.ParseSubjectAltNames(validation.SubjectAltNames); err != nil {
+	if _, err := backendtls.ParseSubjectAltNames(validation.SubjectAltNames); err != nil {
 		return invalidAcceptedPolicyCondition(policy.Generation, err.Error()), resolvedRefs, false
 	}
 
-	if _, err := tlspolicy.ParseOptions(policy.Spec.Options); err != nil {
+	if _, err := backendtls.ParseOptions(policy.Spec.Options); err != nil {
 		return invalidAcceptedPolicyCondition(policy.Generation, err.Error()), resolvedRefs, false
 	}
 

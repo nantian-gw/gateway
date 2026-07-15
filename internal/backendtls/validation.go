@@ -1,4 +1,4 @@
-package tlspolicy
+package backendtls
 
 import (
 	"fmt"

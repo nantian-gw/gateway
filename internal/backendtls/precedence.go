@@ -1,11 +1,11 @@
-package lbpolicy
+package backendtls
 
-import backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+import gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
 // PolicyPrecedes reports whether a should take precedence over b according to
-// the BackendLBPolicy conflict resolution order: older creation timestamp
+// the BackendTLSPolicy conflict resolution order: older creation timestamp
 // first, then lexical name order for ties.
-func PolicyPrecedes(a, b backend.BackendLBPolicy) bool {
+func PolicyPrecedes(a, b gatewayv1alpha3.BackendTLSPolicy) bool {
 	if a.CreationTimestamp.Time.Before(b.CreationTimestamp.Time) {
 		return true
 	}

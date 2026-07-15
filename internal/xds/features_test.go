@@ -10,7 +10,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 	"github.com/nantian-gw/gateway/internal/observability"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
@@ -49,7 +49,7 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{Metrics: metrics})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{Metrics: metrics})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
@@ -111,7 +111,7 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 
 func waitForNodeStatus(
 	t *testing.T,
-	nodes *nodeinfo.Registry,
+	nodes *noderegistry.Registry,
 	nodeID string,
 	match func(ir.NodeStatus) bool,
 ) ir.NodeStatus {

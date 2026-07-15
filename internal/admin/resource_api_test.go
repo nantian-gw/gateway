@@ -28,7 +28,7 @@ import (
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 )
 
 func newTestServerWithResourceManager(t *testing.T, resources *ResourceManager) *Server {
@@ -61,11 +61,11 @@ func newTestServerWithResourceManagerAndLoggerAndOptions(
 	}
 
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodeinfo.NewRegistry(
+	nodes := noderegistry.NewRegistry(
 		ir.NewNodeStatusStore(),
 		nil,
 		logger,
-		nodeinfo.Options{PersistTimeout: time.Second},
+		noderegistry.Options{PersistTimeout: time.Second},
 	)
 	server := NewServer(":0", store, nodes, resources, logger, opts)
 

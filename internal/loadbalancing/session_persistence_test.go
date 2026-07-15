@@ -1,4 +1,4 @@
-package lbpolicy
+package loadbalancing
 
 import (
 	"testing"

@@ -3,7 +3,7 @@ package translator
 import (
 	"strings"
 
-	"github.com/nantian-gw/gateway/internal/lbpolicy"
+	"github.com/nantian-gw/gateway/internal/loadbalancing"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
@@ -12,12 +12,12 @@ func backendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancing
 	if source == nil {
 		return nil
 	}
-	if err := lbpolicy.ValidateLoadBalancing(source); err != nil {
+	if err := loadbalancing.ValidateLoadBalancing(source); err != nil {
 		return nil
 	}
 
 	out := &ir.LoadBalancingPolicy{
-		Type: string(lbpolicy.EffectiveLoadBalancingType(source)),
+		Type: string(loadbalancing.EffectiveLoadBalancingType(source)),
 	}
 
 	if out.Type == string(backend.LoadBalancingStrategyTypeConsistentHash) {
@@ -27,7 +27,7 @@ func backendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancing
 			headerName = strings.TrimSpace(*hash.HeaderName)
 		}
 		out.ConsistentHash = &ir.ConsistentHashPolicy{
-			KeyType:    string(lbpolicy.EffectiveConsistentHashKeyType(hash)),
+			KeyType:    string(loadbalancing.EffectiveConsistentHashKeyType(hash)),
 			HeaderName: headerName,
 		}
 	}

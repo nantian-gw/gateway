@@ -22,7 +22,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 	"github.com/nantian-gw/gateway/internal/observability"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
@@ -385,7 +385,7 @@ func TestStreamConfigurationDrainsOnServerShutdown(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
@@ -422,7 +422,7 @@ func TestStreamConfigurationInterruptsBlockedInitialRecvOnShutdown(t *testing.T)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
@@ -457,7 +457,7 @@ func TestStreamConfigurationInterruptsBlockedInitialRecvOnShutdown(t *testing.T)
 func TestStreamConfigurationInterruptsBlockedSendOnShutdown(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, nil)
@@ -512,7 +512,7 @@ func TestStreamConfigurationSupersedesExistingNodeStream(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
@@ -570,7 +570,7 @@ func TestStreamConfigurationInterruptsBlockedSendOnSupersededStream(t *testing.T
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(
@@ -644,7 +644,7 @@ func TestStreamConfigurationInterruptsBlockedSendOnSupersededStream(t *testing.T
 func TestStreamConfigurationTimesOutBlockedSend(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(
@@ -705,7 +705,7 @@ func TestStreamConfigurationRecordsSnapshotSendDurationMetric(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(
@@ -754,7 +754,7 @@ func TestStreamConfigurationRecordsSnapshotSendTimeoutMetric(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(
@@ -808,7 +808,7 @@ func TestStreamConfigurationTimesOutStaleSnapshotAck(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{Metrics: metrics})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{Metrics: metrics})
 	defer nodes.Close()
 
 	server, err := New(
@@ -873,7 +873,7 @@ func TestStreamConfigurationMatchingAckPreventsStaleSnapshotTimeout(t *testing.T
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{Metrics: metrics})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{Metrics: metrics})
 	defer nodes.Close()
 
 	server, err := New(
@@ -951,7 +951,7 @@ func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testi
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{Metrics: metrics})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{Metrics: metrics})
 	defer nodes.Close()
 
 	server, err := New(
@@ -1024,7 +1024,7 @@ func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfi
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{Metrics: metrics})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{Metrics: metrics})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
@@ -1147,7 +1147,7 @@ func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfi
 	}
 }
 
-func waitForNodeConnection(t *testing.T, nodes *nodeinfo.Registry, nodeID string) {
+func waitForNodeConnection(t *testing.T, nodes *noderegistry.Registry, nodeID string) {
 	t.Helper()
 
 	deadline := time.After(time.Second)

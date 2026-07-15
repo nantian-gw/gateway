@@ -1,4 +1,4 @@
-package nodeinfo
+package noderegistry
 
 import (
 	"context"

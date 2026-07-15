@@ -14,7 +14,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/config"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
@@ -22,7 +22,7 @@ func TestStreamConfigurationRejectsInitialRequestWithoutNodeID(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
@@ -64,7 +64,7 @@ func TestStreamConfigurationRejectsNodeIDChangeMidStream(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
 	metrics := observability.NewMetrics()
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{})
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)

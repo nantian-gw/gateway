@@ -10,7 +10,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 )
 
 const (
@@ -61,7 +61,7 @@ type routeBinding struct {
 
 type Server struct {
 	store                 *ir.SnapshotStore
-	nodes                 *nodeinfo.Registry
+	nodes                 *noderegistry.Registry
 	resources             *ResourceManager
 	dashboardCapabilities DashboardCapabilities
 	logger                *slog.Logger
@@ -82,7 +82,7 @@ type Server struct {
 func NewServer(
 	addr string,
 	store *ir.SnapshotStore,
-	nodes *nodeinfo.Registry,
+	nodes *noderegistry.Registry,
 	resources *ResourceManager,
 	logger *slog.Logger,
 	opts Options,

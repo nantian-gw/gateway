@@ -26,7 +26,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/lifecycle"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 	"github.com/nantian-gw/gateway/internal/observability"
 	"github.com/nantian-gw/gateway/internal/status"
 	"github.com/nantian-gw/gateway/internal/translator"
@@ -133,18 +133,18 @@ func run(configPath string) error {
 			metrics.XDSSnapshotFanoutCoalescedTotal.Add(float64(replaced))
 		},
 	})
-	nodeRepository := nodeinfo.NewLeaseRepository(
+	nodeRepository := noderegistry.NewLeaseRepository(
 		mgr.GetAPIReader(),
 		mgr.GetClient(),
 		cfg.NodeStatus.Namespace,
 		cfg.NodeStatus.LeasePrefix,
 		logger,
 	)
-	nodes := nodeinfo.NewRegistry(
+	nodes := noderegistry.NewRegistry(
 		ir.NewNodeStatusStore(),
 		nodeRepository,
 		logger,
-		nodeinfo.Options{
+		noderegistry.Options{
 			BaseContext:     ctx,
 			PersistTimeout:  cfg.NodeStatusPersistTimeout(),
 			PersistDebounce: cfg.NodeStatusPersistDebounce(),

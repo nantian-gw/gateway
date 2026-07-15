@@ -14,7 +14,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/config"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
@@ -22,7 +22,7 @@ type Server struct {
 	controlv1.UnimplementedConfigurationDiscoveryServiceServer
 	addr          string
 	store         *ir.SnapshotStore
-	nodes         *nodeinfo.Registry
+	nodes         *noderegistry.Registry
 	logger        *slog.Logger
 	metrics       *observability.Metrics
 	runtime       grpcRuntimeSettings
@@ -63,7 +63,7 @@ func New(
 	tlsConfig config.GRPCTLSConfig,
 	runtimeConfig config.GRPCRuntimeConfig,
 	store *ir.SnapshotStore,
-	nodes *nodeinfo.Registry,
+	nodes *noderegistry.Registry,
 	logger *slog.Logger,
 	metrics *observability.Metrics,
 ) (*Server, error) {

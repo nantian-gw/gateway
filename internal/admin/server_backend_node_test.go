@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 )
 
 func TestBackendAndNodeEndpointsSupportFilteringAndDetails(t *testing.T) {
@@ -422,7 +422,7 @@ func TestNodeEndpointsFallbackToSharedLeaseState(t *testing.T) {
 	server := NewServer(
 		":0",
 		store,
-		nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{PersistTimeout: time.Second}),
+		noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{PersistTimeout: time.Second}),
 		NewResourceManager(client, logger),
 		logger,
 		Options{BearerToken: testAuthToken},
@@ -513,7 +513,7 @@ func TestNodeEndpointsIgnoreStaleSharedLeaseState(t *testing.T) {
 	server := NewServer(
 		":0",
 		store,
-		nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, logger, nodeinfo.Options{PersistTimeout: time.Second}),
+		noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, logger, noderegistry.Options{PersistTimeout: time.Second}),
 		NewResourceManager(client, logger),
 		logger,
 		Options{BearerToken: testAuthToken},

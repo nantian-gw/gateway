@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 )
 
 const stableFrontendCohortWarning = "no dataplane node has acknowledged the current snapshot; exposing the last stable frontend cohort"
@@ -68,7 +68,7 @@ func TestLoadFrontendEligibleDataplanePodsRejectsPeerSnapshotAckForAllFrontends(
 		t.Fatal("test requires the local controlplane snapshot version to differ from the peer version")
 	}
 
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), noderegistry.Options{})
 	now := time.Now().UTC()
 	nodes.Connect(context.Background(), "nantian-dataplane-current", "kind", nil, now)
 	nodes.ObservePublished(context.Background(), "nantian-dataplane-current", "peer-snapshot-version", now)
@@ -149,7 +149,7 @@ func newFrontendEligibilityTestReconciler(t *testing.T) (*Reconciler, *bytes.Buf
 		t.Fatal("expected snapshot publish to succeed")
 	}
 
-	nodes := nodeinfo.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), nodeinfo.Options{})
+	nodes := noderegistry.NewRegistry(ir.NewNodeStatusStore(), nil, discardLogger(), noderegistry.Options{})
 	now := time.Now().UTC()
 	currentVersion := store.Current().ID
 	nodes.Connect(context.Background(), "nantian-dataplane-stable", "kind", nil, now)

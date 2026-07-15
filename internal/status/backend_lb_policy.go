@@ -8,7 +8,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/lbpolicy"
+	"github.com/nantian-gw/gateway/internal/loadbalancing"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
@@ -53,7 +53,7 @@ func evaluateBackendLBPolicies(
 		}
 		for _, backendKey := range eval.targetBackendKeys {
 			currentWinner, exists := winners[backendKey]
-			if !exists || lbpolicy.PolicyPrecedes(policy, policyByKey[currentWinner]) {
+			if !exists || loadbalancing.PolicyPrecedes(policy, policyByKey[currentWinner]) {
 				winners[backendKey] = key
 			}
 		}
@@ -135,12 +135,12 @@ func evaluateBackendLBPolicySpec(
 		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backend.PolicyReasonInvalid), message)
 		return eval
 	}
-	if err := lbpolicy.ValidateLoadBalancing(policy.Spec.LoadBalancing); err != nil {
+	if err := loadbalancing.ValidateLoadBalancing(policy.Spec.LoadBalancing); err != nil {
 		eval.acceptedCondition = invalidAcceptedPolicyCondition(policy.Generation, err.Error())
 		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backend.PolicyReasonInvalid), err.Error())
 		return eval
 	}
-	if err := lbpolicy.ValidateSessionPersistence(policy.Spec.SessionPersistence); err != nil {
+	if err := loadbalancing.ValidateSessionPersistence(policy.Spec.SessionPersistence); err != nil {
 		eval.acceptedCondition = invalidAcceptedPolicyCondition(policy.Generation, err.Error())
 		eval.resolvedCondition = backendLBResolvedPolicyCondition(policy.Generation, metav1.ConditionFalse, string(backend.PolicyReasonInvalid), err.Error())
 		return eval

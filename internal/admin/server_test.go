@@ -28,7 +28,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
-	"github.com/nantian-gw/gateway/internal/nodeinfo"
+	"github.com/nantian-gw/gateway/internal/noderegistry"
 )
 
 const testAuthToken = "test-admin-token"
@@ -250,7 +250,7 @@ func newTestServerWithOptions(t *testing.T, opts Options) *Server {
 	return newTestServerWithRepository(t, nil, opts)
 }
 
-func newTestServerWithRepository(t *testing.T, repo nodeinfo.Repository, opts Options) *Server {
+func newTestServerWithRepository(t *testing.T, repo noderegistry.Repository, opts Options) *Server {
 	t.Helper()
 
 	if !IsAuthConfigured(opts) {
@@ -259,11 +259,11 @@ func newTestServerWithRepository(t *testing.T, repo nodeinfo.Repository, opts Op
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
-	nodes := nodeinfo.NewRegistry(
+	nodes := noderegistry.NewRegistry(
 		ir.NewNodeStatusStore(),
 		repo,
 		logger,
-		nodeinfo.Options{PersistTimeout: time.Second},
+		noderegistry.Options{PersistTimeout: time.Second},
 	)
 	server := NewServer(":0", store, nodes, nil, logger, opts)
 
