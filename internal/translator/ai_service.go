@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/nantian-gw/gateway/internal/gwexp/aiservice"
+	"github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 

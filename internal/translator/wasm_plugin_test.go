@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
+	"github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
 
 func TestTranslateWasmPlugin(t *testing.T) {

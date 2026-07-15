@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 )
 
 func TestValidateLoadBalancing(t *testing.T) {

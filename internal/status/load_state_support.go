@@ -16,7 +16,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 

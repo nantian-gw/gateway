@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/nantian-gw/gateway/internal/config"
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 

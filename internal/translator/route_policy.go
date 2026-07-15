@@ -5,7 +5,7 @@ import (
 
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	routepolicy "github.com/nantian-gw/gateway/internal/gwexp/routepolicy"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 

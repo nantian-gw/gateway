@@ -6,7 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 )
 
 // TestRenderDetail_MaliciousAIServiceNeutralized verifies that an injection

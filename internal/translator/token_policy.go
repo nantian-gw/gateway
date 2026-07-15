@@ -5,7 +5,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
+	"github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 

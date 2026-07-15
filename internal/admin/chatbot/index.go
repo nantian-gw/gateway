@@ -14,10 +14,10 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
-	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
-	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
 
 const (

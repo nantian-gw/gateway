@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 )
 
 func ValidateLoadBalancing(policy *backendlb.LoadBalancingPolicy) error {

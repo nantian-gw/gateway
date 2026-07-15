@@ -14,7 +14,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 	k8syaml "sigs.k8s.io/yaml"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 )
 
 func managedResourceFromObject(spec resourceKindSpec, obj client.Object) (ManagedResource, error) {

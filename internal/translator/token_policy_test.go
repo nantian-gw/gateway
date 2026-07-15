@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 )
 
 func TestTranslateTokenPolicy_Basic(t *testing.T) {

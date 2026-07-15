@@ -18,11 +18,11 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
-	routepolicy "github.com/nantian-gw/gateway/internal/gwexp/routepolicy"
-	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
-	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 )

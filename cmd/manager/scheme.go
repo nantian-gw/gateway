@@ -16,10 +16,10 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/config"
-	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
-	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
-	wasmplugin "github.com/nantian-gw/gateway/internal/gwexp/wasmplugin"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
 
 func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {

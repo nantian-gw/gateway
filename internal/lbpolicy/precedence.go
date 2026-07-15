@@ -1,6 +1,6 @@
 package lbpolicy
 
-import backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+import backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 
 // PolicyPrecedes reports whether a should take precedence over b according to
 // the BackendLBPolicy conflict resolution order: older creation timestamp

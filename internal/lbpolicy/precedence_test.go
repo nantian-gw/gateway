@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

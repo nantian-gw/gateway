@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/nantian-gw/gateway/internal/lbpolicy"
-	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
+	backendlb "github.com/nantian-gw/gateway/internal/gatewayexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
