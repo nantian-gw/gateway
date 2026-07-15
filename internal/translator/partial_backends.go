@@ -15,7 +15,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
@@ -469,7 +469,7 @@ func listBackendTLSPoliciesForNamespaceTargets(
 	if usedIndex {
 		return items, nil
 	}
-	return gwapi.ListBackendTLSPoliciesV1WithOptions(ctx, cl, client.InNamespace(namespace))
+	return gatewayapi.ListBackendTLSPoliciesV1WithOptions(ctx, cl, client.InNamespace(namespace))
 }
 
 func listBackendTLSPoliciesByTargetRefIndex(
@@ -482,7 +482,7 @@ func listBackendTLSPoliciesByTargetRefIndex(
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
-		items, err := gwapi.ListBackendTLSPoliciesV1WithOptions(
+		items, err := gatewayapi.ListBackendTLSPoliciesV1WithOptions(
 			ctx,
 			cl,
 			client.InNamespace(namespace),

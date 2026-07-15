@@ -12,7 +12,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 func (r *Reconciler) ReconcileHTTPRouteObject(ctx context.Context, key client.ObjectKey) error {
@@ -244,7 +244,7 @@ func (r *Reconciler) loadRouteParentGateways(
 		}
 	}
 
-	if gwapi.UsesDefaultGateways(route.defaultGatewayScope) {
+	if gatewayapi.UsesDefaultGateways(route.defaultGatewayScope) {
 		if err := r.loadRouteDefaultGateways(ctx, state, route.defaultGatewayScope); err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func (r *Reconciler) loadRouteDefaultGateways(
 		if _, ok := managedClasses[string(gateway.Spec.GatewayClassName)]; !ok {
 			continue
 		}
-		if !gwapi.GatewayMatchesDefaultScope(gateway, scope) {
+		if !gatewayapi.GatewayMatchesDefaultScope(gateway, scope) {
 			continue
 		}
 		key := namespacedName(gateway.Namespace, gateway.Name)

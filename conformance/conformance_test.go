@@ -16,7 +16,7 @@ import (
 	conformancesuite "sigs.k8s.io/gateway-api/conformance/utils/suite"
 	"sigs.k8s.io/yaml"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 const (
@@ -83,7 +83,7 @@ func patchAllFeatures(options conformancesuite.ConformanceOptions) (conformances
 		return options, false
 	}
 
-	options.SupportedFeatures = gwapi.SupportedFeatureNameSet()
+	options.SupportedFeatures = gatewayapi.SupportedFeatureNameSet()
 	options.EnableAllSupportedFeatures = false
 	return options, true
 }

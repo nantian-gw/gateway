@@ -1,4 +1,4 @@
-package gwapi
+package gatewayapi
 
 import (
 	"reflect"

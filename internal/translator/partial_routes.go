@@ -14,7 +14,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 )
@@ -350,27 +350,27 @@ func routesUseDefaultGateways(
 	tlsRoutes []gatewayv1alpha2.TLSRoute,
 ) bool {
 	for _, route := range httpRoutes {
-		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range grpcRoutes {
-		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range tcpRoutes {
-		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range udpRoutes {
-		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}
 	for _, route := range tlsRoutes {
-		if gwapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
+		if gatewayapi.UsesDefaultGateways(route.Spec.UseDefaultGateways) {
 			return true
 		}
 	}

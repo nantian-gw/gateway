@@ -10,7 +10,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 const (
@@ -320,7 +320,7 @@ func evaluateListenerTLSRefs(
 			}
 		}
 
-		if validation := gwapi.FrontendValidationForListener(gateway, listener); validation != nil {
+		if validation := gatewayapi.FrontendValidationForListener(gateway, listener); validation != nil {
 			var (
 				firstReason  string
 				firstMessage string
@@ -360,7 +360,7 @@ func evaluateListenerTLSRefs(
 }
 
 func evaluateGatewayBackendTLSRef(state *clusterState, gateway gatewayv1.Gateway) listenerTLSRefEvaluation {
-	backendTLS := gwapi.GatewayBackendTLS(gateway)
+	backendTLS := gatewayapi.GatewayBackendTLS(gateway)
 	if backendTLS == nil || backendTLS.ClientCertificateRef == nil {
 		return listenerTLSRefEvaluation{ok: true}
 	}
@@ -435,11 +435,11 @@ func acceptedListenerCondition(generation int64) conditionSpec {
 
 func gatewayExtraConditions(state *clusterState, gateway gatewayv1.Gateway) []conditionSpec {
 	out := gatewayFrontendValidationConditions(gateway)
-	if gwapi.GatewayActsAsDefault(gateway) {
+	if gatewayapi.GatewayActsAsDefault(gateway) {
 		out = append(out, conditionSpec{
-			Type:               gwapi.GatewayConditionDefaultGateway,
+			Type:               gatewayapi.GatewayConditionDefaultGateway,
 			Status:             metav1.ConditionTrue,
-			Reason:             gwapi.GatewayReasonDefaultGateway,
+			Reason:             gatewayapi.GatewayReasonDefaultGateway,
 			Message:            "Gateway has default scope " + string(gateway.Spec.DefaultScope),
 			ObservedGeneration: gateway.Generation,
 		})
@@ -452,7 +452,7 @@ func gatewayExtraConditions(state *clusterState, gateway gatewayv1.Gateway) []co
 }
 
 func gatewayBackendTLSResolvedRefsCondition(state *clusterState, gateway gatewayv1.Gateway) (conditionSpec, bool) {
-	backendTLS := gwapi.GatewayBackendTLS(gateway)
+	backendTLS := gatewayapi.GatewayBackendTLS(gateway)
 	if backendTLS == nil || backendTLS.ClientCertificateRef == nil {
 		return conditionSpec{}, false
 	}
@@ -482,7 +482,7 @@ func gatewayBackendTLSResolvedRefsCondition(state *clusterState, gateway gateway
 
 func gatewayFrontendValidationConditions(gateway gatewayv1.Gateway) []conditionSpec {
 	for _, listener := range gateway.Spec.Listeners {
-		validation := gwapi.FrontendValidationForListener(gateway, listener)
+		validation := gatewayapi.FrontendValidationForListener(gateway, listener)
 		if validation == nil || validation.Mode != gatewayv1.AllowInsecureFallback {
 			continue
 		}

@@ -12,7 +12,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
@@ -165,12 +165,12 @@ func (s *Syncer) backendTLSPoliciesForConfigMapIndex(
 	ctx context.Context,
 	indexValue string,
 ) ([]gatewayv1alpha3.BackendTLSPolicy, bool, error) {
-	list := gwapi.NewBackendTLSPolicyV1List()
+	list := gatewayapi.NewBackendTLSPolicyV1List()
 
 	decode := func(_ client.ObjectList) ([]gatewayv1alpha3.BackendTLSPolicy, error) {
 		policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0, len(list.Items))
 		for i := range list.Items {
-			policy, err := gwapi.DecodeBackendTLSPolicyV1(&list.Items[i])
+			policy, err := gatewayapi.DecodeBackendTLSPolicyV1(&list.Items[i])
 			if err != nil {
 				return nil, err
 			}
@@ -216,7 +216,7 @@ func (s *Syncer) listBackendTLSPoliciesInNamespace(
 		opts = append(opts, client.InNamespace(namespace))
 	}
 
-	return gwapi.ListBackendTLSPoliciesV1WithOptions(ctx, s.client, opts...)
+	return gatewayapi.ListBackendTLSPoliciesV1WithOptions(ctx, s.client, opts...)
 }
 
 func splitNamespacedIndexValue(value string) (string, string) {

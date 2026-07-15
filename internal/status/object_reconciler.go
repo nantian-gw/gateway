@@ -14,7 +14,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
 
@@ -253,7 +253,7 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 	state.grpcRoutes = grpcRoutes
 
 	if !r.experimentalGatewayEnabled() {
-		if gwapi.GatewayActsAsDefault(gateway) {
+		if gatewayapi.GatewayActsAsDefault(gateway) {
 			return r.loadDefaultGatewayRoutes(ctx, state, gateway)
 		}
 		return nil
@@ -295,7 +295,7 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 		state.httpRoutes = mergeHTTPRoutesByKey(state.httpRoutes, routesForListenerSets)
 	}
 
-	if gwapi.GatewayActsAsDefault(gateway) {
+	if gatewayapi.GatewayActsAsDefault(gateway) {
 		if err := r.loadDefaultGatewayRoutes(ctx, state, gateway); err != nil {
 			return err
 		}
@@ -488,7 +488,7 @@ func (r *Reconciler) loadGatewayTLSSecrets(
 		}
 	}
 
-	if backendTLS := gwapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
+	if backendTLS := gatewayapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 		clientCertificateRef := backendTLS.ClientCertificateRef
 		if group := stringOrEmpty(clientCertificateRef.Group); group == "" {
 			kind := stringOrEmpty(clientCertificateRef.Kind)
@@ -524,7 +524,7 @@ func (r *Reconciler) loadGatewayTLSConfigMaps(
 	keys := make(map[string]client.ObjectKey)
 
 	for _, listener := range gateway.Spec.Listeners {
-		validation := gwapi.FrontendValidationForListener(gateway, listener)
+		validation := gatewayapi.FrontendValidationForListener(gateway, listener)
 		if validation == nil {
 			continue
 		}

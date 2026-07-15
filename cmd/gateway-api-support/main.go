@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	gatewayfeatures "sigs.k8s.io/gateway-api/pkg/features"
 )
 
@@ -37,7 +37,7 @@ func main() {
 	format := flag.String("format", markdownFormat, "output format: markdown, json, names, or audit")
 	flag.Parse()
 
-	features := gwapi.SupportedFeatureNames()
+	features := gatewayapi.SupportedFeatureNames()
 	names := make([]string, 0, len(features))
 	for _, feature := range features {
 		names = append(names, string(feature))

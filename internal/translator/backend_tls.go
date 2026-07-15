@@ -7,7 +7,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -26,7 +26,7 @@ func backendTLSForGatewayWithIndexes(
 	gateway gatewayv1.Gateway,
 	indexes translatorIndexes,
 ) *ir.BackendTLSConfig {
-	backendTLS := gwapi.GatewayBackendTLS(gateway)
+	backendTLS := gatewayapi.GatewayBackendTLS(gateway)
 	if backendTLS == nil || backendTLS.ClientCertificateRef == nil {
 		return nil
 	}

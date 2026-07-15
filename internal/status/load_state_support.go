@@ -15,7 +15,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 )
@@ -281,7 +281,7 @@ func collectGatewaySecretRefs(out map[string]client.ObjectKey, gateways []gatewa
 			}
 		}
 
-		if backendTLS := gwapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
+		if backendTLS := gatewayapi.GatewayBackendTLS(gateway); backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 			clientCertificateRef := backendTLS.ClientCertificateRef
 			if group := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Group)); group == "" {
 				kind := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Kind))
@@ -322,7 +322,7 @@ func collectGatewayConfigMapRefs(
 		}
 
 		for _, listener := range gateway.Spec.Listeners {
-			validation := gwapi.FrontendValidationForListener(gateway, listener)
+			validation := gatewayapi.FrontendValidationForListener(gateway, listener)
 			if validation == nil {
 				continue
 			}

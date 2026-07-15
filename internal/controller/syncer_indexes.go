@@ -11,7 +11,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -71,7 +71,7 @@ func gatewaySecretReferenceIndexKeys(object client.Object) []string {
 	}
 
 	keys := make(map[string]struct{})
-	for _, listener := range gwapi.EffectiveListeners(*gateway) {
+	for _, listener := range gatewayapi.EffectiveListeners(*gateway) {
 		if listener.TLS == nil {
 			continue
 		}
@@ -82,7 +82,7 @@ func gatewaySecretReferenceIndexKeys(object client.Object) []string {
 		}
 	}
 
-	backendTLS := gwapi.GatewayBackendTLS(*gateway)
+	backendTLS := gatewayapi.GatewayBackendTLS(*gateway)
 	if backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 		if key, ok := secretReferenceIndexValue(gateway.Namespace, *backendTLS.ClientCertificateRef); ok {
 			keys[key] = struct{}{}
@@ -99,8 +99,8 @@ func gatewayConfigMapReferenceIndexKeys(object client.Object) []string {
 	}
 
 	keys := make(map[string]struct{})
-	for _, listener := range gwapi.EffectiveListeners(*gateway) {
-		validation := gwapi.FrontendValidationForListener(*gateway, listener)
+	for _, listener := range gatewayapi.EffectiveListeners(*gateway) {
+		validation := gatewayapi.FrontendValidationForListener(*gateway, listener)
 		if validation == nil {
 			continue
 		}
@@ -121,7 +121,7 @@ func gatewayReferenceGrantNamespaceIndexKeys(object client.Object) []string {
 	}
 
 	keys := make(map[string]struct{})
-	for _, listener := range gwapi.EffectiveListeners(*gateway) {
+	for _, listener := range gatewayapi.EffectiveListeners(*gateway) {
 		if listener.TLS != nil {
 			for _, ref := range listener.TLS.CertificateRefs {
 				targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
@@ -131,7 +131,7 @@ func gatewayReferenceGrantNamespaceIndexKeys(object client.Object) []string {
 			}
 		}
 
-		if validation := gwapi.FrontendValidationForListener(*gateway, listener); validation != nil {
+		if validation := gatewayapi.FrontendValidationForListener(*gateway, listener); validation != nil {
 			for _, ref := range validation.CACertificateRefs {
 				targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
 				if targetNamespace != gateway.Namespace {
@@ -141,7 +141,7 @@ func gatewayReferenceGrantNamespaceIndexKeys(object client.Object) []string {
 		}
 	}
 
-	backendTLS := gwapi.GatewayBackendTLS(*gateway)
+	backendTLS := gatewayapi.GatewayBackendTLS(*gateway)
 	if backendTLS != nil && backendTLS.ClientCertificateRef != nil {
 		targetNamespace := namespaceOrDefault(backendTLS.ClientCertificateRef.Namespace, gateway.Namespace)
 		if targetNamespace != gateway.Namespace {
@@ -158,7 +158,7 @@ func gatewayNamespaceSelectorIndexKeys(object client.Object) []string {
 		return nil
 	}
 
-	for _, listener := range gwapi.EffectiveListeners(*gateway) {
+	for _, listener := range gatewayapi.EffectiveListeners(*gateway) {
 		if listener.AllowedRoutes == nil || listener.AllowedRoutes.Namespaces == nil || listener.AllowedRoutes.Namespaces.From == nil {
 			continue
 		}
@@ -437,7 +437,7 @@ func backendTLSPolicyConfigMapReferenceIndexKeys(object client.Object) []string 
 		return nil
 	}
 
-	policy, err := gwapi.DecodeBackendTLSPolicyV1(item)
+	policy, err := gatewayapi.DecodeBackendTLSPolicyV1(item)
 	if err != nil {
 		return nil
 	}

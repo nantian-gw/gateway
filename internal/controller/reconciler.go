@@ -21,7 +21,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	aiservice "github.com/nantian-gw/gateway/internal/gwexp/aiservice"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gwexp/tokenpolicy"
@@ -151,7 +151,7 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 
 	if backendTLSPolicyV1Supported(mgr) {
 		controllerBuilder = controllerBuilder.Watches(
-			gwapi.NewBackendTLSPolicyV1Object(),
+			gatewayapi.NewBackendTLSPolicyV1Object(),
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
@@ -206,8 +206,8 @@ func resourceSupported(mgr ctrl.Manager, object client.Object) bool {
 
 func backendTLSPolicyV1Supported(mgr ctrl.Manager) bool {
 	_, err := mgr.GetRESTMapper().RESTMapping(
-		gwapi.BackendTLSPolicyV1GVK.GroupKind(),
-		gwapi.BackendTLSPolicyV1GVK.Version,
+		gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
+		gatewayapi.BackendTLSPolicyV1GVK.Version,
 	)
 	return err == nil
 }

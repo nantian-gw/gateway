@@ -4,11 +4,11 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 func httpRouteInput(route gatewayv1.HTTPRoute) routeInput {
-	validation := gwapi.ValidateHTTPRouteRules(route)
+	validation := gatewayapi.ValidateHTTPRouteRules(route)
 
 	resolvedRefsErrorMessage := ""
 	if validation.FullyInvalid(len(route.Spec.Rules)) && validation.AcceptedErrorMessage() == "" {

@@ -10,7 +10,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 type IndexName string
@@ -352,7 +352,7 @@ func controllerReferenceIndexContracts(includeBackendTLSPolicy bool) []fieldInde
 	if includeBackendTLSPolicy {
 		contracts = append(contracts, fieldIndexContract{
 			Name:           backendTLSPolicyConfigMapRefIndex,
-			Object:         gwapi.NewBackendTLSPolicyV1Object(),
+			Object:         gatewayapi.NewBackendTLSPolicyV1Object(),
 			Extract:        backendTLSPolicyConfigMapReferenceIndexKeys,
 			Owner:          "snapshot-syncer",
 			WatchSource:    "ConfigMap",

@@ -7,7 +7,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -29,12 +29,12 @@ func translateHTTPRouteWithDefaultGateways(
 	rawFilterConfigs rawHTTPRouteFilterConfigs,
 	defaultGateways []gatewayv1.Gateway,
 ) ir.HTTPRoute {
-	validation := gwapi.ValidateHTTPRouteRules(route)
+	validation := gatewayapi.ValidateHTTPRouteRules(route)
 	invalidRules := make(map[int]struct{}, len(validation.InvalidRuleIndexes))
 	for _, index := range validation.InvalidRuleIndexes {
 		invalidRules[index] = struct{}{}
 	}
-	parentRefs := gwapi.DefaultGatewayParentRefs(
+	parentRefs := gatewayapi.DefaultGatewayParentRefs(
 		route.Spec.ParentRefs,
 		route.Namespace,
 		route.Spec.UseDefaultGateways,
@@ -123,7 +123,7 @@ func translateGRPCRouteWithResolver(route gatewayv1.GRPCRoute, resolver extfilte
 }
 
 func translateGRPCRouteWithDefaultGateways(route gatewayv1.GRPCRoute, resolver extfilter.Resolver, defaultGateways []gatewayv1.Gateway) ir.GRPCRoute {
-	parentRefs := gwapi.DefaultGatewayParentRefs(
+	parentRefs := gatewayapi.DefaultGatewayParentRefs(
 		route.Spec.ParentRefs,
 		route.Namespace,
 		route.Spec.UseDefaultGateways,
@@ -180,7 +180,7 @@ func translateTCPRoute(route gatewayv1alpha2.TCPRoute) ir.StreamRoute {
 }
 
 func translateTCPRouteWithDefaultGateways(route gatewayv1alpha2.TCPRoute, defaultGateways []gatewayv1.Gateway) ir.StreamRoute {
-	parentRefs := gwapi.DefaultGatewayParentRefs(
+	parentRefs := gatewayapi.DefaultGatewayParentRefs(
 		route.Spec.ParentRefs,
 		route.Namespace,
 		route.Spec.UseDefaultGateways,
@@ -212,7 +212,7 @@ func translateUDPRoute(route gatewayv1alpha2.UDPRoute) ir.StreamRoute {
 }
 
 func translateUDPRouteWithDefaultGateways(route gatewayv1alpha2.UDPRoute, defaultGateways []gatewayv1.Gateway) ir.StreamRoute {
-	parentRefs := gwapi.DefaultGatewayParentRefs(
+	parentRefs := gatewayapi.DefaultGatewayParentRefs(
 		route.Spec.ParentRefs,
 		route.Namespace,
 		route.Spec.UseDefaultGateways,
@@ -244,7 +244,7 @@ func translateTLSRoute(route gatewayv1alpha2.TLSRoute) ir.StreamRoute {
 }
 
 func translateTLSRouteWithDefaultGateways(route gatewayv1alpha2.TLSRoute, defaultGateways []gatewayv1.Gateway) ir.StreamRoute {
-	parentRefs := gwapi.DefaultGatewayParentRefs(
+	parentRefs := gatewayapi.DefaultGatewayParentRefs(
 		route.Spec.ParentRefs,
 		route.Namespace,
 		route.Spec.UseDefaultGateways,
@@ -309,7 +309,7 @@ func tlsRouteModesForHostname(
 		if !ok {
 			continue
 		}
-		for _, listener := range gwapi.EffectiveListeners(gw) {
+		for _, listener := range gatewayapi.EffectiveListeners(gw) {
 			if ref.SectionName != nil && string(*ref.SectionName) != "" &&
 				string(*ref.SectionName) != string(listener.Name) {
 				continue

@@ -24,7 +24,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
@@ -483,7 +483,7 @@ func (c scopedBuildDependencyValidatingTranslatorClient) List(
 			return fmt.Errorf("BackendTLSPolicy typed list must be namespace-scoped")
 		}
 	case *unstructured.UnstructuredList:
-		if typed.GroupVersionKind() == gwapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") &&
+		if typed.GroupVersionKind() == gatewayapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") &&
 			listOptions.Namespace == "" {
 			return fmt.Errorf("BackendTLSPolicy list must be namespace-scoped")
 		}
@@ -512,7 +512,7 @@ func (c fakeScopedPolicyListValidatingTranslatorClient) List(
 			return fmt.Errorf("BackendTLSPolicy typed list must be namespace-scoped")
 		}
 	case *unstructured.UnstructuredList:
-		if typed.GroupVersionKind() == gwapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") &&
+		if typed.GroupVersionKind() == gatewayapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") &&
 			namespace == "" {
 			return fmt.Errorf("BackendTLSPolicy list must be namespace-scoped")
 		}
@@ -564,7 +564,7 @@ func (c fakeIndexedPolicyListValidatingTranslatorClient) List(
 			return err
 		}
 	case *unstructured.UnstructuredList:
-		if typed.GroupVersionKind() == gwapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
+		if typed.GroupVersionKind() == gatewayapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
 			if err := requireMatchingAnyField(opts, backendTLSPolicyTargetRefIndex, c.expectedBackendTLSTargets); err != nil {
 				return err
 			}
@@ -634,7 +634,7 @@ func (c fieldSelectorRejectingTranslatorClient) List(
 	if !ok {
 		return c.Client.List(ctx, list, opts...)
 	}
-	if typed.GroupVersionKind() != gwapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
+	if typed.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK.GroupVersion().WithKind("BackendTLSPolicyList") {
 		return c.Client.List(ctx, list, opts...)
 	}
 

@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
@@ -52,9 +52,9 @@ func TestSetupIndexesIgnoresMissingBackendTLSPolicyCRD(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
 			backendTLSPolicyTargetRefIndex: &metav1.NoKindMatchError{
-				GroupKind: gwapi.BackendTLSPolicyV1GVK.GroupKind(),
+				GroupKind: gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
 				SearchedVersions: []string{
-					gwapi.BackendTLSPolicyV1GVK.Version,
+					gatewayapi.BackendTLSPolicyV1GVK.Version,
 				},
 			},
 		},

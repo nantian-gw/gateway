@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -84,7 +84,7 @@ func dataplaneListenerNetworkPolicyPorts(
 	ordered := make([]networkPolicyPortKey, 0)
 
 	for _, gateway := range gateways {
-		for _, listener := range gwapi.InfrastructureListeners(gateway) {
+		for _, listener := range gatewayapi.InfrastructureListeners(gateway) {
 			protocol, ok := serviceProtocol(listener.Protocol)
 			if !ok {
 				continue

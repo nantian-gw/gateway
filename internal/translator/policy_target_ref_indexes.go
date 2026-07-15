@@ -13,7 +13,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	routepolicy "github.com/nantian-gw/gateway/internal/gwexp/routepolicy"
 )
@@ -27,7 +27,7 @@ const (
 func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(
 		ctx,
-		gwapi.NewBackendTLSPolicyV1Object(),
+		gatewayapi.NewBackendTLSPolicyV1Object(),
 		backendTLSPolicyTargetRefIndex,
 		backendTLSPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
@@ -62,10 +62,10 @@ func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 	case *gatewayv1alpha3.BackendTLSPolicy:
 		return backendTLSPolicyTargetRefValues(item.Spec.TargetRefs)
 	case *unstructured.Unstructured:
-		if item == nil || item.GroupVersionKind() != gwapi.BackendTLSPolicyV1GVK {
+		if item == nil || item.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK {
 			return nil
 		}
-		policy, err := gwapi.DecodeBackendTLSPolicyV1(item)
+		policy, err := gatewayapi.DecodeBackendTLSPolicyV1(item)
 		if err != nil {
 			return nil
 		}

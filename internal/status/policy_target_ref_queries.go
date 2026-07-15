@@ -15,7 +15,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
@@ -27,7 +27,7 @@ const (
 func setupPolicyTargetRefIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(
 		ctx,
-		gwapi.NewBackendTLSPolicyV1Object(),
+		gatewayapi.NewBackendTLSPolicyV1Object(),
 		statusBackendTLSPolicyTargetRefIndex,
 		statusBackendTLSPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
@@ -53,10 +53,10 @@ func statusBackendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 	case *gatewayv1alpha3.BackendTLSPolicy:
 		return statusBackendTLSPolicyTargetRefValues(item.Spec.TargetRefs)
 	case *unstructured.Unstructured:
-		if item == nil || item.GroupVersionKind() != gwapi.BackendTLSPolicyV1GVK {
+		if item == nil || item.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK {
 			return nil
 		}
-		policy, err := gwapi.DecodeBackendTLSPolicyV1(item)
+		policy, err := gatewayapi.DecodeBackendTLSPolicyV1(item)
 		if err != nil {
 			return nil
 		}
@@ -124,7 +124,7 @@ func (r *Reconciler) loadAllBackendPolicies(ctx context.Context, state *clusterS
 	}
 	state.backendLBPolicies = backendLBPolicies.Items
 
-	backendTLSPolicies, err := gwapi.ListBackendTLSPoliciesV1(ctx, r.listReader)
+	backendTLSPolicies, err := gatewayapi.ListBackendTLSPoliciesV1(ctx, r.listReader)
 	if err != nil && !apierrors.IsNotFound(err) && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 		return err
 	}
@@ -315,7 +315,7 @@ func listBackendTLSPoliciesForNamespaceTargets(
 		return items, nil
 	}
 
-	return gwapi.ListBackendTLSPoliciesV1WithOptions(ctx, reader, client.InNamespace(namespace))
+	return gatewayapi.ListBackendTLSPoliciesV1WithOptions(ctx, reader, client.InNamespace(namespace))
 }
 
 func listBackendTLSPoliciesByTargetRefIndex(
@@ -328,7 +328,7 @@ func listBackendTLSPoliciesByTargetRefIndex(
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
-		items, err := gwapi.ListBackendTLSPoliciesV1WithOptions(
+		items, err := gatewayapi.ListBackendTLSPoliciesV1WithOptions(
 			ctx,
 			reader,
 			client.InNamespace(namespace),

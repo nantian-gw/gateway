@@ -7,7 +7,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -35,7 +35,7 @@ func frontendValidationForListenerWithIndexes(
 	listener gatewayv1.Listener,
 	indexes translatorIndexes,
 ) *ir.FrontendValidation {
-	validation := gwapi.FrontendValidationForListener(gateway, listener)
+	validation := gatewayapi.FrontendValidationForListener(gateway, listener)
 	if validation == nil {
 		return nil
 	}

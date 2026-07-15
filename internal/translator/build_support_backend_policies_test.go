@@ -14,7 +14,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
@@ -322,17 +322,17 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 			},
 		},
 	}
-	echoRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoPolicy)
+	echoRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoPolicy)
 	if err != nil {
 		t.Fatalf("encode echo BackendTLSPolicy: %v", err)
 	}
-	spareRaw, err := gwapi.EncodeBackendTLSPolicyV1(sparePolicy)
+	spareRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(sparePolicy)
 	if err != nil {
 		t.Fatalf("encode spare BackendTLSPolicy: %v", err)
 	}
 
 	baseClient := newTranslatorClientBuilder(scheme).
-		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), backendTLSPolicyTargetRefIndex, func(object client.Object) []string {
+		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), backendTLSPolicyTargetRefIndex, func(object client.Object) []string {
 			return backendTLSPolicyTargetRefIndexKeys(object)
 		}).
 		WithObjects(
@@ -401,11 +401,11 @@ func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupporte
 			},
 		},
 	}
-	echoRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoPolicy)
+	echoRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoPolicy)
 	if err != nil {
 		t.Fatalf("encode echo BackendTLSPolicy: %v", err)
 	}
-	spareRaw, err := gwapi.EncodeBackendTLSPolicyV1(sparePolicy)
+	spareRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(sparePolicy)
 	if err != nil {
 		t.Fatalf("encode spare BackendTLSPolicy: %v", err)
 	}

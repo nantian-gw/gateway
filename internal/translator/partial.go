@@ -17,7 +17,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
@@ -48,7 +48,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 	})
 	group.Go(func() error {
 		var err error
-		backendTLSPolicies, err = gwapi.ListBackendTLSPoliciesV1(groupCtx, cl)
+		backendTLSPolicies, err = gatewayapi.ListBackendTLSPoliciesV1(groupCtx, cl)
 		if err != nil && !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 			return err
 		}

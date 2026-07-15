@@ -16,7 +16,7 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
@@ -100,9 +100,9 @@ func TestSetupIndexesIgnoresMissingStatusBackendTLSPolicyCRD(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
 			statusBackendTLSPolicyTargetRefIndex: &meta.NoKindMatchError{
-				GroupKind: gwapi.BackendTLSPolicyV1GVK.GroupKind(),
+				GroupKind: gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
 				SearchedVersions: []string{
-					gwapi.BackendTLSPolicyV1GVK.Version,
+					gatewayapi.BackendTLSPolicyV1GVK.Version,
 				},
 			},
 		},
@@ -130,7 +130,7 @@ func TestSetupIndexesReturnsUnexpectedStatusBackendLBPolicyIndexError(t *testing
 }
 
 func TestStatusBackendPolicyTargetRefIndexKeysDeduplicateAndSortValues(t *testing.T) {
-	raw, err := gwapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
+	raw, err := gatewayapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
 		Spec: gatewayv1.BackendTLSPolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReferenceWithSectionName{
 				{

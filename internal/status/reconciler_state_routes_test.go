@@ -16,7 +16,7 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backendlb "github.com/nantian-gw/gateway/internal/gwexp/backendlb"
 )
 
@@ -220,7 +220,7 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 			},
 		},
 	}
-	echoTLSRaw, err := gwapi.EncodeBackendTLSPolicyV1(echoTLSPolicy)
+	echoTLSRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(echoTLSPolicy)
 	if err != nil {
 		t.Fatalf("encode BackendTLSPolicy: %v", err)
 	}
@@ -244,7 +244,7 @@ func TestLoadStateLoadsBackendPoliciesForReferencedBackends(t *testing.T) {
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteGatewayParentIndex, statusHTTPRouteGatewayParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys).
 		WithIndex(&gatewayv1.HTTPRoute{}, statusHTTPRouteListenerSetParentIndex, statusHTTPRouteListenerSetParentIndexKeys).
-		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
+		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
 		WithIndex(&backendlb.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
@@ -450,7 +450,7 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 
-	policyRaw, err := gwapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
+	policyRaw, err := gatewayapi.EncodeBackendTLSPolicyV1(&gatewayv1alpha3.BackendTLSPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "orders-tls", Namespace: "default"},
 		Spec: gatewayv1.BackendTLSPolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReferenceWithSectionName{{
@@ -471,7 +471,7 @@ func TestLoadStateFallsBackToBackendPolicyListsWithoutRouteBackendRefs(t *testin
 
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithIndex(gwapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
+		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), statusBackendTLSPolicyTargetRefIndex, statusBackendTLSPolicyTargetRefIndexKeys).
 		WithIndex(&backendlb.BackendLBPolicy{}, statusBackendLBPolicyTargetRefIndex, statusBackendLBPolicyTargetRefIndexKeys).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},

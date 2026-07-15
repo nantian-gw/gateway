@@ -8,7 +8,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -70,7 +70,7 @@ func newBackendRefTranslator(
 
 func (t backendRefTranslator) annotateHTTPRoute(target *ir.HTTPRoute, source gatewayv1.HTTPRoute) {
 	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
-	validation := gwapi.ValidateHTTPRouteRules(source)
+	validation := gatewayapi.ValidateHTTPRouteRules(source)
 	invalidRules := make(map[int]struct{}, len(validation.InvalidRuleIndexes))
 	for _, index := range validation.InvalidRuleIndexes {
 		invalidRules[index] = struct{}{}

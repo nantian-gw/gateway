@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/nantian-gw/gateway/internal/gwapi"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 func (r *Reconciler) reconcileListenerSetStatuses(ctx context.Context, lses []gatewayv1.ListenerSet, evals map[string]listenerSetEvaluation) error {
@@ -58,7 +58,7 @@ func (r *Reconciler) reconcileListenerSetStatus(
 		if apiequality.Semantic.DeepEqual(current.Status, *desired) {
 			return nil
 		}
-		if err := gwapi.UpdateListenerSetV1Status(ctx, r.client, currentRaw, *desired); err != nil {
+		if err := gatewayapi.UpdateListenerSetV1Status(ctx, r.client, currentRaw, *desired); err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil
 			}

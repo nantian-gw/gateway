@@ -1,4 +1,4 @@
-package gwapi
+package gatewayapi
 
 import (
 	"k8s.io/apimachinery/pkg/api/meta"
