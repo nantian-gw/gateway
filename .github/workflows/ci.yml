@@ -108,4 +108,10 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
       - name: Run benchmarks
-        run: go test -bench=. -benchtime=1x ./...
+        run: go test -bench=. -benchtime=3x -count=3 ./... | tee bench-output.txt
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: benchmark-results
+          path: bench-output.txt
+          retention-days: 30
