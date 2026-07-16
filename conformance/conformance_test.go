@@ -35,7 +35,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.TestIsolation = 10 * time.Second
 
 	options.SkipTests = []string{
-		// Not yet implemented or fixed:
+		// Data-plane dependent (translator is correct):
 		"GatewayHTTPListenerIsolation",
 		"HTTPRouteListenerHostnameMatching",
 		"HTTPRouteRedirectPortAndScheme",
