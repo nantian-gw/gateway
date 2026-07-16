@@ -23,6 +23,12 @@
         },
         {
           "method": "GET",
+          "path": "/v1/auth/verify",
+          "auth": "bearer-always",
+          "contentType": "application/json"
+        },
+        {
+          "method": "GET",
           "path": "/v1/summary",
           "auth": "bearer-when-configured",
           "contentType": "application/json"

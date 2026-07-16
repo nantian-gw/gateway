@@ -8,6 +8,19 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
+func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
+	token := extractBearerToken(r)
+	if token == "" {
+		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "no token"})
+		return
+	}
+	if !s.authOpts.IsTokenValid(token) {
+		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "invalid"})
+		return
+	}
+	s.respondJSON(w, map[string]any{"authenticated": true})
+}
+
 func (s *Server) handleLiveness(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte("ok")); err != nil {

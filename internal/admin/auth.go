@@ -409,6 +409,25 @@ func resolveBearerToken(opts Options) (string, bool) {
 	return token, token != ""
 }
 
+// IsTokenValid checks if a given Bearer token matches the configured token.
+// Always returns false if auth is not configured (no token set).
+func (opts Options) IsTokenValid(token string) bool {
+	expected, ok := resolveBearerToken(opts)
+	if !ok || expected == "" {
+		return false
+	}
+	return subtle.ConstantTimeCompare([]byte(token), []byte(expected)) == 1
+}
+
+// extractBearerToken pulls the Bearer token from the Authorization header.
+func extractBearerToken(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if !strings.HasPrefix(auth, "Bearer ") {
+		return ""
+	}
+	return strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+}
+
 func resolveReadOnlyToken(opts Options) (string, bool) {
 	if path := strings.TrimSpace(opts.ReadOnlyBearerTokenFile); path != "" {
 		raw, err := os.ReadFile(path)

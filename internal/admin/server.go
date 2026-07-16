@@ -77,6 +77,7 @@ type Server struct {
 	detailIndex           *snapshotDetailIndexCache
 	dataplaneDiscovery    *DataplaneDiscovery
 	dataplaneClient       *DataplaneClient
+	authOpts              Options
 }
 
 func NewServer(
@@ -101,6 +102,7 @@ func NewServer(
 		maxListItems:          opts.MaxListItems,
 		now:                   func() time.Time { return time.Now().UTC() },
 		detailIndex:           newSnapshotDetailIndexCache(),
+		authOpts:              opts,
 	}
 
 	mux := http.NewServeMux()
@@ -149,6 +151,10 @@ func adminRouteBindings() []routeBinding {
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/readyz", Auth: "none", ContentType: "text/plain"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleReadiness },
+		},
+		{
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/auth/verify", Auth: "bearer-always", ContentType: "application/json"},
+			handler:  func(s *Server) http.HandlerFunc { return s.handleAuthVerify },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/summary", Auth: "bearer-when-configured", ContentType: "application/json"},
