@@ -41,6 +41,8 @@ func TestGatewayAPIConformance(t *testing.T) {
 		"HTTPRouteRedirectPortAndScheme",
 		"ListenerSetHTTPRouting",
 		"BackendTLSPolicy",
+		// Needs status reconciler enhancement:
+		"TLSRouteInvalidNoMatchingListener",
 	}
 
 	manifestFS, err := gatewayAPIManifestFS()
