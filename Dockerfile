@@ -23,6 +23,9 @@ COPY --from=builder /out/nantian-controlplane /usr/local/bin/nantian-controlplan
 
 USER 65532:65532
 
+# No HEALTHCHECK: the runtime base is distroless/static (no shell/curl).
+# Kubernetes liveness/readiness probes (httpGet at /livez and /readyz on :18081)
+# provide equivalent functionality.
 ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]
 
 # ──────────────────────────────────────────────
