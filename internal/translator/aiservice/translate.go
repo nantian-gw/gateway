@@ -1,4 +1,4 @@
-package translator
+package aiservice
 
 import (
 	"log/slog"
@@ -8,7 +8,8 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func translateAIService(svc aiservice.AIService) ir.AIServiceConfig {
+// Translate converts an AIService CRD to the IR config.
+func Translate(svc aiservice.AIService) ir.AIServiceConfig {
 	cfg := ir.AIServiceConfig{
 		Provider:  svc.Spec.Provider,
 		Format:    svc.Spec.Format,
@@ -30,11 +31,12 @@ func translateAIService(svc aiservice.AIService) ir.AIServiceConfig {
 	return cfg
 }
 
-func translateAIServices(svcs []aiservice.AIService) map[string]ir.AIServiceConfig {
+// TranslateAll converts a list of AIService CRDs to a name-indexed IR config map.
+func TranslateAll(svcs []aiservice.AIService) map[string]ir.AIServiceConfig {
 	result := make(map[string]ir.AIServiceConfig, len(svcs))
 	for _, svc := range svcs {
-		key := backendObjectKey(svc.Namespace, svc.Name)
-		result[key] = translateAIService(svc)
+		key := svc.Namespace + "/" + svc.Name
+		result[key] = Translate(svc)
 	}
 	return result
 }

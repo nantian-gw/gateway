@@ -19,6 +19,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
@@ -513,7 +514,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot,
 		t.limits.DefaultConnectTimeout,
 		indexes,
 	)
-	aiServiceConfigs := translateAIServices(aiServices)
+	aiServiceConfigs := aiservicetranslator.TranslateAll(aiServices)
 	for i := range snapshot.Backends {
 		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := aiServiceConfigs[key]; ok {

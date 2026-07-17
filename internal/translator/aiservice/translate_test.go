@@ -1,4 +1,4 @@
-package translator
+package aiservice
 
 import (
 	"testing"
@@ -21,7 +21,7 @@ func TestTranslateAIService_Basic(t *testing.T) {
 			Model:    "gpt-4",
 		},
 	}
-	result := translateAIService(svc)
+	result := Translate(svc)
 	if result.Provider != "openai" {
 		t.Errorf("expected provider openai, got %s", result.Provider)
 	}
@@ -54,7 +54,7 @@ func TestTranslateAIService_WithFormat(t *testing.T) {
 			Timeout: "30s",
 		},
 	}
-	result := translateAIService(svc)
+	result := Translate(svc)
 	if result.Format != "openai" {
 		t.Errorf("expected format openai, got %s", result.Format)
 	}
@@ -92,7 +92,7 @@ func TestTranslateAIServiceList(t *testing.T) {
 			},
 		},
 	}
-	result := translateAIServices(svcs)
+	result := TranslateAll(svcs)
 	if len(result) != 2 {
 		t.Errorf("expected 2 results, got %d", len(result))
 	}
@@ -120,11 +120,11 @@ func TestTranslateAIService_TimeoutParse(t *testing.T) {
 			Timeout:  "invalid",
 		},
 	}
-	result := translateAIService(svc)
+	result := Translate(svc)
 	if result.Timeout != 0 {
 		t.Errorf("expected zero timeout for invalid duration, got %v", result.Timeout)
 	}
 }
 
 // Ensure interfaces compile
-var _ ir.AIServiceConfig = translateAIService(aiservice.AIService{})
+var _ ir.AIServiceConfig = Translate(aiservice.AIService{})
