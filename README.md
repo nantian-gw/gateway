@@ -30,7 +30,7 @@ Nightly conformance + load test results (600s vegeta, via Gateway → dataplane)
 ## Why Nantian Gateway?
 
 | | Nantian Gateway | Envoy Gateway | Istio | Traefik |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | **Control plane** | Go | Go | Go | Go |
 | **Data plane** | Rust (Pingora) | Envoy (C++) | Envoy (C++) | Traefik (Go) |
 | **AI Gateway** | Yes (native) | — | — | — |
