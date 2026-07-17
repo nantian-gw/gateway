@@ -208,9 +208,7 @@ func normalizeParentRef(routeNamespace string, ref gatewayv1.ParentReference) ga
 		namespace := gatewayv1.Namespace(*ref.Namespace)
 		normalized.Namespace = &namespace
 	} else if routeNamespace != "" {
-		namespace := gatewayv1.Namespace(routeNamespace)
 		normalized.Namespace = nil
-		_ = namespace
 	}
 	return normalized
 }

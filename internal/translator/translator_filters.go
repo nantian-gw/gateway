@@ -1,8 +1,6 @@
 package translator
 
 import (
-	"time"
-
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
@@ -422,4 +420,3 @@ func backendRefsFromRouteRule(refs []gatewayv1.BackendRef, defaultNamespace stri
 	return out
 }
 
-var _ = time.Second
