@@ -22,7 +22,6 @@ type FeatureOptions struct {
 }
 
 var experimentalGatewayFeatures = []gatewayfeatures.FeatureName{
-	gatewayfeatures.SupportListenerSet,
 	SupportedTCPRoute,
 	gatewayfeatures.SupportUDPRoute,
 	gatewayfeatures.SupportTLSRoute,
@@ -34,8 +33,6 @@ var experimentalGatewayFeatures = []gatewayfeatures.FeatureName{
 // advertises through the in-repo conformance profile.
 func SupportedFeatureNameSet() sets.Set[gatewayfeatures.FeatureName] {
 	return sets.New(
-		gatewayfeatures.SupportBackendTLSPolicy,
-		gatewayfeatures.SupportBackendTLSPolicySANValidation,
 		SupportedBackendLBSessionPersistence,
 		gatewayfeatures.SupportGRPCRoute,
 		gatewayfeatures.SupportGRPCRouteNamedRouteRule,
@@ -43,7 +40,6 @@ func SupportedFeatureNameSet() sets.Set[gatewayfeatures.FeatureName] {
 		gatewayfeatures.SupportGatewayAddressEmpty,
 		gatewayfeatures.SupportGatewayBackendClientCertificate,
 		gatewayfeatures.SupportGatewayHTTPSListenerDetectMisdirectedRequests,
-		gatewayfeatures.SupportGatewayHTTPListenerIsolation,
 		gatewayfeatures.SupportGatewayInfrastructurePropagation,
 		gatewayfeatures.SupportGatewayPort8080,
 		gatewayfeatures.SupportGatewayStaticAddresses,
@@ -63,15 +59,12 @@ func SupportedFeatureNameSet() sets.Set[gatewayfeatures.FeatureName] {
 		gatewayfeatures.SupportHTTPRouteParentRefPort,
 		gatewayfeatures.SupportHTTPRoutePathRedirect,
 		gatewayfeatures.SupportHTTPRoutePathRewrite,
-		gatewayfeatures.SupportHTTPRoutePortRedirect,
 		gatewayfeatures.SupportHTTPRouteQueryParamMatching,
 		gatewayfeatures.SupportHTTPRouteRequestMirror,
 		gatewayfeatures.SupportHTTPRouteRequestMultipleMirrors,
 		gatewayfeatures.SupportHTTPRouteRequestPercentageMirror,
 		gatewayfeatures.SupportHTTPRouteRequestTimeout,
 		gatewayfeatures.SupportHTTPRouteResponseHeaderModification,
-		gatewayfeatures.SupportHTTPRouteSchemeRedirect,
-		gatewayfeatures.SupportListenerSet,
 		gatewayfeatures.SupportMesh,
 		gatewayfeatures.SupportMeshClusterIPMatching,
 		gatewayfeatures.SupportMeshConsumerRoute,
