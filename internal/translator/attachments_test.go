@@ -16,6 +16,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
@@ -33,7 +34,7 @@ func TestBuildSnapshotAttachesRoutesOnlyToIntersectingListeners(t *testing.T) {
 	pathPrefix := gatewayv1.PathMatchPathPrefix
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -194,7 +195,7 @@ func TestBuildSnapshotScopesListenerSetParentRoutesToListenerSetListeners(t *tes
 	listenerSetHostname := gatewayv1.Hostname("listenerset.example.com")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -320,7 +321,7 @@ func TestBuildSnapshotAttachesListenerSetParentToAllDerivedListeners(t *testing.
 	listenerTwoHostname := gatewayv1.Hostname("two.example.com")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -466,7 +467,7 @@ func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *t
 	ls2HostnameOne := gatewayv1.Hostname("listener-set-http-routing-2-listener-1.com")
 	ls2HostnameTwo := gatewayv1.Hostname("listener-set-http-routing-2-listener-2.com")
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -744,7 +745,7 @@ func TestBuildSnapshotAttachesDefaultGatewayRoute(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -858,7 +859,7 @@ func TestBuildSnapshotAttachesConformanceSameNamespaceRoute(t *testing.T) {
 	backendGroup := gatewayv1.Group("unknownkind.example.com")
 	backendKind := gatewayv1.Kind("NonExistent")
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -970,7 +971,7 @@ func TestBuildSnapshotAttachesGRPCRouteToHTTPListener(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1085,7 +1086,7 @@ func TestBuildSnapshotAttachesMeshGRPCRouteToServiceFrontendListener(t *testing.
 	servicePort := gatewayv1.PortNumber(7070)
 	appGRPC := "grpc"
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-mesh"}},
 			&corev1.Service{
@@ -1177,7 +1178,7 @@ func TestBuildSnapshotAttachesTLSRouteToTLSListener(t *testing.T) {
 	tlsMode := gatewayv1.TLSModePassthrough
 	portNumber := gatewayv1.PortNumber(443)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1295,7 +1296,7 @@ func TestBuildSnapshotDoesNotAttachTLSRouteToHTTPSListener(t *testing.T) {
 	tlsMode := gatewayv1.TLSModeTerminate
 	portNumber := gatewayv1.PortNumber(443)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1414,7 +1415,7 @@ func TestBuildSnapshotAttachesTCPRouteToMatchingParentRefPort(t *testing.T) {
 	targetPort := gatewayv1.PortNumber(9001)
 	servicePort := gatewayv1.PortNumber(7001)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1533,7 +1534,7 @@ func TestBuildSnapshotDifferentiatesTLSProtocolModes(t *testing.T) {
 	passthroughMode := gatewayv1.TLSModePassthrough
 	terminateMode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -1615,7 +1616,7 @@ func TestBuildSnapshotAnnotatesTLSRouteTerminateStreamRouteWithoutNativeHTTPRout
 	terminateMode := gatewayv1.TLSModeTerminate
 	servicePort := gatewayv1.PortNumber(80)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1740,7 +1741,7 @@ func TestBuildSnapshotSetsTLSRouteModesFromIntersectingListenersOnSharedPort(t *
 	terminateBackendPort := gatewayv1.PortNumber(3000)
 	passthroughBackendPort := gatewayv1.PortNumber(8443)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{

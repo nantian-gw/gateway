@@ -7,11 +7,13 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
 func TestListGatewayClassesForControllerRequiresFieldIndex(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	cl := fake.NewClientBuilder().
@@ -36,7 +38,7 @@ func TestListGatewayClassesForControllerRequiresFieldIndex(t *testing.T) {
 }
 
 func TestListGatewaysForGatewayClassRequiresFieldIndex(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
 	cl := fake.NewClientBuilder().
 		WithScheme(scheme).

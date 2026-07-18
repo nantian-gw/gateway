@@ -16,6 +16,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildMarksTCPRouteCrossNamespaceBackendWithoutGrant(t *testing.T) {
@@ -153,7 +154,7 @@ func TestBuildAllowsTCPRouteCrossNamespaceBackendWithReferenceGrant(t *testing.T
 func buildTCPRouteSupplementalSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapshot {
 	t.Helper()
 
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	baseObjects := []runtime.Object{
 		&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -183,7 +184,7 @@ func buildTCPRouteSupplementalSnapshot(t *testing.T, objects ...runtime.Object) 
 	}
 	baseObjects = append(baseObjects, objects...)
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithRuntimeObjects(baseObjects...).
 		Build()
 

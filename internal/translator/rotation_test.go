@@ -19,6 +19,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *testing.T) {
@@ -57,7 +58,7 @@ func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *tes
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -128,7 +129,7 @@ func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotati
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -200,7 +201,7 @@ func TestBuildSnapshotFallsBackToSecondaryCertificateWhenPrimaryBecomesInvalid(t
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -272,7 +273,7 @@ func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t 
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -341,7 +342,7 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -412,7 +413,7 @@ func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testin
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{

@@ -13,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
@@ -22,7 +24,7 @@ var httpRouteResource = schema.GroupResource{
 }
 
 func TestBuildSkipsRawHTTPRouteFetchWithoutCustomRawFilters(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
 	standardRoute := &gatewayv1.HTTPRoute{
 		ObjectMeta: metav1.ObjectMeta{Name: "standard", Namespace: "default"},
@@ -38,7 +40,7 @@ func TestBuildSkipsRawHTTPRouteFetchWithoutCustomRawFilters(t *testing.T) {
 		},
 	}
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(standardRoute).
 		Build()
 
@@ -58,7 +60,7 @@ func TestBuildSkipsRawHTTPRouteFetchWithoutCustomRawFilters(t *testing.T) {
 }
 
 func TestBuildLoadsRawHTTPRoutesOnDemandForCORSFilters(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
 	corsRoute := &gatewayv1.HTTPRoute{
 		ObjectMeta: metav1.ObjectMeta{Name: "cors", Namespace: "default"},
@@ -81,7 +83,7 @@ func TestBuildLoadsRawHTTPRoutesOnDemandForCORSFilters(t *testing.T) {
 		},
 	}
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(corsRoute, standardRoute).
 		Build()
 

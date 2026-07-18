@@ -12,14 +12,15 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildGatewayListenersForSnapshotIncludesListenerSets(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -79,12 +80,12 @@ func TestBuildGatewayListenersForSnapshotIncludesListenerSets(t *testing.T) {
 }
 
 func TestBuildGatewayListenersForSnapshotAddsSecondListenerSetToExistingSnapshot(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	ls1Hostname := gatewayv1.Hostname("listener-set-1.example.com")
 	ls2Hostname := gatewayv1.Hostname("listener-set-2.example.com")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -223,7 +224,7 @@ func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGat
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,

@@ -15,6 +15,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/translator/shared"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildReturnsErrorWhenInputObjectLimitExceeded(t *testing.T) {
@@ -120,13 +121,13 @@ func TestBuildIgnoresDisabledSnapshotLimits(t *testing.T) {
 func newTranslatorLimitsFixture(t *testing.T) client.Client {
 	t.Helper()
 
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	pathType := gatewayv1.PathMatchPathPrefix
 	hostname := gatewayv1.Hostname("example.com")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	return newTranslatorClientBuilder(scheme).
+	return testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},

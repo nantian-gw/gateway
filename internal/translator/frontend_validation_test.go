@@ -13,6 +13,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotIncludesFrontendValidationCAPEMs(t *testing.T) {
@@ -26,7 +28,7 @@ func TestBuildSnapshotIncludesFrontendValidationCAPEMs(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -106,7 +108,7 @@ func TestBuildSnapshotIncludesFrontendValidationMode(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -180,7 +182,7 @@ func TestBuildSnapshotIncludesCrossNamespaceFrontendValidationWithReferenceGrant
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -272,7 +274,7 @@ func TestBuildSnapshotRejectsHTTPSListenerForCrossNamespaceFrontendValidationWit
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -353,7 +355,7 @@ func TestBuildSnapshotIgnoresFrontendValidationForTLSPassthroughListener(t *test
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	passthrough := gatewayv1.TLSModePassthrough
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -433,7 +435,7 @@ func TestBuildSnapshotRejectsHTTPSListenerWhenDefaultFrontendValidationHasNoVali
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -539,7 +541,7 @@ func TestBuildSnapshotKeepsRejectedFrontendValidationListenerFromCurrentStatus(t
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -640,7 +642,7 @@ func TestBuildSnapshotSkipsCrossNamespaceCertificateRefWithoutReferenceGrant(t *
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -711,7 +713,7 @@ func TestBuildSnapshotIncludesCrossNamespaceCertificateRefWithReferenceGrant(t *
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -797,7 +799,7 @@ func TestBuildSnapshotDeduplicatesValidListenerCertificateRefs(t *testing.T) {
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -896,7 +898,7 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	mode := gatewayv1.TLSModeTerminate
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},

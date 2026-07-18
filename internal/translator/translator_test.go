@@ -21,6 +21,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildIgnoresMissingExperimentalGatewayRouteCRDs(t *testing.T) {
@@ -32,7 +33,7 @@ func TestBuildIgnoresMissingExperimentalGatewayRouteCRDs(t *testing.T) {
 	must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(&gatewayv1.GatewayClass{
 			ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
 			Spec: gatewayv1.GatewayClassSpec{
@@ -92,7 +93,7 @@ func TestBuildSnapshot(t *testing.T) {
 	hostname := gatewayv1.Hostname("example.com")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -307,7 +308,7 @@ func TestBuildSnapshotSkipsInvalidGatewayListeners(t *testing.T) {
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -401,7 +402,7 @@ func TestBuildSnapshotDropsHTTPRuleWithUnsupportedExternalAuthProtocol(t *testin
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},

@@ -15,6 +15,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
@@ -26,7 +28,7 @@ func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
 	must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -97,7 +99,7 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 	must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
@@ -181,7 +183,7 @@ func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutRefer
 	must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "shared"}},
@@ -250,7 +252,7 @@ func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *tes
 	must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{

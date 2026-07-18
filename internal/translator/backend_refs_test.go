@@ -18,6 +18,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildMarksInvalidBackendKind(t *testing.T) {
@@ -440,7 +441,7 @@ func buildTranslatorSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapsh
 	}
 	baseObjects = append(baseObjects, objects...)
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithRuntimeObjects(baseObjects...).
 		Build()
 

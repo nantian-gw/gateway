@@ -16,10 +16,11 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(80)
 
@@ -60,7 +61,7 @@ func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -190,14 +191,14 @@ func TestBuildRoutesForSnapshotAddsNewlyReferencedBackends(t *testing.T) {
 }
 
 func TestBuildRoutesForSnapshotAttachesListenerSetParentRoute(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(80)
 	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
 	listenerSetKind := gatewayv1.Kind("ListenerSet")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -330,14 +331,14 @@ func TestBuildRoutesForSnapshotAttachesListenerSetParentRoute(t *testing.T) {
 }
 
 func TestBuildRoutesForSnapshotRebuildsMissingListenerSetListenersBeforeAttachingRoutes(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(80)
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
 	listenerSetKind := gatewayv1.Kind("ListenerSet")
 	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -476,7 +477,7 @@ func TestBuildRoutesForSnapshotRebuildsMissingListenerSetListenersBeforeAttachin
 }
 
 func TestBuildRoutesForSnapshotAttachesListenerSetRoutesForMixedAllowedRoutesNamespaces(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(8080)
 	allNamespaces := gatewayv1.NamespacesFromAll
@@ -485,7 +486,7 @@ func TestBuildRoutesForSnapshotAttachesListenerSetRoutesForMixedAllowedRoutesNam
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
 	listenerSetKind := gatewayv1.Kind("ListenerSet")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -770,7 +771,7 @@ func TestBuildRoutesForSnapshotAttachesListenerSetRoutesForMixedAllowedRoutesNam
 }
 
 func TestBuildRoutesForSnapshotUsesDirectParentListenerSetWhenGatewayListIsStale(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(80)
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
@@ -778,7 +779,7 @@ func TestBuildRoutesForSnapshotUsesDirectParentListenerSetWhenGatewayListIsStale
 	ls1Hostname := gatewayv1.Hostname("listener-set-1.example.com")
 	ls2Hostname := gatewayv1.Hostname("listener-set-2.example.com")
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -949,7 +950,7 @@ func TestBuildRoutesForSnapshotUsesDirectParentListenerSetWhenGatewayListIsStale
 }
 
 func TestBuildRoutesForSnapshotRebuildsSecondListenerSetForSharedAndSpecificRoutes(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	servicePort := gatewayv1.PortNumber(80)
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
@@ -959,7 +960,7 @@ func TestBuildRoutesForSnapshotRebuildsSecondListenerSetForSharedAndSpecificRout
 	ls1Hostname := gatewayv1.Hostname("listener-set-1.example.com")
 	ls2Hostname := gatewayv1.Hostname("listener-set-2.example.com")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1204,7 +1205,7 @@ func (c *staleListenerSetListClient) List(
 }
 
 func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	terminateMode := gatewayv1.TLSModeTerminate
 	servicePort := gatewayv1.PortNumber(80)
@@ -1227,7 +1228,7 @@ func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{

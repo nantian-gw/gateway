@@ -17,6 +17,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
@@ -30,7 +31,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -123,7 +124,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -213,7 +214,7 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithUnsupportedOptions(t *testing.T) 
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -272,7 +273,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyWhenAtLeastOneTargetIsValid(t *tes
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -337,7 +338,7 @@ func TestBuildSnapshotAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -424,7 +425,7 @@ func TestBuildSnapshotPrefersSectionScopedBackendTLSPolicyOverCatchAll(t *testin
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -512,7 +513,7 @@ func TestBuildSnapshotKeepsValidBackendTLSCAPEMsWhenSomeRefsAreInvalid(t *testin
 	must(corev1.AddToScheme(scheme), t)
 	must(discoveryv1.AddToScheme(scheme), t)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -590,7 +591,7 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -654,7 +655,7 @@ func TestBuildSnapshotExternalAuthWithBackendTLSPolicy(t *testing.T) {
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{

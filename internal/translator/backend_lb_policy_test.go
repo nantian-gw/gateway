@@ -18,6 +18,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
@@ -35,7 +36,7 @@ func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 	sessionType := gatewayv1.HeaderBasedSessionPersistence
 	sessionName := "x-orders-session"
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
@@ -107,7 +108,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 	must(discoveryv1.AddToScheme(scheme), t)
 	must(mcsv1alpha1.AddToScheme(scheme), t)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&mcsv1alpha1.ServiceImport{
@@ -173,7 +174,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyConsistentHash(t *testing.T) {
 	keyType := backend.HashKeyTypeHeader
 	headerName := "x-user-id"
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{

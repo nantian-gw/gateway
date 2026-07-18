@@ -16,6 +16,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(t *testing.T) {
@@ -29,7 +30,7 @@ func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -146,7 +147,7 @@ func TestBuildSnapshotAttachesCrossNamespaceRouteWhenAllowedRoutesFromAll(t *tes
 	namespaceMode := gatewayv1.NamespacesFromAll
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "apps"}},
@@ -243,7 +244,7 @@ func TestBuildSnapshotAttachesRoutesOnlyForSelectorMatchedNamespacesAndParentRef
 	namespaceMode := gatewayv1.NamespacesFromSelector
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{
@@ -421,7 +422,7 @@ func TestBuildSnapshotAllowsListenerSetFromSelectorMatchedNamespace(t *testing.T
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
@@ -494,7 +495,7 @@ func TestBuildSnapshotListenerSetAllowedRoutesSameUsesListenerSetNamespace(t *te
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "apps"}},
@@ -601,7 +602,7 @@ func TestBuildSnapshotListenerSetAllowedRoutesSelectorLoadsRouteNamespace(t *tes
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "infra"}},
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
@@ -716,7 +717,7 @@ func TestBuildSnapshotAttachesListenerSetRoutesForMixedAllowedRoutesNamespaces(t
 	sameNamespace := gatewayv1.NamespacesFromSame
 	selectorNamespaces := gatewayv1.NamespacesFromSelector
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1007,7 +1008,7 @@ func TestBuildSnapshotSynthesizesMeshServiceListeners(t *testing.T) {
 	servicePort := gatewayv1.PortNumber(80)
 	httpProtocol := "http"
 
-	client := newTranslatorClientBuilder(scheme).
+	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&corev1.Service{
