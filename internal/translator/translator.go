@@ -30,6 +30,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/listeners"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/routepolicy"
 	"github.com/nantian-gw/gateway/internal/translator/routes"
@@ -453,8 +454,8 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	snapshot.Listeners = append(
 		snapshot.Listeners,
-		translateMeshServiceListeners(
-			collectMeshServiceFrontends(
+		listeners.TranslateMeshServiceListeners(
+			listeners.CollectMeshServiceFrontends(
 				filteredServices,
 				httpRoutes.Items,
 				grpcRoutes.Items,

@@ -23,6 +23,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/listeners"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
@@ -499,7 +500,7 @@ func (t *Translator) RebuildMeshServiceListeners(
 		return nil, err
 	}
 
-	meshListeners := translateMeshServiceListeners(
+	meshListeners := listeners.TranslateMeshServiceListeners(
 		collectMeshServiceFrontendsFromSnapshot(
 			resources.FilterServices(services),
 			current,

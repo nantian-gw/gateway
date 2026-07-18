@@ -1,9 +1,11 @@
-package translator
+package listeners_test
 
 import (
 	"context"
 	"io"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +16,8 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
+	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
@@ -73,7 +77,7 @@ func TestBuildSnapshotIncludesFrontendValidationCAPEMs(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -154,7 +158,7 @@ func TestBuildSnapshotIncludesFrontendValidationMode(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -243,7 +247,7 @@ func TestBuildSnapshotIncludesCrossNamespaceFrontendValidationWithReferenceGrant
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -320,7 +324,7 @@ func TestBuildSnapshotRejectsHTTPSListenerForCrossNamespaceFrontendValidationWit
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -400,7 +404,7 @@ func TestBuildSnapshotIgnoresFrontendValidationForTLSPassthroughListener(t *test
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -494,7 +498,7 @@ func TestBuildSnapshotRejectsHTTPSListenerWhenDefaultFrontendValidationHasNoVali
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -608,7 +612,7 @@ func TestBuildSnapshotKeepsRejectedFrontendValidationListenerFromCurrentStatus(t
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -682,7 +686,7 @@ func TestBuildSnapshotSkipsCrossNamespaceCertificateRefWithoutReferenceGrant(t *
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -768,7 +772,7 @@ func TestBuildSnapshotIncludesCrossNamespaceCertificateRefWithReferenceGrant(t *
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -867,7 +871,7 @@ func TestBuildSnapshotDeduplicatesValidListenerCertificateRefs(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -990,7 +994,7 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -1016,5 +1020,39 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 	}
 	if got := findSnapshotSecret(t, snapshot, "shared", "shared-cert").CertPEM; got != string(readBackendTLSAsset(t, "server-san.crt")) {
 		t.Fatalf("unexpected shared cert material: %q", got)
+	}
+}
+
+// --- test helpers (local copies originally from translator package) ---
+
+func ptr[T any](value T) *T {
+	return &value
+}
+
+func findSnapshotSecret(t *testing.T, snapshot *ir.Snapshot, namespace, name string) ir.SecretMaterial {
+	t.Helper()
+	for _, secret := range snapshot.Secrets {
+		if secret.Namespace == namespace && secret.Name == name {
+			return secret
+		}
+	}
+	t.Fatalf("secret %s/%s not found in snapshot", namespace, name)
+	return ir.SecretMaterial{}
+}
+
+func readBackendTLSAsset(t *testing.T, name string) []byte {
+	t.Helper()
+	path := filepath.Join("..", "..", "..", "test", "testdata", "backendtls", name)
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return raw
+}
+
+func must(err error, t *testing.T) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

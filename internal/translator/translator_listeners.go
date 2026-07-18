@@ -16,6 +16,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	lsnr "github.com/nantian-gw/gateway/internal/translator/listeners"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -90,7 +91,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 				tlsConfig.Passthrough = string(*listener.TLS.Mode) == "Passthrough"
 			}
 			tlsConfig.SecretRefs = listenerCertificateSecretRefsWithIndexes(gateway, listener, indexes)
-			tlsConfig.FrontendValidation = frontendValidationForListenerWithIndexes(gateway, listener, indexes)
+			tlsConfig.FrontendValidation = lsnr.FrontendValidationForListenerWithIndexes(gateway, listener, indexes)
 			item.TLS = tlsConfig
 		}
 

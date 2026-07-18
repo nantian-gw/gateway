@@ -1,4 +1,4 @@
-package translator
+package listeners
 
 import (
 	"log/slog"
@@ -19,20 +19,20 @@ import (
 // and FrontendTLSValidationModeRequestClientCertificate (v1).
 const frontendValidationRejectMode = "RejectClientCertificate"
 
-func frontendValidationForListener(
+func FrontendValidationForListener(
 	gateway gatewayv1.Gateway,
 	listener gatewayv1.Listener,
 	configMaps []corev1.ConfigMap,
 	referenceGrants []gatewayv1beta1.ReferenceGrant,
 ) *ir.FrontendValidation {
-	return frontendValidationForListenerWithIndexes(
+	return FrontendValidationForListenerWithIndexes(
 		gateway,
 		listener,
 		shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, referenceGrants),
 	)
 }
 
-func frontendValidationForListenerWithIndexes(
+func FrontendValidationForListenerWithIndexes(
 	gateway gatewayv1.Gateway,
 	listener gatewayv1.Listener,
 	indexes shared.TranslatorIndexes,

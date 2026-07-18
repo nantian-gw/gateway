@@ -1,4 +1,4 @@
-package translator
+package listeners
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -9,7 +9,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
-func collectMeshServiceFrontends(
+func CollectMeshServiceFrontends(
 	services []corev1.Service,
 	httpRoutes []gatewayv1.HTTPRoute,
 	grpcRoutes []gatewayv1.GRPCRoute,
@@ -51,7 +51,7 @@ func collectMeshParentKeys(
 	return out
 }
 
-func translateMeshServiceListeners(frontends []mesh.ServiceFrontendPort) []ir.Listener {
+func TranslateMeshServiceListeners(frontends []mesh.ServiceFrontendPort) []ir.Listener {
 	out := make([]ir.Listener, 0, len(frontends))
 	for _, frontend := range frontends {
 		out = append(out, ir.Listener{
