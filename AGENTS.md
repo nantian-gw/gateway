@@ -58,7 +58,17 @@ The translator package is the highest-risk package in this repository. When chan
 
 ### Translator Package Size
 
-The `internal/translator/` package is 66 `.go` files (~9,535 non-test LOC) with only two sub-packages (`aiservice/`, `routepolicy/`). Future splitting opportunities: `listeners/`, `routes/`, `filters/`, `backends/`, `ai/`. This is tracked in the platform TODO as a P2 item estimated at 3-5 days.
+The `internal/translator/` package has been split into 8 sub-packages (2026-07-18). Root retains 13 files with the `Translator` struct, full/partial rebuild orchestration, support object loaders, and workload translation.
+
+Sub-packages:
+- `shared/` — indexes, helpers, limits, metrics, status summaries
+- `backends/` — backend cluster, TLS, LB policy, session translation
+- `routes/` — route and filter translation, timeout parsing
+- `listeners/` — frontend validation, mesh service translation
+- `policies/` — route attachment, gateway queries, Wasm/Token translation
+- `routepolicy/` — RoutePolicy translation
+- `aiservice/` — AIService translation
+- `testutil/` — shared test helpers
 
 ## Documentation And Comments
 
