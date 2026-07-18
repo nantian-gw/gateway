@@ -1,6 +1,7 @@
 package xds
 
 import (
+	"context"
 	"log/slog"
 	"sync"
 
@@ -10,7 +11,7 @@ import (
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
-type snapshotProtoBuilder func(*ir.Snapshot, projectionProfile, *slog.Logger) *controlv1.ConfigSnapshot
+type snapshotProtoBuilder func(context.Context, *ir.Snapshot, projectionProfile, *slog.Logger) *controlv1.ConfigSnapshot
 
 type snapshotProtoCache struct {
 	mu      sync.RWMutex
@@ -31,7 +32,7 @@ func newSnapshotProtoCache(build snapshotProtoBuilder) *snapshotProtoCache {
 	return &snapshotProtoCache{build: build}
 }
 
-func (c *snapshotProtoCache) get(snapshot *ir.Snapshot, profile projectionProfile, logger *slog.Logger) *controlv1.ConfigSnapshot {
+func (c *snapshotProtoCache) get(ctx context.Context, snapshot *ir.Snapshot, profile projectionProfile, logger *slog.Logger) *controlv1.ConfigSnapshot {
 	if snapshot == nil {
 		return &controlv1.ConfigSnapshot{}
 	}
@@ -53,7 +54,7 @@ func (c *snapshotProtoCache) get(snapshot *ir.Snapshot, profile projectionProfil
 			return cached, nil
 		}
 
-		built := c.build(snapshot, profile, logger)
+		built := c.build(ctx, snapshot, profile, logger)
 
 		c.mu.Lock()
 		if c.version != snapshot.ID || c.snapshots == nil {

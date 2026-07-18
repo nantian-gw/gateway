@@ -305,7 +305,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 				attribute.String("xds.snapshot_id", snapshot.ID),
 			)
 
-			variant := s.protoCache.get(snapshot, profile, s.logger)
+			variant := s.protoCache.get(stream.Context(), snapshot, profile, s.logger)
 			pushSpan.SetAttributes(
 				attribute.String("xds.compatibility_profile", variant.GetCompatibilityProfile()),
 			)

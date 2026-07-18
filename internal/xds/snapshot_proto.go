@@ -1,9 +1,11 @@
 package xds
 
 import (
+	"context"
 	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -495,4 +497,14 @@ func nonZeroDurationOrNil(value time.Duration) *durationpb.Duration {
 	}
 
 	return durationpb.New(value)
+}
+
+// injectTraceparent extracts the W3C traceparent header from the current span
+// context and writes it into the snapshot proto so the data plane can create
+// child spans linked to the snapshot generation trace.
+func injectTraceparent(ctx context.Context, snapshot *controlv1.ConfigSnapshot) {
+	prop := propagation.TraceContext{}
+	carrier := propagation.MapCarrier{}
+	prop.Inject(ctx, carrier)
+	snapshot.Traceparent = carrier.Get("traceparent")
 }

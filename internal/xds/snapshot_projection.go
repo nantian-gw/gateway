@@ -1,6 +1,7 @@
 package xds
 
 import (
+	"context"
 	"log/slog"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 
 const backendRefValidityMetadataKey = "nantian.dev/backend-ref-valid"
 
-func buildProjectedProtoSnapshot(source *ir.Snapshot, profile projectionProfile, logger *slog.Logger) *controlv1.ConfigSnapshot {
+func buildProjectedProtoSnapshot(ctx context.Context, source *ir.Snapshot, profile projectionProfile, logger *slog.Logger) *controlv1.ConfigSnapshot {
 	if source == nil {
 		return &controlv1.ConfigSnapshot{
 			RequiredFeatures:     []string{featureCoreV1},
@@ -23,6 +24,7 @@ func buildProjectedProtoSnapshot(source *ir.Snapshot, profile projectionProfile,
 	projected := toProtoSnapshotWithLogger(projectedIR, logger)
 	projected.RequiredFeatures = projectedRequiredFeatures(projectedIR)
 	projected.CompatibilityProfile = profile.compatibilityProfile
+	injectTraceparent(ctx, projected)
 	return projected
 }
 

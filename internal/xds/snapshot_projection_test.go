@@ -1,6 +1,7 @@
 package xds
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"reflect"
@@ -15,7 +16,7 @@ import (
 func TestProjectedSnapshotLegacyFallbackRemovesUnsupportedHardSemantics(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		projectionTestSnapshot(),
 		effectiveProjectionProfile(nil),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -74,7 +75,7 @@ func TestProjectedSnapshotLegacyFallbackRemovesUnsupportedHardSemantics(t *testi
 func TestProjectedSnapshotFullProfilePreservesAIServiceTokenPolicyWasmAndLabels(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		projectionTestSnapshot(),
 		effectiveProjectionProfile([]string{
 			featureCoreV1,
@@ -139,7 +140,7 @@ func TestProjectedSnapshotFullProfilePreservesAIServiceTokenPolicyWasmAndLabels(
 func TestProjectedSnapshotPreservesListenerWhenAllAttachedRoutesArePruned(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			Listeners: []ir.Listener{{
 				Name:           "listener-empty-after-projection",
@@ -177,7 +178,7 @@ func TestProjectedSnapshotPreservesListenerWhenAllAttachedRoutesArePruned(t *tes
 func TestProjectedSnapshotKeepsHTTPRouteWithPortQualifiedBackendName(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			HTTPRoutes: []ir.HTTPRoute{{
 				Name:      "echo-route",
@@ -282,7 +283,7 @@ func TestProjectedSnapshotFiltersRouteLocalPortQualifiedBackendRefs(t *testing.T
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			projected := buildProjectedProtoSnapshot(
+			projected := buildProjectedProtoSnapshot(context.Background(),
 				&ir.Snapshot{
 					HTTPRoutes: []ir.HTTPRoute{{
 						Name:      "orders-route",
@@ -323,7 +324,7 @@ func TestProjectedSnapshotFiltersRouteLocalPortQualifiedBackendRefs(t *testing.T
 func TestProjectedSnapshotKeepsSecondListenerSetHTTPRoutingRoutes(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			Listeners: []ir.Listener{
 				listenerSetHTTPRoutingProjectedListener(
@@ -428,7 +429,7 @@ func TestProjectedSnapshotKeepsSecondListenerSetHTTPRoutingRoutes(t *testing.T) 
 func TestProjectedSnapshotKeepsGRPCRouteWithPortQualifiedBackendName(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			GRPCRoutes: []ir.GRPCRoute{{
 				Name:      "echo-grpc",
@@ -470,7 +471,7 @@ func TestProjectedSnapshotKeepsGRPCRouteWithPortQualifiedBackendName(t *testing.
 func TestProjectedSnapshotKeepsStreamRouteWithPortQualifiedBackendName(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			StreamRoutes: []ir.StreamRoute{{
 				Name:      "echo-stream",
@@ -513,7 +514,7 @@ func TestProjectedSnapshotKeepsStreamRouteWithPortQualifiedBackendName(t *testin
 func TestProjectedSnapshotKeepsHTTPRouteWithInvalidBackendRef(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			HTTPRoutes: []ir.HTTPRoute{{
 				Name:      "invalid-route",
@@ -599,7 +600,7 @@ func listenerSetHTTPRoutingProjectedBackend(name, address string) ir.BackendClus
 func TestProjectedSnapshotPreservesMeshListenerWhenAllAttachedRoutesArePruned(t *testing.T) {
 	t.Parallel()
 
-	projected := buildProjectedProtoSnapshot(
+	projected := buildProjectedProtoSnapshot(context.Background(),
 		&ir.Snapshot{
 			Listeners: []ir.Listener{{
 				Name:           "mesh/apps/orders/25001",
