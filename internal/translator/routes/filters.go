@@ -1,4 +1,4 @@
-package translator
+package routes
 
 import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -8,8 +8,8 @@ import (
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
-func filtersFromHTTP(filters []gatewayv1.HTTPRouteFilter, defaultNamespace string) []ir.Filter {
-	return filtersFromHTTPWithResolver(
+func FiltersFromHTTP(filters []gatewayv1.HTTPRouteFilter, defaultNamespace string) []ir.Filter {
+	return FiltersFromHTTPWithResolver(
 		filters,
 		defaultNamespace,
 		extfilter.Resolver{},
@@ -19,18 +19,18 @@ func filtersFromHTTP(filters []gatewayv1.HTTPRouteFilter, defaultNamespace strin
 	)
 }
 
-func filtersFromHTTPWithResolver(
+func FiltersFromHTTPWithResolver(
 	filters []gatewayv1.HTTPRouteFilter,
 	defaultNamespace string,
 	resolver extfilter.Resolver,
 	target extfilter.Target,
-	rawFilterConfigs rawHTTPRouteFilterConfigs,
+	rawFilterConfigs RawHTTPRouteFilterConfigs,
 	ruleIndex int,
 ) []ir.Filter {
 	out := make([]ir.Filter, 0, len(filters))
 	for filterIndex, filter := range filters {
 		item := ir.Filter{Type: string(filter.Type)}
-		rawFilterConfig := rawHTTPFilterConfig(rawFilterConfigs, ruleIndex, filterIndex)
+		rawFilterConfig := RawHTTPFilterConfig(rawFilterConfigs, ruleIndex, filterIndex)
 		switch filter.Type {
 		case gatewayv1.HTTPRouteFilterRequestHeaderModifier:
 			item.Config = headerFilterConfig(filter.RequestHeaderModifier)
@@ -56,11 +56,11 @@ func filtersFromHTTPWithResolver(
 	return out
 }
 
-func filtersFromGRPC(filters []gatewayv1.GRPCRouteFilter, defaultNamespace string) []ir.Filter {
-	return filtersFromGRPCWithResolver(filters, defaultNamespace, extfilter.Resolver{}, extfilter.TargetGRPC)
+func FiltersFromGRPC(filters []gatewayv1.GRPCRouteFilter, defaultNamespace string) []ir.Filter {
+	return FiltersFromGRPCWithResolver(filters, defaultNamespace, extfilter.Resolver{}, extfilter.TargetGRPC)
 }
 
-func filtersFromGRPCWithResolver(
+func FiltersFromGRPCWithResolver(
 	filters []gatewayv1.GRPCRouteFilter,
 	defaultNamespace string,
 	resolver extfilter.Resolver,
@@ -371,7 +371,7 @@ func headersToConfig(headers []gatewayv1.HTTPHeader) []any {
 	return out
 }
 
-func backendRefsFromHTTP(refs []gatewayv1.HTTPBackendRef, defaultNamespace string) []ir.BackendRef {
+func BackendRefsFromHTTP(refs []gatewayv1.HTTPBackendRef, defaultNamespace string) []ir.BackendRef {
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
@@ -381,14 +381,14 @@ func backendRefsFromHTTP(refs []gatewayv1.HTTPBackendRef, defaultNamespace strin
 			Name:      string(ref.BackendRef.Name),
 			Port:      shared.PortValue(ref.BackendRef.Port),
 			Weight:    uint32(shared.WeightValue(ref.Weight)),
-			Filters:   filtersFromHTTP(ref.Filters, defaultNamespace),
+			Filters:   FiltersFromHTTP(ref.Filters, defaultNamespace),
 		})
 	}
 
 	return out
 }
 
-func backendRefsFromGRPC(refs []gatewayv1.GRPCBackendRef, defaultNamespace string) []ir.BackendRef {
+func BackendRefsFromGRPC(refs []gatewayv1.GRPCBackendRef, defaultNamespace string) []ir.BackendRef {
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
@@ -398,14 +398,14 @@ func backendRefsFromGRPC(refs []gatewayv1.GRPCBackendRef, defaultNamespace strin
 			Name:      string(ref.BackendRef.Name),
 			Port:      shared.PortValue(ref.BackendRef.Port),
 			Weight:    uint32(shared.WeightValue(ref.Weight)),
-			Filters:   filtersFromGRPC(ref.Filters, defaultNamespace),
+			Filters:   FiltersFromGRPC(ref.Filters, defaultNamespace),
 		})
 	}
 
 	return out
 }
 
-func backendRefsFromRouteRule(refs []gatewayv1.BackendRef, defaultNamespace string) []ir.BackendRef {
+func BackendRefsFromRouteRule(refs []gatewayv1.BackendRef, defaultNamespace string) []ir.BackendRef {
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{

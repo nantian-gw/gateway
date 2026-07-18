@@ -1,4 +1,4 @@
-package translator
+package routes
 
 import (
 	"encoding/json"
@@ -24,7 +24,7 @@ func TestTranslateRoutesPreservesNamedRulesInIR(t *testing.T) {
 	}{
 		{
 			name: "HTTPRoute",
-			rule: translateHTTPRoute(gatewayv1.HTTPRoute{
+			rule: TranslateHTTPRoute(gatewayv1.HTTPRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "http", Namespace: "default"},
 				Spec: gatewayv1.HTTPRouteSpec{
 					Rules: []gatewayv1.HTTPRouteRule{{Name: &httpRuleName}},
@@ -34,7 +34,7 @@ func TestTranslateRoutesPreservesNamedRulesInIR(t *testing.T) {
 		},
 		{
 			name: "GRPCRoute",
-			rule: translateGRPCRoute(gatewayv1.GRPCRoute{
+			rule: TranslateGRPCRoute(gatewayv1.GRPCRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "grpc", Namespace: "default"},
 				Spec: gatewayv1.GRPCRouteSpec{
 					Rules: []gatewayv1.GRPCRouteRule{{Name: &grpcRuleName}},
@@ -44,7 +44,7 @@ func TestTranslateRoutesPreservesNamedRulesInIR(t *testing.T) {
 		},
 		{
 			name: "TCPRoute",
-			rule: translateTCPRoute(gatewayv1alpha2.TCPRoute{
+			rule: TranslateTCPRoute(gatewayv1alpha2.TCPRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "tcp", Namespace: "default"},
 				Spec: gatewayv1alpha2.TCPRouteSpec{
 					Rules: []gatewayv1alpha2.TCPRouteRule{{Name: &tcpRuleName}},
@@ -54,7 +54,7 @@ func TestTranslateRoutesPreservesNamedRulesInIR(t *testing.T) {
 		},
 		{
 			name: "UDPRoute",
-			rule: translateUDPRoute(gatewayv1alpha2.UDPRoute{
+			rule: TranslateUDPRoute(gatewayv1alpha2.UDPRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "udp", Namespace: "default"},
 				Spec: gatewayv1alpha2.UDPRouteSpec{
 					Rules: []gatewayv1alpha2.UDPRouteRule{{Name: &udpRuleName}},
@@ -64,7 +64,7 @@ func TestTranslateRoutesPreservesNamedRulesInIR(t *testing.T) {
 		},
 		{
 			name: "TLSRoute",
-			rule: translateTLSRoute(gatewayv1alpha2.TLSRoute{
+			rule: TranslateTLSRoute(gatewayv1alpha2.TLSRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "tls", Namespace: "default"},
 				Spec: gatewayv1alpha2.TLSRouteSpec{
 					Rules: []gatewayv1alpha2.TLSRouteRule{{Name: &tlsRuleName}},

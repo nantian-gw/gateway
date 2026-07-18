@@ -15,6 +15,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
 )
 
 func TestTranslateGRPCRoutePreservesRegexMethodMatchType(t *testing.T) {
@@ -38,7 +39,7 @@ func TestTranslateGRPCRoutePreservesRegexMethodMatchType(t *testing.T) {
 		},
 	}
 
-	translated := translateGRPCRoute(route)
+	translated := routes.TranslateGRPCRoute(route)
 	if len(translated.Rules) != 1 || len(translated.Rules[0].Matches) != 1 {
 		t.Fatalf("unexpected translated gRPC matches: %#v", translated.Rules)
 	}
@@ -181,7 +182,7 @@ func TestHTTPRouteRetryParsesAttemptsCodesAndBackoff(t *testing.T) {
 	attempts := 3
 	backoff := gatewayv1.Duration("150ms")
 
-	retry := httpRouteRetry(&gatewayv1.HTTPRouteRetry{
+	retry := routes.HTTPRouteRetry(&gatewayv1.HTTPRouteRetry{
 		Codes:    []gatewayv1.HTTPRouteRetryStatusCode{500, 503, 504},
 		Attempts: &attempts,
 		Backoff:  &backoff,
@@ -243,7 +244,7 @@ func TestTranslateHTTPRouteDropsInvalidRulesMarkedPartiallyInvalid(t *testing.T)
 		},
 	}
 
-	translated := translateHTTPRoute(route)
+	translated := routes.TranslateHTTPRoute(route)
 	if len(translated.Rules) != 1 {
 		t.Fatalf("expected 1 translated rule after dropping invalid rule, got %#v", translated.Rules)
 	}
@@ -460,7 +461,7 @@ func TestFiltersFromHTTPRedirectAndRewrite(t *testing.T) {
 	rewriteHost := gatewayv1.PreciseHostname("backend.internal")
 	prefixPath := "/api"
 
-	filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{
+	filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{
 		{
 			Type: gatewayv1.HTTPRouteFilterRequestRedirect,
 			RequestRedirect: &gatewayv1.HTTPRequestRedirectFilter{
@@ -530,7 +531,7 @@ func TestHTTPRequestRedirectPreservesGatewayAPIStatusCodes(t *testing.T) {
 	for _, code := range []int{303, 307, 308} {
 		code := code
 		t.Run(fmt.Sprintf("status-%d", code), func(t *testing.T) {
-			filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{{
+			filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{{
 				Type: gatewayv1.HTTPRouteFilterRequestRedirect,
 				RequestRedirect: &gatewayv1.HTTPRequestRedirectFilter{
 					Scheme:     &redirectScheme,

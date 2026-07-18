@@ -1,4 +1,4 @@
-package translator
+package routes
 
 import (
 	"context"
@@ -8,19 +8,19 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-type rawHTTPRouteFilterConfigs [][]map[string]any
+type RawHTTPRouteFilterConfigs [][]map[string]any
 
-func loadHTTPRouteRawFilterConfigs(
+func LoadHTTPRouteRawFilterConfigs(
 	ctx context.Context,
 	cl client.Client,
 	routes []gatewayv1.HTTPRoute,
-) (map[client.ObjectKey]rawHTTPRouteFilterConfigs, error) {
+) (map[client.ObjectKey]RawHTTPRouteFilterConfigs, error) {
 	keys := httpRoutesNeedingRawFilterConfigs(routes)
 	if len(keys) == 0 {
 		return nil, nil
 	}
 
-	out := make(map[client.ObjectKey]rawHTTPRouteFilterConfigs, len(keys))
+	out := make(map[client.ObjectKey]RawHTTPRouteFilterConfigs, len(keys))
 	for _, key := range keys {
 		item := &unstructured.Unstructured{}
 		item.SetAPIVersion("gateway.networking.k8s.io/v1")
@@ -65,7 +65,7 @@ func httpRouteFilterNeedsRawConfig(filter gatewayv1.HTTPRouteFilter) bool {
 	}
 }
 
-func rawHTTPRouteFilterConfigsFromObject(object map[string]any) rawHTTPRouteFilterConfigs {
+func rawHTTPRouteFilterConfigsFromObject(object map[string]any) RawHTTPRouteFilterConfigs {
 	rules, exists, err := unstructured.NestedSlice(object, "spec", "rules")
 	if err != nil {
 		return nil
@@ -73,7 +73,7 @@ func rawHTTPRouteFilterConfigsFromObject(object map[string]any) rawHTTPRouteFilt
 	if !exists {
 		return nil
 	}
-	routeConfigs := make(rawHTTPRouteFilterConfigs, 0, len(rules))
+	routeConfigs := make(RawHTTPRouteFilterConfigs, 0, len(rules))
 	for _, rawRule := range rules {
 		ruleMap, ok := rawRule.(map[string]any)
 		if !ok {
@@ -95,8 +95,8 @@ func rawHTTPRouteFilterConfigsFromObject(object map[string]any) rawHTTPRouteFilt
 	return routeConfigs
 }
 
-func rawHTTPFilterConfig(
-	configs rawHTTPRouteFilterConfigs,
+func RawHTTPFilterConfig(
+	configs RawHTTPRouteFilterConfigs,
 	ruleIndex int,
 	filterIndex int,
 ) map[string]any {

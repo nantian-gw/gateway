@@ -18,6 +18,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -85,7 +86,7 @@ func (t *Translator) BuildRoutesForSnapshot(
 		}
 	}
 
-	httpRouteRawFilters, err := loadHTTPRouteRawFilterConfigs(ctx, cl, httpRoutes)
+	httpRouteRawFilters, err := routes.LoadHTTPRouteRawFilterConfigs(ctx, cl, httpRoutes)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func (t *Translator) BuildRoutesForSnapshot(
 
 	updatedHTTPRoutes := make([]ir.HTTPRoute, 0, len(httpRoutes))
 	for _, route := range httpRoutes {
-		updatedHTTPRoutes = append(updatedHTTPRoutes, translateHTTPRouteWithDefaultGateways(
+		updatedHTTPRoutes = append(updatedHTTPRoutes, routes.TranslateHTTPRouteWithDefaultGateways(
 			route,
 			extensionResolver,
 			httpRouteRawFilters[client.ObjectKeyFromObject(&route)],
@@ -111,17 +112,17 @@ func (t *Translator) BuildRoutesForSnapshot(
 	}
 	updatedGRPCRoutes := make([]ir.GRPCRoute, 0, len(grpcRoutes))
 	for _, route := range grpcRoutes {
-		updatedGRPCRoutes = append(updatedGRPCRoutes, translateGRPCRouteWithDefaultGateways(route, extensionResolver, filteredGateways))
+		updatedGRPCRoutes = append(updatedGRPCRoutes, routes.TranslateGRPCRouteWithDefaultGateways(route, extensionResolver, filteredGateways))
 	}
 	updatedStreamRoutes := make([]ir.StreamRoute, 0, len(tcpRoutes)+len(udpRoutes)+len(tlsRoutes))
 	for _, route := range tcpRoutes {
-		updatedStreamRoutes = append(updatedStreamRoutes, translateTCPRouteWithDefaultGateways(route, filteredGateways))
+		updatedStreamRoutes = append(updatedStreamRoutes, routes.TranslateTCPRouteWithDefaultGateways(route, filteredGateways))
 	}
 	for _, route := range udpRoutes {
-		updatedStreamRoutes = append(updatedStreamRoutes, translateUDPRouteWithDefaultGateways(route, filteredGateways))
+		updatedStreamRoutes = append(updatedStreamRoutes, routes.TranslateUDPRouteWithDefaultGateways(route, filteredGateways))
 	}
 	for _, route := range tlsRoutes {
-		updatedStreamRoutes = append(updatedStreamRoutes, translateTLSRouteWithDefaultGateways(route, filteredGateways))
+		updatedStreamRoutes = append(updatedStreamRoutes, routes.TranslateTLSRouteWithDefaultGateways(route, filteredGateways))
 	}
 
 	partialRoutes := &ir.Snapshot{
@@ -163,10 +164,10 @@ func (t *Translator) BuildRoutesForSnapshot(
 		referenceGrants,
 		extensionResolver,
 		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
-			return filtersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+			return routes.FiltersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
 		},
 		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
-			return filtersFromGRPCWithResolver(filters, ns, resolver, target)
+			return routes.FiltersFromGRPCWithResolver(filters, ns, resolver, target)
 		},
 	)
 	for idx := range httpRoutes {

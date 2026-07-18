@@ -31,6 +31,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/routepolicy"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -162,7 +163,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		filteredGateways    []gatewayv1.Gateway
 		listenerSets        gatewayv1.ListenerSetList
 		httpRoutes          gatewayv1.HTTPRouteList
-		httpRouteRawFilters map[client.ObjectKey]rawHTTPRouteFilterConfigs
+		httpRouteRawFilters map[client.ObjectKey]routes.RawHTTPRouteFilterConfigs
 		grpcRoutes          gatewayv1.GRPCRouteList
 		tcpRoutes           gatewayv1alpha2.TCPRouteList
 		udpRoutes           gatewayv1alpha2.UDPRouteList
@@ -194,7 +195,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		var err error
-		httpRouteRawFilters, err = loadHTTPRouteRawFilterConfigs(groupCtx, cl, httpRoutes.Items)
+		httpRouteRawFilters, err = routes.LoadHTTPRouteRawFilterConfigs(groupCtx, cl, httpRoutes.Items)
 		return err
 	})
 	group.Go(func() error {
@@ -225,7 +226,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range httpRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			snapshot.HTTPRoutes[i] = translateHTTPRouteWithDefaultGateways(
+			snapshot.HTTPRoutes[i] = routes.TranslateHTTPRouteWithDefaultGateways(
 				httpRoutes.Items[i],
 				extensionResolver,
 				httpRouteRawFilters[client.ObjectKeyFromObject(&httpRoutes.Items[i])],
@@ -238,7 +239,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range grpcRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			snapshot.GRPCRoutes[i] = translateGRPCRouteWithDefaultGateways(grpcRoutes.Items[i], extensionResolver, filteredGateways)
+			snapshot.GRPCRoutes[i] = routes.TranslateGRPCRouteWithDefaultGateways(grpcRoutes.Items[i], extensionResolver, filteredGateways)
 			return nil
 		})
 	}
@@ -247,7 +248,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range tcpRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			tcpResults[i] = translateTCPRouteWithDefaultGateways(tcpRoutes.Items[i], filteredGateways)
+			tcpResults[i] = routes.TranslateTCPRouteWithDefaultGateways(tcpRoutes.Items[i], filteredGateways)
 			return nil
 		})
 	}
@@ -255,7 +256,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range udpRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			udpResults[i] = translateUDPRouteWithDefaultGateways(udpRoutes.Items[i], filteredGateways)
+			udpResults[i] = routes.TranslateUDPRouteWithDefaultGateways(udpRoutes.Items[i], filteredGateways)
 			return nil
 		})
 	}
@@ -263,7 +264,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range tlsRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			tlsStreamResults[i] = translateTLSRouteWithDefaultGateways(tlsRoutes.Items[i], filteredGateways)
+			tlsStreamResults[i] = routes.TranslateTLSRouteWithDefaultGateways(tlsRoutes.Items[i], filteredGateways)
 			return nil
 		})
 	}
@@ -469,10 +470,10 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		referenceGrants,
 		extfilter.NewResolver(mergedConfigMaps),
 		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
-			return filtersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+			return routes.FiltersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
 		},
 		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
-			return filtersFromGRPCWithResolver(filters, ns, resolver, target)
+			return routes.FiltersFromGRPCWithResolver(filters, ns, resolver, target)
 		},
 	)
 

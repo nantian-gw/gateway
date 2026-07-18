@@ -23,6 +23,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -432,10 +433,10 @@ func (t *Translator) refreshBackendRefMetadataForSnapshot(
 		referenceGrants,
 		extfilter.Resolver{},
 		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
-			return filtersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+			return routes.FiltersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
 		},
 		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
-			return filtersFromGRPCWithResolver(filters, ns, resolver, target)
+			return routes.FiltersFromGRPCWithResolver(filters, ns, resolver, target)
 		},
 	)
 	next := current.Clone()

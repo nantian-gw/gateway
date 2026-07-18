@@ -21,6 +21,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
@@ -522,7 +523,7 @@ func TestTranslateHTTPRoutePreservesExtendedMatchesAndDefaultRule(t *testing.T) 
 		},
 	}
 
-	translated := translateHTTPRoute(route)
+	translated := routes.TranslateHTTPRoute(route)
 	if len(translated.Hostnames) != 0 {
 		t.Fatalf("expected empty hostnames to be preserved, got %#v", translated.Hostnames)
 	}
@@ -552,7 +553,7 @@ func TestTranslateHTTPRoutePreservesExtendedMatchesAndDefaultRule(t *testing.T) 
 }
 
 func TestFiltersFromHTTPHeaderModifiers(t *testing.T) {
-	filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{
+	filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{
 		{
 			Type: gatewayv1.HTTPRouteFilterRequestHeaderModifier,
 			RequestHeaderModifier: &gatewayv1.HTTPHeaderFilter{
@@ -599,14 +600,14 @@ func TestFiltersFromHTTPHeaderModifiers(t *testing.T) {
 }
 
 func TestFiltersFromHTTPCORS(t *testing.T) {
-	filters := filtersFromHTTPWithResolver(
+	filters := routes.FiltersFromHTTPWithResolver(
 		[]gatewayv1.HTTPRouteFilter{{
 			Type: gatewayv1.HTTPRouteFilterType("CORS"),
 		}},
 		"default",
 		extfilter.Resolver{},
 		extfilter.TargetHTTP,
-		rawHTTPRouteFilterConfigs{{
+		routes.RawHTTPRouteFilterConfigs{{
 			{
 				"type": "CORS",
 				"cors": map[string]any{
@@ -649,7 +650,7 @@ func TestFiltersFromHTTPCORS(t *testing.T) {
 }
 
 func TestFiltersFromHTTPExternalAuthHTTP(t *testing.T) {
-	filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{{
+	filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{{
 		Type: gatewayv1.HTTPRouteFilterExternalAuth,
 		ExternalAuth: &gatewayv1.HTTPExternalAuthFilter{
 			ExternalAuthProtocol: gatewayv1.HTTPRouteExternalAuthHTTPProtocol,
@@ -693,7 +694,7 @@ func TestFiltersFromHTTPExternalAuthHTTP(t *testing.T) {
 }
 
 func TestFiltersFromHTTPExternalAuthGRPC(t *testing.T) {
-	filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{{
+	filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{{
 		Type: gatewayv1.HTTPRouteFilterExternalAuth,
 		ExternalAuth: &gatewayv1.HTTPExternalAuthFilter{
 			ExternalAuthProtocol: gatewayv1.HTTPRouteExternalAuthGRPCProtocol,
@@ -729,7 +730,7 @@ func TestFiltersFromHTTPExternalAuthGRPC(t *testing.T) {
 }
 
 func TestFiltersFromGRPCHeaderModifiers(t *testing.T) {
-	filters := filtersFromGRPC([]gatewayv1.GRPCRouteFilter{
+	filters := routes.FiltersFromGRPC([]gatewayv1.GRPCRouteFilter{
 		{
 			Type: gatewayv1.GRPCRouteFilterRequestHeaderModifier,
 			RequestHeaderModifier: &gatewayv1.HTTPHeaderFilter{
@@ -771,7 +772,7 @@ directResponse:
 		},
 	}})
 
-	filters := filtersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
+	filters := routes.FiltersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
 		Type: gatewayv1.HTTPRouteFilterExtensionRef,
 		ExtensionRef: &gatewayv1.LocalObjectReference{
 			Group: "",
@@ -812,7 +813,7 @@ headerModifier:
 		},
 	}})
 
-	filters := filtersFromGRPCWithResolver([]gatewayv1.GRPCRouteFilter{{
+	filters := routes.FiltersFromGRPCWithResolver([]gatewayv1.GRPCRouteFilter{{
 		Type: gatewayv1.GRPCRouteFilterExtensionRef,
 		ExtensionRef: &gatewayv1.LocalObjectReference{
 			Group: "",
@@ -835,7 +836,7 @@ headerModifier:
 }
 
 func TestFiltersFromHTTPExtensionRefMissingConfigMap(t *testing.T) {
-	filters := filtersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
+	filters := routes.FiltersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
 		Type: gatewayv1.HTTPRouteFilterExtensionRef,
 		ExtensionRef: &gatewayv1.LocalObjectReference{
 			Group: "",
@@ -869,7 +870,7 @@ requestRedirect:
 		},
 	}})
 
-	filters := filtersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
+	filters := routes.FiltersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
 		Type: gatewayv1.HTTPRouteFilterExtensionRef,
 		ExtensionRef: &gatewayv1.LocalObjectReference{
 			Group: "",
@@ -906,7 +907,7 @@ cors:
 		},
 	}})
 
-	filters := filtersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
+	filters := routes.FiltersFromHTTPWithResolver([]gatewayv1.HTTPRouteFilter{{
 		Type: gatewayv1.HTTPRouteFilterExtensionRef,
 		ExtensionRef: &gatewayv1.LocalObjectReference{
 			Group: "",
@@ -933,7 +934,7 @@ func TestFiltersFromHTTPAndGRPCRequestMirror(t *testing.T) {
 	percent := int32(25)
 	denominator := int32(1000)
 
-	httpFilters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{
+	httpFilters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{
 		{
 			Type: gatewayv1.HTTPRouteFilterRequestMirror,
 			RequestMirror: &gatewayv1.HTTPRequestMirrorFilter{
@@ -946,7 +947,7 @@ func TestFiltersFromHTTPAndGRPCRequestMirror(t *testing.T) {
 		},
 	}, "default")
 
-	grpcFilters := filtersFromGRPC([]gatewayv1.GRPCRouteFilter{
+	grpcFilters := routes.FiltersFromGRPC([]gatewayv1.GRPCRouteFilter{
 		{
 			Type: gatewayv1.GRPCRouteFilterRequestMirror,
 			RequestMirror: &gatewayv1.HTTPRequestMirrorFilter{
@@ -1008,7 +1009,7 @@ func TestBackendRefsFromGRPCIncludesBackendFilters(t *testing.T) {
 		},
 	}
 
-	refs := backendRefsFromGRPC([]gatewayv1.GRPCBackendRef{ref}, "default")
+	refs := routes.BackendRefsFromGRPC([]gatewayv1.GRPCBackendRef{ref}, "default")
 	if len(refs) != 1 {
 		t.Fatalf("expected 1 grpc backend ref, got %d", len(refs))
 	}
@@ -1048,7 +1049,7 @@ func TestTranslateGRPCRouteAllowsHeaderOnlyMatches(t *testing.T) {
 		},
 	}
 
-	translated := translateGRPCRoute(route)
+	translated := routes.TranslateGRPCRoute(route)
 	if len(translated.Rules) != 1 || len(translated.Rules[0].Matches) != 1 {
 		t.Fatalf("unexpected translated gRPC matches: %#v", translated.Rules)
 	}
