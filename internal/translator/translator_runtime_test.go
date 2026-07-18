@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func TestTranslateGRPCRoutePreservesRegexMethodMatchType(t *testing.T) {
@@ -141,7 +142,7 @@ func TestHTTPRouteTimeoutsParsesRequestAndBackendRequest(t *testing.T) {
 	request := gatewayv1.Duration("12s")
 	backendRequest := gatewayv1.Duration("3s")
 
-	timeouts := httpRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
+	timeouts := shared.HTTPRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
 		Request:        &request,
 		BackendRequest: &backendRequest,
 	})
@@ -160,7 +161,7 @@ func TestHTTPRouteTimeoutsParsesRequestAndBackendRequest(t *testing.T) {
 func TestHTTPRouteTimeoutsPreservesExplicitZeroDuration(t *testing.T) {
 	request := gatewayv1.Duration("0s")
 
-	timeouts := httpRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
+	timeouts := shared.HTTPRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
 		Request: &request,
 	})
 

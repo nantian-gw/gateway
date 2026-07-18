@@ -1,4 +1,4 @@
-package translator
+package shared
 
 import (
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -7,7 +7,11 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func hostnames[T ~string](items []T) []string {
+func BackendObjectKey(namespace string, name string) string {
+	return namespace + "/" + name
+}
+
+func Hostnames[T ~string](items []T) []string {
 	out := make([]string, 0, len(items))
 	for _, item := range items {
 		out = append(out, string(item))
@@ -15,7 +19,7 @@ func hostnames[T ~string](items []T) []string {
 	return out
 }
 
-func stringValue[T ~string](value *T) string {
+func StringValue[T ~string](value *T) string {
 	if value == nil {
 		return ""
 	}
@@ -23,7 +27,7 @@ func stringValue[T ~string](value *T) string {
 	return string(*value)
 }
 
-func namespaceOrDefault[T ~string](value *T, defaultNamespace string) string {
+func NamespaceOrDefault[T ~string](value *T, defaultNamespace string) string {
 	if value == nil || string(*value) == "" {
 		return defaultNamespace
 	}
@@ -31,36 +35,36 @@ func namespaceOrDefault[T ~string](value *T, defaultNamespace string) string {
 	return string(*value)
 }
 
-func portValue[T ~int32](value *T) uint32 {
+func PortValue[T ~int32](value *T) uint32 {
 	if value == nil {
 		return 0
 	}
 	return uint32(*value)
 }
 
-func weightValue[T ~int32](value *T) int32 {
+func WeightValue[T ~int32](value *T) int32 {
 	if value == nil {
 		return 1
 	}
 	return int32(*value)
 }
 
-func gatewayParents(refs []gatewayv1.ParentReference, defaultNamespace string) []ir.ParentRef {
+func GatewayParents(refs []gatewayv1.ParentReference, defaultNamespace string) []ir.ParentRef {
 	out := make([]ir.ParentRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.ParentRef{
-			Group:       stringValue(ref.Group),
-			Kind:        stringValue(ref.Kind),
-			Namespace:   namespaceOrDefault(ref.Namespace, defaultNamespace),
+			Group:       StringValue(ref.Group),
+			Kind:        StringValue(ref.Kind),
+			Namespace:   NamespaceOrDefault(ref.Namespace, defaultNamespace),
 			Name:        string(ref.Name),
-			SectionName: stringValue(ref.SectionName),
-			Port:        portValue(ref.Port),
+			SectionName: StringValue(ref.SectionName),
+			Port:        PortValue(ref.Port),
 		})
 	}
 	return out
 }
 
-func selectSlicePort(ports []discoveryv1.EndpointPort, servicePortName string, servicePort int32) *discoveryv1.EndpointPort {
+func SelectSlicePort(ports []discoveryv1.EndpointPort, servicePortName string, servicePort int32) *discoveryv1.EndpointPort {
 	for _, port := range ports {
 		if port.Name != nil && *port.Name == servicePortName {
 			return &port

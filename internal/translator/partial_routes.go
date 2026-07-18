@@ -17,6 +17,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func (t *Translator) BuildRoutesForSnapshot(
@@ -252,7 +253,7 @@ func (t *Translator) BuildRoutesForSnapshot(
 				return nil, loadErr
 			}
 			for _, key := range attachmentParentGatewayObjectKeys(next, targetSet, listenerSets) {
-				missingGatewayKeyMap[backendObjectKey(key.Namespace, key.Name)] = key
+				missingGatewayKeyMap[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 			}
 		}
 
@@ -384,7 +385,7 @@ func mergePartialHTTPRoutes(
 ) []ir.HTTPRoute {
 	out := make([]ir.HTTPRoute, 0, len(current)+len(updated))
 	for _, route := range current {
-		if _, replace := replacementKeys[backendObjectKey(route.Namespace, route.Name)]; replace {
+		if _, replace := replacementKeys[shared.BackendObjectKey(route.Namespace, route.Name)]; replace {
 			continue
 		}
 		out = append(out, route)
@@ -400,7 +401,7 @@ func mergePartialGRPCRoutes(
 ) []ir.GRPCRoute {
 	out := make([]ir.GRPCRoute, 0, len(current)+len(updated))
 	for _, route := range current {
-		if _, replace := replacementKeys[backendObjectKey(route.Namespace, route.Name)]; replace {
+		if _, replace := replacementKeys[shared.BackendObjectKey(route.Namespace, route.Name)]; replace {
 			continue
 		}
 		out = append(out, route)
@@ -486,13 +487,13 @@ func partialRouteChangesAffectMesh(
 
 	httpKeySet := objectKeyMap(httpKeys)
 	for _, route := range current.HTTPRoutes {
-		if _, ok := httpKeySet[backendObjectKey(route.Namespace, route.Name)]; ok && routeHasServiceParentRefs(route.ParentRefs) {
+		if _, ok := httpKeySet[shared.BackendObjectKey(route.Namespace, route.Name)]; ok && routeHasServiceParentRefs(route.ParentRefs) {
 			return true
 		}
 	}
 	grpcKeySet := objectKeyMap(grpcKeys)
 	for _, route := range current.GRPCRoutes {
-		if _, ok := grpcKeySet[backendObjectKey(route.Namespace, route.Name)]; ok && routeHasServiceParentRefs(route.ParentRefs) {
+		if _, ok := grpcKeySet[shared.BackendObjectKey(route.Namespace, route.Name)]; ok && routeHasServiceParentRefs(route.ParentRefs) {
 			return true
 		}
 	}
@@ -563,7 +564,7 @@ func referencedBackendReplacementKeysForRouteChanges(
 		}
 
 		key := client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}
-		lookupKey := backendObjectKey(key.Namespace, key.Name)
+		lookupKey := shared.BackendObjectKey(key.Namespace, key.Name)
 		if _, exists := currentBackendKeys[lookupKey]; exists {
 			return
 		}
@@ -603,13 +604,13 @@ func filterReferencedBackendKeysByReplacementSet(
 	serviceImportKeys := make(map[string]client.ObjectKey)
 
 	for _, key := range keys.services {
-		lookupKey := backendObjectKey(key.Namespace, key.Name)
+		lookupKey := shared.BackendObjectKey(key.Namespace, key.Name)
 		if _, ok := allowed[lookupKey]; ok {
 			serviceKeys[lookupKey] = key
 		}
 	}
 	for _, key := range keys.serviceImports {
-		lookupKey := backendObjectKey(key.Namespace, key.Name)
+		lookupKey := shared.BackendObjectKey(key.Namespace, key.Name)
 		if _, ok := allowed[lookupKey]; ok {
 			serviceImportKeys[lookupKey] = key
 		}

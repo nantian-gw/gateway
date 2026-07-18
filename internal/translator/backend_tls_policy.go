@@ -12,6 +12,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/backendtls"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type translatedBackendTLSPolicy struct {
@@ -28,13 +29,13 @@ func backendTLSValidationIndex(
 ) map[string]*ir.BackendTLSValidation {
 	return backendTLSValidationIndexWithIndexes(
 		policies,
-		newTranslatorIndexes(services, serviceImports, nil, nil, configMaps, nil),
+		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, configMaps, nil),
 	)
 }
 
 func backendTLSValidationIndexWithIndexes(
 	policies []gatewayv1alpha3.BackendTLSPolicy,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) map[string]*ir.BackendTLSValidation {
 	translations := make([]translatedBackendTLSPolicy, 0, len(policies))
 	owners := make(map[string]int)
@@ -84,13 +85,13 @@ func translateBackendTLSPolicyValidation(
 ) (*ir.BackendTLSValidation, bool) {
 	return translateBackendTLSPolicyValidationWithIndexes(
 		policy,
-		newTranslatorIndexes(nil, nil, nil, nil, configMaps, nil),
+		shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, nil),
 	)
 }
 
 func translateBackendTLSPolicyValidationWithIndexes(
 	policy gatewayv1alpha3.BackendTLSPolicy,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) (*ir.BackendTLSValidation, bool) {
 	validation := policy.Spec.Validation
 	if validation.Hostname == "" {
@@ -164,14 +165,14 @@ func backendTLSPolicyCAPEMs(
 	refs []gatewayv1.LocalObjectReference,
 ) ([]string, bool) {
 	return backendTLSPolicyCAPEMsWithIndexes(
-		newTranslatorIndexes(nil, nil, nil, nil, configMaps, nil),
+		shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, nil),
 		namespace,
 		refs,
 	)
 }
 
 func backendTLSPolicyCAPEMsWithIndexes(
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 	namespace string,
 	refs []gatewayv1.LocalObjectReference,
 ) ([]string, bool) {
@@ -189,7 +190,7 @@ func backendTLSPolicyCAPEMsWithIndexes(
 			continue
 		}
 
-		caPEM := indexes.configMapCAPEM(namespace, string(ref.Name))
+		caPEM := indexes.ConfigMapCAPEM(namespace, string(ref.Name))
 		if !validBackendTLSPolicyCAPEM(caPEM) {
 			continue
 		}
@@ -215,7 +216,7 @@ func backendTLSPolicyBackendKeys(
 ) ([]string, bool) {
 	specificity, ok := backendTLSPolicyBackendSpecificityWithIndexes(
 		policy,
-		newTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
+		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
 	)
 	if !ok || len(specificity) == 0 {
 		return nil, false
@@ -236,13 +237,13 @@ func backendTLSPolicyBackendSpecificity(
 ) (map[string]int, bool) {
 	return backendTLSPolicyBackendSpecificityWithIndexes(
 		policy,
-		newTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
+		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
 	)
 }
 
 func backendTLSPolicyBackendSpecificityWithIndexes(
 	policy gatewayv1alpha3.BackendTLSPolicy,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) (map[string]int, bool) {
 	keys := make(map[string]int)
 	for _, targetRef := range policy.Spec.TargetRefs {
@@ -255,7 +256,7 @@ func backendTLSPolicyBackendSpecificityWithIndexes(
 
 		switch {
 		case group == "" && kind == "Service":
-			service, ok := indexes.service(policy.Namespace, string(targetRef.Name))
+			service, ok := indexes.Service(policy.Namespace, string(targetRef.Name))
 			if !ok {
 				continue
 			}
@@ -275,7 +276,7 @@ func backendTLSPolicyBackendSpecificityWithIndexes(
 				}
 			}
 		case group == mcsv1alpha1.GroupName && kind == "ServiceImport":
-			serviceImport, ok := indexes.serviceImport(policy.Namespace, string(targetRef.Name))
+			serviceImport, ok := indexes.ServiceImport(policy.Namespace, string(targetRef.Name))
 			if !ok {
 				continue
 			}

@@ -10,6 +10,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const (
@@ -42,7 +43,7 @@ func newBackendRefTranslator(
 ) backendRefTranslator {
 	servicePorts := make(map[string]map[uint32]struct{}, len(services))
 	for _, service := range services {
-		key := backendObjectKey(service.Namespace, service.Name)
+		key := shared.BackendObjectKey(service.Namespace, service.Name)
 		ports := make(map[uint32]struct{}, len(service.Spec.Ports))
 		for _, port := range service.Spec.Ports {
 			ports[uint32(port.Port)] = struct{}{}
@@ -52,7 +53,7 @@ func newBackendRefTranslator(
 
 	serviceImportPorts := make(map[string]map[uint32]struct{}, len(serviceImports))
 	for _, serviceImport := range serviceImports {
-		key := backendObjectKey(serviceImport.Namespace, serviceImport.Name)
+		key := shared.BackendObjectKey(serviceImport.Namespace, serviceImport.Name)
 		ports := make(map[uint32]struct{}, len(serviceImport.Spec.Ports))
 		for _, port := range serviceImport.Spec.Ports {
 			ports[uint32(port.Port)] = struct{}{}
@@ -154,12 +155,12 @@ func (t backendRefTranslator) httpBackendRefs(
 			routeKind,
 			allowCrossNamespaceRefs,
 			ir.BackendRef{
-				Group:     stringValue(ref.BackendRef.Group),
-				Kind:      stringValue(ref.BackendRef.Kind),
-				Namespace: namespaceOrDefault(ref.BackendRef.Namespace, routeNamespace),
+				Group:     shared.StringValue(ref.BackendRef.Group),
+				Kind:      shared.StringValue(ref.BackendRef.Kind),
+				Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, routeNamespace),
 				Name:      string(ref.BackendRef.Name),
-				Port:      portValue(ref.BackendRef.Port),
-				Weight:    uint32(weightValue(ref.Weight)),
+				Port:      shared.PortValue(ref.BackendRef.Port),
+				Weight:    uint32(shared.WeightValue(ref.Weight)),
 				Filters: filtersFromHTTPWithResolver(
 					ref.Filters,
 					routeNamespace,
@@ -187,12 +188,12 @@ func (t backendRefTranslator) grpcBackendRefs(
 			routeKind,
 			allowCrossNamespaceRefs,
 			ir.BackendRef{
-				Group:     stringValue(ref.BackendRef.Group),
-				Kind:      stringValue(ref.BackendRef.Kind),
-				Namespace: namespaceOrDefault(ref.BackendRef.Namespace, routeNamespace),
+				Group:     shared.StringValue(ref.BackendRef.Group),
+				Kind:      shared.StringValue(ref.BackendRef.Kind),
+				Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, routeNamespace),
 				Name:      string(ref.BackendRef.Name),
-				Port:      portValue(ref.BackendRef.Port),
-				Weight:    uint32(weightValue(ref.Weight)),
+				Port:      shared.PortValue(ref.BackendRef.Port),
+				Weight:    uint32(shared.WeightValue(ref.Weight)),
 				Filters: filtersFromGRPCWithResolver(
 					ref.Filters,
 					routeNamespace,
@@ -218,12 +219,12 @@ func (t backendRefTranslator) routeBackendRefs(
 			routeKind,
 			allowCrossNamespaceRefs,
 			ir.BackendRef{
-				Group:     stringValue(ref.Group),
-				Kind:      stringValue(ref.Kind),
-				Namespace: namespaceOrDefault(ref.Namespace, routeNamespace),
+				Group:     shared.StringValue(ref.Group),
+				Kind:      shared.StringValue(ref.Kind),
+				Namespace: shared.NamespaceOrDefault(ref.Namespace, routeNamespace),
 				Name:      string(ref.Name),
-				Port:      portValue(ref.Port),
-				Weight:    uint32(weightValue(ref.Weight)),
+				Port:      shared.PortValue(ref.Port),
+				Weight:    uint32(shared.WeightValue(ref.Weight)),
 			},
 		))
 	}
@@ -292,7 +293,7 @@ func (t backendRefTranslator) backendRefMetadata(
 }
 
 func (t backendRefTranslator) serviceExists(namespace string, name string, port uint32) bool {
-	ports, ok := t.servicePorts[backendObjectKey(namespace, name)]
+	ports, ok := t.servicePorts[shared.BackendObjectKey(namespace, name)]
 	if !ok {
 		return false
 	}
@@ -304,7 +305,7 @@ func (t backendRefTranslator) serviceExists(namespace string, name string, port 
 }
 
 func (t backendRefTranslator) serviceImportExists(namespace string, name string, port uint32) bool {
-	ports, ok := t.serviceImportPorts[backendObjectKey(namespace, name)]
+	ports, ok := t.serviceImportPorts[shared.BackendObjectKey(namespace, name)]
 	if !ok {
 		return false
 	}
@@ -333,10 +334,6 @@ func invalidBackendRefMetadata(reason string) map[string]string {
 		backendRefMetaValid:  "false",
 		backendRefMetaReason: reason,
 	}
-}
-
-func backendObjectKey(namespace string, name string) string {
-	return namespace + "/" + name
 }
 
 func referenceGranted(

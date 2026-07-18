@@ -6,6 +6,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type referencedBackendObjectKeys struct {
@@ -99,9 +100,9 @@ func referencedBackendObjectKeysFromSnapshot(current *ir.Snapshot) referencedBac
 		case !ok:
 			return
 		case kind == "Service":
-			serviceKeys[backendObjectKey(key.Namespace, key.Name)] = key
+			serviceKeys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		case kind == "ServiceImport":
-			serviceImportKeys[backendObjectKey(key.Namespace, key.Name)] = key
+			serviceImportKeys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}
 

@@ -13,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func TestBuildReturnsErrorWhenInputObjectLimitExceeded(t *testing.T) {
@@ -22,8 +24,8 @@ func TestBuildReturnsErrorWhenInputObjectLimitExceeded(t *testing.T) {
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		Options{
-			Limits: Limits{
+		shared.Options{
+			Limits: shared.Limits{
 				MaxInputObjects: 3,
 			},
 		},
@@ -45,8 +47,8 @@ func TestBuildReturnsErrorWhenSnapshotObjectLimitExceeded(t *testing.T) {
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		Options{
-			Limits: Limits{
+		shared.Options{
+			Limits: shared.Limits{
 				MaxSnapshotObjects: 2,
 			},
 		},
@@ -68,8 +70,8 @@ func TestBuildReturnsErrorWhenSnapshotEndpointLimitExceeded(t *testing.T) {
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		Options{
-			Limits: Limits{
+		shared.Options{
+			Limits: shared.Limits{
 				MaxSnapshotEndpoints: 1,
 			},
 		},
@@ -91,8 +93,8 @@ func TestBuildIgnoresDisabledSnapshotLimits(t *testing.T) {
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		Options{
-			Limits: Limits{
+		shared.Options{
+			Limits: shared.Limits{
 				MaxInputObjects:      0,
 				MaxSnapshotObjects:   0,
 				MaxSnapshotEndpoints: 0,

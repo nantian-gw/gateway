@@ -22,6 +22,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.BackendCluster, error) {
@@ -75,7 +76,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 
 	filteredServices := resources.FilterServices(services.Items)
 	filteredEndpointSlices := resources.FilterEndpointSlices(endpointSlices.Items)
-	indexes := newTranslatorIndexes(
+	indexes := shared.NewTranslatorIndexes(
 		filteredServices,
 		serviceImports.Items,
 		filteredEndpointSlices,
@@ -313,7 +314,7 @@ func listenerSetAttachmentMaps(
 	for _, listenerSet := range listenerSets {
 		key := listenerSet.Namespace + "/" + listenerSet.Name
 		listenerSetByKey[key] = listenerSet
-		parentNamespace := namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
+		parentNamespace := shared.NamespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
 		listenerSetGateway[key] = parentNamespace + "/" + string(listenerSet.Spec.ParentRef.Name)
 	}
 	return listenerSetByKey, listenerSetGateway
@@ -630,7 +631,7 @@ func attachmentParentGatewayObjectKeys(
 				Namespace: namespace,
 				Name:      parentRef.Name,
 			}
-			keys[backendObjectKey(key.Namespace, key.Name)] = key
+			keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}
 
@@ -648,10 +649,10 @@ func attachmentParentGatewayObjectKeys(
 			continue
 		}
 		key := client.ObjectKey{
-			Namespace: namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace),
+			Namespace: shared.NamespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace),
 			Name:      string(listenerSet.Spec.ParentRef.Name),
 		}
-		keys[backendObjectKey(key.Namespace, key.Name)] = key
+		keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 
 	return sortedObjectKeys(keys)
@@ -682,7 +683,7 @@ func attachmentParentListenerSetObjectKeys(
 				Namespace: namespace,
 				Name:      parentRef.Name,
 			}
-			keys[backendObjectKey(key.Namespace, key.Name)] = key
+			keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}
 

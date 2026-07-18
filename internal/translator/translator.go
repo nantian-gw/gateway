@@ -29,12 +29,13 @@ import (
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type Translator struct {
 	controllerName string
 	logger         *slog.Logger
-	limits         Limits
+	limits         shared.Limits
 }
 
 const (
@@ -43,14 +44,14 @@ const (
 )
 
 func New(controllerName string, logger *slog.Logger) *Translator {
-	return NewWithOptions(controllerName, logger, Options{})
+	return NewWithOptions(controllerName, logger, shared.Options{})
 }
 
-func NewWithOptions(controllerName string, logger *slog.Logger, options Options) *Translator {
+func NewWithOptions(controllerName string, logger *slog.Logger, options shared.Options) *Translator {
 	return &Translator{
 		controllerName: controllerName,
 		logger:         logger,
-		limits:         normalizeLimits(options.Limits),
+		limits:         shared.NormalizeLimits(options.Limits),
 	}
 }
 
@@ -184,7 +185,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		&filteredGateways, &listenerSets, &httpRoutes, &grpcRoutes,
 		&tcpRoutes, &udpRoutes, &tlsRoutes, &services, &serviceImports, &endpointSlices,
 	); err != nil {
-		metricTranslationErrors.WithLabelValues("routes").Inc()
+		shared.MetricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
 
@@ -265,7 +266,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		})
 	}
 	if err := transGroup.Wait(); err != nil {
-		metricTranslationErrors.WithLabelValues("routes").Inc()
+		shared.MetricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
 	for i := range tcpResults {
@@ -282,12 +283,12 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	serviceKeyMap := make(map[string]client.ObjectKey, len(filteredServices))
 	for _, service := range filteredServices {
 		key := client.ObjectKey{Namespace: service.Namespace, Name: service.Name}
-		serviceKeyMap[backendObjectKey(key.Namespace, key.Name)] = key
+		serviceKeyMap[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 	serviceImportKeyMap := make(map[string]client.ObjectKey, len(serviceImports))
 	for _, serviceImport := range serviceImports {
 		key := client.ObjectKey{Namespace: serviceImport.Namespace, Name: serviceImport.Name}
-		serviceImportKeyMap[backendObjectKey(key.Namespace, key.Name)] = key
+		serviceImportKeyMap[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 	backendNamespaces := sortedBackendPolicyNamespaces(serviceKeyMap, serviceImportKeyMap)
 	referenceGrantNamespaces := mergeSortedStrings(
@@ -406,7 +407,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		return nil, err
 	}
 
-	if err := t.limits.validateInputObjects(
+	if err := t.limits.ValidateInputObjects(
 		len(filteredGateways) +
 			len(httpRoutes.Items) +
 			len(grpcRoutes.Items) +
@@ -427,7 +428,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 
 	filteredEndpointSlices := resources.FilterEndpointSlices(endpointSlices)
 	mergedConfigMaps := mergeConfigMaps(supportObjects.configMaps, backendConfigMaps, wasmConfigMaps)
-	indexes := newTranslatorIndexes(
+	indexes := shared.NewTranslatorIndexes(
 		filteredServices,
 		serviceImports,
 		filteredEndpointSlices,
@@ -539,7 +540,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	)
 	aiServiceConfigs := aiservicetranslator.TranslateAll(aiServices)
 	for i := range snapshot.Backends {
-		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
+		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := aiServiceConfigs[key]; ok {
 			cfgCopy := cfg
 			snapshot.Backends[i].AIService = &cfgCopy
@@ -548,7 +549,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	routeBackends := buildRouteBackendServices(httpRoutes.Items)
 	tokenPolicyConfigs := translateTokenPolicies(tokenPolicies, serviceKeySet(filteredServices), serviceImportKeySet(serviceImports), routeBackends)
 	for i := range snapshot.Backends {
-		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
+		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := tokenPolicyConfigs[key]; ok {
 			cfgCopy := cfg
 			snapshot.Backends[i].TokenPolicy = &cfgCopy
@@ -556,7 +557,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	wasmPluginConfigs := translateWasmPlugins(wasmPlugins, mergedConfigMaps, t.logger)
 	for i := range snapshot.Backends {
-		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
+		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := wasmPluginConfigs[key]; ok {
 			cfgCopy := cfg
 			snapshot.Backends[i].WasmPlugin = &cfgCopy
@@ -568,7 +569,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		translateSecrets(supportObjects.secrets),
 		listenerSecretMaterialKeys(snapshot.Listeners),
 	)
-	if err := t.limits.validateSnapshot(snapshot); err != nil {
+	if err := t.limits.ValidateSnapshot(snapshot); err != nil {
 		return nil, err
 	}
 

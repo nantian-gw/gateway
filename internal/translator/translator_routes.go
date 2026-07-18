@@ -9,6 +9,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func translateHTTPRoute(route gatewayv1.HTTPRoute) ir.HTTPRoute {
@@ -44,11 +45,11 @@ func translateHTTPRouteWithDefaultGateways(
 	out := ir.HTTPRoute{
 		Name:        route.Name,
 		Namespace:   route.Namespace,
-		Hostnames:   hostnames(route.Spec.Hostnames),
-		ParentRefs:  gatewayParents(parentRefs, route.Namespace),
+		Hostnames:   shared.Hostnames(route.Spec.Hostnames),
+		ParentRefs:  shared.GatewayParents(parentRefs, route.Namespace),
 		Labels:      route.Labels,
 		Annotations: route.Annotations,
-		Status:      routeStatusSummary(route.Status.Parents, route.Namespace),
+		Status:      shared.RouteStatusSummary(route.Status.Parents, route.Namespace),
 	}
 
 	for index, rule := range route.Spec.Rules {
@@ -57,7 +58,7 @@ func translateHTTPRouteWithDefaultGateways(
 		}
 
 		item := ir.HTTPRule{
-			Name: stringValue((*string)(rule.Name)),
+			Name: shared.StringValue((*string)(rule.Name)),
 			Filters: filtersFromHTTPWithResolver(
 				rule.Filters,
 				route.Namespace,
@@ -67,7 +68,7 @@ func translateHTTPRouteWithDefaultGateways(
 				index,
 			),
 			BackendRefs:        backendRefsFromHTTP(rule.BackendRefs, route.Namespace),
-			Timeouts:           httpRouteTimeouts(rule.Timeouts),
+			Timeouts:           shared.HTTPRouteTimeouts(rule.Timeouts),
 			Retry:              httpRouteRetry(rule.Retry),
 			SessionPersistence: ruleSessionPersistence("http", route.Namespace, route.Name, index, rule.SessionPersistence),
 		}
@@ -132,16 +133,16 @@ func translateGRPCRouteWithDefaultGateways(route gatewayv1.GRPCRoute, resolver e
 	out := ir.GRPCRoute{
 		Name:        route.Name,
 		Namespace:   route.Namespace,
-		Hostnames:   hostnames(route.Spec.Hostnames),
-		ParentRefs:  gatewayParents(parentRefs, route.Namespace),
+		Hostnames:   shared.Hostnames(route.Spec.Hostnames),
+		ParentRefs:  shared.GatewayParents(parentRefs, route.Namespace),
 		Labels:      route.Labels,
 		Annotations: route.Annotations,
-		Status:      routeStatusSummary(route.Status.Parents, route.Namespace),
+		Status:      shared.RouteStatusSummary(route.Status.Parents, route.Namespace),
 	}
 
 	for index, rule := range route.Spec.Rules {
 		item := ir.GRPCRule{
-			Name:               stringValue((*string)(rule.Name)),
+			Name:               shared.StringValue((*string)(rule.Name)),
 			Filters:            filtersFromGRPCWithResolver(rule.Filters, route.Namespace, resolver, extfilter.TargetGRPC),
 			BackendRefs:        backendRefsFromGRPC(rule.BackendRefs, route.Namespace),
 			SessionPersistence: ruleSessionPersistence("grpc", route.Namespace, route.Name, index, rule.SessionPersistence),
@@ -150,8 +151,8 @@ func translateGRPCRouteWithDefaultGateways(route gatewayv1.GRPCRoute, resolver e
 		for _, match := range rule.Matches {
 			grpcMatch := ir.GRPCMatch{}
 			if match.Method != nil {
-				grpcMatch.Service = stringValue(match.Method.Service)
-				grpcMatch.Method = stringValue(match.Method.Method)
+				grpcMatch.Service = shared.StringValue(match.Method.Service)
+				grpcMatch.Method = shared.StringValue(match.Method.Method)
 				if match.Method.Type != nil {
 					grpcMatch.MatchType = string(*match.Method.Type)
 				}
@@ -190,15 +191,15 @@ func translateTCPRouteWithDefaultGateways(route gatewayv1alpha2.TCPRoute, defaul
 		Name:        route.Name,
 		Namespace:   route.Namespace,
 		Kind:        "TCP",
-		ParentRefs:  gatewayParents(parentRefs, route.Namespace),
+		ParentRefs:  shared.GatewayParents(parentRefs, route.Namespace),
 		Labels:      route.Labels,
 		Annotations: route.Annotations,
-		Status:      routeStatusSummary(route.Status.Parents, route.Namespace),
+		Status:      shared.RouteStatusSummary(route.Status.Parents, route.Namespace),
 	}
 
 	for _, rule := range route.Spec.Rules {
 		out.Rules = append(out.Rules, ir.StreamRule{
-			Name:        stringValue((*string)(rule.Name)),
+			Name:        shared.StringValue((*string)(rule.Name)),
 			Matches:     []ir.StreamMatch{{}},
 			BackendRefs: backendRefsFromRouteRule(rule.BackendRefs, route.Namespace),
 		})
@@ -222,15 +223,15 @@ func translateUDPRouteWithDefaultGateways(route gatewayv1alpha2.UDPRoute, defaul
 		Name:        route.Name,
 		Namespace:   route.Namespace,
 		Kind:        "UDP",
-		ParentRefs:  gatewayParents(parentRefs, route.Namespace),
+		ParentRefs:  shared.GatewayParents(parentRefs, route.Namespace),
 		Labels:      route.Labels,
 		Annotations: route.Annotations,
-		Status:      routeStatusSummary(route.Status.Parents, route.Namespace),
+		Status:      shared.RouteStatusSummary(route.Status.Parents, route.Namespace),
 	}
 
 	for _, rule := range route.Spec.Rules {
 		out.Rules = append(out.Rules, ir.StreamRule{
-			Name:        stringValue((*string)(rule.Name)),
+			Name:        shared.StringValue((*string)(rule.Name)),
 			Matches:     []ir.StreamMatch{{}},
 			BackendRefs: backendRefsFromRouteRule(rule.BackendRefs, route.Namespace),
 		})
@@ -254,15 +255,15 @@ func translateTLSRouteWithDefaultGateways(route gatewayv1alpha2.TLSRoute, defaul
 		Name:        route.Name,
 		Namespace:   route.Namespace,
 		Kind:        "TLS",
-		ParentRefs:  gatewayParents(parentRefs, route.Namespace),
+		ParentRefs:  shared.GatewayParents(parentRefs, route.Namespace),
 		Labels:      route.Labels,
 		Annotations: route.Annotations,
-		Status:      routeStatusSummary(route.Status.Parents, route.Namespace),
+		Status:      shared.RouteStatusSummary(route.Status.Parents, route.Namespace),
 	}
 
 	for _, rule := range route.Spec.Rules {
 		streamRule := ir.StreamRule{
-			Name:        stringValue((*string)(rule.Name)),
+			Name:        shared.StringValue((*string)(rule.Name)),
 			BackendRefs: backendRefsFromRouteRule(rule.BackendRefs, route.Namespace),
 		}
 		for _, hostname := range route.Spec.Hostnames {
@@ -298,13 +299,13 @@ func tlsRouteModesForHostname(
 		gatewayByName[gw.Namespace+"/"+gw.Name] = gw
 	}
 	for _, ref := range parentRefs {
-		if stringValue(ref.Group) != "" && stringValue(ref.Group) != gatewayv1.GroupName {
+		if shared.StringValue(ref.Group) != "" && shared.StringValue(ref.Group) != gatewayv1.GroupName {
 			continue
 		}
-		if stringValue(ref.Kind) != "" && stringValue(ref.Kind) != "Gateway" {
+		if shared.StringValue(ref.Kind) != "" && shared.StringValue(ref.Kind) != "Gateway" {
 			continue
 		}
-		key := namespaceOrDefault(ref.Namespace, routeNamespace) + "/" + string(ref.Name)
+		key := shared.NamespaceOrDefault(ref.Namespace, routeNamespace) + "/" + string(ref.Name)
 		gw, ok := gatewayByName[key]
 		if !ok {
 			continue

@@ -13,6 +13,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const listenerSetParentGatewayFieldIndex = "nantian.dev/snapshot.listenerset.parent-gateways"
@@ -79,7 +80,7 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 		return nil, err
 	}
 
-	indexes := newTranslatorIndexes(nil, nil, nil, supportObjects.secrets, supportObjects.configMaps, referenceGrants)
+	indexes := shared.NewTranslatorIndexes(nil, nil, nil, supportObjects.secrets, supportObjects.configMaps, referenceGrants)
 	namespaceByName := namespacesByName(supportObjects.namespaces)
 	listeners := t.rebuildGatewayListenersWithIndexes(current.Listeners, gatewayKeys, gateways, indexes, listenerSets, namespaceByName)
 	updated := ApplyPartialSnapshot(current, nil, listeners)
@@ -230,7 +231,7 @@ func loadReferencedListenerSetsForGatewaysFromSnapshot(
 				namespace = routeNamespace
 			}
 			key := client.ObjectKey{Namespace: namespace, Name: parentRef.Name}
-			keys[backendObjectKey(namespace, parentRef.Name)] = key
+			keys[shared.BackendObjectKey(namespace, parentRef.Name)] = key
 		}
 	}
 
@@ -332,7 +333,7 @@ func listenerSetParentGatewayKey(listenerSet gatewayv1.ListenerSet) string {
 	if listenerSet.Spec.ParentRef.Name == "" {
 		return ""
 	}
-	namespace := namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
+	namespace := shared.NamespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
 	return namespace + "/" + string(listenerSet.Spec.ParentRef.Name)
 }
 
@@ -459,7 +460,7 @@ func (t *Translator) rebuildGatewayListenersWithIndexes(
 	current []ir.Listener,
 	gatewayKeys []client.ObjectKey,
 	gateways []gatewayv1.Gateway,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 	listenerSets []gatewayv1.ListenerSet,
 	namespaces map[string]corev1.Namespace,
 ) []ir.Listener {
@@ -500,12 +501,12 @@ func rebuildGatewaySecretMaterials(
 	replacements := filterSecretMaterialsByKeys(translateSecrets(secrets), updated)
 	replacementKeys := make(map[string]struct{}, len(replacements))
 	for _, secret := range replacements {
-		replacementKeys[backendObjectKey(secret.Namespace, secret.Name)] = struct{}{}
+		replacementKeys[shared.BackendObjectKey(secret.Namespace, secret.Name)] = struct{}{}
 	}
 
 	out := make([]ir.SecretMaterial, 0, len(currentSecrets)+len(secrets))
 	for _, secret := range currentSecrets {
-		key := backendObjectKey(secret.Namespace, secret.Name)
+		key := shared.BackendObjectKey(secret.Namespace, secret.Name)
 		if _, stillReferenced := referenced[key]; !stillReferenced {
 			continue
 		}
@@ -527,13 +528,13 @@ func listenerSecretMaterialKeys(listeners []ir.Listener) map[string]struct{} {
 				if !ok {
 					continue
 				}
-				keys[backendObjectKey(namespace, name)] = struct{}{}
+				keys[shared.BackendObjectKey(namespace, name)] = struct{}{}
 			}
 		}
 		if listener.BackendTLS != nil && listener.BackendTLS.ClientCertificateRef != "" {
 			namespace, name, ok := splitNamespacedRef(listener.BackendTLS.ClientCertificateRef)
 			if ok {
-				keys[backendObjectKey(namespace, name)] = struct{}{}
+				keys[shared.BackendObjectKey(namespace, name)] = struct{}{}
 			}
 		}
 	}
@@ -592,7 +593,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 		for _, listener := range gatewayapi.EffectiveListeners(gateway) {
 			if listener.TLS != nil {
 				for _, ref := range listener.TLS.CertificateRefs {
-					targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
+					targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 					if targetNamespace != gateway.Namespace && refGroup(&ref) == "" && refKind(&ref) == "Secret" {
 						namespaces[targetNamespace] = struct{}{}
 					}
@@ -601,7 +602,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 
 			if validation := gatewayapi.FrontendValidationForListener(gateway, listener); validation != nil {
 				for _, ref := range validation.CACertificateRefs {
-					targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
+					targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 					targetKind := string(ref.Kind)
 					if targetKind == "" {
 						targetKind = "ConfigMap"
@@ -618,7 +619,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 			continue
 		}
 		ref := backendTLS.ClientCertificateRef
-		targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
+		targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 		if targetNamespace != gateway.Namespace && refGroup(ref) == "" && refKind(ref) == "Secret" {
 			namespaces[targetNamespace] = struct{}{}
 		}
@@ -641,7 +642,7 @@ func filterSecretMaterialsByKeys(
 	}
 	out := make([]ir.SecretMaterial, 0, len(materials))
 	for _, material := range materials {
-		if _, ok := keys[backendObjectKey(material.Namespace, material.Name)]; !ok {
+		if _, ok := keys[shared.BackendObjectKey(material.Namespace, material.Name)]; !ok {
 			continue
 		}
 		out = append(out, material)

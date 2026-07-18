@@ -5,6 +5,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func filtersFromHTTP(filters []gatewayv1.HTTPRouteFilter, defaultNamespace string) []ir.Filter {
@@ -164,14 +165,14 @@ func requestMirrorConfig(filter *gatewayv1.HTTPRequestMirrorFilter, defaultNames
 	}
 
 	backendRef := map[string]any{
-		"namespace": namespaceOrDefault(filter.BackendRef.Namespace, defaultNamespace),
+		"namespace": shared.NamespaceOrDefault(filter.BackendRef.Namespace, defaultNamespace),
 		"name":      string(filter.BackendRef.Name),
-		"port":      int(portValue(filter.BackendRef.Port)),
+		"port":      int(shared.PortValue(filter.BackendRef.Port)),
 	}
-	if group := stringValue(filter.BackendRef.Group); group != "" {
+	if group := shared.StringValue(filter.BackendRef.Group); group != "" {
 		backendRef["group"] = group
 	}
-	if kind := stringValue(filter.BackendRef.Kind); kind != "" {
+	if kind := shared.StringValue(filter.BackendRef.Kind); kind != "" {
 		backendRef["kind"] = kind
 	}
 
@@ -201,14 +202,14 @@ func externalAuthConfig(filter *gatewayv1.HTTPExternalAuthFilter, defaultNamespa
 	}
 
 	backendRef := map[string]any{
-		"namespace": namespaceOrDefault(filter.BackendRef.Namespace, defaultNamespace),
+		"namespace": shared.NamespaceOrDefault(filter.BackendRef.Namespace, defaultNamespace),
 		"name":      string(filter.BackendRef.Name),
-		"port":      int(portValue(filter.BackendRef.Port)),
+		"port":      int(shared.PortValue(filter.BackendRef.Port)),
 	}
-	if group := stringValue(filter.BackendRef.Group); group != "" {
+	if group := shared.StringValue(filter.BackendRef.Group); group != "" {
 		backendRef["group"] = group
 	}
-	if kind := stringValue(filter.BackendRef.Kind); kind != "" {
+	if kind := shared.StringValue(filter.BackendRef.Kind); kind != "" {
 		backendRef["kind"] = kind
 	}
 
@@ -374,12 +375,12 @@ func backendRefsFromHTTP(refs []gatewayv1.HTTPBackendRef, defaultNamespace strin
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
-			Group:     stringValue(ref.BackendRef.Group),
-			Kind:      stringValue(ref.BackendRef.Kind),
-			Namespace: namespaceOrDefault(ref.BackendRef.Namespace, defaultNamespace),
+			Group:     shared.StringValue(ref.BackendRef.Group),
+			Kind:      shared.StringValue(ref.BackendRef.Kind),
+			Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, defaultNamespace),
 			Name:      string(ref.BackendRef.Name),
-			Port:      portValue(ref.BackendRef.Port),
-			Weight:    uint32(weightValue(ref.Weight)),
+			Port:      shared.PortValue(ref.BackendRef.Port),
+			Weight:    uint32(shared.WeightValue(ref.Weight)),
 			Filters:   filtersFromHTTP(ref.Filters, defaultNamespace),
 		})
 	}
@@ -391,12 +392,12 @@ func backendRefsFromGRPC(refs []gatewayv1.GRPCBackendRef, defaultNamespace strin
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
-			Group:     stringValue(ref.BackendRef.Group),
-			Kind:      stringValue(ref.BackendRef.Kind),
-			Namespace: namespaceOrDefault(ref.BackendRef.Namespace, defaultNamespace),
+			Group:     shared.StringValue(ref.BackendRef.Group),
+			Kind:      shared.StringValue(ref.BackendRef.Kind),
+			Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, defaultNamespace),
 			Name:      string(ref.BackendRef.Name),
-			Port:      portValue(ref.BackendRef.Port),
-			Weight:    uint32(weightValue(ref.Weight)),
+			Port:      shared.PortValue(ref.BackendRef.Port),
+			Weight:    uint32(shared.WeightValue(ref.Weight)),
 			Filters:   filtersFromGRPC(ref.Filters, defaultNamespace),
 		})
 	}
@@ -408,12 +409,12 @@ func backendRefsFromRouteRule(refs []gatewayv1.BackendRef, defaultNamespace stri
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
-			Group:     stringValue(ref.Group),
-			Kind:      stringValue(ref.Kind),
-			Namespace: namespaceOrDefault(ref.Namespace, defaultNamespace),
+			Group:     shared.StringValue(ref.Group),
+			Kind:      shared.StringValue(ref.Kind),
+			Namespace: shared.NamespaceOrDefault(ref.Namespace, defaultNamespace),
 			Name:      string(ref.Name),
-			Port:      portValue(ref.Port),
-			Weight:    uint32(weightValue(ref.Weight)),
+			Port:      shared.PortValue(ref.Port),
+			Weight:    uint32(shared.WeightValue(ref.Weight)),
 		})
 	}
 

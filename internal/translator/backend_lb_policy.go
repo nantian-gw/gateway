@@ -9,6 +9,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/loadbalancing"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type translatedBackendLBPolicy struct {
@@ -32,13 +33,13 @@ func buildBackendLBPolicyIndexes(
 ) backendLBPolicyIndexes {
 	return buildBackendLBPolicyIndexesWithIndexes(
 		policies,
-		newTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
+		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
 	)
 }
 
 func buildBackendLBPolicyIndexesWithIndexes(
 	policies []backend.BackendLBPolicy,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) backendLBPolicyIndexes {
 	translations := make([]translatedBackendLBPolicy, 0, len(policies))
 	owners := make(map[string]int)
@@ -112,13 +113,13 @@ func backendLBPolicyBackendKeys(
 ) ([]string, bool) {
 	return backendLBPolicyBackendKeysWithIndexes(
 		policy,
-		newTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
+		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
 	)
 }
 
 func backendLBPolicyBackendKeysWithIndexes(
 	policy backend.BackendLBPolicy,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) ([]string, bool) {
 	keys := make([]string, 0)
 	for _, targetRef := range policy.Spec.TargetRefs {
@@ -127,7 +128,7 @@ func backendLBPolicyBackendKeysWithIndexes(
 
 		switch {
 		case group == "" && kind == "Service":
-			service, ok := indexes.service(policy.Namespace, string(targetRef.Name))
+			service, ok := indexes.Service(policy.Namespace, string(targetRef.Name))
 			if !ok {
 				return nil, false
 			}
@@ -142,7 +143,7 @@ func backendLBPolicyBackendKeysWithIndexes(
 			}
 			keys = append(keys, targetKeys...)
 		case group == mcsv1alpha1.GroupName && kind == "ServiceImport":
-			serviceImport, ok := indexes.serviceImport(policy.Namespace, string(targetRef.Name))
+			serviceImport, ok := indexes.ServiceImport(policy.Namespace, string(targetRef.Name))
 			if !ok {
 				return nil, false
 			}

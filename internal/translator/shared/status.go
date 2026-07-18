@@ -1,4 +1,4 @@
-package translator
+package shared
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -7,7 +7,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func listenerStatusSummary(statuses []gatewayv1.ListenerStatus, name gatewayv1.SectionName) *ir.ListenerStatus {
+func ListenerStatusSummary(statuses []gatewayv1.ListenerStatus, name gatewayv1.SectionName) *ir.ListenerStatus {
 	for _, item := range statuses {
 		if item.Name != name {
 			continue
@@ -15,11 +15,11 @@ func listenerStatusSummary(statuses []gatewayv1.ListenerStatus, name gatewayv1.S
 
 		out := &ir.ListenerStatus{
 			AttachedRoutes: int(item.AttachedRoutes),
-			Conditions:     convertConditions(item.Conditions),
+			Conditions:     ConvertConditions(item.Conditions),
 		}
-		out.Accepted = findConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionAccepted))
-		out.Programmed = findConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionProgrammed))
-		out.ResolvedRefs = findConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionResolvedRefs))
+		out.Accepted = FindConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionAccepted))
+		out.Programmed = FindConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionProgrammed))
+		out.ResolvedRefs = FindConditionSummary(out.Conditions, string(gatewayv1.ListenerConditionResolvedRefs))
 		if out.AttachedRoutes == 0 && len(out.Conditions) == 0 {
 			return nil
 		}
@@ -29,7 +29,7 @@ func listenerStatusSummary(statuses []gatewayv1.ListenerStatus, name gatewayv1.S
 	return nil
 }
 
-func routeStatusSummary(parents []gatewayv1.RouteParentStatus, defaultNamespace string) *ir.RouteStatus {
+func RouteStatusSummary(parents []gatewayv1.RouteParentStatus, defaultNamespace string) *ir.RouteStatus {
 	if len(parents) == 0 {
 		return nil
 	}
@@ -41,17 +41,17 @@ func routeStatusSummary(parents []gatewayv1.RouteParentStatus, defaultNamespace 
 		parent := ir.RouteParentStatus{
 			ControllerName: string(item.ControllerName),
 			ParentRef:      routeParentRef(item.ParentRef, defaultNamespace),
-			Conditions:     convertConditions(item.Conditions),
+			Conditions:     ConvertConditions(item.Conditions),
 		}
-		parent.Accepted = findConditionSummary(parent.Conditions, string(gatewayv1.RouteConditionAccepted))
-		parent.ResolvedRefs = findConditionSummary(parent.Conditions, string(gatewayv1.RouteConditionResolvedRefs))
+		parent.Accepted = FindConditionSummary(parent.Conditions, string(gatewayv1.RouteConditionAccepted))
+		parent.ResolvedRefs = FindConditionSummary(parent.Conditions, string(gatewayv1.RouteConditionResolvedRefs))
 		out.Parents = append(out.Parents, parent)
 	}
 
 	return out
 }
 
-func convertConditions(conditions []metav1.Condition) []ir.ConditionStatus {
+func ConvertConditions(conditions []metav1.Condition) []ir.ConditionStatus {
 	if len(conditions) == 0 {
 		return nil
 	}
@@ -71,7 +71,7 @@ func convertConditions(conditions []metav1.Condition) []ir.ConditionStatus {
 	return out
 }
 
-func findConditionSummary(conditions []ir.ConditionStatus, target string) *ir.ConditionStatus {
+func FindConditionSummary(conditions []ir.ConditionStatus, target string) *ir.ConditionStatus {
 	for _, condition := range conditions {
 		if condition.Type != target {
 			continue

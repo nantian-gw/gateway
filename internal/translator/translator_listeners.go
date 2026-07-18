@@ -15,6 +15,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func (t *Translator) translateGatewayListeners(
@@ -25,7 +26,7 @@ func (t *Translator) translateGatewayListeners(
 ) []ir.Listener {
 	return t.translateGatewayListenersWithIndexes(
 		gateway,
-		newTranslatorIndexes(nil, nil, nil, secrets, configMaps, referenceGrants),
+		shared.NewTranslatorIndexes(nil, nil, nil, secrets, configMaps, referenceGrants),
 		nil,
 		nil,
 	)
@@ -33,7 +34,7 @@ func (t *Translator) translateGatewayListeners(
 
 func (t *Translator) translateGatewayListenersWithIndexes(
 	gateway gatewayv1.Gateway,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 	listenerSets []gatewayv1.ListenerSet,
 	namespaces map[string]corev1.Namespace,
 ) []ir.Listener {
@@ -67,7 +68,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 				"gateway":   gateway.Name,
 				"namespace": gateway.Namespace,
 			},
-			Status: listenerStatusSummary(gateway.Status.Listeners, listener.Name),
+			Status: shared.ListenerStatusSummary(gateway.Status.Listeners, listener.Name),
 		}
 		if len(addresses) > 1 {
 			item.Metadata[listenerAddressesMetadataKey] = strings.Join(addresses, ",")
@@ -101,7 +102,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 func listenerCertificateSecretRefsWithIndexes(
 	gateway gatewayv1.Gateway,
 	listener gatewayv1.Listener,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) []string {
 	if listener.TLS == nil {
 		return nil
@@ -114,9 +115,9 @@ func listenerCertificateSecretRefsWithIndexes(
 			continue
 		}
 
-		targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
+		targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 		if targetNamespace != gateway.Namespace && !referenceGranted(
-			indexes.referenceGrantsByNamespace[targetNamespace],
+			indexes.ReferenceGrantsByNamespace[targetNamespace],
 			targetNamespace,
 			gatewayv1beta1.ReferenceGrantFrom{
 				Group:     gatewayv1beta1.Group(gatewayv1.GroupVersion.Group),
@@ -132,7 +133,7 @@ func listenerCertificateSecretRefsWithIndexes(
 			continue
 		}
 
-		secret, ok := indexes.tlsSecret(targetNamespace, string(ref.Name))
+		secret, ok := indexes.TLSSecret(targetNamespace, string(ref.Name))
 		if !ok {
 			continue
 		}

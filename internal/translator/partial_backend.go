@@ -4,6 +4,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func affectedBackendRefRoutes(
@@ -132,7 +133,7 @@ func routeBackendRefsTouchAffectedBackends(
 			}
 		}
 
-		key := backendObjectKey(ref.Namespace, ref.Name)
+		key := shared.BackendObjectKey(ref.Namespace, ref.Name)
 		switch kind, ok := backendKindForRef(ref.Group, ref.Kind); {
 		case !ok:
 			continue

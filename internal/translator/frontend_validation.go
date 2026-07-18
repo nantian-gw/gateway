@@ -9,6 +9,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 // NOTE: "RejectClientCertificate" is a project-specific mode string,
@@ -26,14 +27,14 @@ func frontendValidationForListener(
 	return frontendValidationForListenerWithIndexes(
 		gateway,
 		listener,
-		newTranslatorIndexes(nil, nil, nil, nil, configMaps, referenceGrants),
+		shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, referenceGrants),
 	)
 }
 
 func frontendValidationForListenerWithIndexes(
 	gateway gatewayv1.Gateway,
 	listener gatewayv1.Listener,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) *ir.FrontendValidation {
 	validation := gatewayapi.FrontendValidationForListener(gateway, listener)
 	if validation == nil {
@@ -57,9 +58,9 @@ func frontendValidationForListenerWithIndexes(
 			continue
 		}
 
-		targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
+		targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 		if targetNamespace != gateway.Namespace && !referenceGranted(
-			indexes.referenceGrantsByNamespace[targetNamespace],
+			indexes.ReferenceGrantsByNamespace[targetNamespace],
 			targetNamespace,
 			gatewayv1beta1.ReferenceGrantFrom{
 				Group:     gatewayv1beta1.Group(gatewayv1.GroupVersion.Group),
@@ -75,7 +76,7 @@ func frontendValidationForListenerWithIndexes(
 			continue
 		}
 
-		caPEM := indexes.configMapCAPEM(targetNamespace, string(ref.Name))
+		caPEM := indexes.ConfigMapCAPEM(targetNamespace, string(ref.Name))
 		if caPEM == "" {
 			continue
 		}
@@ -93,5 +94,5 @@ func frontendValidationForListenerWithIndexes(
 }
 
 func configMapCAPEM(configMaps []corev1.ConfigMap, namespace, name string) string {
-	return newTranslatorIndexes(nil, nil, nil, nil, configMaps, nil).configMapCAPEM(namespace, name)
+	return shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, nil).ConfigMapCAPEM(namespace, name)
 }

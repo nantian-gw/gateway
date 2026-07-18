@@ -13,6 +13,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type attachmentRouteKind string
@@ -46,7 +47,7 @@ func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespace
 	for _, ls := range listenerSets {
 		key := ls.Namespace + "/" + ls.Name
 		listenerSetByKey[key] = ls
-		parentNS := namespaceOrDefault(ls.Spec.ParentRef.Namespace, ls.Namespace)
+		parentNS := shared.NamespaceOrDefault(ls.Spec.ParentRef.Namespace, ls.Namespace)
 		listenerSetGateway[key] = parentNS + "/" + string(ls.Spec.ParentRef.Name)
 	}
 	serviceListeners := make(map[string][]ir.Listener)
@@ -335,7 +336,7 @@ func buildAttachmentPolicy(listener gatewayv1.Listener) attachmentPolicy {
 
 	policy.supportedKinds = policy.supportedKinds[:0]
 	for _, routeGroupKind := range listener.AllowedRoutes.Kinds {
-		group := stringValue(routeGroupKind.Group)
+		group := shared.StringValue(routeGroupKind.Group)
 		if group != "" && group != gatewayv1.GroupName {
 			continue
 		}

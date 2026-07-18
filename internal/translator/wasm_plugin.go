@@ -15,6 +15,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const (
@@ -108,7 +109,7 @@ func translateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.C
 	}
 	result := make(map[string]ir.WasmPluginConfig, len(plugins))
 	for _, p := range plugins {
-		key := backendObjectKey(p.Namespace, p.Name)
+		key := shared.BackendObjectKey(p.Namespace, p.Name)
 		result[key] = translateWasmPlugin(p, configMaps, logger)
 	}
 	return result

@@ -7,6 +7,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func translateTokenPolicy(policy tokenpolicy.TokenPolicy) ir.TokenPolicyConfig {
@@ -30,7 +31,7 @@ func translateTokenPolicies(
 	for _, policy := range policies {
 		cfg := translateTokenPolicy(policy)
 		for _, targetRef := range policy.Spec.TargetRefs {
-			key := backendObjectKey(policy.Namespace, string(targetRef.Name))
+			key := shared.BackendObjectKey(policy.Namespace, string(targetRef.Name))
 			switch {
 			case targetRef.Kind == "Service" && targetRef.Group == "":
 				if _, ok := services[key]; ok {
@@ -57,7 +58,7 @@ func translateTokenPolicies(
 func serviceKeySet(services []corev1.Service) map[string]struct{} {
 	s := make(map[string]struct{}, len(services))
 	for _, svc := range services {
-		s[backendObjectKey(svc.Namespace, svc.Name)] = struct{}{}
+		s[shared.BackendObjectKey(svc.Namespace, svc.Name)] = struct{}{}
 	}
 	return s
 }
@@ -65,7 +66,7 @@ func serviceKeySet(services []corev1.Service) map[string]struct{} {
 func serviceImportKeySet(serviceImports []mcsv1alpha1.ServiceImport) map[string]struct{} {
 	s := make(map[string]struct{}, len(serviceImports))
 	for _, si := range serviceImports {
-		s[backendObjectKey(si.Namespace, si.Name)] = struct{}{}
+		s[shared.BackendObjectKey(si.Namespace, si.Name)] = struct{}{}
 	}
 	return s
 }
@@ -73,7 +74,7 @@ func serviceImportKeySet(serviceImports []mcsv1alpha1.ServiceImport) map[string]
 func buildRouteBackendServices(routes []gatewayv1.HTTPRoute) map[string][]string {
 	result := make(map[string][]string)
 	for _, route := range routes {
-		key := backendObjectKey(route.Namespace, route.Name)
+		key := shared.BackendObjectKey(route.Namespace, route.Name)
 		var backends []string
 		for _, rule := range route.Spec.Rules {
 			for _, ref := range rule.BackendRefs {
@@ -81,7 +82,7 @@ func buildRouteBackendServices(routes []gatewayv1.HTTPRoute) map[string][]string
 				if ref.Namespace != nil {
 					ns = string(*ref.Namespace)
 				}
-				bk := backendObjectKey(ns, string(ref.Name))
+				bk := shared.BackendObjectKey(ns, string(ref.Name))
 				backends = append(backends, bk)
 			}
 		}

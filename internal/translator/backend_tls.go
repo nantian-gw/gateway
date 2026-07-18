@@ -9,6 +9,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func backendTLSForGateway(
@@ -18,13 +19,13 @@ func backendTLSForGateway(
 ) *ir.BackendTLSConfig {
 	return backendTLSForGatewayWithIndexes(
 		gateway,
-		newTranslatorIndexes(nil, nil, nil, secrets, nil, referenceGrants),
+		shared.NewTranslatorIndexes(nil, nil, nil, secrets, nil, referenceGrants),
 	)
 }
 
 func backendTLSForGatewayWithIndexes(
 	gateway gatewayv1.Gateway,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) *ir.BackendTLSConfig {
 	backendTLS := gatewayapi.GatewayBackendTLS(gateway)
 	if backendTLS == nil || backendTLS.ClientCertificateRef == nil {
@@ -41,9 +42,9 @@ func backendTLSForGatewayWithIndexes(
 		return nil
 	}
 
-	targetNamespace := namespaceOrDefault(ref.Namespace, gateway.Namespace)
+	targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 	if targetNamespace != gateway.Namespace && !referenceGranted(
-		indexes.referenceGrantsByNamespace[targetNamespace],
+		indexes.ReferenceGrantsByNamespace[targetNamespace],
 		targetNamespace,
 		gatewayv1beta1.ReferenceGrantFrom{
 			Group:     gatewayv1beta1.Group(gatewayv1.GroupVersion.Group),
@@ -59,7 +60,7 @@ func backendTLSForGatewayWithIndexes(
 		return nil
 	}
 
-	secret, ok := indexes.tlsSecret(targetNamespace, string(ref.Name))
+	secret, ok := indexes.TLSSecret(targetNamespace, string(ref.Name))
 	if !ok {
 		return nil
 	}
@@ -73,7 +74,7 @@ func backendTLSForGatewayWithIndexes(
 }
 
 func tlsSecret(secrets []corev1.Secret, namespace, name string) (corev1.Secret, bool) {
-	return newTranslatorIndexes(nil, nil, nil, secrets, nil, nil).tlsSecret(namespace, name)
+	return shared.NewTranslatorIndexes(nil, nil, nil, secrets, nil, nil).TLSSecret(namespace, name)
 }
 
 func refGroup(ref *gatewayv1.SecretObjectReference) string {

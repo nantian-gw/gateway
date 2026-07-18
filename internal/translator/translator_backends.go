@@ -12,6 +12,7 @@ import (
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const defaultConnectTimeout = 5 * time.Second
@@ -31,7 +32,7 @@ func translateBackends(
 		backendTLSPolicies,
 		backendLBPolicies,
 		connectTimeout,
-		newTranslatorIndexes(services, serviceImports, slices, nil, configMaps, nil),
+		shared.NewTranslatorIndexes(services, serviceImports, slices, nil, configMaps, nil),
 	)
 }
 
@@ -41,7 +42,7 @@ func translateBackendsWithIndexes(
 	backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy,
 	backendLBPolicies []backend.BackendLBPolicy,
 	connectTimeout time.Duration,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) []ir.BackendCluster {
 	backendTLSValidations := backendTLSValidationIndexWithIndexes(backendTLSPolicies, indexes)
 	backendLBIndexes := buildBackendLBPolicyIndexesWithIndexes(backendLBPolicies, indexes)
@@ -61,7 +62,7 @@ func translateEffectiveBackends(
 	backendTLSValidations map[string]*ir.BackendTLSValidation,
 	backendLB backendLBPolicyIndexes,
 	connectTimeout time.Duration,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) []ir.BackendCluster {
 	out := make([]ir.BackendCluster, 0)
 
@@ -97,7 +98,7 @@ func translateEffectiveBackends(
 				},
 			}
 
-			for _, slice := range indexes.serviceEndpointSlices(service.service.Namespace, service.service.Name) {
+			for _, slice := range indexes.ServiceEndpointSlices(service.service.Namespace, service.service.Name) {
 				for _, endpoint := range slice.Endpoints {
 					healthy := endpoint.Conditions.Ready == nil || *endpoint.Conditions.Ready
 					zone := ""
@@ -106,7 +107,7 @@ func translateEffectiveBackends(
 					}
 
 					matchedPort := uint32(port.Port)
-					if portInfo := selectSlicePort(slice.Ports, port.Name, port.Port); portInfo != nil && portInfo.Port != nil {
+					if portInfo := shared.SelectSlicePort(slice.Ports, port.Name, port.Port); portInfo != nil && portInfo.Port != nil {
 						matchedPort = uint32(*portInfo.Port)
 					}
 
@@ -162,7 +163,7 @@ func translateServiceImportBackends(
 	backendTLSValidations map[string]*ir.BackendTLSValidation,
 	backendLB backendLBPolicyIndexes,
 	connectTimeout time.Duration,
-	indexes translatorIndexes,
+	indexes shared.TranslatorIndexes,
 ) []ir.BackendCluster {
 	out := make([]ir.BackendCluster, 0)
 	for _, serviceImport := range serviceImports {
@@ -192,7 +193,7 @@ func translateServiceImportBackends(
 				},
 			}
 
-			for _, slice := range indexes.serviceImportEndpointSlices(serviceImport.Namespace, serviceImport.Name) {
+			for _, slice := range indexes.ServiceImportEndpointSlices(serviceImport.Namespace, serviceImport.Name) {
 				for _, endpoint := range slice.Endpoints {
 					healthy := endpoint.Conditions.Ready == nil || *endpoint.Conditions.Ready
 					zone := ""
@@ -201,7 +202,7 @@ func translateServiceImportBackends(
 					}
 
 					matchedPort := uint32(port.Port)
-					if portInfo := selectSlicePort(slice.Ports, port.Name, port.Port); portInfo != nil && portInfo.Port != nil {
+					if portInfo := shared.SelectSlicePort(slice.Ports, port.Name, port.Port); portInfo != nil && portInfo.Port != nil {
 						matchedPort = uint32(*portInfo.Port)
 					}
 

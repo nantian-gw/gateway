@@ -8,6 +8,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func collectMeshServiceFrontendsFromSnapshot(
@@ -36,7 +37,7 @@ func meshParentServiceObjectKeysFromSnapshot(current *ir.Snapshot) []client.Obje
 	add := func(parentRefs []ir.ParentRef) {
 		for _, key := range collectMeshParentKeysFromIR(parentRefs) {
 			objectKey := client.ObjectKey{Namespace: key.Namespace, Name: key.Name}
-			keys[backendObjectKey(objectKey.Namespace, objectKey.Name)] = objectKey
+			keys[shared.BackendObjectKey(objectKey.Namespace, objectKey.Name)] = objectKey
 		}
 	}
 

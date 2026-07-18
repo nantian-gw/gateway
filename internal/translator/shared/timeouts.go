@@ -1,4 +1,4 @@
-package translator
+package shared
 
 import (
 	"time"
@@ -8,14 +8,14 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func httpRouteTimeouts(timeouts *gatewayv1.HTTPRouteTimeouts) *ir.RouteTimeouts {
+func HTTPRouteTimeouts(timeouts *gatewayv1.HTTPRouteTimeouts) *ir.RouteTimeouts {
 	if timeouts == nil {
 		return nil
 	}
 
 	out := &ir.RouteTimeouts{
-		Request:        parseGatewayDuration(timeouts.Request),
-		BackendRequest: parseGatewayDuration(timeouts.BackendRequest),
+		Request:        ParseGatewayDuration(timeouts.Request),
+		BackendRequest: ParseGatewayDuration(timeouts.BackendRequest),
 	}
 	if out.Request == nil && out.BackendRequest == nil {
 		return nil
@@ -24,7 +24,7 @@ func httpRouteTimeouts(timeouts *gatewayv1.HTTPRouteTimeouts) *ir.RouteTimeouts 
 	return out
 }
 
-func parseGatewayDuration(value *gatewayv1.Duration) *time.Duration {
+func ParseGatewayDuration(value *gatewayv1.Duration) *time.Duration {
 	if value == nil {
 		return nil
 	}
