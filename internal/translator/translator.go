@@ -30,6 +30,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/routepolicy"
 	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
@@ -402,7 +403,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		wasmConfigMaps, err = loadConfigMaps(
 			groupCtx,
 			cl,
-			referencedConfigMapKeysForWasmPlugins(wasmPlugins),
+			policies.ReferencedConfigMapKeysForWasmPlugins(wasmPlugins),
 		)
 		return err
 	})
@@ -555,8 +556,8 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 			snapshot.Backends[i].AIService = &cfgCopy
 		}
 	}
-	routeBackends := buildRouteBackendServices(httpRoutes.Items)
-	tokenPolicyConfigs := translateTokenPolicies(tokenPolicies, serviceKeySet(filteredServices), serviceImportKeySet(serviceImports), routeBackends)
+	routeBackends := policies.BuildRouteBackendServices(httpRoutes.Items)
+	tokenPolicyConfigs := policies.TranslateTokenPolicies(tokenPolicies, policies.ServiceKeySet(filteredServices), policies.ServiceImportKeySet(serviceImports), routeBackends)
 	for i := range snapshot.Backends {
 		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := tokenPolicyConfigs[key]; ok {
@@ -564,7 +565,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 			snapshot.Backends[i].TokenPolicy = &cfgCopy
 		}
 	}
-	wasmPluginConfigs := translateWasmPlugins(wasmPlugins, mergedConfigMaps, t.logger)
+	wasmPluginConfigs := policies.TranslateWasmPlugins(wasmPlugins, mergedConfigMaps, t.logger)
 	for i := range snapshot.Backends {
 		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := wasmPluginConfigs[key]; ok {
@@ -573,7 +574,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		}
 	}
 	snapshot.Workloads = translateWorkloads(pods)
-	attachRoutes(snapshot, filteredGateways, supportObjects.namespaces, listenerSets.Items)
+	policies.AttachRoutes(snapshot, filteredGateways, supportObjects.namespaces, listenerSets.Items, gatewayAllowsListenerSet, mergeListenerSetListeners)
 	snapshot.Secrets = filterSecretMaterialsByKeys(
 		backends.TranslateSecrets(supportObjects.secrets),
 		listenerSecretMaterialKeys(snapshot.Listeners),

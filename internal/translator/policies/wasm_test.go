@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"encoding/base64"
@@ -30,7 +30,7 @@ func TestTranslateWasmPlugin(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.Name != "test" {
 		t.Errorf("expected name test, got %s", cfg.Name)
 	}
@@ -78,7 +78,7 @@ func TestTranslateWasmPluginFromConfigMap(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, configMaps, nil)
+	cfg := TranslateWasmPlugin(p, configMaps, nil)
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from ConfigMap, got nil")
 	}
@@ -109,7 +109,7 @@ func TestTranslateWasmPluginFromConfigMapCustomKey(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, configMaps, nil)
+	cfg := TranslateWasmPlugin(p, configMaps, nil)
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from ConfigMap with custom key, got nil")
 	}
@@ -129,7 +129,7 @@ func TestTranslateWasmPluginConfigMapNotFound(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.WasmBytes != nil {
 		t.Errorf("expected nil WasmBytes for missing ConfigMap, got %v", cfg.WasmBytes)
 	}
@@ -140,7 +140,7 @@ func TestTranslateWasmPlugins(t *testing.T) {
 		{ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "default"}},
 		{ObjectMeta: metav1.ObjectMeta{Name: "p2", Namespace: "default"}},
 	}
-	result := translateWasmPlugins(plugins, nil, nil)
+	result := TranslateWasmPlugins(plugins, nil, nil)
 	if len(result) != 2 {
 		t.Errorf("expected 2, got %d", len(result))
 	}
@@ -178,7 +178,7 @@ func TestReferencedConfigMapKeysForWasmPlugins(t *testing.T) {
 			},
 		},
 	}
-	keys := referencedConfigMapKeysForWasmPlugins(plugins)
+	keys := ReferencedConfigMapKeysForWasmPlugins(plugins)
 	if len(keys) != 2 {
 		t.Fatalf("expected 2 keys, got %d", len(keys))
 	}
@@ -203,7 +203,7 @@ func TestTranslateWasmPluginFromInline(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from inline, got nil")
 	}
@@ -224,7 +224,7 @@ func TestTranslateWasmPluginFromInlineDecodeError(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.WasmBytes != nil {
 		t.Errorf("expected nil WasmBytes for invalid base64, got %v", cfg.WasmBytes)
 	}
@@ -245,7 +245,7 @@ func TestTranslateWasmPluginFromURL(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from URL, got nil")
 	}
@@ -268,7 +268,7 @@ func TestTranslateWasmPluginFromURLHTTPError(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.WasmBytes != nil {
 		t.Errorf("expected nil WasmBytes for HTTP error, got %v", cfg.WasmBytes)
 	}
@@ -293,7 +293,7 @@ func TestTranslateWasmPluginURLOverridesInline(t *testing.T) {
 			},
 		},
 	}
-	cfg := translateWasmPlugin(p, nil, nil)
+	cfg := TranslateWasmPlugin(p, nil, nil)
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes, got nil")
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/routes"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
@@ -546,7 +547,7 @@ func routeSlicesUseServiceParents(
 
 func routeHasServiceParentRefs(parentRefs []ir.ParentRef) bool {
 	for _, parentRef := range parentRefs {
-		if isServiceParentRef(parentRef) {
+		if policies.IsServiceParentRef(parentRef) {
 			return true
 		}
 	}

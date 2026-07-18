@@ -1,4 +1,4 @@
-package translator
+package policies_test
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
@@ -121,7 +122,7 @@ func TestBuildSnapshotDoesNotAttachCrossNamespaceRouteWhenAllowedRoutesFromSame(
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -219,7 +220,7 @@ func TestBuildSnapshotAttachesCrossNamespaceRouteWhenAllowedRoutesFromAll(t *tes
 		).
 		Build()
 
-	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -394,7 +395,7 @@ func TestBuildSnapshotAttachesRoutesOnlyForSelectorMatchedNamespacesAndParentRef
 		).
 		Build()
 
-	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -470,7 +471,7 @@ func TestBuildSnapshotAllowsListenerSetFromSelectorMatchedNamespace(t *testing.T
 		).
 		Build()
 
-	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -577,7 +578,7 @@ func TestBuildSnapshotListenerSetAllowedRoutesSameUsesListenerSetNamespace(t *te
 		).
 		Build()
 
-	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -689,7 +690,7 @@ func TestBuildSnapshotListenerSetAllowedRoutesSelectorLoadsRouteNamespace(t *tes
 		).
 		Build()
 
-	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -975,7 +976,7 @@ func TestBuildSnapshotAttachesListenerSetRoutesForMixedAllowedRoutesNamespaces(t
 		).
 		Build()
 
-	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -1048,7 +1049,7 @@ func TestBuildSnapshotSynthesizesMeshServiceListeners(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New("", slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New("", slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}

@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"testing"
@@ -25,7 +25,7 @@ func TestTranslateTokenPolicy_Basic(t *testing.T) {
 		},
 	}
 
-	cfg := translateTokenPolicy(policy)
+	cfg := TranslateTokenPolicy(policy)
 
 	if cfg.TokensPerMinute != 1000 {
 		t.Fatalf("expected TokensPerMinute=1000, got %d", cfg.TokensPerMinute)
@@ -55,7 +55,7 @@ func TestTranslateTokenPolicy_Empty(t *testing.T) {
 		},
 	}
 
-	cfg := translateTokenPolicy(policy)
+	cfg := TranslateTokenPolicy(policy)
 
 	if cfg.TokensPerMinute != 0 {
 		t.Fatalf("expected TokensPerMinute=0, got %d", cfg.TokensPerMinute)
@@ -110,7 +110,7 @@ func TestTranslateTokenPolicyList(t *testing.T) {
 		"ns1/svc-b": {},
 	}
 
-	result := translateTokenPolicies(policies, services, nil, nil)
+	result := TranslateTokenPolicies(policies, services, nil, nil)
 
 	if len(result) != 2 {
 		t.Fatalf("expected 2 results, got %d", len(result))
@@ -152,7 +152,7 @@ func TestTranslateTokenPolicies_HTTPRouteTargetRef(t *testing.T) {
 		"ns1/route-a": {"ns1/svc-a", "ns1/svc-b"},
 	}
 
-	result := translateTokenPolicies(policies, services, nil, httpRoutes)
+	result := TranslateTokenPolicies(policies, services, nil, httpRoutes)
 
 	if len(result) != 2 {
 		t.Fatalf("expected 2 results, got %d", len(result))
@@ -193,7 +193,7 @@ func TestTranslateTokenPolicies_HTTPRouteNoBackendMatch(t *testing.T) {
 		"ns1/route-a": {"ns1/svc-a"},
 	}
 
-	result := translateTokenPolicies(policies, services, nil, httpRoutes)
+	result := TranslateTokenPolicies(policies, services, nil, httpRoutes)
 
 	if len(result) != 0 {
 		t.Fatalf("expected 0 results (route not found), got %d", len(result))
@@ -254,7 +254,7 @@ func TestBuildRouteBackendServices(t *testing.T) {
 		},
 	}
 
-	result := buildRouteBackendServices(routes)
+	result := BuildRouteBackendServices(routes)
 
 	if len(result) != 1 {
 		t.Fatalf("expected 1 route, got %d", len(result))

@@ -17,6 +17,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
@@ -331,8 +332,8 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 	}
 
 	baseClient := testutil.NewTranslatorClientBuilder(scheme).
-		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), backendTLSPolicyTargetRefIndex, func(object client.Object) []string {
-			return backendTLSPolicyTargetRefIndexKeys(object)
+		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), policies.BackendTLSPolicyTargetRefIndex, func(object client.Object) []string {
+			return policies.BackendTLSPolicyTargetRefIndexKeys(object)
 		}).
 		WithObjects(
 			echoRaw,
@@ -344,7 +345,7 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 		context.Background(),
 		testutil.NewFakeIndexedPolicyListValidatingClient(baseClient,
 			map[string]struct{}{
-				backendPolicyTargetRefIndexValue("", "Service", "echo"): {},
+				policies.BackendPolicyTargetRefIndexValue("", "Service", "echo"): {},
 			},
 			nil,
 		),
@@ -439,7 +440,7 @@ func TestLoadBackendLBPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.
 	scheme := testutil.BuildSupportScheme(t)
 
 	baseClient := testutil.NewTranslatorClientBuilder(scheme).
-		WithIndex(&backend.BackendLBPolicy{}, backendLBPolicyTargetRefIndex, func(object client.Object) []string {
+		WithIndex(&backend.BackendLBPolicy{}, policies.BackendLBPolicyTargetRefIndex, func(object client.Object) []string {
 			policy, ok := object.(*backend.BackendLBPolicy)
 			if !ok {
 				return nil
@@ -475,7 +476,7 @@ func TestLoadBackendLBPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.
 		testutil.NewFakeIndexedPolicyListValidatingClient(baseClient,
 			nil,
 			map[string]struct{}{
-				backendPolicyTargetRefIndexValue("", "Service", "echo"): {},
+				policies.BackendPolicyTargetRefIndexValue("", "Service", "echo"): {},
 			},
 		),
 		[]string{"default"},

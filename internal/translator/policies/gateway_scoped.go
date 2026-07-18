@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"context"
@@ -15,7 +15,7 @@ const (
 	gatewayGatewayClassNameIndex    = "nantian.dev/infrastructure.gateway.gatewayclass-name"
 )
 
-func listGatewayClassesForController(
+func ListGatewayClassesForController(
 	ctx context.Context,
 	cl client.Client,
 	controllerName string,
@@ -26,7 +26,7 @@ func listGatewayClassesForController(
 		&gatewayClasses,
 		client.MatchingFields{gatewayClassControllerNameIndex: controllerName},
 	); err != nil {
-		if isMissingFieldIndexError(err) {
+		if IsMissingFieldIndexError(err) {
 			return nil, requiredFieldIndexError("GatewayClass", gatewayClassControllerNameIndex, err)
 		}
 		return nil, err
@@ -47,7 +47,7 @@ func listGatewayClassesForController(
 	return out, nil
 }
 
-func listGatewaysForGatewayClass(
+func ListGatewaysForGatewayClass(
 	ctx context.Context,
 	cl client.Client,
 	gatewayClassName string,
@@ -58,7 +58,7 @@ func listGatewaysForGatewayClass(
 		&gateways,
 		client.MatchingFields{gatewayGatewayClassNameIndex: gatewayClassName},
 	); err != nil {
-		if isMissingFieldIndexError(err) {
+		if IsMissingFieldIndexError(err) {
 			return nil, requiredFieldIndexError("Gateway", gatewayGatewayClassNameIndex, err)
 		}
 		return nil, err
@@ -82,7 +82,7 @@ func listGatewaysForGatewayClass(
 	return out, nil
 }
 
-func isMissingFieldIndexError(err error) bool {
+func IsMissingFieldIndexError(err error) bool {
 	if err == nil {
 		return false
 	}

@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"sort"
@@ -16,14 +16,30 @@ import (
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
-type attachmentRouteKind string
+// ListenerSetMergeFunc merges ListenerSet listeners into a Gateway listener
+// slice. Called by [AttachRoutes] to resolve ListenerSet parent refs.
+type ListenerSetMergeFunc func(
+	gateway gatewayv1.Gateway,
+	base []gatewayv1.Listener,
+	sets []gatewayv1.ListenerSet,
+	namespaces map[string]corev1.Namespace,
+) []gatewayv1.Listener
+
+// ListenerSetGateFunc reports whether a Gateway allows a ListenerSet.
+type ListenerSetGateFunc func(
+	gateway gatewayv1.Gateway,
+	ls gatewayv1.ListenerSet,
+	namespaces map[string]corev1.Namespace,
+) bool
+
+type RouteKind string
 
 const (
-	attachmentRouteKindHTTP attachmentRouteKind = "HTTPRoute"
-	attachmentRouteKindGRPC attachmentRouteKind = "GRPCRoute"
-	attachmentRouteKindTCP  attachmentRouteKind = "TCPRoute"
-	attachmentRouteKindUDP  attachmentRouteKind = "UDPRoute"
-	attachmentRouteKindTLS  attachmentRouteKind = "TLSRoute"
+	RouteKindHTTP RouteKind = "HTTPRoute"
+	RouteKindGRPC RouteKind = "GRPCRoute"
+	RouteKindTCP  RouteKind = "TCPRoute"
+	RouteKindUDP  RouteKind = "UDPRoute"
+	RouteKindTLS  RouteKind = "TLSRoute"
 )
 
 type attachmentPolicy struct {
@@ -32,7 +48,14 @@ type attachmentPolicy struct {
 	selector       labels.Selector
 }
 
-func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespaces []corev1.Namespace, listenerSets []gatewayv1.ListenerSet) {
+func AttachRoutes(
+	snapshot *ir.Snapshot,
+	gateways []gatewayv1.Gateway,
+	namespaces []corev1.Namespace,
+	listenerSets []gatewayv1.ListenerSet,
+	gatewayAllowsListenerSet ListenerSetGateFunc,
+	mergeListenerSetListeners ListenerSetMergeFunc,
+) {
 	namespaceByName := make(map[string]corev1.Namespace, len(namespaces))
 	for _, namespace := range namespaces {
 		namespaceByName[namespace.Name] = namespace
@@ -70,7 +93,7 @@ func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespace
 	attachments := make(map[string]map[string]struct{})
 
 	for _, route := range snapshot.HTTPRoutes {
-		recordRouteAttachments(
+		RecordRouteAttachments(
 			attachments,
 			gatewayByKey,
 			listenerSetByKey,
@@ -78,14 +101,16 @@ func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespace
 			namespaceByName,
 			route.Namespace,
 			route.Name,
-			attachmentRouteKindHTTP,
+			RouteKindHTTP,
 			route.Hostnames,
 			route.ParentRefs,
 			serviceListeners,
+			gatewayAllowsListenerSet,
+			mergeListenerSetListeners,
 		)
 	}
 	for _, route := range snapshot.GRPCRoutes {
-		recordRouteAttachments(
+		RecordRouteAttachments(
 			attachments,
 			gatewayByKey,
 			listenerSetByKey,
@@ -93,14 +118,16 @@ func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespace
 			namespaceByName,
 			route.Namespace,
 			route.Name,
-			attachmentRouteKindGRPC,
+			RouteKindGRPC,
 			route.Hostnames,
 			route.ParentRefs,
 			serviceListeners,
+			gatewayAllowsListenerSet,
+			mergeListenerSetListeners,
 		)
 	}
 	for _, route := range snapshot.StreamRoutes {
-		recordRouteAttachments(
+		RecordRouteAttachments(
 			attachments,
 			gatewayByKey,
 			listenerSetByKey,
@@ -108,10 +135,12 @@ func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespace
 			namespaceByName,
 			route.Namespace,
 			route.Name,
-			attachmentKindForStreamRoute(route.Kind),
-			streamRouteHostnames(route),
+			RouteKindForStreamRoute(route.Kind),
+			StreamRouteHostnames(route),
 			route.ParentRefs,
 			serviceListeners,
+			gatewayAllowsListenerSet,
+			mergeListenerSetListeners,
 		)
 	}
 
@@ -131,7 +160,7 @@ func attachRoutes(snapshot *ir.Snapshot, gateways []gatewayv1.Gateway, namespace
 	}
 }
 
-func recordRouteAttachments(
+func RecordRouteAttachments(
 	attachments map[string]map[string]struct{},
 	gatewayByKey map[string]gatewayv1.Gateway,
 	listenerSetByKey map[string]gatewayv1.ListenerSet,
@@ -139,10 +168,12 @@ func recordRouteAttachments(
 	namespaceByName map[string]corev1.Namespace,
 	routeNamespace string,
 	routeName string,
-	kind attachmentRouteKind,
+	kind RouteKind,
 	hostnames []string,
 	parentRefs []ir.ParentRef,
 	serviceListeners map[string][]ir.Listener,
+	gatewayAllowsListenerSet ListenerSetGateFunc,
+	mergeListenerSetListeners ListenerSetMergeFunc,
 ) {
 	routeKey := routeNamespace + "/" + routeName
 	routeNamespaceObject := namespaceByName[routeNamespace]
@@ -151,7 +182,7 @@ func recordRouteAttachments(
 	}
 
 	for _, parentRef := range parentRefs {
-		if isServiceParentRef(parentRef) {
+		if IsServiceParentRef(parentRef) {
 			serviceNamespace := parentRef.Namespace
 			if serviceNamespace == "" {
 				serviceNamespace = routeNamespace
@@ -173,9 +204,10 @@ func recordRouteAttachments(
 			continue
 		}
 
-		if isListenerSetParentRef(parentRef) {
+		if IsListenerSetParentRef(parentRef) {
 			gwKey, listenerSetNamespace, listeners := resolveListenerSetParent(
 				parentRef, routeNamespace, gatewayByKey, listenerSetByKey, listenerSetGateway, namespaceByName,
+				gatewayAllowsListenerSet, mergeListenerSetListeners,
 			)
 			if gwKey == "" {
 				continue
@@ -225,11 +257,11 @@ func recordRouteAttachments(
 	}
 }
 
-func isServiceParentRef(parentRef ir.ParentRef) bool {
+func IsServiceParentRef(parentRef ir.ParentRef) bool {
 	return parentRef.Group == "" && parentRef.Kind == mesh.FrontendKindService
 }
 
-func isListenerSetParentRef(parentRef ir.ParentRef) bool {
+func IsListenerSetParentRef(parentRef ir.ParentRef) bool {
 	if parentRef.Group != "" && parentRef.Group != gatewayv1.GroupName {
 		return false
 	}
@@ -243,6 +275,8 @@ func resolveListenerSetParent(
 	listenerSetByKey map[string]gatewayv1.ListenerSet,
 	listenerSetGateway map[string]string,
 	namespaces map[string]corev1.Namespace,
+	gatewayAllowsListenerSet ListenerSetGateFunc,
+	mergeListenerSetListeners ListenerSetMergeFunc,
 ) (string, string, []gatewayv1.Listener) {
 	lsNamespace := parentRef.Namespace
 	if lsNamespace == "" {
@@ -341,7 +375,7 @@ func buildAttachmentPolicy(listener gatewayv1.Listener) attachmentPolicy {
 			continue
 		}
 
-		kind := attachmentRouteKind(routeGroupKind.Kind)
+		kind := RouteKind(routeGroupKind.Kind)
 		if !attachmentKindAllowedByProtocol(listener.Protocol, kind) {
 			continue
 		}
@@ -367,28 +401,28 @@ func attachmentSupportedKinds(protocol gatewayv1.ProtocolType) []gatewayv1.Route
 	return out
 }
 
-func attachmentDefaultKinds(protocol gatewayv1.ProtocolType) []attachmentRouteKind {
+func attachmentDefaultKinds(protocol gatewayv1.ProtocolType) []RouteKind {
 	switch strings.ToUpper(string(protocol)) {
 	case "HTTP":
-		return []attachmentRouteKind{attachmentRouteKindGRPC, attachmentRouteKindHTTP}
+		return []RouteKind{RouteKindGRPC, RouteKindHTTP}
 	case "HTTP3":
-		return []attachmentRouteKind{attachmentRouteKindHTTP}
+		return []RouteKind{RouteKindHTTP}
 	case "HTTPS":
-		return []attachmentRouteKind{attachmentRouteKindGRPC, attachmentRouteKindHTTP}
+		return []RouteKind{RouteKindGRPC, RouteKindHTTP}
 	case "TLS", "TLS_PASSTHROUGH":
-		return []attachmentRouteKind{attachmentRouteKindTLS}
+		return []RouteKind{RouteKindTLS}
 	case "GRPC":
-		return []attachmentRouteKind{attachmentRouteKindGRPC}
+		return []RouteKind{RouteKindGRPC}
 	case "TCP":
-		return []attachmentRouteKind{attachmentRouteKindTCP}
+		return []RouteKind{RouteKindTCP}
 	case "UDP":
-		return []attachmentRouteKind{attachmentRouteKindUDP}
+		return []RouteKind{RouteKindUDP}
 	default:
 		return nil
 	}
 }
 
-func attachmentKindAllowedByProtocol(protocol gatewayv1.ProtocolType, kind attachmentRouteKind) bool {
+func attachmentKindAllowedByProtocol(protocol gatewayv1.ProtocolType, kind RouteKind) bool {
 	for _, allowed := range attachmentDefaultKinds(protocol) {
 		if allowed == kind {
 			return true
@@ -399,7 +433,7 @@ func attachmentKindAllowedByProtocol(protocol gatewayv1.ProtocolType, kind attac
 
 func attachmentListenerAllowsRoute(
 	policy attachmentPolicy,
-	kind attachmentRouteKind,
+	kind RouteKind,
 	gatewayNamespace string,
 	routeNamespace string,
 	namespace corev1.Namespace,
@@ -423,9 +457,9 @@ func attachmentListenerAllowsRoute(
 	}
 }
 
-func attachmentListenerAllowsRouteKind(policy attachmentPolicy, kind attachmentRouteKind) bool {
+func attachmentListenerAllowsRouteKind(policy attachmentPolicy, kind RouteKind) bool {
 	for _, item := range policy.supportedKinds {
-		if attachmentRouteKind(item.Kind) == kind {
+		if RouteKind(item.Kind) == kind {
 			return true
 		}
 	}
@@ -495,21 +529,21 @@ func attachmentGroupPtr(group string) *gatewayv1.Group {
 	return &value
 }
 
-func attachmentKindForStreamRoute(kind string) attachmentRouteKind {
+func RouteKindForStreamRoute(kind string) RouteKind {
 	switch strings.ToUpper(kind) {
 	case "ROUTE_KIND_TCP", "TCP":
-		return attachmentRouteKindTCP
+		return RouteKindTCP
 	case "ROUTE_KIND_UDP", "UDP":
-		return attachmentRouteKindUDP
+		return RouteKindUDP
 	case "ROUTE_KIND_TLS", "TLS":
-		return attachmentRouteKindTLS
+		return RouteKindTLS
 	default:
-		return attachmentRouteKind(kind)
+		return RouteKind(kind)
 	}
 }
 
-func streamRouteHostnames(route ir.StreamRoute) []string {
-	if attachmentKindForStreamRoute(route.Kind) != attachmentRouteKindTLS {
+func StreamRouteHostnames(route ir.StreamRoute) []string {
+	if RouteKindForStreamRoute(route.Kind) != RouteKindTLS {
 		return nil
 	}
 

@@ -21,6 +21,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -377,7 +378,7 @@ func loadBackendTLSPoliciesForNamespaces(
 		return nil, nil
 	}
 
-	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
+	targetValuesByNamespace := policies.BackendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
 	policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
 	seen := make(map[string]struct{})
 	for _, namespace := range namespaces {
@@ -421,7 +422,7 @@ func loadBackendLBPoliciesForNamespaces(
 		return nil, nil
 	}
 
-	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
+	targetValuesByNamespace := policies.BackendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
 	policies := make([]backend.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 	for _, namespace := range namespaces {
@@ -480,7 +481,7 @@ func listBackendTLSPoliciesByTargetRefIndex(
 	namespace string,
 	targetValues []string,
 ) ([]gatewayv1alpha3.BackendTLSPolicy, bool, error) {
-	policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
+	results := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
@@ -488,10 +489,10 @@ func listBackendTLSPoliciesByTargetRefIndex(
 			ctx,
 			cl,
 			client.InNamespace(namespace),
-			client.MatchingFields{backendTLSPolicyTargetRefIndex: targetValue},
+			client.MatchingFields{policies.BackendTLSPolicyTargetRefIndex: targetValue},
 		)
 		if err != nil {
-			if isMissingFieldIndexError(err) {
+			if policies.IsMissingFieldIndexError(err) {
 				return nil, false, nil
 			}
 			return nil, false, err
@@ -502,11 +503,11 @@ func listBackendTLSPoliciesByTargetRefIndex(
 				continue
 			}
 			seen[key] = struct{}{}
-			policies = append(policies, item)
+			results = append(results, item)
 		}
 	}
 
-	return policies, true, nil
+	return results, true, nil
 }
 
 func listBackendLBPoliciesForNamespaceTargets(
@@ -540,7 +541,7 @@ func listBackendLBPoliciesByTargetRefIndex(
 	namespace string,
 	targetValues []string,
 ) ([]backend.BackendLBPolicy, bool, error) {
-	policies := make([]backend.BackendLBPolicy, 0)
+	results := make([]backend.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
@@ -549,9 +550,9 @@ func listBackendLBPoliciesByTargetRefIndex(
 			ctx,
 			&list,
 			client.InNamespace(namespace),
-			client.MatchingFields{backendLBPolicyTargetRefIndex: targetValue},
+			client.MatchingFields{policies.BackendLBPolicyTargetRefIndex: targetValue},
 		); err != nil {
-			if isMissingFieldIndexError(err) {
+			if policies.IsMissingFieldIndexError(err) {
 				return nil, false, nil
 			}
 			return nil, false, err
@@ -562,11 +563,11 @@ func listBackendLBPoliciesByTargetRefIndex(
 				continue
 			}
 			seen[key] = struct{}{}
-			policies = append(policies, item)
+			results = append(results, item)
 		}
 	}
 
-	return policies, true, nil
+	return results, true, nil
 }
 
 func backendTLSPolicyTouchesKeys(

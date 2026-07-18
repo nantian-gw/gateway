@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"context"
@@ -33,7 +33,7 @@ func (f *fakeFieldIndexer) IndexField(
 func TestSetupIndexesIgnoresMissingBackendLBPolicyCRD(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
-			backendLBPolicyTargetRefIndex: &metav1.NoKindMatchError{
+			BackendLBPolicyTargetRefIndex: &metav1.NoKindMatchError{
 				GroupKind: schema.GroupKind{
 					Group: backend.GroupVersion.Group,
 					Kind:  "BackendLBPolicy",
@@ -51,7 +51,7 @@ func TestSetupIndexesIgnoresMissingBackendLBPolicyCRD(t *testing.T) {
 func TestSetupIndexesIgnoresMissingBackendTLSPolicyCRD(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
-			backendTLSPolicyTargetRefIndex: &metav1.NoKindMatchError{
+			BackendTLSPolicyTargetRefIndex: &metav1.NoKindMatchError{
 				GroupKind: gatewayapi.BackendTLSPolicyV1GVK.GroupKind(),
 				SearchedVersions: []string{
 					gatewayapi.BackendTLSPolicyV1GVK.Version,
@@ -68,7 +68,7 @@ func TestSetupIndexesIgnoresMissingBackendTLSPolicyCRD(t *testing.T) {
 func TestSetupIndexesReturnsUnexpectedBackendLBPolicyIndexError(t *testing.T) {
 	indexer := &fakeFieldIndexer{
 		errs: map[string]error{
-			backendLBPolicyTargetRefIndex: errors.New("boom"),
+			BackendLBPolicyTargetRefIndex: errors.New("boom"),
 		},
 	}
 

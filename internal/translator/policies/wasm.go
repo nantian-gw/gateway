@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"encoding/base64"
@@ -24,7 +24,7 @@ const (
 	wasmConfigMapDefaultKeyLegacy = ""
 )
 
-func referencedConfigMapKeysForWasmPlugins(plugins []wasmplugin.WasmPlugin) []client.ObjectKey {
+func ReferencedConfigMapKeysForWasmPlugins(plugins []wasmplugin.WasmPlugin) []client.ObjectKey {
 	keys := make([]client.ObjectKey, 0, len(plugins))
 	for _, p := range plugins {
 		if p.Spec.Wasm.ConfigMap != nil && p.Spec.Wasm.ConfigMap.Name != "" {
@@ -49,7 +49,7 @@ func wasmConfigMapData(configMaps []corev1.ConfigMap, namespace, name, key strin
 	return nil
 }
 
-func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) ir.WasmPluginConfig {
+func TranslateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) ir.WasmPluginConfig {
 	if logger == nil {
 		logger = slog.Default()
 	}
@@ -103,14 +103,14 @@ func translateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap,
 	return cfg
 }
 
-func translateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) map[string]ir.WasmPluginConfig {
+func TranslateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) map[string]ir.WasmPluginConfig {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	result := make(map[string]ir.WasmPluginConfig, len(plugins))
 	for _, p := range plugins {
 		key := shared.BackendObjectKey(p.Namespace, p.Name)
-		result[key] = translateWasmPlugin(p, configMaps, logger)
+		result[key] = TranslateWasmPlugin(p, configMaps, logger)
 	}
 	return result
 }

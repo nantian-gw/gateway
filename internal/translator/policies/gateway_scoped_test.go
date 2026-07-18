@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"context"
@@ -28,7 +28,7 @@ func TestListGatewayClassesForControllerRequiresFieldIndex(t *testing.T) {
 		).
 		Build()
 
-	_, err := listGatewayClassesForController(context.Background(), cl, string(controllerName))
+	_, err := ListGatewayClassesForController(context.Background(), cl, string(controllerName))
 	if err == nil {
 		t.Fatal("expected missing field index error, got nil")
 	}
@@ -55,7 +55,7 @@ func TestListGatewaysForGatewayClassRequiresFieldIndex(t *testing.T) {
 		).
 		Build()
 
-	_, err := listGatewaysForGatewayClass(context.Background(), cl, "nantian-gw")
+	_, err := ListGatewaysForGatewayClass(context.Background(), cl, "nantian-gw")
 	if err == nil {
 		t.Fatal("expected missing field index error, got nil")
 	}

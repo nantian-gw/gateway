@@ -1,4 +1,4 @@
-package translator
+package policies_test
 
 import (
 	"context"
@@ -16,8 +16,9 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotAttachesRoutesOnlyToIntersectingListeners(t *testing.T) {
@@ -163,7 +164,7 @@ func TestBuildSnapshotAttachesRoutesOnlyToIntersectingListeners(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -288,7 +289,7 @@ func TestBuildSnapshotScopesListenerSetParentRoutesToListenerSetListeners(t *tes
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -427,7 +428,7 @@ func TestBuildSnapshotAttachesListenerSetParentToAllDerivedListeners(t *testing.
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -644,7 +645,7 @@ func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *t
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -818,7 +819,7 @@ func TestBuildSnapshotAttachesDefaultGatewayRoute(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -946,7 +947,7 @@ func TestBuildSnapshotAttachesConformanceSameNamespaceRoute(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1060,7 +1061,7 @@ func TestBuildSnapshotAttachesGRPCRouteToHTTPListener(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1132,7 +1133,7 @@ func TestBuildSnapshotAttachesMeshGRPCRouteToServiceFrontendListener(t *testing.
 		).
 		Build()
 
-	snapshot, err := New("", slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
+	snapshot, err := translator.New("", slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -1268,7 +1269,7 @@ func TestBuildSnapshotAttachesTLSRouteToTLSListener(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1388,7 +1389,7 @@ func TestBuildSnapshotDoesNotAttachTLSRouteToHTTPSListener(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1499,7 +1500,7 @@ func TestBuildSnapshotAttachesTCPRouteToMatchingParentRefPort(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1580,7 +1581,7 @@ func TestBuildSnapshotDifferentiatesTLSProtocolModes(t *testing.T) {
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1701,7 +1702,7 @@ func TestBuildSnapshotAnnotatesTLSRouteTerminateStreamRouteWithoutNativeHTTPRout
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
@@ -1840,7 +1841,7 @@ func TestBuildSnapshotSetsTLSRouteModesFromIntersectingListenersOnSharedPort(t *
 		).
 		Build()
 
-	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator := translator.New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)

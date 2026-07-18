@@ -14,6 +14,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -119,7 +120,7 @@ func (t *Translator) filterGatewaysByManagedClasses(
 		managedClassNames[gatewayClass.Name] = struct{}{}
 	}
 	if len(managedClassNames) == 0 {
-		gatewayClasses, err = listGatewayClassesForController(ctx, cl, t.controllerName)
+		gatewayClasses, err = policies.ListGatewayClassesForController(ctx, cl, t.controllerName)
 		if err != nil {
 			return nil, err
 		}
@@ -224,7 +225,7 @@ func loadReferencedListenerSetsForGatewaysFromSnapshot(
 	keys := make(map[string]client.ObjectKey)
 	add := func(routeNamespace string, parentRefs []ir.ParentRef) {
 		for _, parentRef := range parentRefs {
-			if !isListenerSetParentRef(parentRef) || parentRef.Name == "" {
+			if !policies.IsListenerSetParentRef(parentRef) || parentRef.Name == "" {
 				continue
 			}
 			namespace := parentRef.Namespace
@@ -380,7 +381,7 @@ func attachmentRouteNamespacesForGatewayKeys(
 	namespaces := make(map[string]struct{})
 	add := func(routeNamespace string, parentRefs []ir.ParentRef) {
 		for _, parentRef := range parentRefs {
-			if isServiceParentRef(parentRef) || parentRef.Name == "" {
+			if policies.IsServiceParentRef(parentRef) || parentRef.Name == "" {
 				continue
 			}
 

@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -10,7 +10,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
-func translateTokenPolicy(policy tokenpolicy.TokenPolicy) ir.TokenPolicyConfig {
+func TranslateTokenPolicy(policy tokenpolicy.TokenPolicy) ir.TokenPolicyConfig {
 	return ir.TokenPolicyConfig{
 		TokensPerMinute:   policy.Spec.TokensPerMinute,
 		TokensPerHour:     policy.Spec.TokensPerHour,
@@ -21,7 +21,7 @@ func translateTokenPolicy(policy tokenpolicy.TokenPolicy) ir.TokenPolicyConfig {
 	}
 }
 
-func translateTokenPolicies(
+func TranslateTokenPolicies(
 	policies []tokenpolicy.TokenPolicy,
 	services map[string]struct{},
 	serviceImports map[string]struct{},
@@ -29,7 +29,7 @@ func translateTokenPolicies(
 ) map[string]ir.TokenPolicyConfig {
 	result := make(map[string]ir.TokenPolicyConfig, len(policies))
 	for _, policy := range policies {
-		cfg := translateTokenPolicy(policy)
+		cfg := TranslateTokenPolicy(policy)
 		for _, targetRef := range policy.Spec.TargetRefs {
 			key := shared.BackendObjectKey(policy.Namespace, string(targetRef.Name))
 			switch {
@@ -55,7 +55,7 @@ func translateTokenPolicies(
 	return result
 }
 
-func serviceKeySet(services []corev1.Service) map[string]struct{} {
+func ServiceKeySet(services []corev1.Service) map[string]struct{} {
 	s := make(map[string]struct{}, len(services))
 	for _, svc := range services {
 		s[shared.BackendObjectKey(svc.Namespace, svc.Name)] = struct{}{}
@@ -63,7 +63,7 @@ func serviceKeySet(services []corev1.Service) map[string]struct{} {
 	return s
 }
 
-func serviceImportKeySet(serviceImports []mcsv1alpha1.ServiceImport) map[string]struct{} {
+func ServiceImportKeySet(serviceImports []mcsv1alpha1.ServiceImport) map[string]struct{} {
 	s := make(map[string]struct{}, len(serviceImports))
 	for _, si := range serviceImports {
 		s[shared.BackendObjectKey(si.Namespace, si.Name)] = struct{}{}
@@ -71,7 +71,7 @@ func serviceImportKeySet(serviceImports []mcsv1alpha1.ServiceImport) map[string]
 	return s
 }
 
-func buildRouteBackendServices(routes []gatewayv1.HTTPRoute) map[string][]string {
+func BuildRouteBackendServices(routes []gatewayv1.HTTPRoute) map[string][]string {
 	result := make(map[string][]string)
 	for _, route := range routes {
 		key := shared.BackendObjectKey(route.Namespace, route.Name)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -62,7 +63,7 @@ func meshWorkloadNamespacesFromSnapshot(current *ir.Snapshot) []string {
 
 	add := func(routeNamespace string, parentRefs []ir.ParentRef) {
 		for _, parentRef := range parentRefs {
-			if !isServiceParentRef(parentRef) {
+			if !policies.IsServiceParentRef(parentRef) {
 				continue
 			}
 			if routeNamespace != "" {
@@ -93,7 +94,7 @@ func meshWorkloadNamespacesFromSnapshot(current *ir.Snapshot) []string {
 func collectMeshParentKeysFromIR(parentRefs []ir.ParentRef) []mesh.ServiceParentKey {
 	out := make([]mesh.ServiceParentKey, 0, len(parentRefs))
 	for _, parentRef := range parentRefs {
-		if !isServiceParentRef(parentRef) || parentRef.Namespace == "" {
+		if !policies.IsServiceParentRef(parentRef) || parentRef.Namespace == "" {
 			continue
 		}
 		out = append(out, mesh.ServiceParentKey{

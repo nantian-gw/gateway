@@ -1,4 +1,4 @@
-package translator
+package policies
 
 import (
 	"context"
@@ -19,33 +19,33 @@ import (
 )
 
 const (
-	backendTLSPolicyTargetRefIndex = "nantian.dev/translator.backendtlspolicy.target-ref"
-	backendLBPolicyTargetRefIndex  = "nantian.dev/translator.backendlbpolicy.target-ref"
-	routePolicyTargetRefIndex      = "nantian.dev/translator.routepolicy.target-ref"
+	BackendTLSPolicyTargetRefIndex = "nantian.dev/translator.backendtlspolicy.target-ref"
+	BackendLBPolicyTargetRefIndex  = "nantian.dev/translator.backendlbpolicy.target-ref"
+	RoutePolicyTargetRefIndex      = "nantian.dev/translator.routepolicy.target-ref"
 )
 
 func SetupIndexes(ctx context.Context, indexer client.FieldIndexer) error {
 	if err := indexer.IndexField(
 		ctx,
 		gatewayapi.NewBackendTLSPolicyV1Object(),
-		backendTLSPolicyTargetRefIndex,
-		backendTLSPolicyTargetRefIndexKeys,
+		BackendTLSPolicyTargetRefIndex,
+		BackendTLSPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
 		return fmt.Errorf("index BackendTLSPolicy target refs: %w", err)
 	}
 	if err := indexer.IndexField(
 		ctx,
 		&backend.BackendLBPolicy{},
-		backendLBPolicyTargetRefIndex,
-		backendLBPolicyTargetRefIndexKeys,
+		BackendLBPolicyTargetRefIndex,
+		BackendLBPolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
 		return fmt.Errorf("index BackendLBPolicy target refs: %w", err)
 	}
 	if err := indexer.IndexField(
 		ctx,
 		&routepolicy.RoutePolicy{},
-		routePolicyTargetRefIndex,
-		routePolicyTargetRefIndexKeys,
+		RoutePolicyTargetRefIndex,
+		RoutePolicyTargetRefIndexKeys,
 	); err != nil && !isOptionalPolicyIndexUnavailable(err) {
 		return fmt.Errorf("index RoutePolicy target refs: %w", err)
 	}
@@ -57,7 +57,7 @@ func isOptionalPolicyIndexUnavailable(err error) bool {
 	return meta.IsNoMatchError(err) || k8sruntime.IsNotRegisteredError(err)
 }
 
-func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
+func BackendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 	switch item := object.(type) {
 	case *gatewayv1alpha3.BackendTLSPolicy:
 		return backendTLSPolicyTargetRefValues(item.Spec.TargetRefs)
@@ -75,7 +75,7 @@ func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
 	}
 }
 
-func backendLBPolicyTargetRefIndexKeys(object client.Object) []string {
+func BackendLBPolicyTargetRefIndexKeys(object client.Object) []string {
 	policy, ok := object.(*backend.BackendLBPolicy)
 	if !ok || policy == nil {
 		return nil
@@ -83,7 +83,7 @@ func backendLBPolicyTargetRefIndexKeys(object client.Object) []string {
 	return backendLBPolicyTargetRefValues(policy.Spec.TargetRefs)
 }
 
-func routePolicyTargetRefIndexKeys(object client.Object) []string {
+func RoutePolicyTargetRefIndexKeys(object client.Object) []string {
 	policy, ok := object.(*routepolicy.RoutePolicy)
 	if !ok || policy == nil {
 		return nil
@@ -96,7 +96,7 @@ func backendTLSPolicyTargetRefValues(
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {
-		value := backendPolicyTargetRefIndexValue(
+		value := BackendPolicyTargetRefIndexValue(
 			string(targetRef.Group),
 			string(targetRef.Kind),
 			string(targetRef.Name),
@@ -114,7 +114,7 @@ func backendLBPolicyTargetRefValues(
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {
-		value := backendPolicyTargetRefIndexValue(
+		value := BackendPolicyTargetRefIndexValue(
 			string(targetRef.Group),
 			string(targetRef.Kind),
 			string(targetRef.Name),
@@ -132,7 +132,7 @@ func routePolicyTargetRefValues(
 ) []string {
 	values := make(map[string]struct{}, len(targetRefs))
 	for _, targetRef := range targetRefs {
-		value := backendPolicyTargetRefIndexValue(
+		value := BackendPolicyTargetRefIndexValue(
 			string(targetRef.Group),
 			string(targetRef.Kind),
 			string(targetRef.Name),
@@ -145,7 +145,7 @@ func routePolicyTargetRefValues(
 	return sortedIndexValues(values)
 }
 
-func backendPolicyTargetRefIndexValuesByNamespace(
+func BackendPolicyTargetRefIndexValuesByNamespace(
 	serviceKeys map[string]client.ObjectKey,
 	serviceImportKeys map[string]client.ObjectKey,
 ) map[string][]string {
@@ -161,12 +161,12 @@ func backendPolicyTargetRefIndexValuesByNamespace(
 	}
 
 	for _, key := range serviceKeys {
-		add(key.Namespace, backendPolicyTargetRefIndexValue("", "Service", key.Name))
+		add(key.Namespace, BackendPolicyTargetRefIndexValue("", "Service", key.Name))
 	}
 	for _, key := range serviceImportKeys {
 		add(
 			key.Namespace,
-			backendPolicyTargetRefIndexValue(mcsv1alpha1.GroupName, "ServiceImport", key.Name),
+			BackendPolicyTargetRefIndexValue(mcsv1alpha1.GroupName, "ServiceImport", key.Name),
 		)
 	}
 
@@ -177,7 +177,7 @@ func backendPolicyTargetRefIndexValuesByNamespace(
 	return out
 }
 
-func backendPolicyTargetRefIndexValue(group string, kind string, name string) string {
+func BackendPolicyTargetRefIndexValue(group string, kind string, name string) string {
 	if kind == "" || name == "" {
 		return ""
 	}
