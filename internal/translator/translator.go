@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -127,8 +130,28 @@ func listOptional(ctx context.Context, cl client.Client, list client.ObjectList)
 	return nil
 }
 
-func (t *Translator) Build(ctx context.Context, cl client.Client) (*ir.Snapshot, error) {
-	snapshot := &ir.Snapshot{
+func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.Snapshot, err error) {
+	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/translator")
+	ctx, span := tracer.Start(ctx, "translator.build_snapshot")
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		if snapshot != nil {
+			span.SetAttributes(
+				attribute.Int("translator.listener_count", len(snapshot.Listeners)),
+				attribute.Int("translator.http_route_count", len(snapshot.HTTPRoutes)),
+				attribute.Int("translator.grpc_route_count", len(snapshot.GRPCRoutes)),
+				attribute.Int("translator.stream_route_count", len(snapshot.StreamRoutes)),
+				attribute.Int("translator.backend_count", len(snapshot.Backends)),
+				attribute.Int("translator.secret_count", len(snapshot.Secrets)),
+			)
+		}
+		span.End()
+	}()
+
+	snapshot = &ir.Snapshot{
 		GeneratedAt: time.Now().UTC(),
 	}
 

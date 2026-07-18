@@ -6,6 +6,9 @@ import (
 	"io"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -294,7 +297,18 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 				return terminate(streamTerminationSuperseded, supersededStreamError())
 			}
 			profile := effectiveProjectionProfile(advertisedFeatures)
+
+			tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/xds")
+			_, pushSpan := tracer.Start(stream.Context(), "xds.push_snapshot")
+			pushSpan.SetAttributes(
+				attribute.String("xds.node_id", nodeID),
+				attribute.String("xds.snapshot_id", snapshot.ID),
+			)
+
 			variant := s.protoCache.get(snapshot, profile, s.logger)
+			pushSpan.SetAttributes(
+				attribute.String("xds.compatibility_profile", variant.GetCompatibilityProfile()),
+			)
 
 			response := &controlv1.DiscoveryResponse{
 				Version:  snapshot.ID,
@@ -303,6 +317,9 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 			}
 
 			if err := s.sendDiscoveryResponse(sender, stream, nodeID, response, supersededCh); err != nil {
+				pushSpan.RecordError(err)
+				pushSpan.SetStatus(otelcodes.Error, err.Error())
+				pushSpan.End()
 				if isSupersededStreamError(err) {
 					return terminate(streamTerminationSuperseded, err)
 				}
@@ -335,6 +352,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 					return terminate(streamTerminationStreamError, err)
 				}
 			}
+			pushSpan.End()
 			s.logger.Info(
 				"publishing projected snapshot",
 				"node_id",

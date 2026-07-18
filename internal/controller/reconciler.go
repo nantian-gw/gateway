@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/client-go/util/workqueue"
@@ -30,8 +32,24 @@ import (
 )
 
 func (s *Syncer) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/controller")
+	ctx, span := tracer.Start(ctx, "controller.reconcile")
+	defer span.End()
+
 	scope, attachmentNamespace, backendNamespace, gatewayKeys, serviceKeys, serviceImportKeys, routeKeys := s.buildScopeForRequest(request)
-	if s.settleDelay <= 0 || s.shouldBypassSettleDelay(ctx, request) {
+
+	bypassed := s.settleDelay <= 0 || s.shouldBypassSettleDelay(ctx, request)
+	span.SetAttributes(
+		attribute.String("controller.request", request.NamespacedName.String()),
+		attribute.String("controller.scope", scope.String()),
+		attribute.Bool("controller.bypass_settle", bypassed),
+	)
+
+	if !bypassed {
+		span.SetAttributes(attribute.String("controller.settle_delay", s.settleDelay.String()))
+	}
+
+	if bypassed {
 		published, err := s.publishSnapshotWithScope(
 			ctx,
 			scope,
