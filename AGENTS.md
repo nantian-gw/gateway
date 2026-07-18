@@ -56,6 +56,10 @@ The translator package is the highest-risk package in this repository. When chan
 - Keep full rebuild and partial rebuild behavior aligned.
 - Add or update focused tests for route semantics, backend policy precedence, ReferenceGrant behavior, status summaries, partial rebuild paths, and IR shape changes.
 
+### Translator Package Size
+
+The `internal/translator/` package is 66 `.go` files (~9,535 non-test LOC) with only two sub-packages (`aiservice/`, `routepolicy/`). Future splitting opportunities: `listeners/`, `routes/`, `filters/`, `backends/`, `ai/`. This is tracked in the platform TODO as a P2 item estimated at 3-5 days.
+
 ## Documentation And Comments
 
 Use English by default for documentation and code comments. Add localized text only when editing existing localized user-facing content.
