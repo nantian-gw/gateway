@@ -2,7 +2,7 @@
 
 Go control plane for Nantian Gateway. It watches Kubernetes Gateway API resources, translates them into an internal routing model (IR), serves admin APIs, and publishes runtime snapshots to Rust data planes over gRPC/xDS.
 
-See [AGENTS.md](AGENTS.md) for the fuller repository guide (translator maintenance rules, generated-code policy, acceptance criteria). This file adds verified build commands and an accurate package map. Where AGENTS.md or README.md name package paths, trust the map below — several paths in those docs are stale.
+See [AGENTS.md](AGENTS.md) for the fuller repository guide (translator maintenance rules, generated-code policy, acceptance criteria). This file adds verified build commands and an accurate package map, synced with the filesystem as of 2026 Q2.
 
 ## Commands
 
@@ -25,14 +25,14 @@ Verified against the filesystem (README.md / AGENTS.md list some renamed-away pa
 - `cmd/manager/` — controller manager entrypoint, wires runtime services
 - `internal/controller/` — watches Kubernetes resources, drives full/partial rebuilds
 - `internal/translator/` — Gateway API resources + policies → IR snapshots (highest-risk package)
-- `internal/xds/` — gRPC/xDS server: publishes snapshots and status to data planes (NOT `internal/grpcserver`)
-- `internal/gwapi/` — Gateway API helpers, validation, supported-feature declarations (NOT `internal/gatewayapi`)
-- `internal/gwexp/` — experimental/extension resources: `aiservice`, `tokenpolicy`, `wasmplugin`, `routepolicy`, `backendlb` (NOT `internal/gatewayapiexperimental`)
+- `internal/xds/` — gRPC/xDS server: publishes snapshots and status to data planes
+- `internal/gatewayapi/` — Gateway API helpers, validation, supported-feature declarations
+- `internal/gatewayexp/` — experimental/extension resources: `aiservice`, `tokenpolicy`, `wasmplugin`, `routepolicy`, `backendlb`
 - `internal/admin/` — operational, topology, metrics, and management APIs (auth in `auth.go`, rate limiting in `rate_limiter.go`, chatbot under `chatbot/`)
 - `internal/ir/` — internal routing/runtime model shared by translator and xDS
 - `internal/config/` — config schema, defaults, and duration/accessor helpers
 - `internal/observability/` — Prometheus metrics
-- `internal/{status,resources,nodeinfo,lifecycle,infrastructure,mesh,lbpolicy,tlspolicy,extfilter,compat}/` — supporting subsystems
+- `internal/{status,resources,noderegistry,lifecycle,infrastructure,mesh,loadbalancing,backendtls,extfilter,compat}/` — supporting subsystems
 - `deploy/kubernetes/overlays/` — Kustomize overlays (`production`, `kind-conformance`, `observability-enabled`, `kind-pprof`); there is no in-repo Helm chart
 - `gen/` — generated protobuf; do not hand-edit
 
