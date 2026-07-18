@@ -1,11 +1,11 @@
-package translator
+package routepolicy
 
 import (
 	"sort"
 
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	rp "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -29,8 +29,8 @@ type translatedRoutePolicy struct {
 	scope     routePolicyScope
 }
 
-func buildRoutePolicyIndexes(
-	policies []routepolicy.RoutePolicy,
+func BuildRoutePolicyIndexes(
+	policies []rp.RoutePolicy,
 	httpRoutes []ir.HTTPRoute,
 	gateways []gatewayv1.Gateway,
 ) map[string]*ir.RoutePolicyConfig {
@@ -127,7 +127,7 @@ func buildGatewayRouteIndex(
 }
 
 func resolveRoutePolicyTargets(
-	policy routepolicy.RoutePolicy,
+	policy rp.RoutePolicy,
 	httpRoutes []ir.HTTPRoute,
 	gatewayToRoutes map[string]map[string]struct{},
 ) (routePolicyScope, []string, bool) {
@@ -173,7 +173,7 @@ func resolveRoutePolicyTargets(
 	return scope, routeKeys, true
 }
 
-func grpcRoutesToHTTP(routes []ir.GRPCRoute) []ir.HTTPRoute {
+func GrpcRoutesToHTTP(routes []ir.GRPCRoute) []ir.HTTPRoute {
 	out := make([]ir.HTTPRoute, len(routes))
 	for i, r := range routes {
 		out[i] = ir.HTTPRoute{
@@ -304,7 +304,7 @@ func mergeRouteConnection(parent, child *ir.RouteConnectionConfig) *ir.RouteConn
 	return &result
 }
 
-func translateRoutePolicyDefault(spec *routepolicy.RoutePolicyDefault) *ir.RoutePolicyConfig {
+func translateRoutePolicyDefault(spec *rp.RoutePolicyDefault) *ir.RoutePolicyConfig {
 	if spec == nil {
 		return nil
 	}
@@ -331,7 +331,7 @@ func translateRoutePolicyDefault(spec *routepolicy.RoutePolicyDefault) *ir.Route
 	return config
 }
 
-func translateTimeoutConfig(cfg *routepolicy.TimeoutConfig) *ir.RouteTimeoutConfig {
+func translateTimeoutConfig(cfg *rp.TimeoutConfig) *ir.RouteTimeoutConfig {
 	result := &ir.RouteTimeoutConfig{}
 	hasField := false
 
@@ -358,7 +358,7 @@ func translateTimeoutConfig(cfg *routepolicy.TimeoutConfig) *ir.RouteTimeoutConf
 	return result
 }
 
-func translateBodyLimitConfig(cfg *routepolicy.BodyLimitConfig) *ir.RouteBodyLimitConfig {
+func translateBodyLimitConfig(cfg *rp.BodyLimitConfig) *ir.RouteBodyLimitConfig {
 	result := &ir.RouteBodyLimitConfig{}
 	hasField := false
 
@@ -381,7 +381,7 @@ func translateBodyLimitConfig(cfg *routepolicy.BodyLimitConfig) *ir.RouteBodyLim
 	return result
 }
 
-func translateProxyConfig(cfg *routepolicy.ProxyConfig) *ir.RouteProxyConfig {
+func translateProxyConfig(cfg *rp.ProxyConfig) *ir.RouteProxyConfig {
 	result := &ir.RouteProxyConfig{}
 	hasField := false
 
@@ -408,7 +408,7 @@ func translateProxyConfig(cfg *routepolicy.ProxyConfig) *ir.RouteProxyConfig {
 	return result
 }
 
-func translateConnectionConfig(cfg *routepolicy.ConnectionConfig) *ir.RouteConnectionConfig {
+func translateConnectionConfig(cfg *rp.ConnectionConfig) *ir.RouteConnectionConfig {
 	result := &ir.RouteConnectionConfig{}
 	hasField := false
 

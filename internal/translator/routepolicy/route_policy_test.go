@@ -1,4 +1,4 @@
-package translator
+package routepolicy
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
-	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	rp "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -24,8 +24,8 @@ func TestTranslateRoutePolicyDefault_Timeout(t *testing.T) {
 	connectDur := metav1.Duration{Duration: 30 * time.Second}
 	nextDur := metav1.Duration{Duration: 40 * time.Second}
 
-	spec := &routepolicy.RoutePolicyDefault{
-		Timeout: &routepolicy.TimeoutConfig{
+	spec := &rp.RoutePolicyDefault{
+		Timeout: &rp.TimeoutConfig{
 			Request:        &requestDur,
 			BackendRequest: &backendDur,
 			Connect:        &connectDur,
@@ -62,8 +62,8 @@ func TestTranslateRoutePolicyDefault_BodyLimit(t *testing.T) {
 	bufBytes := uint64(65536)
 	hdrBytes := uint64(8192)
 
-	spec := &routepolicy.RoutePolicyDefault{
-		BodyLimit: &routepolicy.BodyLimitConfig{
+	spec := &rp.RoutePolicyDefault{
+		BodyLimit: &rp.BodyLimitConfig{
 			MaxRequestBodyBytes:    &maxBody,
 			RequestBodyBufferBytes: &bufBytes,
 			MaxRequestHeaderBytes:  &hdrBytes,
@@ -94,8 +94,8 @@ func TestTranslateRoutePolicyDefault_Proxy(t *testing.T) {
 	bufSize := uint64(32768)
 	bufCount := uint32(16)
 
-	spec := &routepolicy.RoutePolicyDefault{
-		Proxy: &routepolicy.ProxyConfig{
+	spec := &rp.RoutePolicyDefault{
+		Proxy: &rp.ProxyConfig{
 			RequestBuffering:  &reqBuf,
 			ResponseBuffering: &respBuf,
 			BufferSize:        &bufSize,
@@ -131,8 +131,8 @@ func TestTranslateRoutePolicyDefault_Connection(t *testing.T) {
 	keepTimeout := metav1.Duration{Duration: 20 * time.Second}
 	keepIdle := metav1.Duration{Duration: 60 * time.Second}
 
-	spec := &routepolicy.RoutePolicyDefault{
-		Connection: &routepolicy.ConnectionConfig{
+	spec := &rp.RoutePolicyDefault{
+		Connection: &rp.ConnectionConfig{
 			KeepaliveRequests:         &keepaliveReqs,
 			UpstreamKeepalivePoolSize: &poolSize,
 			KeepaliveTime:             &keepTime,
@@ -168,12 +168,12 @@ func TestTranslateRoutePolicyDefault_Connection(t *testing.T) {
 func TestBuildRoutePolicyIndexes_EmptyTargetRefs_NamespaceLevel(t *testing.T) {
 	requestDur := metav1.Duration{Duration: 5 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{
+			Spec: rp.RoutePolicySpec{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{
 						Request: &requestDur,
 					},
 				},
@@ -187,7 +187,7 @@ func TestBuildRoutePolicyIndexes_EmptyTargetRefs_NamespaceLevel(t *testing.T) {
 		{Name: "route3", Namespace: "other"},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if len(result) != 2 {
 		t.Fatalf("expected 2 route configs, got %d", len(result))
 	}
@@ -216,15 +216,15 @@ func TestBuildRoutePolicyIndexes_EmptyTargetRefs_NamespaceLevel(t *testing.T) {
 func TestBuildRoutePolicyIndexes_RouteLevel_TargetsSpecificRoute(t *testing.T) {
 	requestDur := metav1.Duration{Duration: 8 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{
 						Request: &requestDur,
 					},
 				},
@@ -237,7 +237,7 @@ func TestBuildRoutePolicyIndexes_RouteLevel_TargetsSpecificRoute(t *testing.T) {
 		{Name: "route2", Namespace: "default"},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 route config, got %d", len(result))
 	}
@@ -258,15 +258,15 @@ func TestBuildRoutePolicyIndexes_RouteLevel_TargetsSpecificRoute(t *testing.T) {
 func TestBuildRoutePolicyIndexes_GatewayLevel_ResolvesToRoutes(t *testing.T) {
 	requestDur := metav1.Duration{Duration: 12 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw-policy", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "Gateway", Name: "my-gw"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{
 						Request: &requestDur,
 					},
 				},
@@ -303,7 +303,7 @@ func TestBuildRoutePolicyIndexes_GatewayLevel_ResolvesToRoutes(t *testing.T) {
 		{ObjectMeta: metav1.ObjectMeta{Name: "other-gw", Namespace: "default"}},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, gateways)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, gateways)
 	if len(result) != 2 {
 		t.Fatalf("expected 2 route configs, got %d", len(result))
 	}
@@ -327,44 +327,44 @@ func TestBuildRoutePolicyIndexes_ThreeLevelInheritance(t *testing.T) {
 	gwBody := uint64(1048576)
 	routeBody := uint64(2097152)
 
-	nsPolicy := routepolicy.RoutePolicy{
+	nsPolicy := rp.RoutePolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "ns-policy", Namespace: "default"},
-		Spec: routepolicy.RoutePolicySpec{
-			Default: &routepolicy.RoutePolicyDefault{
-				Timeout: &routepolicy.TimeoutConfig{Request: &nsDur},
+		Spec: rp.RoutePolicySpec{
+			Default: &rp.RoutePolicyDefault{
+				Timeout: &rp.TimeoutConfig{Request: &nsDur},
 			},
 		},
 	}
-	gwPolicy := routepolicy.RoutePolicy{
+	gwPolicy := rp.RoutePolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw-policy", Namespace: "default"},
-		Spec: routepolicy.RoutePolicySpec{
+		Spec: rp.RoutePolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 				{Kind: "Gateway", Name: "my-gw"},
 			},
-			Default: &routepolicy.RoutePolicyDefault{
-				Timeout: &routepolicy.TimeoutConfig{Request: &gwDur},
-				BodyLimit: &routepolicy.BodyLimitConfig{
+			Default: &rp.RoutePolicyDefault{
+				Timeout: &rp.TimeoutConfig{Request: &gwDur},
+				BodyLimit: &rp.BodyLimitConfig{
 					MaxRequestBodyBytes: &gwBody,
 				},
 			},
 		},
 	}
-	routePolicy := routepolicy.RoutePolicy{
+	routePolicy := rp.RoutePolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default"},
-		Spec: routepolicy.RoutePolicySpec{
+		Spec: rp.RoutePolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 				{Kind: "HTTPRoute", Name: "route1"},
 			},
-			Default: &routepolicy.RoutePolicyDefault{
-				Timeout: &routepolicy.TimeoutConfig{BackendRequest: &routeDur},
-				BodyLimit: &routepolicy.BodyLimitConfig{
+			Default: &rp.RoutePolicyDefault{
+				Timeout: &rp.TimeoutConfig{BackendRequest: &routeDur},
+				BodyLimit: &rp.BodyLimitConfig{
 					MaxRequestBodyBytes: &routeBody,
 				},
 			},
 		},
 	}
 
-	policies := []routepolicy.RoutePolicy{nsPolicy, gwPolicy, routePolicy}
+	policies := []rp.RoutePolicy{nsPolicy, gwPolicy, routePolicy}
 
 	httpRoutes := []ir.HTTPRoute{
 		{
@@ -380,7 +380,7 @@ func TestBuildRoutePolicyIndexes_ThreeLevelInheritance(t *testing.T) {
 		{ObjectMeta: metav1.ObjectMeta{Name: "my-gw", Namespace: "default"}},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, gateways)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, gateways)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 route config, got %d", len(result))
 	}
@@ -410,20 +410,20 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoNamespacePolicies(t *testi
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 10 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-1", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur1},
+			Spec: rp.RoutePolicySpec{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur1},
 				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-2", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur2},
+			Spec: rp.RoutePolicySpec{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur2},
 				},
 			},
 		},
@@ -433,7 +433,7 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoNamespacePolicies(t *testi
 		{Name: "route1", Namespace: "default"},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if len(result) != 0 {
 		t.Fatalf("expected 0 route configs (conflict), got %d", len(result))
 	}
@@ -443,26 +443,26 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoRoutePoliciesForSameRoute(
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 10 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "route-policy-1", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur1},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur1},
 				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "route-policy-2", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur2},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur2},
 				},
 			},
 		},
@@ -472,7 +472,7 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoRoutePoliciesForSameRoute(
 		{Name: "route1", Namespace: "default"},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if len(result) != 0 {
 		t.Fatalf("expected 0 route configs (conflict), got %d", len(result))
 	}
@@ -483,31 +483,31 @@ func TestBuildRoutePolicyIndexes_Conflict_NamespaceConflictDoesNotBlockNonConfli
 	nsDur2 := metav1.Duration{Duration: 10 * time.Second}
 	routeDur := metav1.Duration{Duration: 20 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-1", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &nsDur1},
+			Spec: rp.RoutePolicySpec{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &nsDur1},
 				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-2", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &nsDur2},
+			Spec: rp.RoutePolicySpec{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &nsDur2},
 				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &routeDur},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &routeDur},
 				},
 			},
 		},
@@ -517,7 +517,7 @@ func TestBuildRoutePolicyIndexes_Conflict_NamespaceConflictDoesNotBlockNonConfli
 		{Name: "route1", Namespace: "default"},
 	}
 
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if len(result) != 1 {
 		t.Fatalf("expected 1 route config, got %d", len(result))
 	}
@@ -531,7 +531,7 @@ func TestBuildRoutePolicyIndexes_EmptyPolicies(t *testing.T) {
 	httpRoutes := []ir.HTTPRoute{
 		{Name: "route1", Namespace: "default"},
 	}
-	result := buildRoutePolicyIndexes(nil, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(nil, httpRoutes, nil)
 	if len(result) != 0 {
 		t.Fatalf("expected empty result, got %d", len(result))
 	}
@@ -602,26 +602,26 @@ func TestBuildRoutePolicyIndexes_RouteLevelConflict(t *testing.T) {
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 15 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "rp-1", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur1},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur1},
 				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "rp-2", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur2},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur2},
 				},
 			},
 		},
@@ -629,7 +629,7 @@ func TestBuildRoutePolicyIndexes_RouteLevelConflict(t *testing.T) {
 	httpRoutes := []ir.HTTPRoute{
 		{Name: "route1", Namespace: "default"},
 	}
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if _, ok := result["default/route1"]; ok {
 		t.Fatal("route1 should NOT have a policy; conflict between rp-1 and rp-2")
 	}
@@ -639,26 +639,26 @@ func TestBuildRoutePolicyIndexes_GatewayLevelConflict(t *testing.T) {
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 15 * time.Second}
 
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw-1", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "Gateway", Name: "my-gw"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur1},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur1},
 				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "gw-2", Namespace: "default"},
-			Spec: routepolicy.RoutePolicySpec{
+			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "Gateway", Name: "my-gw"},
 				},
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur2},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur2},
 				},
 			},
 		},
@@ -672,7 +672,7 @@ func TestBuildRoutePolicyIndexes_GatewayLevelConflict(t *testing.T) {
 	gateways := []gatewayv1.Gateway{
 		{ObjectMeta: metav1.ObjectMeta{Name: "my-gw", Namespace: "default"}},
 	}
-	result := buildRoutePolicyIndexes(policies, httpRoutes, gateways)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, gateways)
 	if _, ok := result["default/route1"]; ok {
 		t.Fatal("route1 should NOT have a policy; conflict between gw-1 and gw-2")
 	}
@@ -683,26 +683,26 @@ func TestBuildRoutePolicyIndexes_RouteOverridesSingleFieldFromGateway(t *testing
 	routeConn := metav1.Duration{Duration: 20 * time.Second}
 	gwBody := uint64(52428800)
 
-	gwPolicy := routepolicy.RoutePolicy{
+	gwPolicy := rp.RoutePolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw-policy", Namespace: "default"},
-		Spec: routepolicy.RoutePolicySpec{
+		Spec: rp.RoutePolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "Gateway", Name: "my-gw"}},
-			Default: &routepolicy.RoutePolicyDefault{
-				Timeout:   &routepolicy.TimeoutConfig{Request: &gwReq},
-				BodyLimit: &routepolicy.BodyLimitConfig{MaxRequestBodyBytes: &gwBody},
+			Default: &rp.RoutePolicyDefault{
+				Timeout:   &rp.TimeoutConfig{Request: &gwReq},
+				BodyLimit: &rp.BodyLimitConfig{MaxRequestBodyBytes: &gwBody},
 			},
 		},
 	}
-	routePolicy := routepolicy.RoutePolicy{
+	routePolicy := rp.RoutePolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default"},
-		Spec: routepolicy.RoutePolicySpec{
+		Spec: rp.RoutePolicySpec{
 			TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "HTTPRoute", Name: "route1"}},
-			Default: &routepolicy.RoutePolicyDefault{
-				Connection: &routepolicy.ConnectionConfig{KeepaliveTimeout: &routeConn},
+			Default: &rp.RoutePolicyDefault{
+				Connection: &rp.ConnectionConfig{KeepaliveTimeout: &routeConn},
 			},
 		},
 	}
-	policies := []routepolicy.RoutePolicy{gwPolicy, routePolicy}
+	policies := []rp.RoutePolicy{gwPolicy, routePolicy}
 	httpRoutes := []ir.HTTPRoute{
 		{
 			Name: "route1", Namespace: "default",
@@ -712,7 +712,7 @@ func TestBuildRoutePolicyIndexes_RouteOverridesSingleFieldFromGateway(t *testing
 	gateways := []gatewayv1.Gateway{
 		{ObjectMeta: metav1.ObjectMeta{Name: "my-gw", Namespace: "default"}},
 	}
-	result := buildRoutePolicyIndexes(policies, httpRoutes, gateways)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, gateways)
 	cfg := result["default/route1"]
 	// Route-level connection should be present
 	if cfg.Connection == nil || cfg.Connection.KeepaliveTimeout != routeConn.Duration {
@@ -730,8 +730,8 @@ func TestBuildRoutePolicyIndexes_RouteOverridesSingleFieldFromGateway(t *testing
 
 func TestTranslateRoutePolicyDefault_PartialBodyLimit(t *testing.T) {
 	maxBody := uint64(1048576)
-	spec := &routepolicy.RoutePolicyDefault{
-		BodyLimit: &routepolicy.BodyLimitConfig{
+	spec := &rp.RoutePolicyDefault{
+		BodyLimit: &rp.BodyLimitConfig{
 			MaxRequestBodyBytes: &maxBody,
 			// RequestBodyBufferBytes and MaxRequestHeaderBytes NOT set
 		},
@@ -757,8 +757,8 @@ func TestTranslateRoutePolicyDefault_ProxyExplicitFalse(t *testing.T) {
 	bufSize := uint64(0)
 	bufCount := uint32(0)
 
-	spec := &routepolicy.RoutePolicyDefault{
-		Proxy: &routepolicy.ProxyConfig{
+	spec := &rp.RoutePolicyDefault{
+		Proxy: &rp.ProxyConfig{
 			RequestBuffering:  &reqBuf,
 			ResponseBuffering: &respBuf,
 			BufferSize:        &bufSize,
@@ -779,12 +779,12 @@ func TestTranslateRoutePolicyDefault_ProxyExplicitFalse(t *testing.T) {
 
 func TestBuildRoutePolicyIndexes_NamespacePolicyDoesNotCrossNamespace(t *testing.T) {
 	reqDur := metav1.Duration{Duration: 5 * time.Second}
-	policies := []routepolicy.RoutePolicy{
+	policies := []rp.RoutePolicy{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy", Namespace: "team-a"},
-			Spec: routepolicy.RoutePolicySpec{
-				Default: &routepolicy.RoutePolicyDefault{
-					Timeout: &routepolicy.TimeoutConfig{Request: &reqDur},
+			Spec: rp.RoutePolicySpec{
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &reqDur},
 				},
 			},
 		},
@@ -792,7 +792,7 @@ func TestBuildRoutePolicyIndexes_NamespacePolicyDoesNotCrossNamespace(t *testing
 	httpRoutes := []ir.HTTPRoute{
 		{Name: "route1", Namespace: "team-b"},
 	}
-	result := buildRoutePolicyIndexes(policies, httpRoutes, nil)
+	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
 	if _, ok := result["team-b/route1"]; ok {
 		t.Fatal("route in team-b should not inherit namespace policy from team-a")
 	}

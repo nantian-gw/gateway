@@ -24,11 +24,12 @@ import (
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
-	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	gwroutepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/translator/routepolicy"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -168,7 +169,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		referenceGrants     []gatewayv1beta1.ReferenceGrant
 		backendTLSPolicies  []gatewayv1alpha3.BackendTLSPolicy
 		backendLBPolicies   []backend.BackendLBPolicy
-		routePolicies       []routepolicy.RoutePolicy
+		routePolicies       []gwroutepolicy.RoutePolicy
 		aiServices          []aiservice.AIService
 		tokenPolicies       []tokenpolicy.TokenPolicy
 		wasmPlugins         []wasmplugin.WasmPlugin
@@ -332,7 +333,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		return nil
 	})
 	group.Go(func() error {
-		var list routepolicy.RoutePolicyList
+		var list gwroutepolicy.RoutePolicyList
 		if err := cl.List(groupCtx, &list); err != nil {
 			if !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 				return err
@@ -514,14 +515,14 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	_ = annotGroup.Wait()
 
 	if len(routePolicies) > 0 {
-		routePolicyIndexes := buildRoutePolicyIndexes(routePolicies, snapshot.HTTPRoutes, filteredGateways)
+		routePolicyIndexes := routepolicy.BuildRoutePolicyIndexes(routePolicies, snapshot.HTTPRoutes, filteredGateways)
 		for i := range snapshot.HTTPRoutes {
 			key := snapshot.HTTPRoutes[i].Namespace + "/" + snapshot.HTTPRoutes[i].Name
 			if cfg, ok := routePolicyIndexes[key]; ok {
 				snapshot.HTTPRoutes[i].RoutePolicy = cfg
 			}
 		}
-		grpcRoutePolicyIndexes := buildRoutePolicyIndexes(routePolicies, grpcRoutesToHTTP(snapshot.GRPCRoutes), filteredGateways)
+		grpcRoutePolicyIndexes := routepolicy.BuildRoutePolicyIndexes(routePolicies, routepolicy.GrpcRoutesToHTTP(snapshot.GRPCRoutes), filteredGateways)
 		for i := range snapshot.GRPCRoutes {
 			key := snapshot.GRPCRoutes[i].Namespace + "/" + snapshot.GRPCRoutes[i].Name
 			if cfg, ok := grpcRoutePolicyIndexes[key]; ok {
