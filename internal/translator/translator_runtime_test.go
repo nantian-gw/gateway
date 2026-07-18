@@ -14,6 +14,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 )
 
 func TestTranslateGRPCRoutePreservesRegexMethodMatchType(t *testing.T) {
@@ -296,7 +297,7 @@ func TestBackendProtocolUsesAppProtocolHints(t *testing.T) {
 		},
 	}
 
-	backends := translateBackends(services, nil, nil, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(services, nil, nil, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 5 {
 		t.Fatalf("expected 5 backends, got %d", len(backends))
 	}
@@ -349,7 +350,7 @@ func TestTranslateBackendsIncludesServiceImports(t *testing.T) {
 		}},
 	}}
 
-	backends := translateBackends(nil, serviceImports, slices, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(nil, serviceImports, slices, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 1 {
 		t.Fatalf("expected 1 serviceimport backend, got %d", len(backends))
 	}
@@ -396,7 +397,7 @@ func TestTranslateBackendsUsesServiceImportAppProtocolHints(t *testing.T) {
 		},
 	}}
 
-	backends := translateBackends(nil, serviceImports, nil, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(nil, serviceImports, nil, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 3 {
 		t.Fatalf("expected 3 serviceimport backends, got %d", len(backends))
 	}
@@ -435,7 +436,7 @@ func TestTranslateBackendsDoesNotInjectDefaultRequestTimeout(t *testing.T) {
 		},
 	}}
 
-	backends := translateBackends(services, serviceImports, nil, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(services, serviceImports, nil, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 2 {
 		t.Fatalf("expected 2 backends, got %d", len(backends))
 	}
@@ -545,7 +546,7 @@ func TestHTTPRequestRedirectPreservesGatewayAPIStatusCodes(t *testing.T) {
 }
 
 func TestRuleSessionPersistenceDefaultsToCookieAndStableName(t *testing.T) {
-	policy := ruleSessionPersistence("http", "default", "route", 1, &gatewayv1.SessionPersistence{})
+	policy := backends.RuleSessionPersistence("http", "default", "route", 1, &gatewayv1.SessionPersistence{})
 	if policy == nil {
 		t.Fatal("expected session persistence policy")
 	}
@@ -555,7 +556,7 @@ func TestRuleSessionPersistenceDefaultsToCookieAndStableName(t *testing.T) {
 	if policy.Cookie == nil || policy.Cookie.LifetimeType != "Session" {
 		t.Fatalf("unexpected default cookie config: %#v", policy.Cookie)
 	}
-	if policy.SessionName != defaultRouteSessionName("http", "default", "route", 1) {
+	if policy.SessionName != backends.DefaultRouteSessionName("http", "default", "route", 1) {
 		t.Fatalf("unexpected default session name: %q", policy.SessionName)
 	}
 }
@@ -566,7 +567,7 @@ func TestRuleSessionPersistenceParsesHeaderAndTimeouts(t *testing.T) {
 	sessionType := gatewayv1.HeaderBasedSessionPersistence
 	sessionName := "x-nantian-gw-session"
 
-	policy := ruleSessionPersistence("grpc", "default", "greeter", 0, &gatewayv1.SessionPersistence{
+	policy := backends.RuleSessionPersistence("grpc", "default", "greeter", 0, &gatewayv1.SessionPersistence{
 		SessionName:     &sessionName,
 		AbsoluteTimeout: &absolute,
 		IdleTimeout:     &idle,

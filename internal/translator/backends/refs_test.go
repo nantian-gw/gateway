@@ -1,4 +1,4 @@
-package translator
+package backends_test
 
 import (
 	"context"
@@ -18,6 +18,8 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
@@ -33,10 +35,10 @@ func TestBuildMarksInvalidBackendKind(t *testing.T) {
 					BackendRefs: []gatewayv1.HTTPBackendRef{{
 						BackendRef: gatewayv1.BackendRef{
 							BackendObjectReference: gatewayv1.BackendObjectReference{
-								Group: ptr[gatewayv1.Group]("unknownkind.example.com"),
-								Kind:  ptr[gatewayv1.Kind]("NonExistent"),
+								Group: testutil.Ptr[gatewayv1.Group]("unknownkind.example.com"),
+								Kind:  testutil.Ptr[gatewayv1.Kind]("NonExistent"),
 								Name:  "echo",
-								Port:  ptr[gatewayv1.PortNumber](8080),
+								Port:  testutil.Ptr[gatewayv1.PortNumber](8080),
 							},
 						},
 					}},
@@ -46,10 +48,10 @@ func TestBuildMarksInvalidBackendKind(t *testing.T) {
 	)
 
 	backend := snapshot.HTTPRoutes[0].Rules[0].BackendRefs[0]
-	if backend.Metadata[backendRefMetaValid] != "false" {
+	if backend.Metadata[backends.BackendRefMetaValid] != "false" {
 		t.Fatalf("expected invalid backend metadata, got %#v", backend.Metadata)
 	}
-	if backend.Metadata[backendRefMetaReason] != string(gatewayv1.RouteReasonInvalidKind) {
+	if backend.Metadata[backends.BackendRefMetaReason] != string(gatewayv1.RouteReasonInvalidKind) {
 		t.Fatalf("unexpected invalid backend reason: %#v", backend.Metadata)
 	}
 }
@@ -78,7 +80,7 @@ func TestBuildMarksCrossNamespaceBackendWithoutGrant(t *testing.T) {
 					discoveryv1.LabelServiceName: "echo",
 				},
 			},
-			Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+			Ports: []discoveryv1.EndpointPort{{Port: testutil.Ptr[int32](8080)}},
 			Endpoints: []discoveryv1.Endpoint{{
 				Addresses: []string{"10.0.0.20"},
 			}},
@@ -94,8 +96,8 @@ func TestBuildMarksCrossNamespaceBackendWithoutGrant(t *testing.T) {
 						BackendRef: gatewayv1.BackendRef{
 							BackendObjectReference: gatewayv1.BackendObjectReference{
 								Name:      "echo",
-								Namespace: ptr[gatewayv1.Namespace]("other"),
-								Port:      ptr[gatewayv1.PortNumber](8080),
+								Namespace: testutil.Ptr[gatewayv1.Namespace]("other"),
+								Port:      testutil.Ptr[gatewayv1.PortNumber](8080),
 							},
 						},
 					}},
@@ -105,10 +107,10 @@ func TestBuildMarksCrossNamespaceBackendWithoutGrant(t *testing.T) {
 	)
 
 	backend := snapshot.HTTPRoutes[0].Rules[0].BackendRefs[0]
-	if backend.Metadata[backendRefMetaValid] != "false" {
+	if backend.Metadata[backends.BackendRefMetaValid] != "false" {
 		t.Fatalf("expected cross-namespace backend metadata, got %#v", backend.Metadata)
 	}
-	if backend.Metadata[backendRefMetaReason] != string(gatewayv1.RouteReasonRefNotPermitted) {
+	if backend.Metadata[backends.BackendRefMetaReason] != string(gatewayv1.RouteReasonRefNotPermitted) {
 		t.Fatalf("unexpected cross-namespace backend reason: %#v", backend.Metadata)
 	}
 }
@@ -140,7 +142,7 @@ func TestBuildAllowsCrossNamespaceBackendForMeshServiceParent(t *testing.T) {
 					discoveryv1.LabelServiceName: "echo-v1",
 				},
 			},
-			Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+			Ports: []discoveryv1.EndpointPort{{Port: testutil.Ptr[int32](8080)}},
 			Endpoints: []discoveryv1.Endpoint{{
 				Addresses: []string{"10.0.0.20"},
 			}},
@@ -153,10 +155,10 @@ func TestBuildAllowsCrossNamespaceBackendForMeshServiceParent(t *testing.T) {
 			Spec: gatewayv1.HTTPRouteSpec{
 				CommonRouteSpec: gatewayv1.CommonRouteSpec{
 					ParentRefs: []gatewayv1.ParentReference{{
-						Group:     ptr[gatewayv1.Group](""),
-						Kind:      ptr[gatewayv1.Kind]("Service"),
+						Group:     testutil.Ptr[gatewayv1.Group](""),
+						Kind:      testutil.Ptr[gatewayv1.Kind]("Service"),
 						Name:      "echo-v1",
-						Namespace: ptr[gatewayv1.Namespace]("gateway-conformance-mesh"),
+						Namespace: testutil.Ptr[gatewayv1.Namespace]("gateway-conformance-mesh"),
 					}},
 				},
 				Rules: []gatewayv1.HTTPRouteRule{{
@@ -164,8 +166,8 @@ func TestBuildAllowsCrossNamespaceBackendForMeshServiceParent(t *testing.T) {
 						BackendRef: gatewayv1.BackendRef{
 							BackendObjectReference: gatewayv1.BackendObjectReference{
 								Name:      "echo-v1",
-								Namespace: ptr[gatewayv1.Namespace]("gateway-conformance-mesh"),
-								Port:      ptr[gatewayv1.PortNumber](80),
+								Namespace: testutil.Ptr[gatewayv1.Namespace]("gateway-conformance-mesh"),
+								Port:      testutil.Ptr[gatewayv1.PortNumber](80),
 							},
 						},
 					}},
@@ -193,7 +195,7 @@ func TestBuildPreservesHTTPBackendRefFilters(t *testing.T) {
 						BackendRef: gatewayv1.BackendRef{
 							BackendObjectReference: gatewayv1.BackendObjectReference{
 								Name: "echo",
-								Port: ptr[gatewayv1.PortNumber](8080),
+								Port: testutil.Ptr[gatewayv1.PortNumber](8080),
 							},
 						},
 						Filters: []gatewayv1.HTTPRouteFilter{{
@@ -248,7 +250,7 @@ cors:
 						BackendRef: gatewayv1.BackendRef{
 							BackendObjectReference: gatewayv1.BackendObjectReference{
 								Name: "echo",
-								Port: ptr[gatewayv1.PortNumber](8080),
+								Port: testutil.Ptr[gatewayv1.PortNumber](8080),
 							},
 						},
 						Filters: []gatewayv1.HTTPRouteFilter{{
@@ -298,7 +300,7 @@ func TestBuildAllowsServiceImportBackendRef(t *testing.T) {
 					mcsv1alpha1.LabelServiceName: "payments",
 				},
 			},
-			Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](19443)}},
+			Ports: []discoveryv1.EndpointPort{{Port: testutil.Ptr[int32](19443)}},
 			Endpoints: []discoveryv1.Endpoint{{
 				Addresses: []string{"10.0.0.30"},
 			}},
@@ -313,10 +315,10 @@ func TestBuildAllowsServiceImportBackendRef(t *testing.T) {
 					BackendRefs: []gatewayv1.HTTPBackendRef{{
 						BackendRef: gatewayv1.BackendRef{
 							BackendObjectReference: gatewayv1.BackendObjectReference{
-								Group: ptr[gatewayv1.Group](mcsv1alpha1.GroupName),
-								Kind:  ptr[gatewayv1.Kind]("ServiceImport"),
+								Group: testutil.Ptr[gatewayv1.Group](mcsv1alpha1.GroupName),
+								Kind:  testutil.Ptr[gatewayv1.Kind]("ServiceImport"),
 								Name:  "payments",
-								Port:  ptr[gatewayv1.PortNumber](9443),
+								Port:  testutil.Ptr[gatewayv1.PortNumber](9443),
 							},
 						},
 					}},
@@ -345,18 +347,18 @@ func TestBuildPreservesHTTPBackendRefWeights(t *testing.T) {
 							BackendRef: gatewayv1.BackendRef{
 								BackendObjectReference: gatewayv1.BackendObjectReference{
 									Name: "echo",
-									Port: ptr[gatewayv1.PortNumber](8080),
+									Port: testutil.Ptr[gatewayv1.PortNumber](8080),
 								},
-								Weight: ptr(int32(90)),
+								Weight: testutil.Ptr(int32(90)),
 							},
 						},
 						{
 							BackendRef: gatewayv1.BackendRef{
 								BackendObjectReference: gatewayv1.BackendObjectReference{
 									Name: "echo",
-									Port: ptr[gatewayv1.PortNumber](8080),
+									Port: testutil.Ptr[gatewayv1.PortNumber](8080),
 								},
-								Weight: ptr(int32(0)),
+								Weight: testutil.Ptr(int32(0)),
 							},
 						},
 					},
@@ -381,12 +383,12 @@ func buildTranslatorSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapsh
 	t.Helper()
 
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(mcsv1alpha1.AddToScheme(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(mcsv1alpha1.AddToScheme(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	baseObjects := []runtime.Object{
 		&corev1.Namespace{
@@ -433,7 +435,7 @@ func buildTranslatorSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapsh
 					discoveryv1.LabelServiceName: "echo",
 				},
 			},
-			Ports: []discoveryv1.EndpointPort{{Port: ptr[int32](8080)}},
+			Ports: []discoveryv1.EndpointPort{{Port: testutil.Ptr[int32](8080)}},
 			Endpoints: []discoveryv1.Endpoint{{
 				Addresses: []string{"10.0.0.10"},
 			}},
@@ -445,7 +447,7 @@ func buildTranslatorSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapsh
 		WithRuntimeObjects(baseObjects...).
 		Build()
 
-	xlator := New(
+	xlator := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)

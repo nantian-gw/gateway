@@ -1,11 +1,9 @@
-package translator
+package backends_test
 
 import (
 	"context"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -17,15 +15,16 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
+	"github.com/nantian-gw/gateway/internal/translator"
 )
 
 func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := testutil.NewTranslatorClientBuilder(scheme).
@@ -62,14 +61,14 @@ func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -92,11 +91,11 @@ func TestBuildSnapshotIncludesBackendClientCertificateRef(t *testing.T) {
 
 func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithReferenceGrant(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := testutil.NewTranslatorClientBuilder(scheme).
@@ -117,7 +116,7 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{
 								Name:      "client-cert",
-								Namespace: ptr(gatewayv1.Namespace("shared")),
+								Namespace: testutil.Ptr(gatewayv1.Namespace("shared")),
 							},
 						},
 					},
@@ -135,8 +134,8 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			&gatewayv1beta1.ReferenceGrant{
@@ -150,14 +149,14 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Secret"),
-						Name:  ptr[gatewayv1beta1.ObjectName]("client-cert"),
+						Name:  testutil.Ptr[gatewayv1beta1.ObjectName]("client-cert"),
 					}},
 				},
 			},
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -176,11 +175,11 @@ func TestBuildSnapshotIncludesCrossNamespaceBackendClientCertificateRefWithRefer
 
 func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutReferenceGrant(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := testutil.NewTranslatorClientBuilder(scheme).
@@ -201,7 +200,7 @@ func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutRefer
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{
 								Name:      "client-cert",
-								Namespace: ptr(gatewayv1.Namespace("shared")),
+								Namespace: testutil.Ptr(gatewayv1.Namespace("shared")),
 							},
 						},
 					},
@@ -219,14 +218,14 @@ func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutRefer
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -245,11 +244,11 @@ func TestBuildSnapshotSkipsCrossNamespaceBackendClientCertificateRefWithoutRefer
 
 func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	client := testutil.NewTranslatorClientBuilder(scheme).
@@ -269,7 +268,7 @@ func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *tes
 						Backend: &gatewayv1.GatewayBackendTLS{
 							ClientCertificateRef: &gatewayv1.SecretObjectReference{
 								Name: "client-cert",
-								Kind: ptr(gatewayv1.Kind("ConfigMap")),
+								Kind: testutil.Ptr(gatewayv1.Kind("ConfigMap")),
 							},
 						},
 					},
@@ -283,7 +282,7 @@ func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *tes
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -298,15 +297,4 @@ func TestBuildSnapshotSkipsBackendClientCertificateRefWithUnsupportedKind(t *tes
 	if len(snapshot.Secrets) != 0 {
 		t.Fatalf("expected unsupported backend client certificate ref kind to omit snapshot secrets, got %#v", snapshot.Secrets)
 	}
-}
-
-func readTestTLSAsset(t *testing.T, name string) []byte {
-	t.Helper()
-
-	path := filepath.Join("..", "..", "test", "testdata", "tls", name)
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatalf("read %s: %v", path, err)
-	}
-	return raw
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -498,7 +499,7 @@ func rebuildGatewaySecretMaterials(
 ) []ir.SecretMaterial {
 	updated := gatewaySecretMaterialKeysFromListeners(updatedListeners, gatewayKeys)
 	referenced := listenerSecretMaterialKeys(updatedListeners)
-	replacements := filterSecretMaterialsByKeys(translateSecrets(secrets), updated)
+	replacements := filterSecretMaterialsByKeys(backends.TranslateSecrets(secrets), updated)
 	replacementKeys := make(map[string]struct{}, len(replacements))
 	for _, secret := range replacements {
 		replacementKeys[shared.BackendObjectKey(secret.Namespace, secret.Name)] = struct{}{}
@@ -594,7 +595,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 			if listener.TLS != nil {
 				for _, ref := range listener.TLS.CertificateRefs {
 					targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
-					if targetNamespace != gateway.Namespace && refGroup(&ref) == "" && refKind(&ref) == "Secret" {
+					if targetNamespace != gateway.Namespace && backends.RefGroup(&ref) == "" && backends.RefKind(&ref) == "Secret" {
 						namespaces[targetNamespace] = struct{}{}
 					}
 				}
@@ -620,7 +621,7 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 		}
 		ref := backendTLS.ClientCertificateRef
 		targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
-		if targetNamespace != gateway.Namespace && refGroup(ref) == "" && refKind(ref) == "Secret" {
+		if targetNamespace != gateway.Namespace && backends.RefGroup(ref) == "" && backends.RefKind(ref) == "Secret" {
 			namespaces[targetNamespace] = struct{}{}
 		}
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -59,7 +60,7 @@ func frontendValidationForListenerWithIndexes(
 		}
 
 		targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
-		if targetNamespace != gateway.Namespace && !referenceGranted(
+		if targetNamespace != gateway.Namespace && !backends.ReferenceGranted(
 			indexes.ReferenceGrantsByNamespace[targetNamespace],
 			targetNamespace,
 			gatewayv1beta1.ReferenceGrantFrom{
@@ -70,7 +71,7 @@ func frontendValidationForListenerWithIndexes(
 			gatewayv1beta1.ReferenceGrantTo{
 				Group: gatewayv1beta1.Group(""),
 				Kind:  gatewayv1beta1.Kind("ConfigMap"),
-				Name:  objectNamePtr(string(ref.Name)),
+				Name:  backends.ObjectNamePtr(string(ref.Name)),
 			},
 		) {
 			continue

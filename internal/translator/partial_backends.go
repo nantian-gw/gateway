@@ -20,6 +20,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -204,12 +205,12 @@ func (t *Translator) buildBackendsForKeyMaps(
 		nil,
 	)
 
-	return mergePartialBackends(current, replacementKeys, translateBackendsWithIndexes(
+	return mergePartialBackends(current, replacementKeys, backends.TranslateBackendsWithIndexes(
 		filteredServices,
 		serviceImports,
 		backendTLSPolicies,
 		backendLBPolicies,
-		defaultConnectTimeout,
+		backends.DefaultConnectTimeout,
 		indexes,
 	)), nil
 }

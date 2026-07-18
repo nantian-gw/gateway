@@ -6,6 +6,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -49,7 +50,7 @@ func referencedBackendGrantNamespacesFromSnapshot(current *ir.Snapshot) []string
 			if ref.Name == "" || ref.Namespace == "" || ref.Namespace == routeNamespace {
 				continue
 			}
-			if _, ok := backendKindForRef(ref.Group, ref.Kind); !ok {
+			if _, ok := backends.BackendKindForRef(ref.Group, ref.Kind); !ok {
 				continue
 			}
 			namespaces[ref.Namespace] = struct{}{}
@@ -57,19 +58,19 @@ func referencedBackendGrantNamespacesFromSnapshot(current *ir.Snapshot) []string
 	}
 
 	for _, route := range current.HTTPRoutes {
-		allowCrossNamespaceRefs := routeUsesOnlyServiceParents(route.ParentRefs)
+		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(route.ParentRefs)
 		for _, rule := range route.Rules {
 			add(route.Namespace, allowCrossNamespaceRefs, rule.BackendRefs)
 		}
 	}
 	for _, route := range current.GRPCRoutes {
-		allowCrossNamespaceRefs := routeUsesOnlyServiceParents(route.ParentRefs)
+		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(route.ParentRefs)
 		for _, rule := range route.Rules {
 			add(route.Namespace, allowCrossNamespaceRefs, rule.BackendRefs)
 		}
 	}
 	for _, route := range current.StreamRoutes {
-		allowCrossNamespaceRefs := routeUsesOnlyServiceParents(route.ParentRefs)
+		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(route.ParentRefs)
 		for _, rule := range route.Rules {
 			add(route.Namespace, allowCrossNamespaceRefs, rule.BackendRefs)
 		}
@@ -96,7 +97,7 @@ func referencedBackendObjectKeysFromSnapshot(current *ir.Snapshot) referencedBac
 		}
 
 		key := client.ObjectKey{Namespace: ref.Namespace, Name: ref.Name}
-		switch kind, ok := backendKindForRef(ref.Group, ref.Kind); {
+		switch kind, ok := backends.BackendKindForRef(ref.Group, ref.Kind); {
 		case !ok:
 			return
 		case kind == "Service":

@@ -1,4 +1,4 @@
-package translator
+package backends_test
 
 import (
 	"context"
@@ -18,16 +18,17 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
+	"github.com/nantian-gw/gateway/internal/translator"
 )
 
 func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -73,7 +74,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -117,12 +118,12 @@ func TestBuildSnapshotIncludesBackendTLSPolicyValidation(t *testing.T) {
 
 func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
@@ -139,7 +140,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{Name: "orders-ca", Namespace: "default"},
 				Data: map[string]string{
-					"ca.crt": string(readTestTLSAsset(t, "client.crt")),
+					"ca.crt": string(testutil.ReadTestTLSAsset(t, "client.crt")),
 				},
 			},
 			&gatewayv1alpha3.BackendTLSPolicy{
@@ -170,7 +171,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -192,7 +193,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 	if len(validation.CAPEMs) != 1 {
 		t.Fatalf("expected 1 custom CA PEM, got %d", len(validation.CAPEMs))
 	}
-	if validation.CAPEMs[0] != string(readTestTLSAsset(t, "client.crt")) {
+	if validation.CAPEMs[0] != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected custom CA PEM: %q", validation.CAPEMs[0])
 	}
 	if len(validation.SubjectAltNames) != 1 {
@@ -205,12 +206,12 @@ func TestBuildSnapshotIncludesBackendTLSPolicyCustomCAPEMs(t *testing.T) {
 
 func TestBuildSnapshotSkipsBackendTLSPolicyWithUnsupportedOptions(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -246,7 +247,7 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithUnsupportedOptions(t *testing.T) 
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -264,12 +265,12 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithUnsupportedOptions(t *testing.T) 
 
 func TestBuildSnapshotIncludesBackendTLSPolicyWhenAtLeastOneTargetIsValid(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -311,7 +312,7 @@ func TestBuildSnapshotIncludesBackendTLSPolicyWhenAtLeastOneTargetIsValid(t *tes
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -329,12 +330,12 @@ func TestBuildSnapshotIncludesBackendTLSPolicyWhenAtLeastOneTargetIsValid(t *tes
 
 func TestBuildSnapshotAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -395,7 +396,7 @@ func TestBuildSnapshotAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -416,12 +417,12 @@ func TestBuildSnapshotAppliesBackendTLSPolicyPrecedence(t *testing.T) {
 
 func TestBuildSnapshotPrefersSectionScopedBackendTLSPolicyOverCatchAll(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -481,7 +482,7 @@ func TestBuildSnapshotPrefersSectionScopedBackendTLSPolicyOverCatchAll(t *testin
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -506,12 +507,12 @@ func TestBuildSnapshotPrefersSectionScopedBackendTLSPolicyOverCatchAll(t *testin
 
 func TestBuildSnapshotKeepsValidBackendTLSCAPEMsWhenSomeRefsAreInvalid(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
@@ -528,7 +529,7 @@ func TestBuildSnapshotKeepsValidBackendTLSCAPEMsWhenSomeRefsAreInvalid(t *testin
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{Name: "orders-ca-valid", Namespace: "default"},
 				Data: map[string]string{
-					"ca.crt": string(readTestTLSAsset(t, "client.crt")),
+					"ca.crt": string(testutil.ReadTestTLSAsset(t, "client.crt")),
 				},
 			},
 			&gatewayv1alpha3.BackendTLSPolicy{
@@ -554,7 +555,7 @@ func TestBuildSnapshotKeepsValidBackendTLSCAPEMsWhenSomeRefsAreInvalid(t *testin
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -575,19 +576,19 @@ func TestBuildSnapshotKeepsValidBackendTLSCAPEMsWhenSomeRefsAreInvalid(t *testin
 	if len(validation.CAPEMs) != 1 {
 		t.Fatalf("expected 1 valid custom CA PEM, got %d", len(validation.CAPEMs))
 	}
-	if validation.CAPEMs[0] != string(readTestTLSAsset(t, "client.crt")) {
+	if validation.CAPEMs[0] != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected custom CA PEM: %q", validation.CAPEMs[0])
 	}
 }
 
 func TestBuildSnapshotSkipsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -628,7 +629,7 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -646,12 +647,12 @@ func TestBuildSnapshotSkipsBackendTLSPolicyWithInvalidSubjectAltName(t *testing.
 
 func TestBuildSnapshotExternalAuthWithBackendTLSPolicy(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	systemCA := gatewayv1.WellKnownCACertificatesSystem
 
@@ -696,7 +697,7 @@ func TestBuildSnapshotExternalAuthWithBackendTLSPolicy(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)

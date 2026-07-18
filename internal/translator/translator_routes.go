@@ -9,6 +9,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -70,7 +71,7 @@ func translateHTTPRouteWithDefaultGateways(
 			BackendRefs:        backendRefsFromHTTP(rule.BackendRefs, route.Namespace),
 			Timeouts:           shared.HTTPRouteTimeouts(rule.Timeouts),
 			Retry:              httpRouteRetry(rule.Retry),
-			SessionPersistence: ruleSessionPersistence("http", route.Namespace, route.Name, index, rule.SessionPersistence),
+			SessionPersistence: backends.RuleSessionPersistence("http", route.Namespace, route.Name, index, rule.SessionPersistence),
 		}
 
 		for _, match := range rule.Matches {
@@ -145,7 +146,7 @@ func translateGRPCRouteWithDefaultGateways(route gatewayv1.GRPCRoute, resolver e
 			Name:               shared.StringValue((*string)(rule.Name)),
 			Filters:            filtersFromGRPCWithResolver(rule.Filters, route.Namespace, resolver, extfilter.TargetGRPC),
 			BackendRefs:        backendRefsFromGRPC(rule.BackendRefs, route.Namespace),
-			SessionPersistence: ruleSessionPersistence("grpc", route.Namespace, route.Name, index, rule.SessionPersistence),
+			SessionPersistence: backends.RuleSessionPersistence("grpc", route.Namespace, route.Name, index, rule.SessionPersistence),
 		}
 
 		for _, match := range rule.Matches {

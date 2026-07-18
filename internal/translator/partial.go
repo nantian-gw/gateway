@@ -22,6 +22,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -85,7 +86,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 		nil,
 	)
 
-	return translateBackendsWithIndexes(
+	return backends.TranslateBackendsWithIndexes(
 		filteredServices,
 		serviceImports.Items,
 		backendTLSPolicies,
@@ -425,11 +426,17 @@ func (t *Translator) refreshBackendRefMetadataForSnapshot(
 		return nil, nil, nil, err
 	}
 
-	annotator := newBackendRefTranslator(
-		resources.FilterServices(services),
+	annotator := backends.NewBackendRefTranslator(
+		services,
 		serviceImports,
 		referenceGrants,
 		extfilter.Resolver{},
+		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return filtersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+		},
+		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return filtersFromGRPCWithResolver(filters, ns, resolver, target)
+		},
 	)
 	next := current.Clone()
 	refreshHTTPRouteBackendRefs(next.HTTPRoutes, annotator)

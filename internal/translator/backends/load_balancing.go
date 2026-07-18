@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	"strings"
@@ -8,7 +8,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func backendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancingPolicy {
+func BackendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancingPolicy {
 	if source == nil {
 		return nil
 	}

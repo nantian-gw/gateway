@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	"sort"
@@ -20,7 +20,7 @@ type translatedBackendLBPolicy struct {
 	policy             backend.BackendLBPolicy
 }
 
-type backendLBPolicyIndexes struct {
+type BackendLBPolicyIndexes struct {
 	sessionPersistence map[string]*ir.SessionPersistencePolicy
 	loadBalancing      map[string]*ir.LoadBalancingPolicy
 	circuitBreaker     map[string]*ir.CircuitBreakerConfig
@@ -30,27 +30,27 @@ func buildBackendLBPolicyIndexes(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 	policies []backend.BackendLBPolicy,
-) backendLBPolicyIndexes {
-	return buildBackendLBPolicyIndexesWithIndexes(
+) BackendLBPolicyIndexes {
+	return BuildBackendLBPolicyIndexesWithIndexes(
 		policies,
 		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
 	)
 }
 
-func buildBackendLBPolicyIndexesWithIndexes(
+func BuildBackendLBPolicyIndexesWithIndexes(
 	policies []backend.BackendLBPolicy,
 	indexes shared.TranslatorIndexes,
-) backendLBPolicyIndexes {
+) BackendLBPolicyIndexes {
 	translations := make([]translatedBackendLBPolicy, 0, len(policies))
 	owners := make(map[string]int)
 
 	for _, policy := range policies {
-		sessionPersistence := backendSessionPersistence(
+		sessionPersistence := BackendSessionPersistence(
 			policy.Namespace,
 			policy.Name,
 			policy.Spec.SessionPersistence,
 		)
-		loadBalancing := backendLoadBalancing(policy.Spec.LoadBalancing)
+		loadBalancing := BackendLoadBalancing(policy.Spec.LoadBalancing)
 		circuitBreaker := backendCircuitBreaker(policy.Spec.CircuitBreaker)
 		if sessionPersistence == nil && loadBalancing == nil && circuitBreaker == nil {
 			continue
@@ -99,7 +99,7 @@ func buildBackendLBPolicyIndexesWithIndexes(
 		}
 	}
 
-	return backendLBPolicyIndexes{
+	return BackendLBPolicyIndexes{
 		sessionPersistence: sessionPersistence,
 		loadBalancing:      loadBalancing,
 		circuitBreaker:     circuitBreaker,

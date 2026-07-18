@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	"crypto/tls"
@@ -17,13 +17,13 @@ func backendTLSForGateway(
 	secrets []corev1.Secret,
 	referenceGrants []gatewayv1beta1.ReferenceGrant,
 ) *ir.BackendTLSConfig {
-	return backendTLSForGatewayWithIndexes(
+	return BackendTLSForGatewayWithIndexes(
 		gateway,
 		shared.NewTranslatorIndexes(nil, nil, nil, secrets, nil, referenceGrants),
 	)
 }
 
-func backendTLSForGatewayWithIndexes(
+func BackendTLSForGatewayWithIndexes(
 	gateway gatewayv1.Gateway,
 	indexes shared.TranslatorIndexes,
 ) *ir.BackendTLSConfig {
@@ -33,17 +33,17 @@ func backendTLSForGatewayWithIndexes(
 	}
 
 	ref := backendTLS.ClientCertificateRef
-	if refGroup(ref) != "" {
+	if RefGroup(ref) != "" {
 		return nil
 	}
 
-	kind := refKind(ref)
+	kind := RefKind(ref)
 	if kind != "Secret" {
 		return nil
 	}
 
 	targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
-	if targetNamespace != gateway.Namespace && !referenceGranted(
+	if targetNamespace != gateway.Namespace && !ReferenceGranted(
 		indexes.ReferenceGrantsByNamespace[targetNamespace],
 		targetNamespace,
 		gatewayv1beta1.ReferenceGrantFrom{
@@ -54,7 +54,7 @@ func backendTLSForGatewayWithIndexes(
 		gatewayv1beta1.ReferenceGrantTo{
 			Group: gatewayv1beta1.Group(""),
 			Kind:  gatewayv1beta1.Kind("Secret"),
-			Name:  objectNamePtr(string(ref.Name)),
+			Name:  ObjectNamePtr(string(ref.Name)),
 		},
 	) {
 		return nil
@@ -77,14 +77,14 @@ func tlsSecret(secrets []corev1.Secret, namespace, name string) (corev1.Secret, 
 	return shared.NewTranslatorIndexes(nil, nil, nil, secrets, nil, nil).TLSSecret(namespace, name)
 }
 
-func refGroup(ref *gatewayv1.SecretObjectReference) string {
+func RefGroup(ref *gatewayv1.SecretObjectReference) string {
 	if ref == nil || ref.Group == nil {
 		return ""
 	}
 	return string(*ref.Group)
 }
 
-func refKind(ref *gatewayv1.SecretObjectReference) string {
+func RefKind(ref *gatewayv1.SecretObjectReference) string {
 	if ref == nil || ref.Kind == nil || string(*ref.Kind) == "" {
 		return "Secret"
 	}

@@ -20,6 +20,7 @@ import (
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 )
 
 func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T) {
@@ -126,7 +127,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Service"),
-						Name:  objectNamePtr("echo"),
+						Name:  backends.ObjectNamePtr("echo"),
 					}},
 				},
 			},
@@ -272,7 +273,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Service"),
-						Name:  objectNamePtr("echo"),
+						Name:  backends.ObjectNamePtr("echo"),
 					}},
 				},
 			},
@@ -287,7 +288,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Service"),
-						Name:  objectNamePtr("other"),
+						Name:  backends.ObjectNamePtr("other"),
 					}},
 				},
 			},

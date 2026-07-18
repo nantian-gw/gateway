@@ -9,12 +9,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
-type backendService struct {
-	namespace   string
-	logicalName string
-	service     corev1.Service
-}
-
 func collectMeshServiceFrontends(
 	services []corev1.Service,
 	httpRoutes []gatewayv1.HTTPRoute,
@@ -68,47 +62,5 @@ func translateMeshServiceListeners(frontends []mesh.ServiceFrontendPort) []ir.Li
 			Metadata: frontend.Metadata(),
 		})
 	}
-	return out
-}
-
-func effectiveBackendServices(services []corev1.Service) []backendService {
-	shadowByName := make(map[string]corev1.Service, len(services))
-	shadowByOriginal := make(map[string]corev1.Service, len(services))
-	for _, service := range services {
-		if service.Labels[mesh.ShadowServiceRoleLabel] != mesh.ShadowServiceRoleValue {
-			continue
-		}
-
-		shadowByName[service.Namespace+"/"+service.Name] = service
-		originalNamespace := service.Labels[mesh.OriginalServiceNamespaceLabel]
-		originalName := service.Labels[mesh.OriginalServiceNameLabel]
-		if originalNamespace != "" && originalName != "" {
-			shadowByOriginal[originalNamespace+"/"+originalName] = service
-		}
-	}
-
-	out := make([]backendService, 0, len(services))
-	for _, service := range services {
-		if service.Labels[mesh.ShadowServiceRoleLabel] == mesh.ShadowServiceRoleValue {
-			continue
-		}
-
-		actual := service
-		if service.Annotations[mesh.ManagedServiceAnnotation] == "true" {
-			shadowName := service.Annotations[mesh.ShadowServiceAnnotation]
-			if shadow, ok := shadowByName[service.Namespace+"/"+shadowName]; ok {
-				actual = shadow
-			} else if shadow, ok := shadowByOriginal[service.Namespace+"/"+service.Name]; ok {
-				actual = shadow
-			}
-		}
-
-		out = append(out, backendService{
-			namespace:   service.Namespace,
-			logicalName: service.Name,
-			service:     actual,
-		})
-	}
-
 	return out
 }

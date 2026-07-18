@@ -17,6 +17,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -156,29 +157,35 @@ func (t *Translator) BuildRoutesForSnapshot(
 		return nil, err
 	}
 
-	annotator := newBackendRefTranslator(
+	annotator := backends.NewBackendRefTranslator(
 		resources.FilterServices(services),
 		serviceImports,
 		referenceGrants,
 		extensionResolver,
+		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return filtersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+		},
+		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return filtersFromGRPCWithResolver(filters, ns, resolver, target)
+		},
 	)
 	for idx := range httpRoutes {
-		annotator.annotateHTTPRoute(&updatedHTTPRoutes[idx], httpRoutes[idx])
+		annotator.AnnotateHTTPRoute(&updatedHTTPRoutes[idx], httpRoutes[idx])
 	}
 	for idx := range updatedGRPCRoutes {
-		annotator.annotateGRPCRoute(&updatedGRPCRoutes[idx], grpcRoutes[idx])
+		annotator.AnnotateGRPCRoute(&updatedGRPCRoutes[idx], grpcRoutes[idx])
 	}
 	streamIndex := 0
 	for idx := range tcpRoutes {
-		annotator.annotateTCPRoute(&updatedStreamRoutes[streamIndex], tcpRoutes[idx])
+		annotator.AnnotateTCPRoute(&updatedStreamRoutes[streamIndex], tcpRoutes[idx])
 		streamIndex++
 	}
 	for idx := range udpRoutes {
-		annotator.annotateUDPRoute(&updatedStreamRoutes[streamIndex], udpRoutes[idx])
+		annotator.AnnotateUDPRoute(&updatedStreamRoutes[streamIndex], udpRoutes[idx])
 		streamIndex++
 	}
 	for idx := range tlsRoutes {
-		annotator.annotateTLSRoute(&updatedStreamRoutes[streamIndex], tlsRoutes[idx])
+		annotator.AnnotateTLSRoute(&updatedStreamRoutes[streamIndex], tlsRoutes[idx])
 		streamIndex++
 	}
 
@@ -559,7 +566,7 @@ func referencedBackendReplacementKeysForRouteChanges(
 			return
 		}
 
-		if _, ok := backendKindForRef(ref.Group, ref.Kind); !ok {
+		if _, ok := backends.BackendKindForRef(ref.Group, ref.Kind); !ok {
 			return
 		}
 
@@ -623,7 +630,7 @@ func backendRefMarkedInvalid(ref ir.BackendRef) bool {
 	if len(ref.Metadata) == 0 {
 		return false
 	}
-	return ref.Metadata[backendRefMetaValid] == "false"
+	return ref.Metadata[backends.BackendRefMetaValid] == "false"
 }
 
 func routeChangeNamespaces(groups ...[]client.ObjectKey) []string {

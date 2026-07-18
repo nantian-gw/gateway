@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	"crypto/sha256"
@@ -12,7 +12,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-func ruleSessionPersistence(
+func RuleSessionPersistence(
 	routeKind string,
 	routeNamespace string,
 	routeName string,
@@ -20,12 +20,12 @@ func ruleSessionPersistence(
 	source *gatewayv1.SessionPersistence,
 ) *ir.SessionPersistencePolicy {
 	return buildSessionPersistence(
-		defaultRouteSessionName(routeKind, routeNamespace, routeName, ruleIndex),
+		DefaultRouteSessionName(routeKind, routeNamespace, routeName, ruleIndex),
 		source,
 	)
 }
 
-func backendSessionPersistence(
+func BackendSessionPersistence(
 	policyNamespace string,
 	policyName string,
 	source *gatewayv1.SessionPersistence,
@@ -77,7 +77,7 @@ func buildSessionPersistence(
 	return out
 }
 
-func defaultRouteSessionName(routeKind string, routeNamespace string, routeName string, ruleIndex int) string {
+func DefaultRouteSessionName(routeKind string, routeNamespace string, routeName string, ruleIndex int) string {
 	sum := sha256.Sum256([]byte(fmt.Sprintf("%s:%s:%s:%d", routeKind, routeNamespace, routeName, ruleIndex)))
 	return "nantian-gw-" + strings.ToLower(routeKind) + "-" + hex.EncodeToString(sum[:6])
 }

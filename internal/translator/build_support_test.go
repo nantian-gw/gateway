@@ -120,8 +120,8 @@ func TestBuildLoadsReferencedSecretsAndConfigMapsOnDemand(t *testing.T) {
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			&corev1.ConfigMap{
@@ -183,7 +183,7 @@ headerModifier:
 		t.Fatalf("unexpected frontend validation CA: %#v", listenerTLS.FrontendValidation.ClientCAPEMs)
 	}
 
-	if got := findSnapshotSecret(t, snapshot, "default", "example-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, snapshot, "default", "example-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected translated secret material: %q", got)
 	}
 

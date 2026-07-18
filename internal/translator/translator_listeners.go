@@ -15,6 +15,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -63,7 +64,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 			Addresses:  append([]string(nil), addresses...),
 			Port:       uint32(listener.Port),
 			Protocol:   protocol,
-			BackendTLS: backendTLSForGatewayWithIndexes(gateway, indexes),
+			BackendTLS: backends.BackendTLSForGatewayWithIndexes(gateway, indexes),
 			Metadata: map[string]string{
 				"gateway":   gateway.Name,
 				"namespace": gateway.Namespace,
@@ -111,12 +112,12 @@ func listenerCertificateSecretRefsWithIndexes(
 	out := make([]string, 0, len(listener.TLS.CertificateRefs))
 	seen := make(map[string]struct{}, len(listener.TLS.CertificateRefs))
 	for _, ref := range listener.TLS.CertificateRefs {
-		if refGroup(&ref) != "" || refKind(&ref) != "Secret" || ref.Name == "" {
+		if backends.RefGroup(&ref) != "" || backends.RefKind(&ref) != "Secret" || ref.Name == "" {
 			continue
 		}
 
 		targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
-		if targetNamespace != gateway.Namespace && !referenceGranted(
+		if targetNamespace != gateway.Namespace && !backends.ReferenceGranted(
 			indexes.ReferenceGrantsByNamespace[targetNamespace],
 			targetNamespace,
 			gatewayv1beta1.ReferenceGrantFrom{
@@ -127,7 +128,7 @@ func listenerCertificateSecretRefsWithIndexes(
 			gatewayv1beta1.ReferenceGrantTo{
 				Group: gatewayv1beta1.Group(""),
 				Kind:  gatewayv1beta1.Kind("Secret"),
-				Name:  objectNamePtr(string(ref.Name)),
+				Name:  backends.ObjectNamePtr(string(ref.Name)),
 			},
 		) {
 			continue

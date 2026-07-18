@@ -16,6 +16,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
@@ -83,7 +84,7 @@ func referencedSecretKeys(gateways []gatewayv1.Gateway) []client.ObjectKey {
 				continue
 			}
 			for _, ref := range listener.TLS.CertificateRefs {
-				if refGroup(&ref) != "" || refKind(&ref) != "Secret" || ref.Name == "" {
+				if backends.RefGroup(&ref) != "" || backends.RefKind(&ref) != "Secret" || ref.Name == "" {
 					continue
 				}
 				key := client.ObjectKey{
@@ -100,7 +101,7 @@ func referencedSecretKeys(gateways []gatewayv1.Gateway) []client.ObjectKey {
 		}
 
 		ref := backendTLS.ClientCertificateRef
-		if refGroup(ref) != "" || refKind(ref) != "Secret" || ref.Name == "" {
+		if backends.RefGroup(ref) != "" || backends.RefKind(ref) != "Secret" || ref.Name == "" {
 			continue
 		}
 		key := client.ObjectKey{

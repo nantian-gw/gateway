@@ -675,8 +675,8 @@ func TestBuildSnapshotSkipsCrossNamespaceCertificateRefWithoutReferenceGrant(t *
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 		).
@@ -746,8 +746,8 @@ func TestBuildSnapshotIncludesCrossNamespaceCertificateRefWithReferenceGrant(t *
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			&gatewayv1beta1.ReferenceGrant{
@@ -783,7 +783,7 @@ func TestBuildSnapshotIncludesCrossNamespaceCertificateRefWithReferenceGrant(t *
 	if len(tls.SecretRefs) != 1 || tls.SecretRefs[0] != "shared/shared-cert" {
 		t.Fatalf("expected granted cross-namespace certificate ref, got %#v", tls.SecretRefs)
 	}
-	if got := findSnapshotSecret(t, snapshot, "shared", "shared-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, snapshot, "shared", "shared-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected translated certificate secret material: %q", got)
 	}
 }
@@ -834,8 +834,8 @@ func TestBuildSnapshotDeduplicatesValidListenerCertificateRefs(t *testing.T) {
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			&corev1.Secret{
@@ -957,8 +957,8 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 				},
 				Type: corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			&corev1.Secret{
@@ -1011,7 +1011,7 @@ func TestBuildSnapshotPreservesValidCertificateRefOrderAcrossMixedValidityRefs(t
 	if len(snapshot.Secrets) != 2 {
 		t.Fatalf("expected 2 translated secrets, got %#v", snapshot.Secrets)
 	}
-	if got := findSnapshotSecret(t, snapshot, "default", "default-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, snapshot, "default", "default-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected default cert material: %q", got)
 	}
 	if got := findSnapshotSecret(t, snapshot, "shared", "shared-cert").CertPEM; got != string(readBackendTLSAsset(t, "server-san.crt")) {

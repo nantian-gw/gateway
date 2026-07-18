@@ -3,6 +3,8 @@ package testutil
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -405,4 +407,31 @@ func (c *fakeFieldSelectorRejectingClient) List(
 	}
 
 	return c.Client.List(ctx, list, opts...)
+}
+
+// ReadTestTLSAsset reads a TLS test asset from the repository testdata directory.
+func ReadTestTLSAsset(t *testing.T, name string) []byte {
+	t.Helper()
+
+	candidates := []string{
+		filepath.Join("..", "..", "test", "testdata", "tls", name),
+		filepath.Join("..", "..", "..", "test", "testdata", "tls", name),
+	}
+
+	var lastErr error
+	for _, path := range candidates {
+		raw, err := os.ReadFile(path)
+		if err == nil {
+			return raw
+		}
+		lastErr = err
+	}
+	t.Fatalf("read tls asset %s: %v", name, lastErr)
+	return nil
+}
+
+// SectionNamePtr returns a pointer to a gateway SectionName.
+func SectionNamePtr(value string) *gatewayv1.SectionName {
+	item := gatewayv1.SectionName(value)
+	return &item
 }

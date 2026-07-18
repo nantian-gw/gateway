@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	"strconv"
@@ -12,12 +12,68 @@ import (
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const defaultConnectTimeout = 5 * time.Second
 
-func translateBackends(
+// DefaultConnectTimeout is the exported version for external callers.
+const DefaultConnectTimeout = 5 * time.Second
+
+// BackendService bundles a Kubernetes Service with its logical name and
+// namespace for backend cluster construction.
+type BackendService struct {
+	namespace   string
+	logicalName string
+	service     corev1.Service
+}
+
+// EffectiveBackendServices resolves shadow service substitution and returns
+// the effective backend services to use for cluster construction.
+func EffectiveBackendServices(services []corev1.Service) []BackendService {
+	shadowByName := make(map[string]corev1.Service, len(services))
+	shadowByOriginal := make(map[string]corev1.Service, len(services))
+	for _, svc := range services {
+		if svc.Labels[mesh.ShadowServiceRoleLabel] != mesh.ShadowServiceRoleValue {
+			continue
+		}
+
+		shadowByName[svc.Namespace+"/"+svc.Name] = svc
+		originalNamespace := svc.Labels[mesh.OriginalServiceNamespaceLabel]
+		originalName := svc.Labels[mesh.OriginalServiceNameLabel]
+		if originalNamespace != "" && originalName != "" {
+			shadowByOriginal[originalNamespace+"/"+originalName] = svc
+		}
+	}
+
+	out := make([]BackendService, 0, len(services))
+	for _, svc := range services {
+		if svc.Labels[mesh.ShadowServiceRoleLabel] == mesh.ShadowServiceRoleValue {
+			continue
+		}
+
+		actual := svc
+		if svc.Annotations[mesh.ManagedServiceAnnotation] == "true" {
+			shadowName := svc.Annotations[mesh.ShadowServiceAnnotation]
+			if shadow, ok := shadowByName[svc.Namespace+"/"+shadowName]; ok {
+				actual = shadow
+			} else if shadow, ok := shadowByOriginal[svc.Namespace+"/"+svc.Name]; ok {
+				actual = shadow
+			}
+		}
+
+		out = append(out, BackendService{
+			namespace:   svc.Namespace,
+			logicalName: svc.Name,
+			service:     actual,
+		})
+	}
+
+	return out
+}
+
+func TranslateBackends(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 	slices []discoveryv1.EndpointSlice,
@@ -26,7 +82,7 @@ func translateBackends(
 	backendLBPolicies []backend.BackendLBPolicy,
 	connectTimeout time.Duration,
 ) []ir.BackendCluster {
-	return translateBackendsWithIndexes(
+	return TranslateBackendsWithIndexes(
 		services,
 		serviceImports,
 		backendTLSPolicies,
@@ -36,7 +92,7 @@ func translateBackends(
 	)
 }
 
-func translateBackendsWithIndexes(
+func TranslateBackendsWithIndexes(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 	backendTLSPolicies []gatewayv1alpha3.BackendTLSPolicy,
@@ -44,23 +100,23 @@ func translateBackendsWithIndexes(
 	connectTimeout time.Duration,
 	indexes shared.TranslatorIndexes,
 ) []ir.BackendCluster {
-	backendTLSValidations := backendTLSValidationIndexWithIndexes(backendTLSPolicies, indexes)
-	backendLBIndexes := buildBackendLBPolicyIndexesWithIndexes(backendLBPolicies, indexes)
-	out := translateEffectiveBackends(
-		effectiveBackendServices(services),
+	backendTLSValidations := BackendTLSValidationIndexWithIndexes(backendTLSPolicies, indexes)
+	backendLBIndexes := BuildBackendLBPolicyIndexesWithIndexes(backendLBPolicies, indexes)
+	out := TranslateEffectiveBackends(
+		EffectiveBackendServices(services),
 		backendTLSValidations,
 		backendLBIndexes,
 		connectTimeout,
 		indexes,
 	)
-	out = append(out, translateServiceImportBackends(serviceImports, backendTLSValidations, backendLBIndexes, connectTimeout, indexes)...)
+	out = append(out, TranslateServiceImportBackends(serviceImports, backendTLSValidations, backendLBIndexes, connectTimeout, indexes)...)
 	return out
 }
 
-func translateEffectiveBackends(
-	services []backendService,
+func TranslateEffectiveBackends(
+	services []BackendService,
 	backendTLSValidations map[string]*ir.BackendTLSValidation,
-	backendLB backendLBPolicyIndexes,
+	backendLB BackendLBPolicyIndexes,
 	connectTimeout time.Duration,
 	indexes shared.TranslatorIndexes,
 ) []ir.BackendCluster {
@@ -158,10 +214,10 @@ func backendProtocolForValues(protocol corev1.Protocol, appProtocol *string) str
 	}
 }
 
-func translateServiceImportBackends(
+func TranslateServiceImportBackends(
 	serviceImports []mcsv1alpha1.ServiceImport,
 	backendTLSValidations map[string]*ir.BackendTLSValidation,
-	backendLB backendLBPolicyIndexes,
+	backendLB BackendLBPolicyIndexes,
 	connectTimeout time.Duration,
 	indexes shared.TranslatorIndexes,
 ) []ir.BackendCluster {
@@ -224,7 +280,7 @@ func translateServiceImportBackends(
 	return out
 }
 
-func translateSecrets(secrets []corev1.Secret) []ir.SecretMaterial {
+func TranslateSecrets(secrets []corev1.Secret) []ir.SecretMaterial {
 	out := make([]ir.SecretMaterial, 0)
 	for _, secret := range secrets {
 		if secret.Type != corev1.SecretTypeTLS {

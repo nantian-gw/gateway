@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	"crypto/x509"
@@ -27,13 +27,13 @@ func backendTLSValidationIndex(
 	configMaps []corev1.ConfigMap,
 	policies []gatewayv1alpha3.BackendTLSPolicy,
 ) map[string]*ir.BackendTLSValidation {
-	return backendTLSValidationIndexWithIndexes(
+	return BackendTLSValidationIndexWithIndexes(
 		policies,
 		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, configMaps, nil),
 	)
 }
 
-func backendTLSValidationIndexWithIndexes(
+func BackendTLSValidationIndexWithIndexes(
 	policies []gatewayv1alpha3.BackendTLSPolicy,
 	indexes shared.TranslatorIndexes,
 ) map[string]*ir.BackendTLSValidation {

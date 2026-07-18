@@ -1265,8 +1265,8 @@ func TestBuildRoutesForSnapshotAddsTLSRouteTerminateStreamRoute(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "gateway-cert", Namespace: "default"},
 				Type:       corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			&corev1.Service{

@@ -1,4 +1,4 @@
-package translator
+package backends
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -10,37 +10,49 @@ import (
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const (
-	backendRefMetaValid  = "nantian.dev/backend-ref-valid"
-	backendRefMetaReason = "nantian.dev/backend-ref-reason"
+	BackendRefMetaValid  = "nantian.dev/backend-ref-valid"
+	BackendRefMetaReason = "nantian.dev/backend-ref-reason"
 )
 
-type routeKind string
+// RouteKind identifies a route kind for backend ref validation.
+type RouteKind string
 
 const (
-	routeKindHTTP routeKind = "HTTPRoute"
-	routeKindGRPC routeKind = "GRPCRoute"
-	routeKindTCP  routeKind = "TCPRoute"
-	routeKindUDP  routeKind = "UDPRoute"
-	routeKindTLS  routeKind = "TLSRoute"
+	RouteKindHTTP RouteKind = "HTTPRoute"
+	RouteKindGRPC RouteKind = "GRPCRoute"
+	RouteKindTCP  RouteKind = "TCPRoute"
+	RouteKindUDP  RouteKind = "UDPRoute"
+	RouteKindTLS  RouteKind = "TLSRoute"
 )
 
-type backendRefTranslator struct {
+// HTTPFilterFunc resolves HTTP route filters to IR filters.
+type HTTPFilterFunc func(filters []gatewayv1.HTTPRouteFilter, defaultNamespace string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter
+
+// GRPCFilterFunc resolves GRPC route filters to IR filters.
+type GRPCFilterFunc func(filters []gatewayv1.GRPCRouteFilter, defaultNamespace string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter
+
+type BackendRefTranslator struct {
 	servicePorts               map[string]map[uint32]struct{}
 	serviceImportPorts         map[string]map[uint32]struct{}
 	referenceGrantsByNamespace map[string][]gatewayv1beta1.ReferenceGrant
 	extensionResolver          extfilter.Resolver
+	httpFilter                 HTTPFilterFunc
+	grpcFilter                 GRPCFilterFunc
 }
 
-func newBackendRefTranslator(
+func NewBackendRefTranslator(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,
 	referenceGrants []gatewayv1beta1.ReferenceGrant,
 	extensionResolver extfilter.Resolver,
-) backendRefTranslator {
+	httpFilter HTTPFilterFunc,
+	grpcFilter GRPCFilterFunc,
+) BackendRefTranslator {
 	servicePorts := make(map[string]map[uint32]struct{}, len(services))
 	for _, service := range services {
 		key := shared.BackendObjectKey(service.Namespace, service.Name)
@@ -61,16 +73,18 @@ func newBackendRefTranslator(
 		serviceImportPorts[key] = ports
 	}
 
-	return backendRefTranslator{
+	return BackendRefTranslator{
 		servicePorts:               servicePorts,
 		serviceImportPorts:         serviceImportPorts,
 		referenceGrantsByNamespace: indexReferenceGrantsByNamespace(referenceGrants),
 		extensionResolver:          extensionResolver,
+		httpFilter:                 httpFilter,
+		grpcFilter:                 grpcFilter,
 	}
 }
 
-func (t backendRefTranslator) annotateHTTPRoute(target *ir.HTTPRoute, source gatewayv1.HTTPRoute) {
-	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
+func (t BackendRefTranslator) AnnotateHTTPRoute(target *ir.HTTPRoute, source gatewayv1.HTTPRoute) {
+	allowCrossNamespaceRefs := RouteUsesOnlyServiceParents(target.ParentRefs)
 	validation := gatewayapi.ValidateHTTPRouteRules(source)
 	invalidRules := make(map[int]struct{}, len(validation.InvalidRuleIndexes))
 	for _, index := range validation.InvalidRuleIndexes {
@@ -86,7 +100,7 @@ func (t backendRefTranslator) annotateHTTPRoute(target *ir.HTTPRoute, source gat
 		}
 		target.Rules[targetRuleIndex].BackendRefs = t.httpBackendRefs(
 			source.Namespace,
-			routeKindHTTP,
+			RouteKindHTTP,
 			allowCrossNamespaceRefs,
 			rule.BackendRefs,
 		)
@@ -94,57 +108,57 @@ func (t backendRefTranslator) annotateHTTPRoute(target *ir.HTTPRoute, source gat
 	}
 }
 
-func (t backendRefTranslator) annotateGRPCRoute(target *ir.GRPCRoute, source gatewayv1.GRPCRoute) {
-	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
+func (t BackendRefTranslator) AnnotateGRPCRoute(target *ir.GRPCRoute, source gatewayv1.GRPCRoute) {
+	allowCrossNamespaceRefs := RouteUsesOnlyServiceParents(target.ParentRefs)
 	for index, rule := range source.Spec.Rules {
 		target.Rules[index].BackendRefs = t.grpcBackendRefs(
 			source.Namespace,
-			routeKindGRPC,
+			RouteKindGRPC,
 			allowCrossNamespaceRefs,
 			rule.BackendRefs,
 		)
 	}
 }
 
-func (t backendRefTranslator) annotateTCPRoute(target *ir.StreamRoute, source gatewayv1alpha2.TCPRoute) {
-	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
+func (t BackendRefTranslator) AnnotateTCPRoute(target *ir.StreamRoute, source gatewayv1alpha2.TCPRoute) {
+	allowCrossNamespaceRefs := RouteUsesOnlyServiceParents(target.ParentRefs)
 	for index, rule := range source.Spec.Rules {
 		target.Rules[index].BackendRefs = t.routeBackendRefs(
 			source.Namespace,
-			routeKindTCP,
+			RouteKindTCP,
 			allowCrossNamespaceRefs,
 			rule.BackendRefs,
 		)
 	}
 }
 
-func (t backendRefTranslator) annotateUDPRoute(target *ir.StreamRoute, source gatewayv1alpha2.UDPRoute) {
-	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
+func (t BackendRefTranslator) AnnotateUDPRoute(target *ir.StreamRoute, source gatewayv1alpha2.UDPRoute) {
+	allowCrossNamespaceRefs := RouteUsesOnlyServiceParents(target.ParentRefs)
 	for index, rule := range source.Spec.Rules {
 		target.Rules[index].BackendRefs = t.routeBackendRefs(
 			source.Namespace,
-			routeKindUDP,
+			RouteKindUDP,
 			allowCrossNamespaceRefs,
 			rule.BackendRefs,
 		)
 	}
 }
 
-func (t backendRefTranslator) annotateTLSRoute(target *ir.StreamRoute, source gatewayv1alpha2.TLSRoute) {
-	allowCrossNamespaceRefs := routeUsesOnlyServiceParents(target.ParentRefs)
+func (t BackendRefTranslator) AnnotateTLSRoute(target *ir.StreamRoute, source gatewayv1alpha2.TLSRoute) {
+	allowCrossNamespaceRefs := RouteUsesOnlyServiceParents(target.ParentRefs)
 	for index, rule := range source.Spec.Rules {
 		target.Rules[index].BackendRefs = t.routeBackendRefs(
 			source.Namespace,
-			routeKindTLS,
+			RouteKindTLS,
 			allowCrossNamespaceRefs,
 			rule.BackendRefs,
 		)
 	}
 }
 
-func (t backendRefTranslator) httpBackendRefs(
+func (t BackendRefTranslator) httpBackendRefs(
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind RouteKind,
 	allowCrossNamespaceRefs bool,
 	refs []gatewayv1.HTTPBackendRef,
 ) []ir.BackendRef {
@@ -161,13 +175,11 @@ func (t backendRefTranslator) httpBackendRefs(
 				Name:      string(ref.BackendRef.Name),
 				Port:      shared.PortValue(ref.BackendRef.Port),
 				Weight:    uint32(shared.WeightValue(ref.Weight)),
-				Filters: filtersFromHTTPWithResolver(
+				Filters: t.httpFilter(
 					ref.Filters,
 					routeNamespace,
 					t.extensionResolver,
 					extfilter.TargetHTTP,
-					nil,
-					0,
 				),
 			},
 		))
@@ -175,9 +187,9 @@ func (t backendRefTranslator) httpBackendRefs(
 	return out
 }
 
-func (t backendRefTranslator) grpcBackendRefs(
+func (t BackendRefTranslator) grpcBackendRefs(
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind RouteKind,
 	allowCrossNamespaceRefs bool,
 	refs []gatewayv1.GRPCBackendRef,
 ) []ir.BackendRef {
@@ -194,7 +206,7 @@ func (t backendRefTranslator) grpcBackendRefs(
 				Name:      string(ref.BackendRef.Name),
 				Port:      shared.PortValue(ref.BackendRef.Port),
 				Weight:    uint32(shared.WeightValue(ref.Weight)),
-				Filters: filtersFromGRPCWithResolver(
+				Filters: t.grpcFilter(
 					ref.Filters,
 					routeNamespace,
 					t.extensionResolver,
@@ -206,9 +218,9 @@ func (t backendRefTranslator) grpcBackendRefs(
 	return out
 }
 
-func (t backendRefTranslator) routeBackendRefs(
+func (t BackendRefTranslator) routeBackendRefs(
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind RouteKind,
 	allowCrossNamespaceRefs bool,
 	refs []gatewayv1.BackendRef,
 ) []ir.BackendRef {
@@ -231,21 +243,21 @@ func (t backendRefTranslator) routeBackendRefs(
 	return out
 }
 
-func (t backendRefTranslator) annotateBackendRef(
+func (t BackendRefTranslator) annotateBackendRef(
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind RouteKind,
 	allowCrossNamespaceRefs bool,
 	ref ir.BackendRef,
 ) ir.BackendRef {
-	if metadata := t.backendRefMetadata(routeNamespace, routeKind, allowCrossNamespaceRefs, ref); len(metadata) > 0 {
+	if metadata := t.BackendRefMetadata(routeNamespace, routeKind, allowCrossNamespaceRefs, ref); len(metadata) > 0 {
 		ref.Metadata = metadata
 	}
 	return ref
 }
 
-func (t backendRefTranslator) backendRefMetadata(
+func (t BackendRefTranslator) BackendRefMetadata(
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind RouteKind,
 	allowCrossNamespaceRefs bool,
 	ref ir.BackendRef,
 ) map[string]string {
@@ -254,12 +266,12 @@ func (t backendRefTranslator) backendRefMetadata(
 		return invalidBackendRefMetadata(string(gatewayv1.RouteReasonInvalidKind))
 	}
 
-	targetKind, ok := backendKindForRef(ref.Group, ref.Kind)
+	targetKind, ok := BackendKindForRef(ref.Group, ref.Kind)
 	if !ok {
 		return invalidBackendRefMetadata(string(gatewayv1.RouteReasonInvalidKind))
 	}
 
-	if ref.Namespace != routeNamespace && !allowCrossNamespaceRefs && !referenceGranted(
+	if ref.Namespace != routeNamespace && !allowCrossNamespaceRefs && !ReferenceGranted(
 		t.referenceGrantsByNamespace[ref.Namespace],
 		ref.Namespace,
 		gatewayv1beta1.ReferenceGrantFrom{
@@ -270,7 +282,7 @@ func (t backendRefTranslator) backendRefMetadata(
 		gatewayv1beta1.ReferenceGrantTo{
 			Group: gatewayv1beta1.Group(targetGroup),
 			Kind:  gatewayv1beta1.Kind(targetKind),
-			Name:  objectNamePtr(ref.Name),
+			Name:  ObjectNamePtr(ref.Name),
 		},
 	) {
 		return invalidBackendRefMetadata(string(gatewayv1.RouteReasonRefNotPermitted))
@@ -292,7 +304,7 @@ func (t backendRefTranslator) backendRefMetadata(
 	return nil
 }
 
-func (t backendRefTranslator) serviceExists(namespace string, name string, port uint32) bool {
+func (t BackendRefTranslator) serviceExists(namespace string, name string, port uint32) bool {
 	ports, ok := t.servicePorts[shared.BackendObjectKey(namespace, name)]
 	if !ok {
 		return false
@@ -304,7 +316,7 @@ func (t backendRefTranslator) serviceExists(namespace string, name string, port 
 	return ok
 }
 
-func (t backendRefTranslator) serviceImportExists(namespace string, name string, port uint32) bool {
+func (t BackendRefTranslator) serviceImportExists(namespace string, name string, port uint32) bool {
 	ports, ok := t.serviceImportPorts[shared.BackendObjectKey(namespace, name)]
 	if !ok {
 		return false
@@ -316,7 +328,7 @@ func (t backendRefTranslator) serviceImportExists(namespace string, name string,
 	return ok
 }
 
-func backendKindForRef(group string, kind string) (string, bool) {
+func BackendKindForRef(group string, kind string) (string, bool) {
 	if group == "" {
 		if kind == "" || kind == "Service" {
 			return "Service", true
@@ -331,12 +343,12 @@ func backendKindForRef(group string, kind string) (string, bool) {
 
 func invalidBackendRefMetadata(reason string) map[string]string {
 	return map[string]string{
-		backendRefMetaValid:  "false",
-		backendRefMetaReason: reason,
+		BackendRefMetaValid:  "false",
+		BackendRefMetaReason: reason,
 	}
 }
 
-func referenceGranted(
+func ReferenceGranted(
 	grants []gatewayv1beta1.ReferenceGrant,
 	targetNamespace string,
 	from gatewayv1beta1.ReferenceGrantFrom,
@@ -395,20 +407,39 @@ func referenceGrantToAllowed(
 	return false
 }
 
-func objectNamePtr(name string) *gatewayv1beta1.ObjectName {
+func ObjectNamePtr(name string) *gatewayv1beta1.ObjectName {
 	item := gatewayv1beta1.ObjectName(name)
 	return &item
 }
 
-func routeKindName(kind routeKind) string {
+func routeKindName(kind RouteKind) string {
 	return string(kind)
 }
 
-func routeGroupForKind(kind routeKind) string {
+func routeGroupForKind(kind RouteKind) string {
 	switch kind {
-	case routeKindHTTP, routeKindGRPC, routeKindTCP, routeKindUDP, routeKindTLS:
+	case RouteKindHTTP, RouteKindGRPC, RouteKindTCP, RouteKindUDP, RouteKindTLS:
 		return gatewayv1.GroupName
 	default:
 		return gatewayv1.GroupName
 	}
+}
+
+// RouteUsesOnlyServiceParents reports whether every parent ref targets a
+// Service (used to determine if cross-namespace backend refs are allowed).
+func RouteUsesOnlyServiceParents(parentRefs []ir.ParentRef) bool {
+	if len(parentRefs) == 0 {
+		return false
+	}
+	for _, parentRef := range parentRefs {
+		if !IsServiceParentRef(parentRef) {
+			return false
+		}
+	}
+	return true
+}
+
+// IsServiceParentRef reports whether the parent ref targets a Kubernetes Service.
+func IsServiceParentRef(parentRef ir.ParentRef) bool {
+	return parentRef.Group == "" && parentRef.Kind == mesh.FrontendKindService
 }

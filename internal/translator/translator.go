@@ -29,6 +29,7 @@ import (
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/routepolicy"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
@@ -462,25 +463,31 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		)...,
 	)
 
-	backendRefs := newBackendRefTranslator(
+	backendRefs := backends.NewBackendRefTranslator(
 		filteredServices,
 		serviceImports,
 		referenceGrants,
 		extfilter.NewResolver(mergedConfigMaps),
+		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return filtersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+		},
+		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return filtersFromGRPCWithResolver(filters, ns, resolver, target)
+		},
 	)
 
 	annotGroup, _ := errgroup.WithContext(ctx)
 	for idx := range httpRoutes.Items {
 		idx := idx
 		annotGroup.Go(func() error {
-			backendRefs.annotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
+			backendRefs.AnnotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
 			return nil
 		})
 	}
 	for idx := range snapshot.GRPCRoutes {
 		idx := idx
 		annotGroup.Go(func() error {
-			backendRefs.annotateGRPCRoute(&snapshot.GRPCRoutes[idx], grpcRoutes.Items[idx])
+			backendRefs.AnnotateGRPCRoute(&snapshot.GRPCRoutes[idx], grpcRoutes.Items[idx])
 			return nil
 		})
 	}
@@ -489,7 +496,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
-			backendRefs.annotateTCPRoute(&snapshot.StreamRoutes[sIdx], tcpRoutes.Items[idx])
+			backendRefs.AnnotateTCPRoute(&snapshot.StreamRoutes[sIdx], tcpRoutes.Items[idx])
 			return nil
 		})
 		streamIdx++
@@ -498,7 +505,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
-			backendRefs.annotateUDPRoute(&snapshot.StreamRoutes[sIdx], udpRoutes.Items[idx])
+			backendRefs.AnnotateUDPRoute(&snapshot.StreamRoutes[sIdx], udpRoutes.Items[idx])
 			return nil
 		})
 		streamIdx++
@@ -507,7 +514,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
-			backendRefs.annotateTLSRoute(&snapshot.StreamRoutes[sIdx], tlsRoutes.Items[idx])
+			backendRefs.AnnotateTLSRoute(&snapshot.StreamRoutes[sIdx], tlsRoutes.Items[idx])
 			return nil
 		})
 		streamIdx++
@@ -531,7 +538,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		}
 	}
 
-	snapshot.Backends = translateBackendsWithIndexes(
+	snapshot.Backends = backends.TranslateBackendsWithIndexes(
 		filteredServices,
 		serviceImports,
 		backendTLSPolicies,
@@ -567,7 +574,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	snapshot.Workloads = translateWorkloads(pods)
 	attachRoutes(snapshot, filteredGateways, supportObjects.namespaces, listenerSets.Items)
 	snapshot.Secrets = filterSecretMaterialsByKeys(
-		translateSecrets(supportObjects.secrets),
+		backends.TranslateSecrets(supportObjects.secrets),
 		listenerSecretMaterialKeys(snapshot.Listeners),
 	)
 	if err := t.limits.ValidateSnapshot(snapshot); err != nil {

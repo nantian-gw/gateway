@@ -1,4 +1,4 @@
-package translator
+package backends_test
 
 import (
 	"context"
@@ -18,18 +18,19 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	"github.com/nantian-gw/gateway/internal/translator"
 	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(backend.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(backend.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	absolute := gatewayv1.Duration("5m")
 	idle := gatewayv1.Duration("30s")
@@ -64,7 +65,7 @@ func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -99,14 +100,14 @@ func TestBuildSnapshotIncludesBackendLBPolicySessionPersistence(t *testing.T) {
 
 func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(backend.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
-	must(mcsv1alpha1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(backend.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(mcsv1alpha1.AddToScheme(scheme), t)
 
 	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
@@ -136,7 +137,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
@@ -162,13 +163,13 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 
 func TestBuildSnapshotIncludesBackendLBPolicyConsistentHash(t *testing.T) {
 	scheme := runtime.NewScheme()
-	must(gatewayv1.Install(scheme), t)
-	must(gatewayv1alpha2.Install(scheme), t)
-	must(backend.Install(scheme), t)
-	must(gatewayv1alpha3.Install(scheme), t)
-	must(gatewayv1beta1.Install(scheme), t)
-	must(corev1.AddToScheme(scheme), t)
-	must(discoveryv1.AddToScheme(scheme), t)
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(backend.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 
 	strategyType := backend.LoadBalancingStrategyTypeConsistentHash
 	keyType := backend.HashKeyTypeHeader
@@ -203,7 +204,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyConsistentHash(t *testing.T) {
 		).
 		Build()
 
-	snapshot, err := New(
+	snapshot, err := translator.New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	).Build(context.Background(), client)
