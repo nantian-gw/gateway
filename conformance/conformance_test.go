@@ -36,13 +36,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 
 	options.SkipTests = []string{
 		// Data-plane dependent (translator is correct):
-		"GatewayHTTPListenerIsolation",
 		"HTTPRouteListenerHostnameMatching",
-		"HTTPRouteRedirectPortAndScheme",
-		"ListenerSetHTTPRouting",
-		"BackendTLSPolicy",
-		// Needs status reconciler enhancement:
-		"TLSRouteInvalidNoMatchingListener",
 	}
 
 	manifestFS, err := gatewayAPIManifestFS()
