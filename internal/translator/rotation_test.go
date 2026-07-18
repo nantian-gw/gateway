@@ -19,6 +19,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *testing.T) {
@@ -52,12 +53,12 @@ func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *tes
 		ObjectMeta: metav1.ObjectMeta{Name: "example-cert", Namespace: "default"},
 		Type:       corev1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"tls.crt": readTestTLSAsset(t, "client.crt"),
-			"tls.key": readTestTLSAsset(t, "client.key"),
+			"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+			"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -67,7 +68,7 @@ func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *tes
 		Build()
 
 	first := buildRotationSnapshot(t, cl, string(controllerName))
-	if got := findSnapshotSecret(t, first, "default", "example-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, first, "default", "example-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected initial cert material: %q", got)
 	}
 
@@ -123,12 +124,12 @@ func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotati
 		ObjectMeta: metav1.ObjectMeta{Name: "secondary-cert", Namespace: "default"},
 		Type:       corev1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"tls.crt": readTestTLSAsset(t, "client.crt"),
-			"tls.key": readTestTLSAsset(t, "client.key"),
+			"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+			"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -139,7 +140,7 @@ func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotati
 		Build()
 
 	first := buildRotationSnapshot(t, cl, string(controllerName))
-	if got := findSnapshotSecret(t, first, "default", "secondary-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, first, "default", "secondary-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected initial secondary cert material: %q", got)
 	}
 
@@ -195,12 +196,12 @@ func TestBuildSnapshotFallsBackToSecondaryCertificateWhenPrimaryBecomesInvalid(t
 		ObjectMeta: metav1.ObjectMeta{Name: "secondary-cert", Namespace: "default"},
 		Type:       corev1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"tls.crt": readTestTLSAsset(t, "client.crt"),
-			"tls.key": readTestTLSAsset(t, "client.key"),
+			"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+			"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -228,7 +229,7 @@ func TestBuildSnapshotFallsBackToSecondaryCertificateWhenPrimaryBecomesInvalid(t
 	if len(second.Secrets) != 1 {
 		t.Fatalf("expected only secondary secret to remain in snapshot, got %#v", second.Secrets)
 	}
-	if got := findSnapshotSecret(t, second, "default", "secondary-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, second, "default", "secondary-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected surviving secondary cert material: %q", got)
 	}
 }
@@ -272,7 +273,7 @@ func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t 
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -286,8 +287,8 @@ func TestBuildSnapshotRefreshesFrontendValidationBundleAfterConfigMapRotation(t 
 				ObjectMeta: metav1.ObjectMeta{Name: "example-cert", Namespace: "default"},
 				Type:       corev1.SecretTypeTLS,
 				Data: map[string][]byte{
-					"tls.crt": readTestTLSAsset(t, "client.crt"),
-					"tls.key": readTestTLSAsset(t, "client.key"),
+					"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+					"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 				},
 			},
 			clientCA,
@@ -318,8 +319,8 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 		ObjectMeta: metav1.ObjectMeta{Name: "client-cert", Namespace: "default"},
 		Type:       corev1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"tls.crt": readTestTLSAsset(t, "client.crt"),
-			"tls.key": readTestTLSAsset(t, "client.key"),
+			"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+			"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 		},
 	}
 	gateway := &gatewayv1.Gateway{
@@ -341,7 +342,7 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -359,7 +360,7 @@ func TestBuildSnapshotRefreshesBackendClientCertificateSecretMaterialAfterRotati
 	if got := first.Listeners[0].BackendTLS.ClientCertificateRef; got != "default/client-cert" {
 		t.Fatalf("unexpected backend client cert ref: %q", got)
 	}
-	if got := findSnapshotSecret(t, first, "default", "client-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, first, "default", "client-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected initial backend client cert material: %q", got)
 	}
 
@@ -385,7 +386,7 @@ func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testin
 	ca := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{Name: "orders-ca", Namespace: "default"},
 		Data: map[string]string{
-			"ca.crt": string(readTestTLSAsset(t, "client.crt")),
+			"ca.crt": string(testutil.ReadTestTLSAsset(t, "client.crt")),
 		},
 	}
 	policy := &gatewayv1alpha3.BackendTLSPolicy{
@@ -397,7 +398,7 @@ func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testin
 					Kind:  "Service",
 					Name:  "orders",
 				},
-				SectionName: sectionNamePtr("https"),
+				SectionName: testutil.SectionNamePtr("https"),
 			}},
 			Validation: gatewayv1.BackendTLSPolicyValidation{
 				Hostname: "orders.old.example",
@@ -412,7 +413,7 @@ func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testin
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -440,7 +441,7 @@ func TestBuildSnapshotRefreshesBackendTLSPolicyValidationAfterRotation(t *testin
 	if firstValidation.Hostname != "orders.old.example" {
 		t.Fatalf("unexpected initial hostname: %q", firstValidation.Hostname)
 	}
-	if firstValidation.CAPEMs[0] != string(readTestTLSAsset(t, "client.crt")) {
+	if firstValidation.CAPEMs[0] != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected initial CA bundle: %q", firstValidation.CAPEMs[0])
 	}
 	if firstValidation.SubjectAltNames[0].Value != "orders.old.svc" {

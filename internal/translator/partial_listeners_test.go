@@ -12,14 +12,15 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildGatewayListenersForSnapshotIncludesListenerSets(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	listenerHostname := gatewayv1.Hostname("listener-set.example.com")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -79,12 +80,12 @@ func TestBuildGatewayListenersForSnapshotIncludesListenerSets(t *testing.T) {
 }
 
 func TestBuildGatewayListenersForSnapshotAddsSecondListenerSetToExistingSnapshot(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	ls1Hostname := gatewayv1.Hostname("listener-set-1.example.com")
 	ls2Hostname := gatewayv1.Hostname("listener-set-2.example.com")
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			&gatewayv1.GatewayClass{
@@ -218,12 +219,12 @@ func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGat
 		ObjectMeta: metav1.ObjectMeta{Name: "shared-cert", Namespace: "default"},
 		Type:       corev1.SecretTypeTLS,
 		Data: map[string][]byte{
-			"tls.crt": readTestTLSAsset(t, "client.crt"),
-			"tls.key": readTestTLSAsset(t, "client.key"),
+			"tls.crt": testutil.ReadTestTLSAsset(t, "client.crt"),
+			"tls.key": testutil.ReadTestTLSAsset(t, "client.key"),
 		},
 	}
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
 			gatewayClass,
@@ -270,7 +271,7 @@ func TestBuildGatewayListenersForSnapshotPreservesSharedSecretUsedByUntouchedGat
 	if len(next.Secrets) != 1 {
 		t.Fatalf("expected shared secret to remain in snapshot, got %#v", next.Secrets)
 	}
-	if got := findSnapshotSecret(t, next, "default", "shared-cert").CertPEM; got != string(readTestTLSAsset(t, "client.crt")) {
+	if got := findSnapshotSecret(t, next, "default", "shared-cert").CertPEM; got != string(testutil.ReadTestTLSAsset(t, "client.crt")) {
 		t.Fatalf("unexpected preserved cert material: %q", got)
 	}
 }

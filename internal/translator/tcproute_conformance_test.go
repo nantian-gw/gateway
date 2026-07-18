@@ -16,6 +16,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 )
 
 func TestBuildMarksTCPRouteCrossNamespaceBackendWithoutGrant(t *testing.T) {
@@ -70,10 +72,10 @@ func TestBuildMarksTCPRouteCrossNamespaceBackendWithoutGrant(t *testing.T) {
 	)
 
 	backend := snapshot.StreamRoutes[0].Rules[0].BackendRefs[0]
-	if backend.Metadata[backendRefMetaValid] != "false" {
+	if backend.Metadata[backends.BackendRefMetaValid] != "false" {
 		t.Fatalf("expected invalid TCPRoute backend metadata, got %#v", backend.Metadata)
 	}
-	if backend.Metadata[backendRefMetaReason] != string(gatewayv1.RouteReasonRefNotPermitted) {
+	if backend.Metadata[backends.BackendRefMetaReason] != string(gatewayv1.RouteReasonRefNotPermitted) {
 		t.Fatalf("unexpected TCPRoute backend reason: %#v", backend.Metadata)
 	}
 }
@@ -121,7 +123,7 @@ func TestBuildAllowsTCPRouteCrossNamespaceBackendWithReferenceGrant(t *testing.T
 				To: []gatewayv1beta1.ReferenceGrantTo{{
 					Group: "",
 					Kind:  "Service",
-					Name:  objectNamePtr("echo"),
+					Name:  backends.ObjectNamePtr("echo"),
 				}},
 			},
 		},
@@ -153,7 +155,7 @@ func TestBuildAllowsTCPRouteCrossNamespaceBackendWithReferenceGrant(t *testing.T
 func buildTCPRouteSupplementalSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapshot {
 	t.Helper()
 
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	baseObjects := []runtime.Object{
 		&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
@@ -183,7 +185,7 @@ func buildTCPRouteSupplementalSnapshot(t *testing.T, objects ...runtime.Object) 
 	}
 	baseObjects = append(baseObjects, objects...)
 
-	cl := newTranslatorClientBuilder(scheme).
+	cl := testutil.NewTranslatorClientBuilder(scheme).
 		WithRuntimeObjects(baseObjects...).
 		Build()
 

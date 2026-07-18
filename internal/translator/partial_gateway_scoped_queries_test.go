@@ -15,6 +15,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 )
 
 func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
@@ -107,7 +108,7 @@ func TestLoadFilteredGatewaysUsesFieldIndexes(t *testing.T) {
 }
 
 func TestLoadFilteredGatewaysSkipsGatewayListWhenNoManagedGatewayClassesExist(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
@@ -162,7 +163,7 @@ func TestLoadFilteredGatewaysSkipsGatewayListWhenNoManagedGatewayClassesExist(t 
 }
 
 func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().
@@ -274,7 +275,7 @@ func TestRebuildAttachmentsForNamespacesLoadsReferencedGatewaysDirectly(t *testi
 }
 
 func TestBuildGatewayListenersForSnapshotLoadsReferencedGatewayClassesDirectly(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 
 	baseClient := fake.NewClientBuilder().

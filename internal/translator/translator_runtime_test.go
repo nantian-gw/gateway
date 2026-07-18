@@ -13,6 +13,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
 )
 
 func TestTranslateGRPCRoutePreservesRegexMethodMatchType(t *testing.T) {
@@ -36,7 +39,7 @@ func TestTranslateGRPCRoutePreservesRegexMethodMatchType(t *testing.T) {
 		},
 	}
 
-	translated := translateGRPCRoute(route)
+	translated := routes.TranslateGRPCRoute(route)
 	if len(translated.Rules) != 1 || len(translated.Rules[0].Matches) != 1 {
 		t.Fatalf("unexpected translated gRPC matches: %#v", translated.Rules)
 	}
@@ -141,7 +144,7 @@ func TestHTTPRouteTimeoutsParsesRequestAndBackendRequest(t *testing.T) {
 	request := gatewayv1.Duration("12s")
 	backendRequest := gatewayv1.Duration("3s")
 
-	timeouts := httpRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
+	timeouts := shared.HTTPRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
 		Request:        &request,
 		BackendRequest: &backendRequest,
 	})
@@ -160,7 +163,7 @@ func TestHTTPRouteTimeoutsParsesRequestAndBackendRequest(t *testing.T) {
 func TestHTTPRouteTimeoutsPreservesExplicitZeroDuration(t *testing.T) {
 	request := gatewayv1.Duration("0s")
 
-	timeouts := httpRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
+	timeouts := shared.HTTPRouteTimeouts(&gatewayv1.HTTPRouteTimeouts{
 		Request: &request,
 	})
 
@@ -179,7 +182,7 @@ func TestHTTPRouteRetryParsesAttemptsCodesAndBackoff(t *testing.T) {
 	attempts := 3
 	backoff := gatewayv1.Duration("150ms")
 
-	retry := httpRouteRetry(&gatewayv1.HTTPRouteRetry{
+	retry := routes.HTTPRouteRetry(&gatewayv1.HTTPRouteRetry{
 		Codes:    []gatewayv1.HTTPRouteRetryStatusCode{500, 503, 504},
 		Attempts: &attempts,
 		Backoff:  &backoff,
@@ -241,7 +244,7 @@ func TestTranslateHTTPRouteDropsInvalidRulesMarkedPartiallyInvalid(t *testing.T)
 		},
 	}
 
-	translated := translateHTTPRoute(route)
+	translated := routes.TranslateHTTPRoute(route)
 	if len(translated.Rules) != 1 {
 		t.Fatalf("expected 1 translated rule after dropping invalid rule, got %#v", translated.Rules)
 	}
@@ -295,7 +298,7 @@ func TestBackendProtocolUsesAppProtocolHints(t *testing.T) {
 		},
 	}
 
-	backends := translateBackends(services, nil, nil, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(services, nil, nil, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 5 {
 		t.Fatalf("expected 5 backends, got %d", len(backends))
 	}
@@ -348,7 +351,7 @@ func TestTranslateBackendsIncludesServiceImports(t *testing.T) {
 		}},
 	}}
 
-	backends := translateBackends(nil, serviceImports, slices, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(nil, serviceImports, slices, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 1 {
 		t.Fatalf("expected 1 serviceimport backend, got %d", len(backends))
 	}
@@ -395,7 +398,7 @@ func TestTranslateBackendsUsesServiceImportAppProtocolHints(t *testing.T) {
 		},
 	}}
 
-	backends := translateBackends(nil, serviceImports, nil, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(nil, serviceImports, nil, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 3 {
 		t.Fatalf("expected 3 serviceimport backends, got %d", len(backends))
 	}
@@ -434,7 +437,7 @@ func TestTranslateBackendsDoesNotInjectDefaultRequestTimeout(t *testing.T) {
 		},
 	}}
 
-	backends := translateBackends(services, serviceImports, nil, nil, nil, nil, defaultConnectTimeout)
+	backends := backends.TranslateBackends(services, serviceImports, nil, nil, nil, nil, backends.DefaultConnectTimeout)
 	if len(backends) != 2 {
 		t.Fatalf("expected 2 backends, got %d", len(backends))
 	}
@@ -458,7 +461,7 @@ func TestFiltersFromHTTPRedirectAndRewrite(t *testing.T) {
 	rewriteHost := gatewayv1.PreciseHostname("backend.internal")
 	prefixPath := "/api"
 
-	filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{
+	filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{
 		{
 			Type: gatewayv1.HTTPRouteFilterRequestRedirect,
 			RequestRedirect: &gatewayv1.HTTPRequestRedirectFilter{
@@ -528,7 +531,7 @@ func TestHTTPRequestRedirectPreservesGatewayAPIStatusCodes(t *testing.T) {
 	for _, code := range []int{303, 307, 308} {
 		code := code
 		t.Run(fmt.Sprintf("status-%d", code), func(t *testing.T) {
-			filters := filtersFromHTTP([]gatewayv1.HTTPRouteFilter{{
+			filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{{
 				Type: gatewayv1.HTTPRouteFilterRequestRedirect,
 				RequestRedirect: &gatewayv1.HTTPRequestRedirectFilter{
 					Scheme:     &redirectScheme,
@@ -544,7 +547,7 @@ func TestHTTPRequestRedirectPreservesGatewayAPIStatusCodes(t *testing.T) {
 }
 
 func TestRuleSessionPersistenceDefaultsToCookieAndStableName(t *testing.T) {
-	policy := ruleSessionPersistence("http", "default", "route", 1, &gatewayv1.SessionPersistence{})
+	policy := backends.RuleSessionPersistence("http", "default", "route", 1, &gatewayv1.SessionPersistence{})
 	if policy == nil {
 		t.Fatal("expected session persistence policy")
 	}
@@ -554,7 +557,7 @@ func TestRuleSessionPersistenceDefaultsToCookieAndStableName(t *testing.T) {
 	if policy.Cookie == nil || policy.Cookie.LifetimeType != "Session" {
 		t.Fatalf("unexpected default cookie config: %#v", policy.Cookie)
 	}
-	if policy.SessionName != defaultRouteSessionName("http", "default", "route", 1) {
+	if policy.SessionName != backends.DefaultRouteSessionName("http", "default", "route", 1) {
 		t.Fatalf("unexpected default session name: %q", policy.SessionName)
 	}
 }
@@ -565,7 +568,7 @@ func TestRuleSessionPersistenceParsesHeaderAndTimeouts(t *testing.T) {
 	sessionType := gatewayv1.HeaderBasedSessionPersistence
 	sessionName := "x-nantian-gw-session"
 
-	policy := ruleSessionPersistence("grpc", "default", "greeter", 0, &gatewayv1.SessionPersistence{
+	policy := backends.RuleSessionPersistence("grpc", "default", "greeter", 0, &gatewayv1.SessionPersistence{
 		SessionName:     &sessionName,
 		AbsoluteTimeout: &absolute,
 		IdleTimeout:     &idle,

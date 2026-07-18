@@ -19,6 +19,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func BenchmarkBuildSnapshotRouteFanout(b *testing.B) {
@@ -144,7 +145,7 @@ func newTranslatorBenchmarkFixture(b *testing.B, routeCount int) (*Translator, c
 	b.Helper()
 
 	scheme := newTranslatorBenchmarkScheme(b)
-	k8sClient := newTranslatorClientBuilder(scheme).
+	k8sClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(translatorBenchmarkObjects(routeCount)...).
 		Build()
 
@@ -156,7 +157,7 @@ func newTranslatorBackendStormFixture(b *testing.B, routeCount int) *translatorB
 	b.Helper()
 
 	scheme := newTranslatorBenchmarkScheme(b)
-	k8sClient := newTranslatorClientBuilder(scheme).
+	k8sClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(translatorBackendStormObjects(routeCount)...).
 		Build()
 

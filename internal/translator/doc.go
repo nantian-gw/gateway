@@ -11,20 +11,17 @@
 // IR snapshot plus status summaries for the controller and gRPC publication
 // layers.
 //
-// The main file groups are:
-//   - translator*.go: full snapshot translation and shared route/listener
-//     helpers.
-//   - partial*.go: incremental rebuild helpers used when only part of the
-//     snapshot must be refreshed.
-//   - backend_*.go, backend_tls*.go, and backend_lb_policy.go: backend,
-//     BackendTLSPolicy, BackendLBPolicy, and session-persistence translation.
-//   - attachments*.go, gateway_scoped_queries.go, and
-//     policy_target_ref_indexes.go: route attachment, parent scoping, and
-//     policy target indexing.
-//   - ai_service.go, token_policy.go, and wasm_plugin.go: Nantian extension
-//     resources.
-//   - indexes.go, limits.go, and status_summary.go: support utilities used by
-//     the translation paths.
+// Sub-packages:
+//   - shared: indexes, helpers, limits, metrics, status summaries
+//   - backends: backend cluster, TLS, LB policy, session translation
+//   - routes: route and filter translation, timeout parsing
+//   - listeners: frontend validation, mesh service translation
+//   - policies: route attachment, gateway queries, Wasm/Token translation
+//   - routepolicy: RoutePolicy translation
+//   - aiservice: AIService translation
+//
+// Root package retains the Translator struct, full Build() orchestration,
+// partial rebuild methods, support object loaders, and workload translation.
 //
 // When changing this package, keep Gateway API status behavior, ReferenceGrant
 // scoping, backend policy precedence, partial rebuild behavior, and IR shape

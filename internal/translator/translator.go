@@ -24,17 +24,23 @@ import (
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
-	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	gwroutepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/listeners"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
+	"github.com/nantian-gw/gateway/internal/translator/routepolicy"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type Translator struct {
 	controllerName string
 	logger         *slog.Logger
-	limits         Limits
+	limits         shared.Limits
 }
 
 const (
@@ -43,14 +49,14 @@ const (
 )
 
 func New(controllerName string, logger *slog.Logger) *Translator {
-	return NewWithOptions(controllerName, logger, Options{})
+	return NewWithOptions(controllerName, logger, shared.Options{})
 }
 
-func NewWithOptions(controllerName string, logger *slog.Logger, options Options) *Translator {
+func NewWithOptions(controllerName string, logger *slog.Logger, options shared.Options) *Translator {
 	return &Translator{
 		controllerName: controllerName,
 		logger:         logger,
-		limits:         normalizeLimits(options.Limits),
+		limits:         shared.NormalizeLimits(options.Limits),
 	}
 }
 
@@ -159,7 +165,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		filteredGateways    []gatewayv1.Gateway
 		listenerSets        gatewayv1.ListenerSetList
 		httpRoutes          gatewayv1.HTTPRouteList
-		httpRouteRawFilters map[client.ObjectKey]rawHTTPRouteFilterConfigs
+		httpRouteRawFilters map[client.ObjectKey]routes.RawHTTPRouteFilterConfigs
 		grpcRoutes          gatewayv1.GRPCRouteList
 		tcpRoutes           gatewayv1alpha2.TCPRouteList
 		udpRoutes           gatewayv1alpha2.UDPRouteList
@@ -167,7 +173,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		referenceGrants     []gatewayv1beta1.ReferenceGrant
 		backendTLSPolicies  []gatewayv1alpha3.BackendTLSPolicy
 		backendLBPolicies   []backend.BackendLBPolicy
-		routePolicies       []routepolicy.RoutePolicy
+		routePolicies       []gwroutepolicy.RoutePolicy
 		aiServices          []aiservice.AIService
 		tokenPolicies       []tokenpolicy.TokenPolicy
 		wasmPlugins         []wasmplugin.WasmPlugin
@@ -184,14 +190,14 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		&filteredGateways, &listenerSets, &httpRoutes, &grpcRoutes,
 		&tcpRoutes, &udpRoutes, &tlsRoutes, &services, &serviceImports, &endpointSlices,
 	); err != nil {
-		metricTranslationErrors.WithLabelValues("routes").Inc()
+		shared.MetricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.Go(func() error {
 		var err error
-		httpRouteRawFilters, err = loadHTTPRouteRawFilterConfigs(groupCtx, cl, httpRoutes.Items)
+		httpRouteRawFilters, err = routes.LoadHTTPRouteRawFilterConfigs(groupCtx, cl, httpRoutes.Items)
 		return err
 	})
 	group.Go(func() error {
@@ -222,7 +228,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range httpRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			snapshot.HTTPRoutes[i] = translateHTTPRouteWithDefaultGateways(
+			snapshot.HTTPRoutes[i] = routes.TranslateHTTPRouteWithDefaultGateways(
 				httpRoutes.Items[i],
 				extensionResolver,
 				httpRouteRawFilters[client.ObjectKeyFromObject(&httpRoutes.Items[i])],
@@ -235,7 +241,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range grpcRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			snapshot.GRPCRoutes[i] = translateGRPCRouteWithDefaultGateways(grpcRoutes.Items[i], extensionResolver, filteredGateways)
+			snapshot.GRPCRoutes[i] = routes.TranslateGRPCRouteWithDefaultGateways(grpcRoutes.Items[i], extensionResolver, filteredGateways)
 			return nil
 		})
 	}
@@ -244,7 +250,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range tcpRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			tcpResults[i] = translateTCPRouteWithDefaultGateways(tcpRoutes.Items[i], filteredGateways)
+			tcpResults[i] = routes.TranslateTCPRouteWithDefaultGateways(tcpRoutes.Items[i], filteredGateways)
 			return nil
 		})
 	}
@@ -252,7 +258,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range udpRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			udpResults[i] = translateUDPRouteWithDefaultGateways(udpRoutes.Items[i], filteredGateways)
+			udpResults[i] = routes.TranslateUDPRouteWithDefaultGateways(udpRoutes.Items[i], filteredGateways)
 			return nil
 		})
 	}
@@ -260,12 +266,12 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	for i := range tlsRoutes.Items {
 		i := i
 		transGroup.Go(func() error {
-			tlsStreamResults[i] = translateTLSRouteWithDefaultGateways(tlsRoutes.Items[i], filteredGateways)
+			tlsStreamResults[i] = routes.TranslateTLSRouteWithDefaultGateways(tlsRoutes.Items[i], filteredGateways)
 			return nil
 		})
 	}
 	if err := transGroup.Wait(); err != nil {
-		metricTranslationErrors.WithLabelValues("routes").Inc()
+		shared.MetricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
 	for i := range tcpResults {
@@ -282,12 +288,12 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	serviceKeyMap := make(map[string]client.ObjectKey, len(filteredServices))
 	for _, service := range filteredServices {
 		key := client.ObjectKey{Namespace: service.Namespace, Name: service.Name}
-		serviceKeyMap[backendObjectKey(key.Namespace, key.Name)] = key
+		serviceKeyMap[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 	serviceImportKeyMap := make(map[string]client.ObjectKey, len(serviceImports))
 	for _, serviceImport := range serviceImports {
 		key := client.ObjectKey{Namespace: serviceImport.Namespace, Name: serviceImport.Name}
-		serviceImportKeyMap[backendObjectKey(key.Namespace, key.Name)] = key
+		serviceImportKeyMap[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 	backendNamespaces := sortedBackendPolicyNamespaces(serviceKeyMap, serviceImportKeyMap)
 	referenceGrantNamespaces := mergeSortedStrings(
@@ -331,7 +337,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		return nil
 	})
 	group.Go(func() error {
-		var list routepolicy.RoutePolicyList
+		var list gwroutepolicy.RoutePolicyList
 		if err := cl.List(groupCtx, &list); err != nil {
 			if !meta.IsNoMatchError(err) && !runtime.IsNotRegisteredError(err) {
 				return err
@@ -398,7 +404,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		wasmConfigMaps, err = loadConfigMaps(
 			groupCtx,
 			cl,
-			referencedConfigMapKeysForWasmPlugins(wasmPlugins),
+			policies.ReferencedConfigMapKeysForWasmPlugins(wasmPlugins),
 		)
 		return err
 	})
@@ -406,7 +412,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		return nil, err
 	}
 
-	if err := t.limits.validateInputObjects(
+	if err := t.limits.ValidateInputObjects(
 		len(filteredGateways) +
 			len(httpRoutes.Items) +
 			len(grpcRoutes.Items) +
@@ -427,7 +433,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 
 	filteredEndpointSlices := resources.FilterEndpointSlices(endpointSlices)
 	mergedConfigMaps := mergeConfigMaps(supportObjects.configMaps, backendConfigMaps, wasmConfigMaps)
-	indexes := newTranslatorIndexes(
+	indexes := shared.NewTranslatorIndexes(
 		filteredServices,
 		serviceImports,
 		filteredEndpointSlices,
@@ -448,8 +454,8 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	snapshot.Listeners = append(
 		snapshot.Listeners,
-		translateMeshServiceListeners(
-			collectMeshServiceFrontends(
+		listeners.TranslateMeshServiceListeners(
+			listeners.CollectMeshServiceFrontends(
 				filteredServices,
 				httpRoutes.Items,
 				grpcRoutes.Items,
@@ -460,25 +466,31 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		)...,
 	)
 
-	backendRefs := newBackendRefTranslator(
+	backendRefs := backends.NewBackendRefTranslator(
 		filteredServices,
 		serviceImports,
 		referenceGrants,
 		extfilter.NewResolver(mergedConfigMaps),
+		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return routes.FiltersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+		},
+		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return routes.FiltersFromGRPCWithResolver(filters, ns, resolver, target)
+		},
 	)
 
 	annotGroup, _ := errgroup.WithContext(ctx)
 	for idx := range httpRoutes.Items {
 		idx := idx
 		annotGroup.Go(func() error {
-			backendRefs.annotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
+			backendRefs.AnnotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
 			return nil
 		})
 	}
 	for idx := range snapshot.GRPCRoutes {
 		idx := idx
 		annotGroup.Go(func() error {
-			backendRefs.annotateGRPCRoute(&snapshot.GRPCRoutes[idx], grpcRoutes.Items[idx])
+			backendRefs.AnnotateGRPCRoute(&snapshot.GRPCRoutes[idx], grpcRoutes.Items[idx])
 			return nil
 		})
 	}
@@ -487,7 +499,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
-			backendRefs.annotateTCPRoute(&snapshot.StreamRoutes[sIdx], tcpRoutes.Items[idx])
+			backendRefs.AnnotateTCPRoute(&snapshot.StreamRoutes[sIdx], tcpRoutes.Items[idx])
 			return nil
 		})
 		streamIdx++
@@ -496,7 +508,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
-			backendRefs.annotateUDPRoute(&snapshot.StreamRoutes[sIdx], udpRoutes.Items[idx])
+			backendRefs.AnnotateUDPRoute(&snapshot.StreamRoutes[sIdx], udpRoutes.Items[idx])
 			return nil
 		})
 		streamIdx++
@@ -505,7 +517,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
-			backendRefs.annotateTLSRoute(&snapshot.StreamRoutes[sIdx], tlsRoutes.Items[idx])
+			backendRefs.AnnotateTLSRoute(&snapshot.StreamRoutes[sIdx], tlsRoutes.Items[idx])
 			return nil
 		})
 		streamIdx++
@@ -513,14 +525,14 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	_ = annotGroup.Wait()
 
 	if len(routePolicies) > 0 {
-		routePolicyIndexes := buildRoutePolicyIndexes(routePolicies, snapshot.HTTPRoutes, filteredGateways)
+		routePolicyIndexes := routepolicy.BuildRoutePolicyIndexes(routePolicies, snapshot.HTTPRoutes, filteredGateways)
 		for i := range snapshot.HTTPRoutes {
 			key := snapshot.HTTPRoutes[i].Namespace + "/" + snapshot.HTTPRoutes[i].Name
 			if cfg, ok := routePolicyIndexes[key]; ok {
 				snapshot.HTTPRoutes[i].RoutePolicy = cfg
 			}
 		}
-		grpcRoutePolicyIndexes := buildRoutePolicyIndexes(routePolicies, grpcRoutesToHTTP(snapshot.GRPCRoutes), filteredGateways)
+		grpcRoutePolicyIndexes := routepolicy.BuildRoutePolicyIndexes(routePolicies, routepolicy.GrpcRoutesToHTTP(snapshot.GRPCRoutes), filteredGateways)
 		for i := range snapshot.GRPCRoutes {
 			key := snapshot.GRPCRoutes[i].Namespace + "/" + snapshot.GRPCRoutes[i].Name
 			if cfg, ok := grpcRoutePolicyIndexes[key]; ok {
@@ -529,7 +541,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		}
 	}
 
-	snapshot.Backends = translateBackendsWithIndexes(
+	snapshot.Backends = backends.TranslateBackendsWithIndexes(
 		filteredServices,
 		serviceImports,
 		backendTLSPolicies,
@@ -539,36 +551,36 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	)
 	aiServiceConfigs := aiservicetranslator.TranslateAll(aiServices)
 	for i := range snapshot.Backends {
-		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
+		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := aiServiceConfigs[key]; ok {
 			cfgCopy := cfg
 			snapshot.Backends[i].AIService = &cfgCopy
 		}
 	}
-	routeBackends := buildRouteBackendServices(httpRoutes.Items)
-	tokenPolicyConfigs := translateTokenPolicies(tokenPolicies, serviceKeySet(filteredServices), serviceImportKeySet(serviceImports), routeBackends)
+	routeBackends := policies.BuildRouteBackendServices(httpRoutes.Items)
+	tokenPolicyConfigs := policies.TranslateTokenPolicies(tokenPolicies, policies.ServiceKeySet(filteredServices), policies.ServiceImportKeySet(serviceImports), routeBackends)
 	for i := range snapshot.Backends {
-		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
+		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := tokenPolicyConfigs[key]; ok {
 			cfgCopy := cfg
 			snapshot.Backends[i].TokenPolicy = &cfgCopy
 		}
 	}
-	wasmPluginConfigs := translateWasmPlugins(wasmPlugins, mergedConfigMaps, t.logger)
+	wasmPluginConfigs := policies.TranslateWasmPlugins(wasmPlugins, mergedConfigMaps, t.logger)
 	for i := range snapshot.Backends {
-		key := backendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
+		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := wasmPluginConfigs[key]; ok {
 			cfgCopy := cfg
 			snapshot.Backends[i].WasmPlugin = &cfgCopy
 		}
 	}
 	snapshot.Workloads = translateWorkloads(pods)
-	attachRoutes(snapshot, filteredGateways, supportObjects.namespaces, listenerSets.Items)
+	policies.AttachRoutes(snapshot, filteredGateways, supportObjects.namespaces, listenerSets.Items, gatewayAllowsListenerSet, mergeListenerSetListeners)
 	snapshot.Secrets = filterSecretMaterialsByKeys(
-		translateSecrets(supportObjects.secrets),
+		backends.TranslateSecrets(supportObjects.secrets),
 		listenerSecretMaterialKeys(snapshot.Listeners),
 	)
-	if err := t.limits.validateSnapshot(snapshot); err != nil {
+	if err := t.limits.ValidateSnapshot(snapshot); err != nil {
 		return nil, err
 	}
 

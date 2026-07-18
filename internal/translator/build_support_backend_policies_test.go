@@ -17,13 +17,15 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	sessionType := gatewayv1.CookieBasedSessionPersistence
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
@@ -91,9 +93,7 @@ func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *t
 	backends, err := New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).BuildBackendsForSnapshot(context.Background(), fakeScopedPolicyListValidatingTranslatorClient{
-		Client: baseClient,
-	}, current, nil, nil)
+	).BuildBackendsForSnapshot(context.Background(), testutil.NewFakeScopedPolicyListValidatingClient(baseClient), current, nil, nil)
 	if err != nil {
 		t.Fatalf("BuildBackendsForSnapshot returned error: %v", err)
 	}
@@ -106,9 +106,9 @@ func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *t
 	}
 }
 func TestBuildBackendsForSnapshotPreservesUntouchedBackends(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
@@ -228,10 +228,10 @@ func TestBuildBackendsForSnapshotPreservesUntouchedBackends(t *testing.T) {
 	}
 }
 func TestLoadBackendTLSPoliciesForNamespacesScopesAndFilters(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1alpha3.BackendTLSPolicy{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo-tls", Namespace: "default"},
@@ -270,7 +270,7 @@ func TestLoadBackendTLSPoliciesForNamespacesScopesAndFilters(t *testing.T) {
 
 	policies, err := loadBackendTLSPoliciesForNamespaces(
 		context.Background(),
-		fakeScopedPolicyListValidatingTranslatorClient{Client: baseClient},
+		testutil.NewFakeScopedPolicyListValidatingClient(baseClient),
 		[]string{"default"},
 		map[string]client.ObjectKey{
 			"default/echo": {Namespace: "default", Name: "echo"},
@@ -288,7 +288,7 @@ func TestLoadBackendTLSPoliciesForNamespacesScopesAndFilters(t *testing.T) {
 	}
 }
 func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 	echoPolicy := &gatewayv1alpha3.BackendTLSPolicy{
 		ObjectMeta: metav1.ObjectMeta{Name: "echo-tls", Namespace: "default"},
@@ -331,9 +331,9 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 		t.Fatalf("encode spare BackendTLSPolicy: %v", err)
 	}
 
-	baseClient := newTranslatorClientBuilder(scheme).
-		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), backendTLSPolicyTargetRefIndex, func(object client.Object) []string {
-			return backendTLSPolicyTargetRefIndexKeys(object)
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
+		WithIndex(gatewayapi.NewBackendTLSPolicyV1Object(), policies.BackendTLSPolicyTargetRefIndex, func(object client.Object) []string {
+			return policies.BackendTLSPolicyTargetRefIndexKeys(object)
 		}).
 		WithObjects(
 			echoRaw,
@@ -343,12 +343,12 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 
 	policies, err := loadBackendTLSPoliciesForNamespaces(
 		context.Background(),
-		fakeIndexedPolicyListValidatingTranslatorClient{
-			Client: baseClient,
-			expectedBackendTLSTargets: map[string]struct{}{
-				backendPolicyTargetRefIndexValue("", "Service", "echo"): {},
+		testutil.NewFakeIndexedPolicyListValidatingClient(baseClient,
+			map[string]struct{}{
+				policies.BackendPolicyTargetRefIndexValue("", "Service", "echo"): {},
 			},
-		},
+			nil,
+		),
 		[]string{"default"},
 		map[string]client.ObjectKey{
 			"default/echo": {Namespace: "default", Name: "echo"},
@@ -366,7 +366,7 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 	}
 }
 func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupported(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
 	echoPolicy := &gatewayv1alpha3.BackendTLSPolicy{
@@ -410,7 +410,7 @@ func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupporte
 		t.Fatalf("encode spare BackendTLSPolicy: %v", err)
 	}
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			echoRaw,
 			spareRaw,
@@ -419,7 +419,7 @@ func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupporte
 
 	policies, err := loadBackendTLSPoliciesForNamespaces(
 		context.Background(),
-		fieldSelectorRejectingTranslatorClient{Client: baseClient},
+		testutil.NewFakeFieldSelectorRejectingClient(baseClient),
 		[]string{"default"},
 		map[string]client.ObjectKey{
 			"default/echo": {Namespace: "default", Name: "echo"},
@@ -437,15 +437,15 @@ func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupporte
 	}
 }
 func TestLoadBackendLBPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
-	baseClient := newTranslatorClientBuilder(scheme).
-		WithIndex(&backend.BackendLBPolicy{}, backendLBPolicyTargetRefIndex, func(object client.Object) []string {
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
+		WithIndex(&backend.BackendLBPolicy{}, policies.BackendLBPolicyTargetRefIndex, func(object client.Object) []string {
 			policy, ok := object.(*backend.BackendLBPolicy)
 			if !ok {
 				return nil
 			}
-			return testBackendLBPolicyTargetRefIndexKeys(policy)
+			return testutil.BackendLBPolicyTargetRefIndexKeys(policy)
 		}).
 		WithObjects(
 			&backend.BackendLBPolicy{
@@ -473,12 +473,12 @@ func TestLoadBackendLBPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.
 
 	policies, err := loadBackendLBPoliciesForNamespaces(
 		context.Background(),
-		fakeIndexedPolicyListValidatingTranslatorClient{
-			Client: baseClient,
-			expectedBackendLBTargets: map[string]struct{}{
-				backendPolicyTargetRefIndexValue("", "Service", "echo"): {},
+		testutil.NewFakeIndexedPolicyListValidatingClient(baseClient,
+			nil,
+			map[string]struct{}{
+				policies.BackendPolicyTargetRefIndexValue("", "Service", "echo"): {},
 			},
-		},
+		),
 		[]string{"default"},
 		map[string]client.ObjectKey{
 			"default/echo": {Namespace: "default", Name: "echo"},

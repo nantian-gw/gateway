@@ -4,11 +4,15 @@ import (
 	"reflect"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
+	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 )
 
 func TestAffectedBackendRefRoutesFindsRoutesAcrossKinds(t *testing.T) {
@@ -158,11 +162,14 @@ func TestRouteBackendRefsTouchAffectedBackends(t *testing.T) {
 }
 
 func TestRefreshBackendRefUpdatesAndCleansValidationMetadata(t *testing.T) {
-	annotator := backendRefTranslator{
-		servicePorts: map[string]map[uint32]struct{}{
-			"apps/orders": {80: {}},
-		},
-	}
+	annotator := backends.NewBackendRefTranslator(
+		[]corev1.Service{{ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: "apps"}, Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 80}}}}},
+		nil,
+		nil,
+		extfilter.Resolver{},
+		nil,
+		nil,
+	)
 
 	validRef := refreshBackendRef(
 		ir.BackendRef{
@@ -170,13 +177,13 @@ func TestRefreshBackendRefUpdatesAndCleansValidationMetadata(t *testing.T) {
 			Name:      "orders",
 			Port:      80,
 			Metadata: map[string]string{
-				backendRefMetaValid:  "false",
-				backendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
+				backends.BackendRefMetaValid:  "false",
+				backends.BackendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
 				"keep":               "value",
 			},
 		},
 		"apps",
-		routeKindHTTP,
+		backends.RouteKindHTTP,
 		false,
 		annotator,
 	)
@@ -190,12 +197,12 @@ func TestRefreshBackendRefUpdatesAndCleansValidationMetadata(t *testing.T) {
 			Name:      "orders",
 			Port:      80,
 			Metadata: map[string]string{
-				backendRefMetaValid:  "false",
-				backendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
+				backends.BackendRefMetaValid:  "false",
+				backends.BackendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
 			},
 		},
 		"apps",
-		routeKindHTTP,
+		backends.RouteKindHTTP,
 		false,
 		annotator,
 	)
@@ -211,13 +218,13 @@ func TestRefreshBackendRefUpdatesAndCleansValidationMetadata(t *testing.T) {
 			Metadata:  map[string]string{"keep": "value"},
 		},
 		"apps",
-		routeKindHTTP,
+		backends.RouteKindHTTP,
 		false,
 		annotator,
 	)
 	wantInvalid := map[string]string{
-		backendRefMetaValid:  "false",
-		backendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
+		backends.BackendRefMetaValid:  "false",
+		backends.BackendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
 	}
 	if !reflect.DeepEqual(invalidRef.Metadata, wantInvalid) {
 		t.Fatalf("invalidRef.Metadata = %#v, want %#v", invalidRef.Metadata, wantInvalid)
@@ -225,11 +232,14 @@ func TestRefreshBackendRefUpdatesAndCleansValidationMetadata(t *testing.T) {
 }
 
 func TestRefreshHTTPRouteBackendRefsAllowsCrossNamespaceRefsForServiceParents(t *testing.T) {
-	annotator := backendRefTranslator{
-		servicePorts: map[string]map[uint32]struct{}{
-			"shared/orders": {80: {}},
-		},
-	}
+	annotator := backends.NewBackendRefTranslator(
+		[]corev1.Service{{ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: "shared"}, Spec: corev1.ServiceSpec{Ports: []corev1.ServicePort{{Port: 80}}}}},
+		nil,
+		nil,
+		extfilter.Resolver{},
+		nil,
+		nil,
+	)
 	routes := []ir.HTTPRoute{{
 		Namespace:  "apps",
 		Name:       "http",
@@ -249,12 +259,12 @@ func TestRefreshHTTPRouteBackendRefsAllowsCrossNamespaceRefsForServiceParents(t 
 func TestRouteKindForStreamIR(t *testing.T) {
 	tests := []struct {
 		kind string
-		want routeKind
+		want backends.RouteKind
 	}{
-		{kind: "TCP", want: routeKindTCP},
-		{kind: "UDP", want: routeKindUDP},
-		{kind: "TLS", want: routeKindTLS},
-		{kind: "unknown", want: routeKindTCP},
+		{kind: "TCP", want: backends.RouteKindTCP},
+		{kind: "UDP", want: backends.RouteKindUDP},
+		{kind: "TLS", want: backends.RouteKindTLS},
+		{kind: "unknown", want: backends.RouteKindTCP},
 	}
 
 	for _, tt := range tests {

@@ -16,6 +16,8 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 type translatorSupportObjects struct {
@@ -82,14 +84,14 @@ func referencedSecretKeys(gateways []gatewayv1.Gateway) []client.ObjectKey {
 				continue
 			}
 			for _, ref := range listener.TLS.CertificateRefs {
-				if refGroup(&ref) != "" || refKind(&ref) != "Secret" || ref.Name == "" {
+				if backends.RefGroup(&ref) != "" || backends.RefKind(&ref) != "Secret" || ref.Name == "" {
 					continue
 				}
 				key := client.ObjectKey{
-					Namespace: namespaceOrDefault(ref.Namespace, gateway.Namespace),
+					Namespace: shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace),
 					Name:      string(ref.Name),
 				}
-				keys[backendObjectKey(key.Namespace, key.Name)] = key
+				keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 			}
 		}
 
@@ -99,14 +101,14 @@ func referencedSecretKeys(gateways []gatewayv1.Gateway) []client.ObjectKey {
 		}
 
 		ref := backendTLS.ClientCertificateRef
-		if refGroup(ref) != "" || refKind(ref) != "Secret" || ref.Name == "" {
+		if backends.RefGroup(ref) != "" || backends.RefKind(ref) != "Secret" || ref.Name == "" {
 			continue
 		}
 		key := client.ObjectKey{
-			Namespace: namespaceOrDefault(ref.Namespace, gateway.Namespace),
+			Namespace: shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace),
 			Name:      string(ref.Name),
 		}
-		keys[backendObjectKey(key.Namespace, key.Name)] = key
+		keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 
 	return sortedObjectKeys(keys)
@@ -128,7 +130,7 @@ func referencedConfigMapKeys(
 			}
 			for _, ref := range validation.CACertificateRefs {
 				if key, ok := configMapObjectKeyFromRef(gateway.Namespace, ref.Group, ref.Kind, ref.Namespace, ref.Name); ok {
-					keys[backendObjectKey(key.Namespace, key.Name)] = key
+					keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 				}
 			}
 		}
@@ -138,13 +140,13 @@ func referencedConfigMapKeys(
 		for _, rule := range route.Spec.Rules {
 			for _, filter := range rule.Filters {
 				if key, ok := configMapObjectKeyFromLocalRef(route.Namespace, filter.ExtensionRef); ok {
-					keys[backendObjectKey(key.Namespace, key.Name)] = key
+					keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 				}
 			}
 			for _, backendRef := range rule.BackendRefs {
 				for _, filter := range backendRef.Filters {
 					if key, ok := configMapObjectKeyFromLocalRef(route.Namespace, filter.ExtensionRef); ok {
-						keys[backendObjectKey(key.Namespace, key.Name)] = key
+						keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 					}
 				}
 			}
@@ -155,13 +157,13 @@ func referencedConfigMapKeys(
 		for _, rule := range route.Spec.Rules {
 			for _, filter := range rule.Filters {
 				if key, ok := configMapObjectKeyFromLocalRef(route.Namespace, filter.ExtensionRef); ok {
-					keys[backendObjectKey(key.Namespace, key.Name)] = key
+					keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 				}
 			}
 			for _, backendRef := range rule.BackendRefs {
 				for _, filter := range backendRef.Filters {
 					if key, ok := configMapObjectKeyFromLocalRef(route.Namespace, filter.ExtensionRef); ok {
-						keys[backendObjectKey(key.Namespace, key.Name)] = key
+						keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 					}
 				}
 			}
@@ -171,7 +173,7 @@ func referencedConfigMapKeys(
 	for _, policy := range backendTLSPolicies {
 		for _, ref := range policy.Spec.Validation.CACertificateRefs {
 			if key, ok := localConfigMapObjectKey(policy.Namespace, ref.Group, ref.Kind, ref.Name); ok {
-				keys[backendObjectKey(key.Namespace, key.Name)] = key
+				keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 			}
 		}
 	}
@@ -291,7 +293,7 @@ func configMapObjectKeyFromRef(
 		return client.ObjectKey{}, false
 	}
 	return client.ObjectKey{
-		Namespace: namespaceOrDefault(namespace, defaultNamespace),
+		Namespace: shared.NamespaceOrDefault(namespace, defaultNamespace),
 		Name:      string(name),
 	}, true
 }

@@ -19,10 +19,12 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
 )
 
 func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
@@ -49,7 +51,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 		t.Fatalf("encode BackendTLSPolicy: %v", err)
 	}
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -125,7 +127,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Service"),
-						Name:  objectNamePtr("echo"),
+						Name:  backends.ObjectNamePtr("echo"),
 					}},
 				},
 			},
@@ -149,9 +151,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 	snapshot, err := New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).Build(context.Background(), scopedBuildDependencyValidatingTranslatorClient{
-		Client: baseClient,
-	})
+	).Build(context.Background(), testutil.NewFakeScopedBuildDependencyValidatingClient(baseClient, nil))
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -173,8 +173,8 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 	}
 }
 func TestRefreshBackendRefMetadataLoadsReferencedBackendsOnDemand(t *testing.T) {
-	scheme := buildSupportScheme(t)
-	baseClient := newTranslatorClientBuilder(scheme).
+	scheme := testutil.BuildSupportScheme(t)
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
@@ -230,13 +230,12 @@ func TestRefreshBackendRefMetadataLoadsReferencedBackendsOnDemand(t *testing.T) 
 	httpRoutes, grpcRoutes, _, err := New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).RefreshBackendRefMetadata(context.Background(), validatingTranslatorClient{
-		Client: baseClient,
-		forbiddenLists: map[reflect.Type]string{
+	).RefreshBackendRefMetadata(context.Background(), testutil.NewFakeValidatingTranslatorClient(baseClient,
+		map[reflect.Type]string{
 			reflect.TypeOf(&corev1.ServiceList{}):            "RefreshBackendRefMetadata should load Services on demand",
 			reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}): "RefreshBackendRefMetadata should load ServiceImports on demand",
 		},
-	}, current)
+	), current)
 	if err != nil {
 		t.Fatalf("RefreshBackendRefMetadata returned error: %v", err)
 	}
@@ -249,8 +248,8 @@ func TestRefreshBackendRefMetadataLoadsReferencedBackendsOnDemand(t *testing.T) 
 	}
 }
 func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *testing.T) {
-	scheme := buildSupportScheme(t)
-	baseClient := newTranslatorClientBuilder(scheme).
+	scheme := testutil.BuildSupportScheme(t)
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "backends"},
@@ -274,7 +273,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Service"),
-						Name:  objectNamePtr("echo"),
+						Name:  backends.ObjectNamePtr("echo"),
 					}},
 				},
 			},
@@ -289,7 +288,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 					To: []gatewayv1beta1.ReferenceGrantTo{{
 						Group: gatewayv1beta1.Group(""),
 						Kind:  gatewayv1beta1.Kind("Service"),
-						Name:  objectNamePtr("other"),
+						Name:  backends.ObjectNamePtr("other"),
 					}},
 				},
 			},
@@ -313,9 +312,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 	httpRoutes, _, _, err := New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).RefreshBackendRefMetadata(context.Background(), fakeScopedReferenceGrantValidatingTranslatorClient{
-		Client: baseClient,
-	}, current)
+	).RefreshBackendRefMetadata(context.Background(), testutil.NewFakeScopedReferenceGrantValidatingClient(baseClient), current)
 	if err != nil {
 		t.Fatalf("RefreshBackendRefMetadata returned error: %v", err)
 	}
@@ -325,8 +322,8 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 	}
 }
 func TestRefreshBackendRefMetadataSkipsReferenceGrantLookupForSameNamespaceBackends(t *testing.T) {
-	scheme := buildSupportScheme(t)
-	baseClient := newTranslatorClientBuilder(scheme).
+	scheme := testutil.BuildSupportScheme(t)
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "apps"},
@@ -359,12 +356,11 @@ func TestRefreshBackendRefMetadataSkipsReferenceGrantLookupForSameNamespaceBacke
 	httpRoutes, _, _, err := New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).RefreshBackendRefMetadata(context.Background(), validatingTranslatorClient{
-		Client: baseClient,
-		forbiddenLists: map[reflect.Type]string{
+	).RefreshBackendRefMetadata(context.Background(), testutil.NewFakeValidatingTranslatorClient(baseClient,
+		map[reflect.Type]string{
 			reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "same-namespace backend refs should not list ReferenceGrants",
 		},
-	}, current)
+	), current)
 	if err != nil {
 		t.Fatalf("RefreshBackendRefMetadata returned error: %v", err)
 	}

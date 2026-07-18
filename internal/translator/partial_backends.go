@@ -20,6 +20,9 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func (t *Translator) BuildBackendsForSnapshot(
@@ -42,7 +45,7 @@ func (t *Translator) BuildBackendsForSnapshot(
 		serviceKeys = objectKeyMap(referencedKeys.services)
 		serviceImportKeys = objectKeyMap(referencedKeys.serviceImports)
 		for _, key := range currentBackendKeys {
-			lookupKey := backendObjectKey(key.Namespace, key.Name)
+			lookupKey := shared.BackendObjectKey(key.Namespace, key.Name)
 			_, serviceKnown := serviceKeys[lookupKey]
 			_, serviceImportKnown := serviceImportKeys[lookupKey]
 			if serviceKnown || serviceImportKnown {
@@ -88,7 +91,7 @@ func (t *Translator) BuildBackendsForNamespaces(
 	serviceKeys := objectKeyMap(filterObjectKeysByNamespaceSet(referencedKeys.services, namespaceSet))
 	serviceImportKeys := objectKeyMap(filterObjectKeysByNamespaceSet(referencedKeys.serviceImports, namespaceSet))
 	for _, key := range currentBackendKeys {
-		lookupKey := backendObjectKey(key.Namespace, key.Name)
+		lookupKey := shared.BackendObjectKey(key.Namespace, key.Name)
 		_, serviceKnown := serviceKeys[lookupKey]
 		_, serviceImportKnown := serviceImportKeys[lookupKey]
 		if serviceKnown || serviceImportKnown {
@@ -194,7 +197,7 @@ func (t *Translator) buildBackendsForKeyMaps(
 	}
 
 	filteredServices := resources.FilterServices(services)
-	indexes := newTranslatorIndexes(
+	indexes := shared.NewTranslatorIndexes(
 		filteredServices,
 		serviceImports,
 		endpointSlices,
@@ -203,12 +206,12 @@ func (t *Translator) buildBackendsForKeyMaps(
 		nil,
 	)
 
-	return mergePartialBackends(current, replacementKeys, translateBackendsWithIndexes(
+	return mergePartialBackends(current, replacementKeys, backends.TranslateBackendsWithIndexes(
 		filteredServices,
 		serviceImports,
 		backendTLSPolicies,
 		backendLBPolicies,
-		defaultConnectTimeout,
+		backends.DefaultConnectTimeout,
 		indexes,
 	)), nil
 }
@@ -263,7 +266,7 @@ func recordMeshShadowBackendKeyExpansion(
 		if key.Namespace == "" || key.Name == "" {
 			return
 		}
-		lookupKey := backendObjectKey(key.Namespace, key.Name)
+		lookupKey := shared.BackendObjectKey(key.Namespace, key.Name)
 		if _, ok := serviceKeys[lookupKey]; ok {
 			return
 		}
@@ -276,7 +279,7 @@ func recordMeshShadowBackendKeyExpansion(
 		if key.Namespace == "" || key.Name == "" {
 			return
 		}
-		replacementKeys[backendObjectKey(key.Namespace, key.Name)] = key
+		replacementKeys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 
 	if service.Labels[mesh.ShadowServiceRoleLabel] == mesh.ShadowServiceRoleValue {
@@ -312,7 +315,7 @@ func mergePartialBackends(
 	for _, backend := range existing {
 		key, ok := backendObjectKeyForCluster(backend)
 		if ok {
-			if _, replace := replacementKeys[backendObjectKey(key.Namespace, key.Name)]; replace {
+			if _, replace := replacementKeys[shared.BackendObjectKey(key.Namespace, key.Name)]; replace {
 				continue
 			}
 		}
@@ -375,7 +378,7 @@ func loadBackendTLSPoliciesForNamespaces(
 		return nil, nil
 	}
 
-	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
+	targetValuesByNamespace := policies.BackendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
 	policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
 	seen := make(map[string]struct{})
 	for _, namespace := range namespaces {
@@ -419,7 +422,7 @@ func loadBackendLBPoliciesForNamespaces(
 		return nil, nil
 	}
 
-	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
+	targetValuesByNamespace := policies.BackendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
 	policies := make([]backend.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 	for _, namespace := range namespaces {
@@ -478,7 +481,7 @@ func listBackendTLSPoliciesByTargetRefIndex(
 	namespace string,
 	targetValues []string,
 ) ([]gatewayv1alpha3.BackendTLSPolicy, bool, error) {
-	policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
+	results := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
@@ -486,10 +489,10 @@ func listBackendTLSPoliciesByTargetRefIndex(
 			ctx,
 			cl,
 			client.InNamespace(namespace),
-			client.MatchingFields{backendTLSPolicyTargetRefIndex: targetValue},
+			client.MatchingFields{policies.BackendTLSPolicyTargetRefIndex: targetValue},
 		)
 		if err != nil {
-			if isMissingFieldIndexError(err) {
+			if policies.IsMissingFieldIndexError(err) {
 				return nil, false, nil
 			}
 			return nil, false, err
@@ -500,11 +503,11 @@ func listBackendTLSPoliciesByTargetRefIndex(
 				continue
 			}
 			seen[key] = struct{}{}
-			policies = append(policies, item)
+			results = append(results, item)
 		}
 	}
 
-	return policies, true, nil
+	return results, true, nil
 }
 
 func listBackendLBPoliciesForNamespaceTargets(
@@ -538,7 +541,7 @@ func listBackendLBPoliciesByTargetRefIndex(
 	namespace string,
 	targetValues []string,
 ) ([]backend.BackendLBPolicy, bool, error) {
-	policies := make([]backend.BackendLBPolicy, 0)
+	results := make([]backend.BackendLBPolicy, 0)
 	seen := make(map[string]struct{})
 
 	for _, targetValue := range targetValues {
@@ -547,9 +550,9 @@ func listBackendLBPoliciesByTargetRefIndex(
 			ctx,
 			&list,
 			client.InNamespace(namespace),
-			client.MatchingFields{backendLBPolicyTargetRefIndex: targetValue},
+			client.MatchingFields{policies.BackendLBPolicyTargetRefIndex: targetValue},
 		); err != nil {
-			if isMissingFieldIndexError(err) {
+			if policies.IsMissingFieldIndexError(err) {
 				return nil, false, nil
 			}
 			return nil, false, err
@@ -560,11 +563,11 @@ func listBackendLBPoliciesByTargetRefIndex(
 				continue
 			}
 			seen[key] = struct{}{}
-			policies = append(policies, item)
+			results = append(results, item)
 		}
 	}
 
-	return policies, true, nil
+	return results, true, nil
 }
 
 func backendTLSPolicyTouchesKeys(
@@ -574,7 +577,7 @@ func backendTLSPolicyTouchesKeys(
 	serviceImportKeys map[string]client.ObjectKey,
 ) bool {
 	for _, targetRef := range targetRefs {
-		key := backendObjectKey(namespace, string(targetRef.Name))
+		key := shared.BackendObjectKey(namespace, string(targetRef.Name))
 		switch {
 		case string(targetRef.Group) == "" && string(targetRef.Kind) == "Service":
 			if _, ok := serviceKeys[key]; ok {
@@ -597,7 +600,7 @@ func backendLBPolicyTouchesKeys(
 	serviceImportKeys map[string]client.ObjectKey,
 ) bool {
 	for _, targetRef := range targetRefs {
-		key := backendObjectKey(namespace, string(targetRef.Name))
+		key := shared.BackendObjectKey(namespace, string(targetRef.Name))
 		switch {
 		case string(targetRef.Group) == "" && string(targetRef.Kind) == "Service":
 			if _, ok := serviceKeys[key]; ok {
@@ -624,7 +627,7 @@ func backendCatalogObjectKeysFromSnapshot(current *ir.Snapshot) []client.ObjectK
 		if !ok {
 			continue
 		}
-		keys[backendObjectKey(key.Namespace, key.Name)] = key
+		keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 	return sortedObjectKeys(keys)
 }
@@ -654,7 +657,7 @@ func objectKeyMap(groups ...[]client.ObjectKey) map[string]client.ObjectKey {
 			if key.Name == "" {
 				continue
 			}
-			keys[backendObjectKey(key.Namespace, key.Name)] = key
+			keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}
 	return keys

@@ -4,6 +4,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func affectedBackendRefRoutes(
@@ -127,13 +129,13 @@ func routeBackendRefsTouchAffectedBackends(
 			continue
 		}
 		if _, ok := namespaceSet[ref.Namespace]; ok {
-			if _, backendKindKnown := backendKindForRef(ref.Group, ref.Kind); backendKindKnown {
+			if _, backendKindKnown := backends.BackendKindForRef(ref.Group, ref.Kind); backendKindKnown {
 				return true
 			}
 		}
 
-		key := backendObjectKey(ref.Namespace, ref.Name)
-		switch kind, ok := backendKindForRef(ref.Group, ref.Kind); {
+		key := shared.BackendObjectKey(ref.Namespace, ref.Name)
+		switch kind, ok := backends.BackendKindForRef(ref.Group, ref.Kind); {
 		case !ok:
 			continue
 		case kind == "Service":
@@ -149,14 +151,14 @@ func routeBackendRefsTouchAffectedBackends(
 	return false
 }
 
-func refreshHTTPRouteBackendRefs(routes []ir.HTTPRoute, annotator backendRefTranslator) {
+func refreshHTTPRouteBackendRefs(routes []ir.HTTPRoute, annotator backends.BackendRefTranslator) {
 	for i := range routes {
-		allowCrossNamespaceRefs := routeUsesOnlyServiceParents(routes[i].ParentRefs)
+		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(routes[i].ParentRefs)
 		for j := range routes[i].Rules {
 			routes[i].Rules[j].BackendRefs = refreshBackendRefs(
 				routes[i].Rules[j].BackendRefs,
 				routes[i].Namespace,
-				routeKindHTTP,
+				backends.RouteKindHTTP,
 				allowCrossNamespaceRefs,
 				annotator,
 			)
@@ -164,14 +166,14 @@ func refreshHTTPRouteBackendRefs(routes []ir.HTTPRoute, annotator backendRefTran
 	}
 }
 
-func refreshGRPCRouteBackendRefs(routes []ir.GRPCRoute, annotator backendRefTranslator) {
+func refreshGRPCRouteBackendRefs(routes []ir.GRPCRoute, annotator backends.BackendRefTranslator) {
 	for i := range routes {
-		allowCrossNamespaceRefs := routeUsesOnlyServiceParents(routes[i].ParentRefs)
+		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(routes[i].ParentRefs)
 		for j := range routes[i].Rules {
 			routes[i].Rules[j].BackendRefs = refreshBackendRefs(
 				routes[i].Rules[j].BackendRefs,
 				routes[i].Namespace,
-				routeKindGRPC,
+				backends.RouteKindGRPC,
 				allowCrossNamespaceRefs,
 				annotator,
 			)
@@ -179,9 +181,9 @@ func refreshGRPCRouteBackendRefs(routes []ir.GRPCRoute, annotator backendRefTran
 	}
 }
 
-func refreshStreamRouteBackendRefs(routes []ir.StreamRoute, annotator backendRefTranslator) {
+func refreshStreamRouteBackendRefs(routes []ir.StreamRoute, annotator backends.BackendRefTranslator) {
 	for i := range routes {
-		allowCrossNamespaceRefs := routeUsesOnlyServiceParents(routes[i].ParentRefs)
+		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(routes[i].ParentRefs)
 		kind := routeKindForStreamIR(routes[i].Kind)
 		for j := range routes[i].Rules {
 			routes[i].Rules[j].BackendRefs = refreshBackendRefs(
@@ -198,9 +200,9 @@ func refreshStreamRouteBackendRefs(routes []ir.StreamRoute, annotator backendRef
 func refreshBackendRefs(
 	refs []ir.BackendRef,
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind backends.RouteKind,
 	allowCrossNamespaceRefs bool,
-	annotator backendRefTranslator,
+	annotator backends.BackendRefTranslator,
 ) []ir.BackendRef {
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
@@ -212,11 +214,11 @@ func refreshBackendRefs(
 func refreshBackendRef(
 	ref ir.BackendRef,
 	routeNamespace string,
-	routeKind routeKind,
+	routeKind backends.RouteKind,
 	allowCrossNamespaceRefs bool,
-	annotator backendRefTranslator,
+	annotator backends.BackendRefTranslator,
 ) ir.BackendRef {
-	metadata := annotator.backendRefMetadata(routeNamespace, routeKind, allowCrossNamespaceRefs, ref)
+	metadata := annotator.BackendRefMetadata(routeNamespace, routeKind, allowCrossNamespaceRefs, ref)
 	if len(metadata) != 0 {
 		ref.Metadata = metadata
 		return ref
@@ -226,8 +228,8 @@ func refreshBackendRef(
 	}
 
 	cleaned := copyStringMap(ref.Metadata)
-	delete(cleaned, backendRefMetaValid)
-	delete(cleaned, backendRefMetaReason)
+	delete(cleaned, backends.BackendRefMetaValid)
+	delete(cleaned, backends.BackendRefMetaReason)
 	if len(cleaned) == 0 {
 		ref.Metadata = nil
 		return ref
@@ -236,27 +238,15 @@ func refreshBackendRef(
 	return ref
 }
 
-func routeUsesOnlyServiceParents(parentRefs []ir.ParentRef) bool {
-	if len(parentRefs) == 0 {
-		return false
-	}
-	for _, parentRef := range parentRefs {
-		if !isServiceParentRef(parentRef) {
-			return false
-		}
-	}
-	return true
-}
-
-func routeKindForStreamIR(kind string) routeKind {
+func routeKindForStreamIR(kind string) backends.RouteKind {
 	switch kind {
 	case "TCP":
-		return routeKindTCP
+		return backends.RouteKindTCP
 	case "UDP":
-		return routeKindUDP
+		return backends.RouteKindUDP
 	case "TLS":
-		return routeKindTLS
+		return backends.RouteKindTLS
 	default:
-		return routeKindTCP
+		return backends.RouteKindTCP
 	}
 }

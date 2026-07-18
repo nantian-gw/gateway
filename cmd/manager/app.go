@@ -30,6 +30,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/observability"
 	"github.com/nantian-gw/gateway/internal/status"
 	"github.com/nantian-gw/gateway/internal/translator"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 const (
@@ -164,8 +165,8 @@ func run(configPath string) error {
 	xlator := translator.NewWithOptions(
 		cfg.ControllerName,
 		logger,
-		translator.Options{
-			Limits: translator.Limits{
+		shared.Options{
+			Limits: shared.Limits{
 				MaxInputObjects:      translatorLimits.MaxInputObjects,
 				MaxSnapshotObjects:   translatorLimits.MaxSnapshotObjects,
 				MaxSnapshotEndpoints: translatorLimits.MaxSnapshotEndpoints,

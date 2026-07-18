@@ -15,15 +15,16 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
 func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	portNumber := gatewayv1.PortNumber(8080)
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.GatewayClass{
 				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
@@ -119,9 +120,7 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 	snapshot, err := New(
 		string(controllerName),
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).Build(context.Background(), scopedBuildDependencyValidatingTranslatorClient{
-		Client: baseClient,
-	})
+	).Build(context.Background(), testutil.NewFakeScopedBuildDependencyValidatingClient(baseClient, nil))
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -143,10 +142,10 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 	}
 }
 func TestBuildLoadsMeshWorkloadsPerRouteNamespace(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 	portNumber := gatewayv1.PortNumber(8080)
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&gatewayv1.HTTPRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "route", Namespace: "apps"},
@@ -213,10 +212,9 @@ func TestBuildLoadsMeshWorkloadsPerRouteNamespace(t *testing.T) {
 	snapshot, err := New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).Build(context.Background(), scopedBuildDependencyValidatingTranslatorClient{
-		Client:                baseClient,
-		expectedPodNamespaces: map[string]struct{}{"apps": {}},
-	})
+	).Build(context.Background(), testutil.NewFakeScopedBuildDependencyValidatingClient(baseClient,
+		map[string]struct{}{"apps": {}},
+	))
 	if err != nil {
 		t.Fatalf("Build returned error: %v", err)
 	}
@@ -229,9 +227,9 @@ func TestBuildLoadsMeshWorkloadsPerRouteNamespace(t *testing.T) {
 	}
 }
 func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -329,9 +327,9 @@ func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 	}
 }
 func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(t *testing.T) {
-	scheme := buildSupportScheme(t)
+	scheme := testutil.BuildSupportScheme(t)
 
-	baseClient := newTranslatorClientBuilder(scheme).
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -429,8 +427,8 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 	}
 }
 func TestRebuildMeshServiceListenersLoadsParentServicesOnDemand(t *testing.T) {
-	scheme := buildSupportScheme(t)
-	baseClient := newTranslatorClientBuilder(scheme).
+	scheme := testutil.BuildSupportScheme(t)
+	baseClient := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
@@ -465,12 +463,11 @@ func TestRebuildMeshServiceListenersLoadsParentServicesOnDemand(t *testing.T) {
 	listeners, err := New(
 		"gateway.networking.k8s.io/nantian-gw",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-	).RebuildMeshServiceListeners(context.Background(), validatingTranslatorClient{
-		Client: baseClient,
-		forbiddenLists: map[reflect.Type]string{
+	).RebuildMeshServiceListeners(context.Background(), testutil.NewFakeValidatingTranslatorClient(baseClient,
+		map[reflect.Type]string{
 			reflect.TypeOf(&corev1.ServiceList{}): "RebuildMeshServiceListeners should load parent Services on demand",
 		},
-	}, current)
+	), current)
 	if err != nil {
 		t.Fatalf("RebuildMeshServiceListeners returned error: %v", err)
 	}

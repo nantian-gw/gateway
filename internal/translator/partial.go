@@ -22,6 +22,11 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/listeners"
+	"github.com/nantian-gw/gateway/internal/translator/policies"
+	"github.com/nantian-gw/gateway/internal/translator/routes"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.BackendCluster, error) {
@@ -75,7 +80,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 
 	filteredServices := resources.FilterServices(services.Items)
 	filteredEndpointSlices := resources.FilterEndpointSlices(endpointSlices.Items)
-	indexes := newTranslatorIndexes(
+	indexes := shared.NewTranslatorIndexes(
 		filteredServices,
 		serviceImports.Items,
 		filteredEndpointSlices,
@@ -84,7 +89,7 @@ func (t *Translator) BuildBackends(ctx context.Context, cl client.Client) ([]ir.
 		nil,
 	)
 
-	return translateBackendsWithIndexes(
+	return backends.TranslateBackendsWithIndexes(
 		filteredServices,
 		serviceImports.Items,
 		backendTLSPolicies,
@@ -169,7 +174,7 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 		if _, ok := targetSet[route.Namespace]; !ok {
 			continue
 		}
-		recordRouteAttachments(
+		policies.RecordRouteAttachments(
 			attachments,
 			gatewayByKey,
 			listenerSetByKey,
@@ -177,17 +182,19 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 			namespaceByName,
 			route.Namespace,
 			route.Name,
-			attachmentRouteKindHTTP,
+			policies.RouteKindHTTP,
 			route.Hostnames,
 			route.ParentRefs,
 			serviceListeners,
+			gatewayAllowsListenerSet,
+			mergeListenerSetListeners,
 		)
 	}
 	for _, route := range current.GRPCRoutes {
 		if _, ok := targetSet[route.Namespace]; !ok {
 			continue
 		}
-		recordRouteAttachments(
+		policies.RecordRouteAttachments(
 			attachments,
 			gatewayByKey,
 			listenerSetByKey,
@@ -195,17 +202,19 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 			namespaceByName,
 			route.Namespace,
 			route.Name,
-			attachmentRouteKindGRPC,
+			policies.RouteKindGRPC,
 			route.Hostnames,
 			route.ParentRefs,
 			serviceListeners,
+			gatewayAllowsListenerSet,
+			mergeListenerSetListeners,
 		)
 	}
 	for _, route := range current.StreamRoutes {
 		if _, ok := targetSet[route.Namespace]; !ok {
 			continue
 		}
-		recordRouteAttachments(
+		policies.RecordRouteAttachments(
 			attachments,
 			gatewayByKey,
 			listenerSetByKey,
@@ -213,10 +222,12 @@ func (t *Translator) RebuildAttachmentsForNamespaces(
 			namespaceByName,
 			route.Namespace,
 			route.Name,
-			attachmentKindForStreamRoute(route.Kind),
-			streamRouteHostnames(route),
+			policies.RouteKindForStreamRoute(route.Kind),
+			policies.StreamRouteHostnames(route),
 			route.ParentRefs,
 			serviceListeners,
+			gatewayAllowsListenerSet,
+			mergeListenerSetListeners,
 		)
 	}
 
@@ -313,7 +324,7 @@ func listenerSetAttachmentMaps(
 	for _, listenerSet := range listenerSets {
 		key := listenerSet.Namespace + "/" + listenerSet.Name
 		listenerSetByKey[key] = listenerSet
-		parentNamespace := namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
+		parentNamespace := shared.NamespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace)
 		listenerSetGateway[key] = parentNamespace + "/" + string(listenerSet.Spec.ParentRef.Name)
 	}
 	return listenerSetByKey, listenerSetGateway
@@ -424,11 +435,17 @@ func (t *Translator) refreshBackendRefMetadataForSnapshot(
 		return nil, nil, nil, err
 	}
 
-	annotator := newBackendRefTranslator(
-		resources.FilterServices(services),
+	annotator := backends.NewBackendRefTranslator(
+		services,
 		serviceImports,
 		referenceGrants,
 		extfilter.Resolver{},
+		func(filters []gatewayv1.HTTPRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return routes.FiltersFromHTTPWithResolver(filters, ns, resolver, target, nil, 0)
+		},
+		func(filters []gatewayv1.GRPCRouteFilter, ns string, resolver extfilter.Resolver, target extfilter.Target) []ir.Filter {
+			return routes.FiltersFromGRPCWithResolver(filters, ns, resolver, target)
+		},
 	)
 	next := current.Clone()
 	refreshHTTPRouteBackendRefs(next.HTTPRoutes, annotator)
@@ -483,7 +500,7 @@ func (t *Translator) RebuildMeshServiceListeners(
 		return nil, err
 	}
 
-	meshListeners := translateMeshServiceListeners(
+	meshListeners := listeners.TranslateMeshServiceListeners(
 		collectMeshServiceFrontendsFromSnapshot(
 			resources.FilterServices(services),
 			current,
@@ -501,7 +518,7 @@ func (t *Translator) RebuildMeshServiceListeners(
 
 	attachments := make(map[string]map[string]struct{})
 	for _, route := range current.HTTPRoutes {
-		recordRouteAttachments(
+		policies.RecordRouteAttachments(
 			attachments,
 			nil,
 			nil,
@@ -509,14 +526,16 @@ func (t *Translator) RebuildMeshServiceListeners(
 			nil,
 			route.Namespace,
 			route.Name,
-			attachmentRouteKindHTTP,
+			policies.RouteKindHTTP,
 			route.Hostnames,
 			route.ParentRefs,
 			serviceListeners,
+			nil,
+			nil,
 		)
 	}
 	for _, route := range current.GRPCRoutes {
-		recordRouteAttachments(
+		policies.RecordRouteAttachments(
 			attachments,
 			nil,
 			nil,
@@ -524,14 +543,16 @@ func (t *Translator) RebuildMeshServiceListeners(
 			nil,
 			route.Namespace,
 			route.Name,
-			attachmentRouteKindGRPC,
+			policies.RouteKindGRPC,
 			route.Hostnames,
 			route.ParentRefs,
 			serviceListeners,
+			nil,
+			nil,
 		)
 	}
 	for _, route := range current.StreamRoutes {
-		recordRouteAttachments(
+		policies.RecordRouteAttachments(
 			attachments,
 			nil,
 			nil,
@@ -539,10 +560,12 @@ func (t *Translator) RebuildMeshServiceListeners(
 			nil,
 			route.Namespace,
 			route.Name,
-			attachmentKindForStreamRoute(route.Kind),
-			streamRouteHostnames(route),
+			policies.RouteKindForStreamRoute(route.Kind),
+			policies.StreamRouteHostnames(route),
 			route.ParentRefs,
 			serviceListeners,
+			nil,
+			nil,
 		)
 	}
 	for idx := range meshListeners {
@@ -560,7 +583,7 @@ func (t *Translator) RebuildMeshServiceListeners(
 }
 
 func (t *Translator) loadFilteredGateways(ctx context.Context, cl client.Client) ([]gatewayv1.Gateway, error) {
-	gatewayClasses, err := listGatewayClassesForController(ctx, cl, t.controllerName)
+	gatewayClasses, err := policies.ListGatewayClassesForController(ctx, cl, t.controllerName)
 	if err != nil {
 		return nil, err
 	}
@@ -570,7 +593,7 @@ func (t *Translator) loadFilteredGateways(ctx context.Context, cl client.Client)
 
 	filteredGateways := make([]gatewayv1.Gateway, 0)
 	for _, gatewayClass := range gatewayClasses {
-		gateways, err := listGatewaysForGatewayClass(ctx, cl, gatewayClass.Name)
+		gateways, err := policies.ListGatewaysForGatewayClass(ctx, cl, gatewayClass.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -615,10 +638,10 @@ func attachmentParentGatewayObjectKeys(
 			return
 		}
 		for _, parentRef := range parentRefs {
-			if isServiceParentRef(parentRef) || parentRef.Name == "" {
+			if policies.IsServiceParentRef(parentRef) || parentRef.Name == "" {
 				continue
 			}
-			if isListenerSetParentRef(parentRef) {
+			if policies.IsListenerSetParentRef(parentRef) {
 				continue
 			}
 
@@ -630,7 +653,7 @@ func attachmentParentGatewayObjectKeys(
 				Namespace: namespace,
 				Name:      parentRef.Name,
 			}
-			keys[backendObjectKey(key.Namespace, key.Name)] = key
+			keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}
 
@@ -648,10 +671,10 @@ func attachmentParentGatewayObjectKeys(
 			continue
 		}
 		key := client.ObjectKey{
-			Namespace: namespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace),
+			Namespace: shared.NamespaceOrDefault(listenerSet.Spec.ParentRef.Namespace, listenerSet.Namespace),
 			Name:      string(listenerSet.Spec.ParentRef.Name),
 		}
-		keys[backendObjectKey(key.Namespace, key.Name)] = key
+		keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 	}
 
 	return sortedObjectKeys(keys)
@@ -671,7 +694,7 @@ func attachmentParentListenerSetObjectKeys(
 			return
 		}
 		for _, parentRef := range parentRefs {
-			if !isListenerSetParentRef(parentRef) || parentRef.Name == "" {
+			if !policies.IsListenerSetParentRef(parentRef) || parentRef.Name == "" {
 				continue
 			}
 			namespace := parentRef.Namespace
@@ -682,7 +705,7 @@ func attachmentParentListenerSetObjectKeys(
 				Namespace: namespace,
 				Name:      parentRef.Name,
 			}
-			keys[backendObjectKey(key.Namespace, key.Name)] = key
+			keys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}
 
