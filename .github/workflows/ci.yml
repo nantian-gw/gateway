@@ -111,10 +111,20 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
       - name: Run benchmarks
-        run: go test -bench=. -benchtime=3x -count=3 ./... | tee bench-output.txt
+        run: go test -bench=. -benchtime=3x -count=3 ./... | tee benchmark-output.txt
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'go'
+          output-file-path: benchmark-output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '130%'
+          comment-on-alert: true
+          fail-on-alert: true
       - name: Upload benchmark results
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: benchmark-results
-          path: bench-output.txt
+          path: benchmark-output.txt
           retention-days: 30
