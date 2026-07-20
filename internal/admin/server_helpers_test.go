@@ -1,27 +1,8 @@
 package admin
 
 import (
-	"net/http/httptest"
 	"testing"
 )
-
-func TestResourceMutationIdentityFallsBackToRequestBody(t *testing.T) {
-	t.Parallel()
-
-	req := httptest.NewRequest("POST", "/v1/resources", nil)
-	body := []byte(`
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  namespace: default
-  name: created
-`)
-
-	kind, namespace, name := resourceMutationIdentity(req, body)
-	if kind != "HTTPRoute" || namespace != "default" || name != "created" {
-		t.Fatalf("unexpected identity: kind=%q namespace=%q name=%q", kind, namespace, name)
-	}
-}
 
 func TestLimitedBufferRejectsWritesBeyondLimit(t *testing.T) {
 	t.Parallel()

@@ -132,6 +132,36 @@ func classifyAdminRoute(path string) string {
 		return "resource_detail"
 	case path == "/v1/topology":
 		return "topology"
+	case path == "/v1/namespaces":
+		return "namespaces"
+	case path == "/v1/dashboard/capabilities":
+		return "dashboard_capabilities"
+	case path == "/v1/auth/verify":
+		return "auth_verify"
+	case path == "/v1/dataplanes":
+		return "dataplanes"
+	case strings.HasPrefix(path, "/v1/dataplanes/"):
+		return "dataplane_summary"
+	case path == "/v1/chatbot/config":
+		return "chatbot_config"
+	case path == "/v1/chatbot/chat":
+		return "chatbot_chat"
+	case path == "/v1/metrics/config":
+		return "metrics_config"
+	case path == "/v1/metrics/query":
+		return "metrics_query"
+	case path == "/v1/metrics/query_range":
+		return "metrics_query_range"
+	case path == "/v1/ai/overview":
+		return "ai_overview"
+	case path == "/v1/ai/services":
+		return "ai_services"
+	case path == "/v1/ai/token-usage":
+		return "ai_token_usage"
+	case path == "/v1/ai/traces":
+		return "ai_traces"
+	case path == "/v1/ai/cost":
+		return "ai_cost"
 	default:
 		return "unknown"
 	}

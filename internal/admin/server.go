@@ -109,6 +109,7 @@ func NewServer(
 	s.registerRoutes(mux)
 
 	handler := wrapAuthHandler(mux, opts)
+	handler = wrapAuditHandler(handler, opts)
 	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst, opts.TrustedProxies); rl != nil {
 		handler = rl.middleware(handler)
 	}

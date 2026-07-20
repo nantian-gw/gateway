@@ -142,12 +142,13 @@ spec:
 		t.Fatalf("expected create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
 	logs := logBuf.String()
-	if !strings.Contains(logs, "admin resource mutation completed") ||
-		!strings.Contains(logs, "operation=create") ||
-		!strings.Contains(logs, "kind=HTTPRoute") ||
-		!strings.Contains(logs, "namespace=default") ||
-		!strings.Contains(logs, "name=created") {
-		t.Fatalf("expected create audit log, got %q", logs)
+	if !strings.Contains(logs, "admin api request") ||
+		!strings.Contains(logs, "log_type=audit") ||
+		!strings.Contains(logs, "level=INFO") ||
+		!strings.Contains(logs, "status=200") ||
+		!strings.Contains(logs, "route=resources") ||
+		!strings.Contains(logs, "method=POST") {
+		t.Fatalf("expected create audit log with INFO level and status=200, got %q", logs)
 	}
 
 	logBuf.Reset()
@@ -156,12 +157,13 @@ spec:
 		t.Fatalf("expected invalid update 400, got %d: %s", recorder.Code, recorder.Body.String())
 	}
 	logs = logBuf.String()
-	if !strings.Contains(logs, "admin resource mutation failed") ||
-		!strings.Contains(logs, "operation=update") ||
-		!strings.Contains(logs, "kind=httproute") ||
-		!strings.Contains(logs, "namespace=default") ||
-		!strings.Contains(logs, "name=created") {
-		t.Fatalf("expected failed update audit log, got %q", logs)
+	if !strings.Contains(logs, "admin api request") ||
+		!strings.Contains(logs, "log_type=audit") ||
+		!strings.Contains(logs, "level=WARN") ||
+		!strings.Contains(logs, "status=400") ||
+		!strings.Contains(logs, "route=resource_detail") ||
+		!strings.Contains(logs, "method=PUT") {
+		t.Fatalf("expected failed update audit log with WARN level and status=400, got %q", logs)
 	}
 }
 

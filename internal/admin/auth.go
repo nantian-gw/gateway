@@ -23,6 +23,26 @@ import (
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
+// contextKey is an unexported type used as a context key for admin request identity.
+type contextKey string
+
+// identityKey stores the authenticated caller identity in the request context.
+const identityKey contextKey = "admin-identity"
+
+// Identity holds the authenticated caller information extracted during auth.
+type Identity struct {
+	Username string   // Kubernetes user (empty for static-token auth)
+	Groups   []string // Kubernetes groups (empty for static-token auth)
+	Subject  string   // Human-readable identity label for audit logs
+}
+
+// IdentityFromContext extracts the authenticated Identity from the request context.
+// Returns nil when no auth was configured (no-auth mode).
+func IdentityFromContext(ctx context.Context) *Identity {
+	id, _ := ctx.Value(identityKey).(*Identity)
+	return id
+}
+
 type Options struct {
 	BearerToken               string
 	BearerTokenFile           string
@@ -177,6 +197,9 @@ func noAuthHandler(next http.Handler, opts Options) http.Handler {
 			return
 		}
 		if r.Method == http.MethodGet || r.Method == http.MethodHead {
+			r = r.WithContext(context.WithValue(r.Context(), identityKey, &Identity{
+				Subject: "anonymous",
+			}))
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -246,6 +269,11 @@ func kubernetesAuthHandler(next http.Handler, opts Options) http.Handler {
 			return
 		}
 
+		r = r.WithContext(context.WithValue(r.Context(), identityKey, &Identity{
+			Username: result.username,
+			Groups:   result.groups,
+			Subject:  result.username,
+		}))
 		next.ServeHTTP(w, r)
 	})
 }
@@ -382,6 +410,9 @@ func staticAuthHandler(next http.Handler, opts Options) http.Handler {
 			}
 		}
 
+		r = r.WithContext(context.WithValue(r.Context(), identityKey, &Identity{
+			Subject: "static-token",
+		}))
 		next.ServeHTTP(w, r)
 	})
 }

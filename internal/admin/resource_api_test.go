@@ -59,6 +59,9 @@ func newTestServerWithResourceManagerAndLoggerAndOptions(
 	if !IsAuthConfigured(opts) {
 		opts.BearerToken = testAuthToken
 	}
+	if opts.Logger == nil {
+		opts.Logger = logger
+	}
 
 	store := ir.NewSnapshotStore(logger)
 	nodes := noderegistry.NewRegistry(
