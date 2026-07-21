@@ -62,6 +62,7 @@ type Options struct {
 	Metrics                   *observability.Metrics
 	TLSConfig                 *tls.Config
 	Logger                    *slog.Logger
+	RBAC                      *AdminRBACConfig
 	RateLimitRPS              int64
 	RateLimitBurst            int64
 	TokenReviewAudiences      []string

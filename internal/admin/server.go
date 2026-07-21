@@ -48,10 +48,11 @@ type Summary struct {
 }
 
 type routeContract struct {
-	Method      string `json:"method"`
-	Path        string `json:"path"`
-	Auth        string `json:"auth"`
-	ContentType string `json:"contentType"`
+	Method      string     `json:"method"`
+	Path        string     `json:"path"`
+	Auth        string     `json:"auth"`
+	Permission  Permission `json:"permission,omitempty"`
+	ContentType string     `json:"contentType"`
 }
 
 type routeBinding struct {
@@ -109,6 +110,7 @@ func NewServer(
 	s.registerRoutes(mux)
 
 	handler := wrapAuthHandler(mux, opts)
+	handler = wrapRBACHandler(handler, opts.RBAC, opts.Logger)
 	handler = wrapAuditHandler(handler, opts)
 	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst, opts.TrustedProxies); rl != nil {
 		handler = rl.middleware(handler)
@@ -130,7 +132,12 @@ func NewServer(
 
 func (s *Server) registerRoutes(mux *http.ServeMux) {
 	for _, binding := range adminRouteBindings() {
-		mux.HandleFunc(binding.contract.Method+" "+binding.contract.Path, binding.handler(s))
+		contract := binding.contract
+		handler := binding.handler(s)
+		mux.HandleFunc(contract.Method+" "+contract.Path, func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), routeContractKey, &contract)
+			handler(w, r.WithContext(ctx))
+		})
 	}
 }
 
@@ -158,148 +165,148 @@ func adminRouteBindings() []routeBinding {
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAuthVerify },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/summary", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/summary", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleSummary },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/dashboard/capabilities", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/dashboard/capabilities", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleDashboardCapabilities },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot-sync", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot-sync", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleSnapshotSync },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleSnapshot },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/listeners", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/listeners", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleListeners },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/listeners/{name}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/listeners/{name}", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleListenerDetail },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/routes", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/routes", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleRoutes },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/routes/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/routes/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleRouteDetail },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/backends", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/backends", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleBackends },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/backends/{namespace}/{name}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/backends/{namespace}/{name}", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleBackendDetail },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/nodes", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/nodes", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleNodes },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/nodes/{nodeId}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/nodes/{nodeId}", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleNodeDetail },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/infrastructure", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/infrastructure", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleInfrastructure },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/service-catalog", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/service-catalog", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleServiceCatalog },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/namespaces", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/namespaces", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleNamespaces },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/resource-kinds", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/resource-kinds", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleResourceKinds },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/resources", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/resources", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleResources },
 		},
 		{
-			contract: routeContract{Method: http.MethodPost, Path: "/v1/resources", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodPost, Path: "/v1/resources", Auth: "bearer-when-configured", Permission: PermissionWriteResources, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleResourceApply },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/resources/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/resources/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleResourceDetail },
 		},
 		{
-			contract: routeContract{Method: http.MethodPut, Path: "/v1/resources/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodPut, Path: "/v1/resources/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", Permission: PermissionWriteResources, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleResourceApply },
 		},
 		{
-			contract: routeContract{Method: http.MethodDelete, Path: "/v1/resources/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodDelete, Path: "/v1/resources/{kind}/{namespace}/{name}", Auth: "bearer-when-configured", Permission: PermissionWriteResources, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleResourceDelete },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/topology", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/topology", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleTopology },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/dataplanes", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/dataplanes", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleDataplanes },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/dataplanes/{nodeId}/summary", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/dataplanes/{nodeId}/summary", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleDataplaneSummary },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/chatbot/config", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/chatbot/config", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleChatbotConfig },
 		},
 		{
-			contract: routeContract{Method: http.MethodPut, Path: "/v1/chatbot/config", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodPut, Path: "/v1/chatbot/config", Auth: "bearer-when-configured", Permission: PermissionWriteChatbot, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleChatbotConfigPut },
 		},
 		{
-			contract: routeContract{Method: http.MethodPost, Path: "/v1/chatbot/chat", Auth: "bearer-when-configured", ContentType: "text/event-stream"},
+			contract: routeContract{Method: http.MethodPost, Path: "/v1/chatbot/chat", Auth: "bearer-when-configured", Permission: PermissionWriteChatbot, ContentType: "text/event-stream"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleChatbotChat },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/metrics/config", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/metrics/config", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleMetricsConfigGet },
 		},
 		{
-			contract: routeContract{Method: http.MethodPut, Path: "/v1/metrics/config", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodPut, Path: "/v1/metrics/config", Auth: "bearer-when-configured", Permission: PermissionWriteMetrics, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleMetricsConfigPut },
 		},
 		{
-			contract: routeContract{Method: http.MethodPost, Path: "/v1/metrics/query", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodPost, Path: "/v1/metrics/query", Auth: "bearer-when-configured", Permission: PermissionWriteMetrics, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleMetricsQuery },
 		},
 		{
-			contract: routeContract{Method: http.MethodPost, Path: "/v1/metrics/query_range", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodPost, Path: "/v1/metrics/query_range", Auth: "bearer-when-configured", Permission: PermissionWriteMetrics, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleMetricsRangeQuery },
 		},
 		// AI Gateway endpoints
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/overview", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/overview", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAIOverview },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/services", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/services", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAIServices },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/token-usage", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/token-usage", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAITokenUsage },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/traces", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/traces", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAITraces },
 		},
 		{
-			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/cost", Auth: "bearer-when-configured", ContentType: "application/json"},
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/cost", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAICost },
 		},
 	}

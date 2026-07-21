@@ -366,6 +366,7 @@ func run(configPath string) error {
 			TrustedProxies:            cfg.AdminAuth.TrustedProxies,
 			DashboardCapabilities:     admin.ResolveDashboardCapabilities(cfg),
 			AllowFromCIDRs:            cfg.AdminAuth.AllowFromCIDRs,
+			RBAC:                      cfg.AdminAuth.RBAC,
 		},
 	)
 	adminServer.SetInfrastructureInspector(infra)

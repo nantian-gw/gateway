@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadAppliesProductionDefaults(t *testing.T) {
@@ -746,5 +748,145 @@ dashboard:
 	}
 	if !caps.AIServices {
 		t.Fatal("unset dashboard capability should still default to true")
+	}
+}
+
+func TestAdminRBACConfigParsing(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte(`
+nodeId: n1
+cluster: c1
+adminAddr: :18081
+adminAuth:
+  authMode: static
+  bearerToken: secret
+  rbac:
+    roles:
+      - name: admin
+        permissions: [admin:*]
+        matchUsers: [admin-user]
+      - name: reader
+        permissions: [read:*]
+        matchGroups: [readers]
+`)
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	assert.NotNil(t, cfg.AdminAuth.RBAC)
+	assert.True(t, cfg.AdminAuth.RBAC.IsEnabled())
+	assert.Len(t, cfg.AdminAuth.RBAC.Roles, 2)
+	assert.Equal(t, "admin", cfg.AdminAuth.RBAC.Roles[0].Name)
+	assert.Equal(t, PermissionAdmin, cfg.AdminAuth.RBAC.Roles[0].Permissions[0])
+}
+
+func TestAdminRBACConfigBackwardCompatible(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	raw := []byte(`
+nodeId: n1
+cluster: c1
+adminAddr: :18081
+adminAuth:
+  authMode: static
+  bearerToken: secret
+`)
+	if err := os.WriteFile(path, raw, 0o600); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+
+	assert.Nil(t, cfg.AdminAuth.RBAC)
+	assert.False(t, cfg.AdminAuth.RBAC.IsEnabled()) // nil receiver safe
+}
+
+func TestAdminRBACConfigValidation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		yaml    string
+		wantErr string
+	}{
+		{
+			name:    "empty role name",
+			yaml:    `nodeId: n1
+cluster: c1
+adminAddr: :18081
+adminAuth:
+  authMode: static
+  bearerToken: secret
+  rbac:
+    roles:
+      - name: ''
+        permissions: [read:*]
+        matchUsers: [u]
+`,
+			wantErr: "name is required",
+		},
+		{
+			name:    "no permissions",
+			yaml:    `nodeId: n1
+cluster: c1
+adminAddr: :18081
+adminAuth:
+  authMode: static
+  bearerToken: secret
+  rbac:
+    roles:
+      - name: r
+        permissions: []
+        matchUsers: [u]
+`,
+			wantErr: "must have at least one permission",
+		},
+		{
+			name:    "invalid permission",
+			yaml:    `nodeId: n1
+cluster: c1
+adminAddr: :18081
+adminAuth:
+  authMode: static
+  bearerToken: secret
+  rbac:
+    roles:
+      - name: r
+        permissions: [bad:perm]
+        matchUsers: [u]
+`,
+			wantErr: "is not a valid permission",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			dir := t.TempDir()
+			path := filepath.Join(dir, "config.yaml")
+			if err := os.WriteFile(path, []byte(tt.yaml), 0o600); err != nil {
+				t.Fatalf("write config: %v", err)
+			}
+
+			cfg, err := Load(path)
+			assert.NoError(t, err, "Load should succeed; validation is separate")
+
+			err = cfg.Validate()
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantErr)
+		})
 	}
 }
