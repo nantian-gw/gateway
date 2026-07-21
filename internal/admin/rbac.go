@@ -36,6 +36,9 @@ func wrapRBACHandler(next http.Handler, cfg *AdminRBACConfig, logger *slog.Logge
 		}
 
 		identity := IdentityFromContext(r.Context())
+		if identity == nil {
+			identity = &Identity{}
+		}
 		roleName, allowed := cfg.Authorize(identity.Username, identity.Groups, rc.Permission)
 
 		if allowed {
