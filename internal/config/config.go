@@ -130,7 +130,10 @@ type AdminAuthConfig struct {
 	AllowedUsers            []string `yaml:"allowedUsers"`
 	AllowedGroups           []string `yaml:"allowedGroups"`
 	TrustedProxies          []string `yaml:"trustedProxies"`
-	AllowFromCIDRs          []string `yaml:"allowFromCIDRs"`
+	AllowFromCIDRs          []string        `yaml:"allowFromCIDRs"`
+	// RBAC enables role-based access control on admin API endpoints.
+	// When nil or empty, the existing binary auth model applies (backward compatible).
+	RBAC *AdminRBACConfig `yaml:"rbac"`
 }
 
 // NormalizeAuthMode returns the effective auth mode, defaulting to "static".
@@ -690,6 +693,12 @@ func (c *Config) Validate() error {
 
 	if c.AdminAuth.BearerToken != "" && c.AdminAuth.BearerTokenFile != "" {
 		errs = append(errs, fmt.Errorf("adminAuth: bearerToken and bearerTokenFile are mutually exclusive"))
+	}
+
+	if c.AdminAuth.RBAC != nil {
+		if err := c.AdminAuth.RBAC.Validate(); err != nil {
+			return err
+		}
 	}
 
 	level := strings.ToLower(c.Log.Level)

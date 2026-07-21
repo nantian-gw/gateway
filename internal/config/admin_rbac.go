@@ -92,7 +92,7 @@ type AdminRBACConfig struct {
 
 // IsEnabled reports whether at least one role is defined.
 func (c *AdminRBACConfig) IsEnabled() bool {
-	return len(c.Roles) > 0
+	return c != nil && len(c.Roles) > 0
 }
 
 // Validate checks the configuration for consistency and returns the first
@@ -135,6 +135,9 @@ func (c *AdminRBACConfig) Validate() error {
 // It returns the matched role name and true on success, or ("", false) when
 // authorization fails (including when RBAC is disabled).
 func (c *AdminRBACConfig) Authorize(username string, groups []string, required Permission) (string, bool) {
+	if c == nil {
+		return "", false
+	}
 	for _, role := range c.Roles {
 		if !c.subjectMatches(role, username, groups) {
 			continue
