@@ -5,7 +5,6 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	_ "google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/keepalive"
 
 	"github.com/nantian-gw/gateway/internal/config"
@@ -62,6 +61,7 @@ func runtimeServerOptionsFromConfig(cfg config.GRPCRuntimeConfig) ([]grpc.Server
 		grpc.KeepaliveParams(settings.keepaliveParams),
 		grpc.KeepaliveEnforcementPolicy(settings.keepalivePolicy),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		grpc.RPCCompressor(grpc.NewGZIPCompressor()),
 	}
 
 	// Flow-control and message-size knobs are opt-in: a zero value leaves the

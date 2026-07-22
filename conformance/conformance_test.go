@@ -34,10 +34,13 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.GetTimeout = 10 * time.Second
 	options.TimeoutConfig.TestIsolation = 10 * time.Second
 
-	options.SkipTests = []string{
-		// Data-plane dependent (translator is correct):
+	options.SkipTests = append([]string{
+		// Data-plane dependent — hostname-based listener attachment matching
+		// is not yet implemented in the data plane. The control plane translator
+		// correctly computes listener-route hostname intersections.
+		// Tracked as: https://github.com/nantian-gw/dataplane/issues/...
 		"HTTPRouteListenerHostnameMatching",
-	}
+	}, parseEnvSkipTests()...)
 
 	manifestFS, err := gatewayAPIManifestFS()
 	if err != nil {
@@ -72,6 +75,14 @@ func envFlagEnabled(name string) bool {
 	default:
 		return false
 	}
+}
+
+func parseEnvSkipTests() []string {
+	raw := strings.TrimSpace(os.Getenv("CONFORMANCE_SKIP_TESTS"))
+	if raw == "" {
+		return nil
+	}
+	return strings.Split(raw, ",")
 }
 
 func patchAllFeatures(options conformancesuite.ConformanceOptions) (conformancesuite.ConformanceOptions, bool) {
