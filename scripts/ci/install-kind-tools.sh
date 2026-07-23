@@ -15,15 +15,21 @@ trap cleanup EXIT
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends ca-certificates curl jq
 
-curl -fsSL "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64" -o "$tmpdir/kind"
+# curl with retry for transient network errors
+curl_with_retry() {
+  local url="$1" out="$2"
+  curl -fsSL --retry 3 --retry-delay 5 --retry-max-time 60 "$url" -o "$out"
+}
+
+curl_with_retry "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64" "$tmpdir/kind"
 chmod +x "$tmpdir/kind"
 sudo install -m 0755 "$tmpdir/kind" "$BIN_DIR/kind"
 
-curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o "$tmpdir/kubectl"
+curl_with_retry "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" "$tmpdir/kubectl"
 chmod +x "$tmpdir/kubectl"
 sudo install -m 0755 "$tmpdir/kubectl" "$BIN_DIR/kubectl"
 
-curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" -o "$tmpdir/kustomize.tar.gz"
+curl_with_retry "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" "$tmpdir/kustomize.tar.gz"
 tar -xzf "$tmpdir/kustomize.tar.gz" -C "$tmpdir"
 chmod +x "$tmpdir/kustomize"
 sudo install -m 0755 "$tmpdir/kustomize" "$BIN_DIR/kustomize"
