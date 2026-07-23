@@ -1,3 +1,4 @@
+// Command grpc-smoke-client validates gRPC connectivity to the control plane.
 package main
 
 import (
@@ -74,7 +75,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("create grpc client: %v", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	results := runRequests(conn, *method, *timeout, *requests, *concurrency)
 	summary := summarize(*addr, *authority, *method, *requests, *concurrency, results)

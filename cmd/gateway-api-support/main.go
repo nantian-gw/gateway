@@ -1,3 +1,4 @@
+// Command gateway-api-support generates Gateway API support documentation.
 package main
 
 import (
