@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
@@ -13,6 +15,10 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
 
 func (r *Reconciler) ReconcileHTTPRouteObject(ctx context.Context, key client.ObjectKey) error {
@@ -437,4 +443,112 @@ func (r *Reconciler) reconcileBackendLBPolicyObject(ctx context.Context, key cli
 
 func (r *Reconciler) reconcileBackendTLSPolicyObject(ctx context.Context, key client.ObjectKey) error {
 	return r.ReconcileRouteStatuses(ctx)
+}
+
+func (r *Reconciler) reconcileAIServiceObject(ctx context.Context, key client.ObjectKey) error {
+	var obj aiservice.AIService
+	if err := r.reader.Get(ctx, key, &obj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	desired := obj.DeepCopy()
+	desired.Status.Conditions = []metav1.Condition{
+		{
+			Type:               "Accepted",
+			Status:             metav1.ConditionTrue,
+			Reason:             "Accepted",
+			Message:            "AIService is accepted by nantian-gw",
+			ObservedGeneration: obj.Generation,
+			LastTransitionTime: metav1.Now(),
+		},
+	}
+
+	if apiequality.Semantic.DeepEqual(obj.Status, desired.Status) {
+		return nil
+	}
+	return r.client.Status().Patch(ctx, desired, client.MergeFrom(&obj))
+}
+
+func (r *Reconciler) reconcileTokenPolicyObject(ctx context.Context, key client.ObjectKey) error {
+	var obj tokenpolicy.TokenPolicy
+	if err := r.reader.Get(ctx, key, &obj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	desired := obj.DeepCopy()
+	desired.Status.Conditions = []metav1.Condition{
+		{
+			Type:               "Accepted",
+			Status:             metav1.ConditionTrue,
+			Reason:             "Accepted",
+			Message:            "TokenPolicy is accepted by nantian-gw",
+			ObservedGeneration: obj.Generation,
+			LastTransitionTime: metav1.Now(),
+		},
+	}
+
+	if apiequality.Semantic.DeepEqual(obj.Status, desired.Status) {
+		return nil
+	}
+	return r.client.Status().Patch(ctx, desired, client.MergeFrom(&obj))
+}
+
+func (r *Reconciler) reconcileWasmPluginObject(ctx context.Context, key client.ObjectKey) error {
+	var obj wasmplugin.WasmPlugin
+	if err := r.reader.Get(ctx, key, &obj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	desired := obj.DeepCopy()
+	desired.Status.Conditions = []metav1.Condition{
+		{
+			Type:               "Accepted",
+			Status:             metav1.ConditionTrue,
+			Reason:             "Accepted",
+			Message:            "WasmPlugin is accepted by nantian-gw",
+			ObservedGeneration: obj.Generation,
+			LastTransitionTime: metav1.Now(),
+		},
+	}
+
+	if apiequality.Semantic.DeepEqual(obj.Status, desired.Status) {
+		return nil
+	}
+	return r.client.Status().Patch(ctx, desired, client.MergeFrom(&obj))
+}
+
+func (r *Reconciler) reconcileRoutePolicyObject(ctx context.Context, key client.ObjectKey) error {
+	var obj routepolicy.RoutePolicy
+	if err := r.reader.Get(ctx, key, &obj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	desired := obj.DeepCopy()
+	desired.Status.Conditions = []metav1.Condition{
+		{
+			Type:               "Accepted",
+			Status:             metav1.ConditionTrue,
+			Reason:             "Accepted",
+			Message:            "RoutePolicy is accepted by nantian-gw",
+			ObservedGeneration: obj.Generation,
+			LastTransitionTime: metav1.Now(),
+		},
+	}
+
+	if apiequality.Semantic.DeepEqual(obj.Status, desired.Status) {
+		return nil
+	}
+	return r.client.Status().Patch(ctx, desired, client.MergeFrom(&obj))
 }

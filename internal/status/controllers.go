@@ -28,7 +28,11 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/resources"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 )
 
 type controllerSetup interface {
@@ -68,6 +72,10 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 	controllers = append(controllers,
 		&backendLBPolicyController{reconciler: reconciler},
 		&backendTLSPolicyController{reconciler: reconciler},
+		&aiserviceController{reconciler: reconciler},
+		&tokenPolicyController{reconciler: reconciler},
+		&wasmPluginController{reconciler: reconciler},
+		&routePolicyController{reconciler: reconciler},
 	)
 
 	return controllers
@@ -608,5 +616,81 @@ func (c *backendTLSPolicyController) SetupWithManager(mgr ctrl.Manager) error {
 		Named("backendtlspolicy-status").
 		WithOptions(statusControllerOptions(c.reconciler.options)).
 		For(&gatewayv1alpha3.BackendTLSPolicy{}, generationChanged).
+		Complete(c)
+}
+
+type aiserviceController struct {
+	reconciler *Reconciler
+}
+
+func (c *aiserviceController) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
+	return ctrl.Result{}, c.reconciler.reconcileAIServiceObject(ctx, req.NamespacedName)
+}
+
+func (c *aiserviceController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("aiservice-status").
+		WithOptions(statusControllerOptions(c.reconciler.options)).
+		For(&aiservice.AIService{}, generationChanged).
+		Complete(c)
+}
+
+type tokenPolicyController struct {
+	reconciler *Reconciler
+}
+
+func (c *tokenPolicyController) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
+	return ctrl.Result{}, c.reconciler.reconcileTokenPolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *tokenPolicyController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("tokenpolicy-status").
+		WithOptions(statusControllerOptions(c.reconciler.options)).
+		For(&tokenpolicy.TokenPolicy{}, generationChanged).
+		Complete(c)
+}
+
+type wasmPluginController struct {
+	reconciler *Reconciler
+}
+
+func (c *wasmPluginController) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
+	return ctrl.Result{}, c.reconciler.reconcileWasmPluginObject(ctx, req.NamespacedName)
+}
+
+func (c *wasmPluginController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("wasmplugin-status").
+		WithOptions(statusControllerOptions(c.reconciler.options)).
+		For(&wasmplugin.WasmPlugin{}, generationChanged).
+		Complete(c)
+}
+
+type routePolicyController struct {
+	reconciler *Reconciler
+}
+
+func (c *routePolicyController) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
+	return ctrl.Result{}, c.reconciler.reconcileRoutePolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *routePolicyController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("routepolicy-status").
+		WithOptions(statusControllerOptions(c.reconciler.options)).
+		For(&routepolicy.RoutePolicy{}, generationChanged).
 		Complete(c)
 }
