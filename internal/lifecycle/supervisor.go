@@ -116,7 +116,6 @@ func (s *Supervisor) Run(parent context.Context) error {
 	startedCh := make(chan string, len(s.components))
 
 	for _, component := range s.components {
-		component := component
 		go func() {
 			var started sync.Once
 			err := component.Run(ctx, func() {

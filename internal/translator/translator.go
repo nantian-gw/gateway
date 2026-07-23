@@ -226,7 +226,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	transGroup, _ := errgroup.WithContext(ctx)
 	snapshot.HTTPRoutes = make([]ir.HTTPRoute, len(httpRoutes.Items))
 	for i := range httpRoutes.Items {
-		i := i
 		transGroup.Go(func() error {
 			snapshot.HTTPRoutes[i] = routes.TranslateHTTPRouteWithDefaultGateways(
 				httpRoutes.Items[i],
@@ -239,7 +238,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	snapshot.GRPCRoutes = make([]ir.GRPCRoute, len(grpcRoutes.Items))
 	for i := range grpcRoutes.Items {
-		i := i
 		transGroup.Go(func() error {
 			snapshot.GRPCRoutes[i] = routes.TranslateGRPCRouteWithDefaultGateways(grpcRoutes.Items[i], extensionResolver, filteredGateways)
 			return nil
@@ -248,7 +246,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	snapshot.StreamRoutes = make([]ir.StreamRoute, 0, len(tcpRoutes.Items)+len(udpRoutes.Items)+len(tlsRoutes.Items))
 	tcpResults := make([]ir.StreamRoute, len(tcpRoutes.Items))
 	for i := range tcpRoutes.Items {
-		i := i
 		transGroup.Go(func() error {
 			tcpResults[i] = routes.TranslateTCPRouteWithDefaultGateways(tcpRoutes.Items[i], filteredGateways)
 			return nil
@@ -256,7 +253,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	udpResults := make([]ir.StreamRoute, len(udpRoutes.Items))
 	for i := range udpRoutes.Items {
-		i := i
 		transGroup.Go(func() error {
 			udpResults[i] = routes.TranslateUDPRouteWithDefaultGateways(udpRoutes.Items[i], filteredGateways)
 			return nil
@@ -264,7 +260,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	tlsStreamResults := make([]ir.StreamRoute, len(tlsRoutes.Items))
 	for i := range tlsRoutes.Items {
-		i := i
 		transGroup.Go(func() error {
 			tlsStreamResults[i] = routes.TranslateTLSRouteWithDefaultGateways(tlsRoutes.Items[i], filteredGateways)
 			return nil
@@ -481,14 +476,12 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 
 	annotGroup, _ := errgroup.WithContext(ctx)
 	for idx := range httpRoutes.Items {
-		idx := idx
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
 			return nil
 		})
 	}
 	for idx := range snapshot.GRPCRoutes {
-		idx := idx
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateGRPCRoute(&snapshot.GRPCRoutes[idx], grpcRoutes.Items[idx])
 			return nil
@@ -496,7 +489,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	}
 	streamIdx := 0
 	for idx := range tcpRoutes.Items {
-		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateTCPRoute(&snapshot.StreamRoutes[sIdx], tcpRoutes.Items[idx])
@@ -505,7 +497,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		streamIdx++
 	}
 	for idx := range udpRoutes.Items {
-		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateUDPRoute(&snapshot.StreamRoutes[sIdx], udpRoutes.Items[idx])
@@ -514,7 +505,6 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		streamIdx++
 	}
 	for idx := range tlsRoutes.Items {
-		idx := idx
 		sIdx := streamIdx
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateTLSRoute(&snapshot.StreamRoutes[sIdx], tlsRoutes.Items[idx])
