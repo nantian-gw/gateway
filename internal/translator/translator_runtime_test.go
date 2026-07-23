@@ -529,7 +529,6 @@ func TestFiltersFromHTTPRedirectAndRewrite(t *testing.T) {
 func TestHTTPRequestRedirectPreservesGatewayAPIStatusCodes(t *testing.T) {
 	redirectScheme := "https"
 	for _, code := range []int{303, 307, 308} {
-		code := code
 		t.Run(fmt.Sprintf("status-%d", code), func(t *testing.T) {
 			filters := routes.FiltersFromHTTP([]gatewayv1.HTTPRouteFilter{{
 				Type: gatewayv1.HTTPRouteFilterRequestRedirect,
