@@ -117,26 +117,26 @@ func (s *Server) handleAIOverview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(overview)
+	_ = json.NewEncoder(w).Encode(overview)
 }
 
 func (s *Server) handleAIServices(w http.ResponseWriter, r *http.Request) {
 	services := s.listAIServices()
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(services)
+	_ = json.NewEncoder(w).Encode(services)
 }
 
 func (s *Server) handleAITokenUsage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	aiMu.RLock()
-	json.NewEncoder(w).Encode(aiTokenUsage)
+	_ = json.NewEncoder(w).Encode(aiTokenUsage)
 	aiMu.RUnlock()
 }
 
 func (s *Server) handleAITraces(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	aiMu.RLock()
-	json.NewEncoder(w).Encode(aiTraces)
+	_ = json.NewEncoder(w).Encode(aiTraces)
 	aiMu.RUnlock()
 }
 
@@ -151,7 +151,7 @@ func (s *Server) handleAICost(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(cost)
+	_ = json.NewEncoder(w).Encode(cost)
 }
 
 // listAIServices returns AI services from the resource cache.

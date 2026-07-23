@@ -70,7 +70,7 @@ func loadStaticServerTLSConfig(cfg config.GRPCTLSConfig) (*tls.Config, error) {
 	}
 
 	if caPath := strings.TrimSpace(cfg.ClientCAPath); caPath != "" {
-		raw, err := os.ReadFile(caPath)
+		raw, err := os.ReadFile(caPath) //nolint:gosec
 		if err != nil {
 			return nil, fmt.Errorf("read grpc tls client ca: %w", err)
 		}

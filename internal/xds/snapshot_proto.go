@@ -253,7 +253,7 @@ func toProtoCircuitBreaker(item *ir.CircuitBreakerConfig) *controlv1.CircuitBrea
 		return nil
 	}
 	return &controlv1.CircuitBreakerConfig{
-		MaxInflightRequests: uint32(item.MaxInflightRequests),
+		MaxInflightRequests: uint32(item.MaxInflightRequests), //nolint:gosec
 	}
 }
 

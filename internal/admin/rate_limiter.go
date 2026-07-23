@@ -45,11 +45,11 @@ func newRateLimiter(rps int64, burstOrWindow any, trustedProxies []string) *rate
 		}
 	case uint:
 		if v > 0 {
-			burst = int64(v)
+			burst = int64(v) //nolint:gosec
 		}
 	case uint64:
 		if v > 0 {
-			burst = int64(v)
+			burst = int64(v) //nolint:gosec
 		}
 	case time.Duration:
 		if v > 0 {

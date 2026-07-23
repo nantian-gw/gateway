@@ -106,15 +106,15 @@ func sortedStringsFromFeatureSet(items sets.Set[gatewayfeatures.FeatureName]) []
 }
 
 func renderAuditMarkdown(dst io.Writer, audit featureAudit) {
-	fmt.Fprintf(dst, "Declared features: `%d`\n\n", len(audit.Declared))
-	fmt.Fprintf(dst, "Upstream features not declared by this repository: `%d`\n\n", len(audit.UpstreamUnclaimed))
+	_, _ = fmt.Fprintf(dst, "Declared features: `%d`\n\n", len(audit.Declared))
+	_, _ = fmt.Fprintf(dst, "Upstream features not declared by this repository: `%d`\n\n", len(audit.UpstreamUnclaimed))
 	for _, name := range audit.UpstreamUnclaimed {
-		fmt.Fprintf(dst, "- `%s`\n", name)
+		_, _ = fmt.Fprintf(dst, "- `%s`\n", name)
 	}
 	fmt.Fprintln(dst)
-	fmt.Fprintf(dst, "Declared features not found upstream: `%d`\n\n", len(audit.StaleOrUnknown))
+	_, _ = fmt.Fprintf(dst, "Declared features not found upstream: `%d`\n\n", len(audit.StaleOrUnknown))
 	for _, name := range audit.StaleOrUnknown {
-		fmt.Fprintf(dst, "- `%s`\n", name)
+		_, _ = fmt.Fprintf(dst, "- `%s`\n", name)
 	}
 }
 
@@ -126,12 +126,12 @@ func renderMarkdown(dst io.Writer, names []string) {
 	fmt.Fprintln(dst, "- `GatewayClass.status.supportedFeatures`")
 	fmt.Fprintln(dst, "- Conformance `SupportedFeatures` when `ALL_FEATURES=true`")
 	fmt.Fprintln(dst, "")
-	fmt.Fprintf(dst, "Number of features declared by this repository: `%d`\n", len(names))
+	_, _ = fmt.Fprintf(dst, "Number of features declared by this repository: `%d`\n", len(names))
 	fmt.Fprintln(dst, "")
 	fmt.Fprintln(dst, "| Feature | GatewayClass.status | Conformance Profile |")
 	fmt.Fprintln(dst, "| --- | --- | --- |")
 	for _, name := range names {
-		fmt.Fprintf(dst, "| `%s` | `Yes` | `Yes` |\n", name)
+		_, _ = fmt.Fprintf(dst, "| `%s` | `Yes` | `Yes` |\n", name)
 	}
 	fmt.Fprintln(dst, "<!-- END GENERATED SUPPORTED FEATURES -->")
 }

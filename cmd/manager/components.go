@@ -99,9 +99,9 @@ func newHTTPComponent(
 			if err != nil {
 				return fmt.Errorf("listen on %s: %w", addr, err)
 			}
-			defer listener.Close()
+			defer func() { _ = listener.Close() }()
 
-			go func() {
+			go func() { //nolint:gosec
 				<-ctx.Done()
 
 				shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
@@ -139,7 +139,7 @@ func newGRPCComponent(name, addr string, server *xds.Server) lifecycle.Component
 			if err != nil {
 				return fmt.Errorf("listen on %s: %w", addr, err)
 			}
-			defer listener.Close()
+			defer func() { _ = listener.Close() }()
 			return server.Serve(ctx, listener, markStarted)
 		},
 	}

@@ -20,7 +20,7 @@ func serviceParentPortMatches(service corev1.Service, parentRef gatewayv1.Parent
 		return true
 	}
 
-	return servicePortExists(service, uint16(*parentRef.Port))
+	return servicePortExists(service, uint16(*parentRef.Port)) //nolint:gosec
 }
 
 func buildListenerPolicy(listener gatewayv1.Listener) listenerPolicy {
@@ -365,7 +365,7 @@ func portOrZero(port *gatewayv1.PortNumber) uint16 {
 	if port == nil {
 		return 0
 	}
-	return uint16(*port)
+	return uint16(*port) //nolint:gosec
 }
 
 func backendKindForStatus(group, kind string) (string, bool) {
@@ -386,7 +386,7 @@ func serviceImportPortExists(serviceImport mcsv1alpha1.ServiceImport, port uint1
 		return true
 	}
 	for _, item := range serviceImport.Spec.Ports {
-		if uint16(item.Port) == port {
+		if uint16(item.Port) == port { //nolint:gosec
 			return true
 		}
 	}

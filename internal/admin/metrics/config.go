@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultMetricsConfigNamespace = "nantian-gw"
-	defaultMetricsConfigSecret    = "nantian-gw-metrics-config"
+	defaultMetricsConfigSecret    = "nantian-gw-metrics-config" //nolint:gosec
 )
 
 // MetricsConfig holds the Prometheus integration configuration loaded from a

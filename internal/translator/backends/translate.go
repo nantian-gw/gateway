@@ -162,9 +162,9 @@ func TranslateEffectiveBackends(
 						zone = *endpoint.Zone
 					}
 
-					matchedPort := uint32(port.Port)
+					matchedPort := uint32(port.Port) //nolint:gosec
 					if portInfo := shared.SelectSlicePort(slice.Ports, port.Name, port.Port); portInfo != nil && portInfo.Port != nil {
-						matchedPort = uint32(*portInfo.Port)
+						matchedPort = uint32(*portInfo.Port) //nolint:gosec
 					}
 
 					for _, address := range endpoint.Addresses {
@@ -257,9 +257,9 @@ func TranslateServiceImportBackends(
 						zone = *endpoint.Zone
 					}
 
-					matchedPort := uint32(port.Port)
+					matchedPort := uint32(port.Port) //nolint:gosec
 					if portInfo := shared.SelectSlicePort(slice.Ports, port.Name, port.Port); portInfo != nil && portInfo.Port != nil {
-						matchedPort = uint32(*portInfo.Port)
+						matchedPort = uint32(*portInfo.Port) //nolint:gosec
 					}
 
 					for _, address := range endpoint.Addresses {

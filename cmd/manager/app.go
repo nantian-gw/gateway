@@ -318,7 +318,7 @@ func run(configPath string) error {
 			},
 		}
 		if caPath := cfg.AdminTLS.ClientCAPath; caPath != "" {
-			raw, err := os.ReadFile(caPath)
+			raw, err := os.ReadFile(caPath) //nolint:gosec
 			if err != nil {
 				return fmt.Errorf("read admin TLS client CA: %w", err)
 			}

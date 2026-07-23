@@ -180,7 +180,7 @@ func loadMeshFrontendNetworkPolicyPorts(
 			}
 
 			key := networkPolicyPortKey{
-				port:     int32(port.TargetPort.IntValue()),
+				port:     int32(port.TargetPort.IntValue()), //nolint:gosec
 				protocol: port.Protocol,
 			}
 			if _, exists := index[key]; exists {

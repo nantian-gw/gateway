@@ -522,7 +522,7 @@ func readBackendTLSAsset(t *testing.T, name string) []byte {
 	t.Helper()
 
 	path := filepath.Join("..", "..", "test", "testdata", "backendtls", name)
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}

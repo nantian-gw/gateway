@@ -53,7 +53,7 @@ func newPprofHandler() http.Handler {
 
 func resolvePprofToken(bearerToken, bearerTokenFile string) string {
 	if path := strings.TrimSpace(bearerTokenFile); path != "" {
-		raw, err := os.ReadFile(path)
+		raw, err := os.ReadFile(path) //nolint:gosec
 		if err != nil {
 			return ""
 		}

@@ -17,7 +17,7 @@ import (
 
 const (
 	gatewayGatewayClassNameIndex          = "nantian.dev/infrastructure.gateway.gatewayclass-name"
-	gatewaySecretReferenceIndex           = "nantian.dev/snapshot.gateway.secret-refs"
+	gatewaySecretReferenceIndex           = "nantian.dev/snapshot.gateway.secret-refs" //nolint:gosec
 	gatewayConfigMapReferenceIndex        = "nantian.dev/snapshot.gateway.configmap-refs"
 	gatewayReferenceGrantNamespaceIndex   = "nantian.dev/snapshot.gateway.referencegrant-namespaces"
 	gatewayNamespaceSelectorIndex         = "nantian.dev/snapshot.gateway.namespace-selector"

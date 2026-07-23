@@ -55,7 +55,7 @@ func (c *PrometheusClient) InstantQuery(ctx context.Context, query string) (*Pro
 	if err != nil {
 		return nil, fmt.Errorf("prometheus: request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -103,7 +103,7 @@ func (c *PrometheusClient) RangeQuery(ctx context.Context, query, start, end, st
 	if err != nil {
 		return nil, fmt.Errorf("prometheus: request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

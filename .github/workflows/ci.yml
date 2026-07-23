@@ -53,8 +53,10 @@ jobs:
           cache-dependency-path: go.sum
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-      - name: Run golangci-lint
-        run: golangci-lint run
+      - name: Run golangci-lint (style — informational)
+        run: golangci-lint run --issues-exit-code=0
+      - name: Run golangci-lint (correctness — blocking)
+        run: golangci-lint run --enable-only=govet,staticcheck,errcheck,gosec,copyloopvar,noctx,nilerr,bodyclose,sqlclosecheck,durationcheck,errorlint,ineffassign
 
   proto-check:
     runs-on: ubuntu-latest

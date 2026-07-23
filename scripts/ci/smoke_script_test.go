@@ -10,7 +10,7 @@ import (
 
 func TestSmokeScriptMarksEarlyBootstrapFailureAsFailed(t *testing.T) {
 	stubDir := filepath.Join(t.TempDir(), "bin")
-	if err := os.MkdirAll(stubDir, 0o755); err != nil {
+	if err := os.MkdirAll(stubDir, 0o755); err != nil { //nolint:gosec
 		t.Fatalf("create stub dir: %v", err)
 	}
 
@@ -36,7 +36,7 @@ fi
 echo "unexpected kubectl invocation: $*" >&2
 exit 1
 `
-	if err := os.WriteFile(kubectlPath, []byte(kubectlStub), 0o755); err != nil {
+	if err := os.WriteFile(kubectlPath, []byte(kubectlStub), 0o755); err != nil { //nolint:gosec
 		t.Fatalf("write kubectl stub: %v", err)
 	}
 
@@ -45,7 +45,7 @@ exit 1
 		t.Fatalf("resolve smoke script path: %v", err)
 	}
 
-	cmd := exec.Command("bash", scriptPath, "--no-cleanup", "--skip-bootstrap")
+	cmd := exec.Command("bash", scriptPath, "--no-cleanup", "--skip-bootstrap") //nolint:gosec
 	cmd.Env = append(
 		os.Environ(),
 		"PATH="+stubDir+string(os.PathListSeparator)+os.Getenv("PATH"),

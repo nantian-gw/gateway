@@ -380,7 +380,7 @@ func BackendRefsFromHTTP(refs []gatewayv1.HTTPBackendRef, defaultNamespace strin
 			Namespace: shared.NamespaceOrDefault(ref.Namespace, defaultNamespace),
 			Name:      string(ref.Name),
 			Port:      shared.PortValue(ref.Port),
-			Weight:    uint32(shared.WeightValue(ref.Weight)),
+			Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec
 			Filters:   FiltersFromHTTP(ref.Filters, defaultNamespace),
 		})
 	}
@@ -397,7 +397,7 @@ func BackendRefsFromGRPC(refs []gatewayv1.GRPCBackendRef, defaultNamespace strin
 			Namespace: shared.NamespaceOrDefault(ref.Namespace, defaultNamespace),
 			Name:      string(ref.Name),
 			Port:      shared.PortValue(ref.Port),
-			Weight:    uint32(shared.WeightValue(ref.Weight)),
+			Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec
 			Filters:   FiltersFromGRPC(ref.Filters, defaultNamespace),
 		})
 	}
@@ -414,7 +414,7 @@ func BackendRefsFromRouteRule(refs []gatewayv1.BackendRef, defaultNamespace stri
 			Namespace: shared.NamespaceOrDefault(ref.Namespace, defaultNamespace),
 			Name:      string(ref.Name),
 			Port:      shared.PortValue(ref.Port),
-			Weight:    uint32(shared.WeightValue(ref.Weight)),
+			Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec
 		})
 	}
 

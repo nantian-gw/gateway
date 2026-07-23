@@ -20,7 +20,7 @@ import (
 
 const (
 	chatbotConfigNamespace = "nantian-gw"
-	chatbotConfigSecret    = "chatbot-config"
+	chatbotConfigSecret    = "chatbot-config" //nolint:gosec
 	maxChatHistoryMessages = 40
 )
 
@@ -255,7 +255,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 
 	if err := <-errCh; err != nil {
 		s.logger.Error("chatbot streaming error", "error", err)
-		fmt.Fprintf(w, "event: error\ndata: %s\n\n", escapeSSEData(err.Error()))
+		_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", escapeSSEData(err.Error()))
 		flusher.Flush()
 		return
 	}
@@ -265,7 +265,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	yamlBlocks := extractYAMLBlocks(responseText)
 	if len(yamlBlocks) == 0 {
 		// Signal end of stream.
-		fmt.Fprintf(w, "data: [DONE]\n\n")
+		_, _ = fmt.Fprintf(w, "data: [DONE]\n\n")
 		flusher.Flush()
 		return
 	}
@@ -275,14 +275,14 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 		_, err := chatbot.DryRunValidate(r.Context(), "gateway.networking.k8s.io/nantian-gw", yamlBlock)
 		if err == nil {
 			// Validation succeeded.
-			fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":true}\n\n")
-			fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yamlBlock))
+			_, _ = fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":true}\n\n")
+			_, _ = fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yamlBlock))
 			flusher.Flush()
 		} else {
 			// Validation failed – stream auto-correction progress.
-			fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":false,\"error\":\"%s\"}\n\n",
+			_, _ = fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":false,\"error\":\"%s\"}\n\n",
 				escapeSSEData(err.Error()))
-			fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yamlBlock))
+			_, _ = fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yamlBlock))
 			flusher.Flush()
 
 			runAutoCorrectSSE(r.Context(), w, flusher, llm, systemPrompt, req.Prompt, history, err)
@@ -290,7 +290,7 @@ func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Signal end of stream.
-	fmt.Fprintf(w, "data: [DONE]\n\n")
+	_, _ = fmt.Fprintf(w, "data: [DONE]\n\n")
 	flusher.Flush()
 }
 
@@ -315,7 +315,7 @@ func runAutoCorrectSSE(
 
 	lastErr := initialErr
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		fmt.Fprintf(w, "event: correction_progress\ndata: {\"attempt\":%d,\"maxRetries\":%d}\n\n",
+		_, _ = fmt.Fprintf(w, "event: correction_progress\ndata: {\"attempt\":%d,\"maxRetries\":%d}\n\n",
 			attempt, maxRetries)
 		flusher.Flush()
 
@@ -334,12 +334,12 @@ func runAutoCorrectSSE(
 		var corrected strings.Builder
 		for chunk := range chunkChan {
 			corrected.WriteString(chunk)
-			fmt.Fprintf(w, "data: %s\n\n", chunk)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", chunk)
 			flusher.Flush()
 		}
 
 		if streamErr := <-errCh; streamErr != nil {
-			fmt.Fprintf(w, "event: correction_error\ndata: {\"error\":\"%s\"}\n\n",
+			_, _ = fmt.Fprintf(w, "event: correction_error\ndata: {\"error\":\"%s\"}\n\n",
 				escapeSSEData(streamErr.Error()))
 			flusher.Flush()
 			return
@@ -356,8 +356,8 @@ func runAutoCorrectSSE(
 			_, dryRunErr := chatbot.DryRunValidate(ctx, "gateway.networking.k8s.io/nantian-gw", yb)
 			if dryRunErr == nil {
 				validated = true
-				fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":true,\"corrected\":true}\n\n")
-				fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yb))
+				_, _ = fmt.Fprintf(w, "event: dry_run_status\ndata: {\"success\":true,\"corrected\":true}\n\n")
+				_, _ = fmt.Fprintf(w, "event: manifests\ndata: %s\n\n", escapeSSEData(yb))
 				flusher.Flush()
 				break
 			}
@@ -369,7 +369,7 @@ func runAutoCorrectSSE(
 		}
 	}
 
-	fmt.Fprintf(w, "event: correction_failed\ndata: {\"error\":\"validation failed after %d retries\"}\n\n",
+	_, _ = fmt.Fprintf(w, "event: correction_failed\ndata: {\"error\":\"validation failed after %d retries\"}\n\n",
 		maxRetries)
 	flusher.Flush()
 }

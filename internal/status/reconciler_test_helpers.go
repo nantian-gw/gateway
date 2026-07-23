@@ -455,7 +455,7 @@ func readStatusTLSAsset(t *testing.T, name string) string {
 	t.Helper()
 
 	path := filepath.Join("..", "..", "test", "testdata", "tls", name)
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}

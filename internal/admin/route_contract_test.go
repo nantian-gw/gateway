@@ -78,7 +78,7 @@ func loadSurfaceContractDocument(t *testing.T) surfaceContractDocument {
 	t.Helper()
 
 	path := filepath.Join("..", "..", "docs", "contracts", "admin-api-surface.json")
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		t.Fatalf("read surface contract doc: %v", err)
 	}

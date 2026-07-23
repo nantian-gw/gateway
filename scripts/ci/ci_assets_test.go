@@ -650,7 +650,7 @@ func portKey(port int, protocol string) string {
 func readFile(t *testing.T, path string) []byte {
 	t.Helper()
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}

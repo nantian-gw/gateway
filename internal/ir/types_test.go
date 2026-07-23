@@ -364,7 +364,7 @@ func TestSnapshotNormalizeStableAcrossPermutationsProperty(t *testing.T) {
 		t.Fatalf("normalize expected snapshot: %v", err)
 	}
 
-	rng := rand.New(rand.NewSource(42))
+	rng := rand.New(rand.NewSource(42)) //nolint:gosec
 	for i := 0; i < 64; i++ {
 		seed := rng.Uint64()
 		shuffled := shuffledSnapshotForProperty(snapshotPropertyFixture(), seed)
@@ -603,7 +603,7 @@ func snapshotPropertyFixture() *Snapshot {
 
 func shuffledSnapshotForProperty(base *Snapshot, seed uint64) *Snapshot {
 	out := base.Clone()
-	rng := rand.New(rand.NewSource(int64(seed)))
+	rng := rand.New(rand.NewSource(int64(seed))) //nolint:gosec
 
 	shuffleListenersForProperty(rng, out.Listeners)
 	shuffleHTTPRoutesForProperty(rng, out.HTTPRoutes)

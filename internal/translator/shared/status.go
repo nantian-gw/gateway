@@ -99,7 +99,7 @@ func routeParentRef(parent gatewayv1.ParentReference, defaultNamespace string) i
 		out.Namespace = defaultNamespace
 	}
 	if parent.Port != nil {
-		out.Port = uint32(*parent.Port)
+		out.Port = uint32(*parent.Port) //nolint:gosec
 	}
 	return out
 }

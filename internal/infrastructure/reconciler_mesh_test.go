@@ -321,7 +321,7 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 		assertNetworkPolicyPort(
 			t,
 			policy.Spec.Ingress,
-			int32(port.TargetPort.IntValue()),
+			int32(port.TargetPort.IntValue()), //nolint:gosec
 			port.Protocol,
 		)
 	}
@@ -388,7 +388,7 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 	}
 	serviceTargetPorts := map[string]int32{}
 	for _, port := range service.Spec.Ports {
-		serviceTargetPorts[port.Name] = int32(port.TargetPort.IntValue())
+		serviceTargetPorts[port.Name] = int32(port.TargetPort.IntValue()) //nolint:gosec
 	}
 	for _, port := range endpointSlices.Items[0].Ports {
 		if port.Name == nil || port.Port == nil {

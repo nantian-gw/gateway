@@ -280,7 +280,7 @@ func benchmarkLargeSnapshotBackend(index int, endpointsPerBackend int) BackendCl
 	for endpoint := endpointsPerBackend - 1; endpoint >= 0; endpoint-- {
 		backend.Endpoints = append(backend.Endpoints, BackendEndpoint{
 			Address: fmt.Sprintf("10.%d.%d.%d", (index/256)%256, index%256, endpoint+1),
-			Port:    8_000 + uint32(index%1_000),
+			Port:    8_000 + uint32(index%1_000), //nolint:gosec
 			Healthy: endpoint%5 != 0,
 			Zone:    fmt.Sprintf("zone-%d", endpoint%3),
 		})
@@ -294,7 +294,7 @@ func benchmarkBackendRef(index int, backendCount int, weight uint32) BackendRef 
 		Kind:      "Service",
 		Namespace: benchmarkNamespace(backendIndex),
 		Name:      benchmarkBackendName(backendIndex),
-		Port:      8_000 + uint32(backendIndex%1_000),
+		Port:      8_000 + uint32(backendIndex%1_000), //nolint:gosec
 		Weight:    weight,
 		Metadata: map[string]string{
 			"backend-index": fmt.Sprintf("%04d", backendIndex),

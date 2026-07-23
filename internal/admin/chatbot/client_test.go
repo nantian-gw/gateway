@@ -75,9 +75,9 @@ func TestChatCompletionStream_WithHistory(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		flusher, _ := w.(http.Flusher)
-		w.Write([]byte(`data: {"choices": [{"delta": {"content": "Acknowledged."}, "index": 0}]}` + "\n"))
+		_, _ = w.Write([]byte(`data: {"choices": [{"delta": {"content": "Acknowledged."}, "index": 0}]}` + "\n"))
 		flusher.Flush()
-		w.Write([]byte("data: [DONE]\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n"))
 	}))
 	defer server.Close()
 
@@ -156,7 +156,7 @@ func TestChatCompletionStream_EmptyStream(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("data: [DONE]\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n"))
 	}))
 	defer server.Close()
 
@@ -195,7 +195,7 @@ func TestChatCompletionStream_MalformedJSON(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		flusher, _ := w.(http.Flusher)
-		w.Write([]byte("data: {invalid}\n"))
+		_, _ = w.Write([]byte("data: {invalid}\n"))
 		flusher.Flush()
 	}))
 	defer server.Close()
@@ -239,7 +239,7 @@ func TestChatCompletionStream_NoAuthWhenAPIKeyEmpty(t *testing.T) {
 
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("data: [DONE]\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n"))
 	}))
 	defer server.Close()
 
@@ -272,11 +272,11 @@ func TestChatCompletionStream_SSECommentsIgnored(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		flusher, _ := w.(http.Flusher)
-		w.Write([]byte(": this is a comment\n"))
+		_, _ = w.Write([]byte(": this is a comment\n"))
 		flusher.Flush()
-		w.Write([]byte(`data: {"choices": [{"delta": {"content": "X"}}]}` + "\n"))
+		_, _ = w.Write([]byte(`data: {"choices": [{"delta": {"content": "X"}}]}` + "\n"))
 		flusher.Flush()
-		w.Write([]byte("data: [DONE]\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n"))
 	}))
 	defer server.Close()
 

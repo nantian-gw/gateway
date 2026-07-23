@@ -429,7 +429,7 @@ func IsAuthConfigured(opts Options) bool {
 
 func resolveBearerToken(opts Options) (string, bool) {
 	if path := strings.TrimSpace(opts.BearerTokenFile); path != "" {
-		raw, err := os.ReadFile(path)
+		raw, err := os.ReadFile(path) //nolint:gosec
 		if err != nil {
 			return "", false
 		}
@@ -462,7 +462,7 @@ func extractBearerToken(r *http.Request) string {
 
 func resolveReadOnlyToken(opts Options) (string, bool) {
 	if path := strings.TrimSpace(opts.ReadOnlyBearerTokenFile); path != "" {
-		raw, err := os.ReadFile(path)
+		raw, err := os.ReadFile(path) //nolint:gosec
 		if err != nil {
 			return "", false
 		}

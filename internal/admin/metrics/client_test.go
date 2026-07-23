@@ -13,7 +13,7 @@ func TestInstantQuery(t *testing.T) {
 			if got := r.URL.Query().Get("query"); got != "up" {
 				t.Errorf("query = %q, want up", got)
 			}
-			w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[]}}`))
+			_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[]}}`))
 		}))
 		defer srv.Close()
 
@@ -50,7 +50,7 @@ func TestInstantQuery(t *testing.T) {
 
 	t.Run("invalid json", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`not json`))
+			_, _ = w.Write([]byte(`not json`))
 		}))
 		defer srv.Close()
 
@@ -63,7 +63,7 @@ func TestInstantQuery(t *testing.T) {
 
 	t.Run("prometheus error status", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`{"status":"error","error":"parse error"}`))
+			_, _ = w.Write([]byte(`{"status":"error","error":"parse error"}`))
 		}))
 		defer srv.Close()
 
@@ -99,7 +99,7 @@ func TestRangeQuery(t *testing.T) {
 			if got := q.Get("step"); got != "60s" {
 				t.Errorf("step = %q", got)
 			}
-			w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[]}}`))
+			_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[]}}`))
 		}))
 		defer srv.Close()
 

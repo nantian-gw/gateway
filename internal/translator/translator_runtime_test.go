@@ -259,7 +259,7 @@ func TestTranslateHTTPRouteDropsInvalidRulesMarkedPartiallyInvalid(t *testing.T)
 
 func TestBackendProtocolUsesAppProtocolHints(t *testing.T) {
 	appH2C := "kubernetes.io/h2c"
-	appWS := "kubernetes.io/ws"
+	appWS := "kubernetes.io/ws" //nolint:gosec
 	appGRPC := "grpc"
 	services := []corev1.Service{
 		{
@@ -371,7 +371,7 @@ func TestTranslateBackendsIncludesServiceImports(t *testing.T) {
 
 func TestTranslateBackendsUsesServiceImportAppProtocolHints(t *testing.T) {
 	appH2C := "kubernetes.io/h2c"
-	appWS := "kubernetes.io/ws"
+	appWS := "kubernetes.io/ws" //nolint:gosec
 
 	serviceImports := []mcsv1alpha1.ServiceImport{{
 		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: "default"},

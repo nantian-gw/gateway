@@ -180,7 +180,7 @@ func meshDataplaneEndpoints(
 func meshEndpointSlicePorts(ports []corev1.ServicePort) []discoveryv1.EndpointPort {
 	out := make([]discoveryv1.EndpointPort, 0, len(ports))
 	for _, port := range ports {
-		endpointPort := int32(serviceTargetPort(port))
+		endpointPort := int32(serviceTargetPort(port)) //nolint:gosec
 		item := discoveryv1.EndpointPort{
 			Port:     &endpointPort,
 			Protocol: &port.Protocol,

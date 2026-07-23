@@ -22,7 +22,7 @@ func TestEndToEndSpanHierarchy(t *testing.T) {
 		sdktrace.WithSyncer(exporter),
 	)
 	otel.SetTracerProvider(provider)
-	defer func() { _ = provider.Shutdown(context.Background()) }()
+	_ = defer func() { _ = provider.Shutdown(context.Background()) }()
 
 	tracer := otel.Tracer("test-tracer")
 	ctx, rootSpan := tracer.Start(context.Background(), "controlplane.syncer.publish_snapshot")
@@ -43,7 +43,7 @@ func TestEndToEndSpanHierarchy(t *testing.T) {
 	rootSpan.SetStatus(codes.Error, "test error")
 	rootSpan.End()
 
-	provider.ForceFlush(context.Background())
+	_ = provider.ForceFlush(context.Background())
 	spans := exporter.GetSpans()
 
 	if len(spans) < 3 {
@@ -88,7 +88,7 @@ func TestEndToEndAIInferenceSpan(t *testing.T) {
 		sdktrace.WithSyncer(exporter),
 	)
 	otel.SetTracerProvider(provider)
-	defer func() { _ = provider.Shutdown(context.Background()) }()
+	_ = defer func() { _ = provider.Shutdown(context.Background()) }()
 
 	tracer := otel.Tracer("test-ai-tracer")
 	_, span := tracer.Start(context.Background(), "ai.inference")
@@ -101,7 +101,7 @@ func TestEndToEndAIInferenceSpan(t *testing.T) {
 	)
 	span.End()
 
-	provider.ForceFlush(context.Background())
+	_ = provider.ForceFlush(context.Background())
 	spans := exporter.GetSpans()
 
 	if len(spans) != 1 {

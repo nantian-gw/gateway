@@ -249,7 +249,7 @@ func listenerSetEntryAttachedRoutes(
 		gatewayName:      gateway.Name,
 		listenerName:     listener.Name,
 	}
-	return int32(len(attachments[key]))
+	return int32(len(attachments[key])) //nolint:gosec
 }
 
 func gatewayAllowsListenerSet(gw gatewayv1.Gateway, ls gatewayv1.ListenerSet, namespaces map[string]corev1.Namespace) bool {
@@ -329,7 +329,7 @@ func evaluateGatewayListenerSetListeners(
 				gatewayName:      gateway.Name,
 				listenerName:     listener.Name,
 			}
-			eval := evaluateGatewayListener(state, gateway, allListeners, listener, int32(len(attachments[key])))
+			eval := evaluateGatewayListener(state, gateway, allListeners, listener, int32(len(attachments[key]))) //nolint:gosec
 			out = append(out, eval)
 		}
 	}

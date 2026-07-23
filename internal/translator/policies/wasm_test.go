@@ -234,7 +234,7 @@ func TestTranslateWasmPluginFromInlineDecodeError(t *testing.T) {
 func TestTranslateWasmPluginFromURL(t *testing.T) {
 	wasmBytes := []byte("mock wasm binary data from url")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(wasmBytes)
+		_, _ = w.Write(wasmBytes)
 	}))
 	defer server.Close()
 
@@ -281,7 +281,7 @@ func TestTranslateWasmPluginURLOverridesInline(t *testing.T) {
 	encoded := base64.StdEncoding.EncodeToString([]byte("inline data"))
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(wasmBytes)
+		_, _ = w.Write(wasmBytes)
 	}))
 	defer server.Close()
 

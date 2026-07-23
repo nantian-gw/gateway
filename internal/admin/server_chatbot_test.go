@@ -107,7 +107,7 @@ func TestGetChatbotConfig_ReturnsMaskedConfig(t *testing.T) {
 	}
 
 	apiKey, _ := resp["apiKey"].(string)
-	if apiKey == "sk-proj-abc123xyz" {
+	if apiKey == "sk-proj-abc123xyz" { //nolint:gosec
 		t.Errorf("API key must be masked, got raw: %q", apiKey)
 	}
 	if !strings.Contains(apiKey, "••••") {
@@ -275,7 +275,7 @@ func TestPostChatbotChat_ReturnsSSEStream(t *testing.T) {
 			`data: [DONE]`,
 		}
 		for _, chunk := range chunks {
-			w.Write([]byte(chunk + "\n"))
+			_, _ = w.Write([]byte(chunk + "\n"))
 			flusher.Flush()
 		}
 	}))
@@ -359,9 +359,9 @@ func TestPostChatbotChat_StreamsWithHistory(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 
 		flusher, _ := w.(http.Flusher)
-		w.Write([]byte(`data: {"choices": [{"delta": {"content": "Acknowledged."}, "index": 0}]}` + "\n"))
+		_, _ = w.Write([]byte(`data: {"choices": [{"delta": {"content": "Acknowledged."}, "index": 0}]}` + "\n"))
 		flusher.Flush()
-		w.Write([]byte("data: [DONE]\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n"))
 	}))
 	defer mockOpenAI.Close()
 

@@ -57,7 +57,7 @@ func main() {
 	if err != nil {
 		fatalf("create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() { _ = os.RemoveAll(tempDir) }()
 
 	currentDescriptorPath := filepath.Join(tempDir, "current.pb")
 	baseDescriptorPath := filepath.Join(tempDir, "base.pb")
@@ -119,7 +119,7 @@ type moduleInfo struct {
 }
 
 func moduleDir(repoRoot, moduleQuery string) (string, error) {
-	download := exec.Command("go", "mod", "download", "-json", moduleQuery)
+	download := exec.Command("go", "mod", "download", "-json", moduleQuery) //nolint:gosec
 	download.Dir = repoRoot
 	download.Stderr = os.Stderr
 	downloadOutput, err := download.Output()
@@ -179,13 +179,13 @@ func findProtocInclude() (string, error) {
 }
 
 func wellKnownTypeExists(root string) bool {
-	_, err := os.Stat(filepath.Join(root, "google/protobuf/duration.proto"))
+	_, err := os.Stat(filepath.Join(root, "google/protobuf/duration.proto")) //nolint:gosec
 	return err == nil
 }
 
 func findWellKnownType(root string) (string, error) {
 	var found string
-	walkErr := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+	walkErr := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error { //nolint:gosec
 		if err != nil {
 			return nil
 		}
@@ -208,7 +208,7 @@ func findWellKnownType(root string) (string, error) {
 }
 
 func compileDescriptor(protoRoot, protoFile, protocInclude, outputPath string) error {
-	cmd := exec.Command(
+	cmd := exec.Command( //nolint:gosec
 		"protoc",
 		"-I", protoRoot,
 		"-I", protocInclude,
@@ -223,7 +223,7 @@ func compileDescriptor(protoRoot, protoFile, protocInclude, outputPath string) e
 }
 
 func loadDescriptorSet(path string) (*descriptorpb.FileDescriptorSet, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
