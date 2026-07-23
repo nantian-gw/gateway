@@ -70,13 +70,26 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 	}
 
 	controllers = append(controllers,
-		&backendLBPolicyController{reconciler: reconciler},
 		&backendTLSPolicyController{reconciler: reconciler},
-		&aiserviceController{reconciler: reconciler},
-		&tokenPolicyController{reconciler: reconciler},
-		&wasmPluginController{reconciler: reconciler},
-		&routePolicyController{reconciler: reconciler},
 	)
+
+	if opts.EnableExperimentalGateway {
+		controllers = append(controllers,
+			&backendLBPolicyController{reconciler: reconciler},
+		)
+	}
+	if opts.EnableAiGateway {
+		controllers = append(controllers,
+			&aiserviceController{reconciler: reconciler},
+		)
+	}
+	if opts.EnableExperimentalGateway {
+		controllers = append(controllers,
+			&tokenPolicyController{reconciler: reconciler},
+			&wasmPluginController{reconciler: reconciler},
+			&routePolicyController{reconciler: reconciler},
+		)
+	}
 
 	return controllers
 }

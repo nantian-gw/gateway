@@ -4,6 +4,7 @@ import "time"
 
 type Options struct {
 	EnableExperimentalGateway bool
+	EnableAiGateway           bool
 	MaxConcurrentReconciles   int
 	RateLimiterBaseDelay      time.Duration
 	RateLimiterMaxDelay       time.Duration

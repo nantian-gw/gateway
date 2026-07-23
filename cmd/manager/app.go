@@ -175,6 +175,7 @@ func run(configPath string) error {
 	)
 	statusOptions := status.Options{
 		EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway,
+		EnableAiGateway:           cfg.Features.EnableAiGateway,
 		MaxConcurrentReconciles:   cfg.Controller.MaxConcurrentReconciles,
 		RateLimiterBaseDelay:      cfg.RateLimiterBaseDelayDuration(),
 		RateLimiterMaxDelay:       cfg.RateLimiterMaxDelayDuration(),
