@@ -438,11 +438,11 @@ func (r *Reconciler) loadRouteExtensionConfigMaps(
 }
 
 func (r *Reconciler) reconcileBackendLBPolicyObject(ctx context.Context, key client.ObjectKey) error {
-	return r.ReconcileRouteStatuses(ctx)
+	return r.Reconcile(ctx)
 }
 
 func (r *Reconciler) reconcileBackendTLSPolicyObject(ctx context.Context, key client.ObjectKey) error {
-	return r.ReconcileRouteStatuses(ctx)
+	return r.Reconcile(ctx)
 }
 
 func (r *Reconciler) reconcileAIServiceObject(ctx context.Context, key client.ObjectKey) error {
