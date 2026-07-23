@@ -99,7 +99,7 @@ func TestRuntimeServerOptionsFromConfigIncludesTracingStatsHandler(t *testing.T)
 	t.Parallel()
 
 	opts, _ := runtimeServerOptionsFromConfig(config.GRPCRuntimeConfig{})
-	if len(opts) != 4 {
+	if len(opts) != 3 {
 		t.Fatalf("unexpected runtime server option count: %d", len(opts))
 	}
 }

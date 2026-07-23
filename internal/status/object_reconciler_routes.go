@@ -430,3 +430,11 @@ func (r *Reconciler) loadRouteExtensionConfigMaps(
 
 	return nil
 }
+
+func (r *Reconciler) reconcileBackendLBPolicyObject(ctx context.Context, key client.ObjectKey) error {
+	return r.ReconcileRouteStatuses(ctx)
+}
+
+func (r *Reconciler) reconcileBackendTLSPolicyObject(ctx context.Context, key client.ObjectKey) error {
+	return r.ReconcileRouteStatuses(ctx)
+}

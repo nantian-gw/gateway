@@ -24,9 +24,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/resources"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 type controllerSetup interface {
@@ -62,6 +64,11 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 			&listenerSetController{reconciler: reconciler},
 		)
 	}
+
+	controllers = append(controllers,
+		&backendLBPolicyController{reconciler: reconciler},
+		&backendTLSPolicyController{reconciler: reconciler},
+	)
 
 	return controllers
 }
@@ -564,4 +571,42 @@ func gatewayListenerSetStatusRequests(
 			Name:      name,
 		},
 	}}
+}
+
+type backendLBPolicyController struct {
+	reconciler *Reconciler
+}
+
+func (c *backendLBPolicyController) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
+	return ctrl.Result{}, c.reconciler.reconcileBackendLBPolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *backendLBPolicyController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("backendlbpolicy-status").
+		WithOptions(statusControllerOptions(c.reconciler.options)).
+		For(&backend.BackendLBPolicy{}, generationChanged).
+		Complete(c)
+}
+
+type backendTLSPolicyController struct {
+	reconciler *Reconciler
+}
+
+func (c *backendTLSPolicyController) Reconcile(
+	ctx context.Context,
+	req ctrl.Request,
+) (ctrl.Result, error) {
+	return ctrl.Result{}, c.reconciler.reconcileBackendTLSPolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *backendTLSPolicyController) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		Named("backendtlspolicy-status").
+		WithOptions(statusControllerOptions(c.reconciler.options)).
+		For(&gatewayv1alpha3.BackendTLSPolicy{}, generationChanged).
+		Complete(c)
 }
