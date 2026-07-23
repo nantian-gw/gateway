@@ -273,7 +273,7 @@ func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get shared Service returned error: %v", err)
 	}
-	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP)
 	assertMissingServicePort(t, shared.Spec.Ports, 443, corev1.ProtocolTCP)
 
 	gatewayService, err := mustGetService(
@@ -284,7 +284,7 @@ func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get gateway Service returned error: %v", err)
 	}
-	assertServicePort(t, gatewayService.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+	assertServicePort(t, gatewayService.Spec.Ports, 80, corev1.ProtocolTCP)
 	assertMissingServicePort(t, gatewayService.Spec.Ports, 443, corev1.ProtocolTCP)
 
 	dataplanePolicy := &networkingv1.NetworkPolicy{}
@@ -406,7 +406,7 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get shared Service after recovery returned error: %v", err)
 	}
-	assertServicePort(t, shared.Spec.Ports, 443, corev1.ProtocolTCP, 0)
+	assertServicePort(t, shared.Spec.Ports, 443, corev1.ProtocolTCP)
 
 	gatewayService, err = mustGetService(
 		context.Background(),
@@ -416,7 +416,7 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get gateway Service after recovery returned error: %v", err)
 	}
-	assertServicePort(t, gatewayService.Spec.Ports, 443, corev1.ProtocolTCP, 0)
+	assertServicePort(t, gatewayService.Spec.Ports, 443, corev1.ProtocolTCP)
 }
 
 func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChanges(t *testing.T) {
@@ -525,8 +525,8 @@ func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChang
 		t.Fatalf("expected stale annotation to be removed, got %#v", service.Annotations)
 	}
 
-	assertServicePort(t, service.Spec.Ports, 443, corev1.ProtocolTCP, 0)
-	assertServicePort(t, service.Spec.Ports, 5353, corev1.ProtocolUDP, 0)
+	assertServicePort(t, service.Spec.Ports, 443, corev1.ProtocolTCP)
+	assertServicePort(t, service.Spec.Ports, 5353, corev1.ProtocolUDP)
 	assertMissingServicePort(t, service.Spec.Ports, 80, corev1.ProtocolTCP)
 	assertMissingServicePort(t, service.Spec.Ports, 5300, corev1.ProtocolUDP)
 }

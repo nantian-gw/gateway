@@ -327,7 +327,6 @@ func performRequestWithBody(
 	method string,
 	path string,
 	body []byte,
-	target any,
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -335,12 +334,6 @@ func performRequestWithBody(
 	req.Header.Set("Authorization", "Bearer "+testAuthToken)
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
-
-	if target != nil && recorder.Code == http.StatusOK {
-		if err := json.Unmarshal(recorder.Body.Bytes(), target); err != nil {
-			t.Fatalf("failed to decode response: %v", err)
-		}
-	}
 
 	return recorder
 }

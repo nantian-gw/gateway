@@ -368,7 +368,6 @@ func TestReconcileBackendScopedRequestRebuildsOnlyBackends(t *testing.T) {
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
-			"default",
 			discoveryv1.LabelServiceName,
 			"echo",
 		),
@@ -560,10 +559,10 @@ func (c *partialRebuildValidatingClient) List(
 	return c.Client.List(ctx, list, opts...)
 }
 
-func requireEndpointSliceList(namespace, labelKey, serviceName string) func(client.ListOptions) error {
+func requireEndpointSliceList(labelKey, serviceName string) func(client.ListOptions) error {
 	return func(opts client.ListOptions) error {
-		if opts.Namespace != namespace {
-			return fmt.Errorf("endpoint slice list namespace = %q, want %q", opts.Namespace, namespace)
+		if opts.Namespace != "default" {
+			return fmt.Errorf("endpoint slice list namespace = %q, want %q", opts.Namespace, "default")
 		}
 		if opts.LabelSelector == nil || opts.LabelSelector.Empty() {
 			return fmt.Errorf("endpoint slice list must include a service label selector")

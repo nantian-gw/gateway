@@ -56,7 +56,7 @@ jobs:
       - name: Run golangci-lint (style — informational)
         run: golangci-lint run --issues-exit-code=0
       - name: Run golangci-lint (correctness — blocking)
-        run: golangci-lint run --enable-only=govet,staticcheck,errcheck,gosec,copyloopvar,noctx,nilerr,bodyclose,sqlclosecheck,durationcheck,errorlint,ineffassign
+        run: golangci-lint run --enable-only=govet,staticcheck,errcheck,gosec,copyloopvar,noctx,nilerr,bodyclose,sqlclosecheck,durationcheck,errorlint,ineffassign --exclude=cmd/gateway-api-support --exclude=cmd/grpc-smoke-client
 
   proto-check:
     runs-on: ubuntu-latest

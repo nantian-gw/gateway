@@ -5,23 +5,12 @@ import (
 	"sort"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
-func (s *Syncer) listHasItems(ctx context.Context, list client.ObjectList, opts ...client.ListOption) (bool, error) {
-	if err := s.client.List(ctx, list, opts...); err != nil {
-		return false, err
-	}
-	items, err := meta.ExtractList(list)
-	if err != nil {
-		return false, err
-	}
-	return len(items) > 0, nil
-}
 
 func (s *Syncer) logDependencyLookupError(kind, namespace, name string, err error) {
 	if s == nil || s.logger == nil || err == nil {

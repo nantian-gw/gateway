@@ -94,6 +94,3 @@ func FrontendValidationForListenerWithIndexes(
 	return out
 }
 
-func configMapCAPEM(configMaps []corev1.ConfigMap, namespace, name string) string {
-	return shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, nil).ConfigMapCAPEM(namespace, name)
-}

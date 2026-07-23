@@ -1495,13 +1495,13 @@ func newPeriodicRetryTestSyncer(t *testing.T, interval time.Duration) (*Syncer, 
 	return syncer, retryClient, store
 }
 
-func waitForPublishedSnapshot(t *testing.T, store *ir.SnapshotStore) *ir.Snapshot {
+func waitForPublishedSnapshot(t *testing.T, store *ir.SnapshotStore) {
 	t.Helper()
 
 	deadline := time.Now().Add(500 * time.Millisecond)
 	for time.Now().Before(deadline) {
 		if snapshot := store.Current(); snapshot != nil && snapshot.ID != "" {
-			return snapshot
+			return
 		}
 		// poll interval for published snapshot check
 		time.Sleep(10 * time.Millisecond)
@@ -1509,7 +1509,6 @@ func waitForPublishedSnapshot(t *testing.T, store *ir.SnapshotStore) *ir.Snapsho
 
 	snapshot := store.Current()
 	t.Fatalf("timed out waiting for published snapshot, last snapshot %#v", snapshot)
-	return nil
 }
 
 func typeName(value any) string {

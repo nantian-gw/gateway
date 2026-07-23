@@ -35,7 +35,7 @@ func TestReconcileGatewayStaticAddressIgnoresStaleDerivedServiceAdvertisements(t
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			currentGateway,
 			oldService,
 		).
