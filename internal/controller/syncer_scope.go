@@ -116,12 +116,6 @@ var (
 	snapshotBackendsReconcileRequest = reconcile.Request{
 		NamespacedName: types.NamespacedName{Name: snapshotBackendsReconcileRequestName},
 	}
-	snapshotBackendDependenciesReconcileRequest = reconcile.Request{
-		NamespacedName: types.NamespacedName{Name: snapshotBackendDependenciesRequestName},
-	}
-	snapshotServiceDependenciesReconcileRequest = reconcile.Request{
-		NamespacedName: types.NamespacedName{Name: snapshotServiceDependenciesRequestName},
-	}
 	snapshotWorkloadsReconcileRequest = reconcile.Request{
 		NamespacedName: types.NamespacedName{Name: snapshotWorkloadsReconcileRequestName},
 	}

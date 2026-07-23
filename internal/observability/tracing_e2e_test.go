@@ -22,7 +22,7 @@ func TestEndToEndSpanHierarchy(t *testing.T) {
 		sdktrace.WithSyncer(exporter),
 	)
 	otel.SetTracerProvider(provider)
-	_ = defer func() { _ = provider.Shutdown(context.Background()) }()
+	defer func() { _ = provider.Shutdown(context.Background()) }()
 
 	tracer := otel.Tracer("test-tracer")
 	ctx, rootSpan := tracer.Start(context.Background(), "controlplane.syncer.publish_snapshot")
@@ -88,7 +88,7 @@ func TestEndToEndAIInferenceSpan(t *testing.T) {
 		sdktrace.WithSyncer(exporter),
 	)
 	otel.SetTracerProvider(provider)
-	_ = defer func() { _ = provider.Shutdown(context.Background()) }()
+	defer func() { _ = provider.Shutdown(context.Background()) }()
 
 	tracer := otel.Tracer("test-ai-tracer")
 	_, span := tracer.Start(context.Background(), "ai.inference")

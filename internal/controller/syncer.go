@@ -154,9 +154,6 @@ func (s *Syncer) SetSettleDelay(delay time.Duration) {
 	s.settleDelay = delay
 }
 
-func (s *Syncer) queueSettleRun(fallbackCtx context.Context) {
-	s.queueScopedSettleRun(fallbackCtx, snapshotBuildScopeFull, "", "", nil, nil, nil, snapshotRouteObjectKeys{})
-}
 
 func (s *Syncer) stopSettleRun() {
 	s.settleMu.Lock()
