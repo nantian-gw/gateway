@@ -386,7 +386,7 @@ func buildTranslatorSnapshot(t *testing.T, objects ...runtime.Object) *ir.Snapsh
 	testutil.Must(gatewayv1.Install(scheme), t)
 	testutil.Must(gatewayv1alpha2.Install(scheme), t)
 	testutil.Must(gatewayv1beta1.Install(scheme), t)
-	testutil.Must(mcsv1alpha1.AddToScheme(scheme), t)
+	testutil.Must(mcsv1alpha1.Install(scheme), t)
 	testutil.Must(corev1.AddToScheme(scheme), t)
 	testutil.Must(discoveryv1.AddToScheme(scheme), t)
 

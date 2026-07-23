@@ -16,8 +16,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildMarksTCPRouteCrossNamespaceBackendWithoutGrant(t *testing.T) {

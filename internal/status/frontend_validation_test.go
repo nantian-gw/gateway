@@ -216,7 +216,7 @@ func TestReconcileKeepsAcceptedWhenFrontendValidationStillHasValidCA(t *testing.
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{Name: "valid-ca", Namespace: "default"},
 				Data: map[string]string{
-					"ca.crt": string(readStatusTLSAsset(t, "client.crt")),
+					"ca.crt": readStatusTLSAsset(t, "client.crt"),
 				},
 			},
 		).
@@ -307,7 +307,7 @@ func TestReconcileRefreshesFrontendValidationRefsWhenReferenceGrantChanges(t *te
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{Name: "client-ca", Namespace: "security"},
 				Data: map[string]string{
-					"ca.crt": string(readStatusTLSAsset(t, "client.crt")),
+					"ca.crt": readStatusTLSAsset(t, "client.crt"),
 				},
 			},
 		).
@@ -535,7 +535,7 @@ func TestReconcileSetsInsecureFrontendValidationModeCondition(t *testing.T) {
 			&corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{Name: "client-ca", Namespace: "default"},
 				Data: map[string]string{
-					"ca.crt": string(readStatusTLSAsset(t, "client.crt")),
+					"ca.crt": readStatusTLSAsset(t, "client.crt"),
 				},
 			},
 		).

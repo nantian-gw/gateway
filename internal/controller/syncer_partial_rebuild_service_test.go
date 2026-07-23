@@ -180,6 +180,7 @@ func TestReconcileServiceImportScopedRequestRefreshesBackendRefsAndBackends(t *t
 		t.Fatalf("expected serviceimport-scoped rebuild to preserve listeners and attachments, got %#v", current.Listeners)
 	}
 }
+
 func TestReconcileServiceScopedRequestRefreshesMeshListenersBackendsAndBackendRefs(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 	servicePort := gatewayv1.PortNumber(8080)
@@ -328,6 +329,7 @@ func TestReconcileServiceScopedRequestRefreshesMeshListenersBackendsAndBackendRe
 		t.Fatalf("expected deleted service to surface backend-not-found, got %#v", metadata)
 	}
 }
+
 func TestReconcileServiceScopedRequestRefreshesOnlyAffectedBackendRefs(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 	echoPort := gatewayv1.PortNumber(8080)
@@ -514,6 +516,7 @@ func TestReconcileServiceScopedRequestRefreshesOnlyAffectedBackendRefs(t *testin
 		t.Fatalf("expected unrelated route reason to stay untouched, got %#v", routeMetadata["route-spare"])
 	}
 }
+
 func TestReconcilePodEventRefreshesMeshWorkloadsAfterPodIPAssignment(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 

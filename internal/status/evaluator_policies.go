@@ -193,20 +193,17 @@ func normalizeParentRef(routeNamespace string, ref gatewayv1.ParentReference) ga
 		Port:        ref.Port,
 	}
 	if ref.Group != nil {
-		group := gatewayv1.Group(*ref.Group)
-		normalized.Group = &group
+		normalized.Group = ref.Group
 	} else {
 		normalized.Group = groupPtr(gatewayGroup)
 	}
 	if ref.Kind != nil {
-		kind := gatewayv1.Kind(*ref.Kind)
-		normalized.Kind = &kind
+		normalized.Kind = ref.Kind
 	} else {
 		normalized.Kind = kindPtr("Gateway")
 	}
 	if ref.Namespace != nil {
-		namespace := gatewayv1.Namespace(*ref.Namespace)
-		normalized.Namespace = &namespace
+		normalized.Namespace = ref.Namespace
 	} else if routeNamespace != "" {
 		normalized.Namespace = nil
 	}
@@ -269,11 +266,11 @@ func httpRouteBackends(route gatewayv1.HTTPRoute) []backendInput {
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{
-				Group:     stringOrEmpty(backendRef.BackendRef.Group),
-				Kind:      stringOrEmpty(backendRef.BackendRef.Kind),
-				Namespace: namespaceOrDefault(backendRef.BackendRef.Namespace, route.Namespace),
-				Name:      string(backendRef.BackendRef.Name),
-				Port:      portOrZero(backendRef.BackendRef.Port),
+				Group:     stringOrEmpty(backendRef.Group),
+				Kind:      stringOrEmpty(backendRef.Kind),
+				Namespace: namespaceOrDefault(backendRef.Namespace, route.Namespace),
+				Name:      string(backendRef.Name),
+				Port:      portOrZero(backendRef.Port),
 			})
 		}
 	}
@@ -290,11 +287,11 @@ func grpcRouteBackends(route gatewayv1.GRPCRoute) []backendInput {
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
 			out = append(out, backendInput{
-				Group:     stringOrEmpty(backendRef.BackendRef.Group),
-				Kind:      stringOrEmpty(backendRef.BackendRef.Kind),
-				Namespace: namespaceOrDefault(backendRef.BackendRef.Namespace, route.Namespace),
-				Name:      string(backendRef.BackendRef.Name),
-				Port:      portOrZero(backendRef.BackendRef.Port),
+				Group:     stringOrEmpty(backendRef.Group),
+				Kind:      stringOrEmpty(backendRef.Kind),
+				Namespace: namespaceOrDefault(backendRef.Namespace, route.Namespace),
+				Name:      string(backendRef.Name),
+				Port:      portOrZero(backendRef.Port),
 			})
 		}
 	}

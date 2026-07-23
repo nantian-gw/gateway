@@ -274,11 +274,11 @@ func policyTargetAncestor(
 	ref := gatewayv1.ParentReference{
 		Group:     groupPtr(string(targetRef.Group)),
 		Kind:      kindPtr(string(targetRef.Kind)),
-		Name:      gatewayv1.ObjectName(targetRef.Name),
+		Name:      targetRef.Name,
 		Namespace: gatewayNamespacePtr(namespace),
 	}
 	if targetRef.SectionName != nil {
-		ref.SectionName = (*gatewayv1.SectionName)(targetRef.SectionName)
+		ref.SectionName = targetRef.SectionName
 	}
 	return ref
 }

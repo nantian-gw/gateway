@@ -34,7 +34,7 @@ const (
 	tlsRouteParentGatewayIndex            = "nantian.dev/snapshot.tlsroute.parent-gateways"
 	tlsRouteReferenceGrantNamespaceIndex  = "nantian.dev/snapshot.tlsroute.referencegrant-namespaces"
 	backendTLSPolicyConfigMapRefIndex     = "nantian.dev/snapshot.backendtlspolicy.configmap-refs"
-	listenerSetParentGatewayIndex        = "nantian.dev/snapshot.listenerset.parent-gateways"
+	listenerSetParentGatewayIndex         = "nantian.dev/snapshot.listenerset.parent-gateways"
 	gatewayNamespaceSelectorIndexMarker   = "selector"
 )
 
@@ -215,7 +215,7 @@ func httpRouteReferenceGrantNamespaceIndexKeys(object client.Object) []string {
 	keys := make(map[string]struct{})
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
-			if key, ok := backendRefReferenceGrantNamespace(route.Namespace, backendRef.BackendRef.Namespace); ok {
+			if key, ok := backendRefReferenceGrantNamespace(route.Namespace, backendRef.Namespace); ok {
 				keys[key] = struct{}{}
 			}
 		}
@@ -268,7 +268,7 @@ func grpcRouteReferenceGrantNamespaceIndexKeys(object client.Object) []string {
 	keys := make(map[string]struct{})
 	for _, rule := range route.Spec.Rules {
 		for _, backendRef := range rule.BackendRefs {
-			if key, ok := backendRefReferenceGrantNamespace(route.Namespace, backendRef.BackendRef.Namespace); ok {
+			if key, ok := backendRefReferenceGrantNamespace(route.Namespace, backendRef.Namespace); ok {
 				keys[key] = struct{}{}
 			}
 		}

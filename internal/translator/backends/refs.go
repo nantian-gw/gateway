@@ -169,11 +169,11 @@ func (t BackendRefTranslator) httpBackendRefs(
 			routeKind,
 			allowCrossNamespaceRefs,
 			ir.BackendRef{
-				Group:     shared.StringValue(ref.BackendRef.Group),
-				Kind:      shared.StringValue(ref.BackendRef.Kind),
-				Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, routeNamespace),
-				Name:      string(ref.BackendRef.Name),
-				Port:      shared.PortValue(ref.BackendRef.Port),
+				Group:     shared.StringValue(ref.Group),
+				Kind:      shared.StringValue(ref.Kind),
+				Namespace: shared.NamespaceOrDefault(ref.Namespace, routeNamespace),
+				Name:      string(ref.Name),
+				Port:      shared.PortValue(ref.Port),
 				Weight:    uint32(shared.WeightValue(ref.Weight)),
 				Filters: t.httpFilter(
 					ref.Filters,
@@ -200,11 +200,11 @@ func (t BackendRefTranslator) grpcBackendRefs(
 			routeKind,
 			allowCrossNamespaceRefs,
 			ir.BackendRef{
-				Group:     shared.StringValue(ref.BackendRef.Group),
-				Kind:      shared.StringValue(ref.BackendRef.Kind),
-				Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, routeNamespace),
-				Name:      string(ref.BackendRef.Name),
-				Port:      shared.PortValue(ref.BackendRef.Port),
+				Group:     shared.StringValue(ref.Group),
+				Kind:      shared.StringValue(ref.Kind),
+				Namespace: shared.NamespaceOrDefault(ref.Namespace, routeNamespace),
+				Name:      string(ref.Name),
+				Port:      shared.PortValue(ref.Port),
 				Weight:    uint32(shared.WeightValue(ref.Weight)),
 				Filters: t.grpcFilter(
 					ref.Filters,

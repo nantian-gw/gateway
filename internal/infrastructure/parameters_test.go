@@ -21,7 +21,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 		gatewayClass               *gatewayv1.GatewayClass
 		wantType                   corev1.ServiceType
 		wantPublish                bool
-		wantIPFamilyPolicy         *corev1.IPFamilyPolicyType
+		wantIPFamilyPolicy         *corev1.IPFamilyPolicy
 		wantIPFamilies             []corev1.IPFamily
 		wantSessionAffinityTimeout *int32
 		wantExternalIPs            []string
@@ -249,7 +249,7 @@ func TestLoadGatewayClassServiceParameters(t *testing.T) {
 	}
 }
 
-func ptrIPFamilyPolicy(value corev1.IPFamilyPolicyType) *corev1.IPFamilyPolicyType {
+func ptrIPFamilyPolicy(value corev1.IPFamilyPolicy) *corev1.IPFamilyPolicy {
 	return &value
 }
 

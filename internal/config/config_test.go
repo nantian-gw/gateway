@@ -823,8 +823,8 @@ func TestAdminRBACConfigValidation(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:    "empty role name",
-			yaml:    `nodeId: n1
+			name: "empty role name",
+			yaml: `nodeId: n1
 cluster: c1
 adminAddr: :18081
 adminAuth:
@@ -839,8 +839,8 @@ adminAuth:
 			wantErr: "name is required",
 		},
 		{
-			name:    "no permissions",
-			yaml:    `nodeId: n1
+			name: "no permissions",
+			yaml: `nodeId: n1
 cluster: c1
 adminAddr: :18081
 adminAuth:
@@ -855,8 +855,8 @@ adminAuth:
 			wantErr: "must have at least one permission",
 		},
 		{
-			name:    "invalid permission",
-			yaml:    `nodeId: n1
+			name: "invalid permission",
+			yaml: `nodeId: n1
 cluster: c1
 adminAddr: :18081
 adminAuth:

@@ -1095,22 +1095,22 @@ func TestReconcileListsGatewayEndpointSlicesByService(t *testing.T) {
 
 func blockedStatusListTypesForFullReconcile() map[reflect.Type]string {
 	return map[reflect.Type]string{
-		reflect.TypeOf(&gatewayv1.GatewayClassList{}):            "full reconcile should not use the object reader for GatewayClass list scans",
-		reflect.TypeOf(&gatewayv1.GatewayList{}):                 "full reconcile should not use the object reader for Gateway list scans",
-		reflect.TypeOf(&gatewayv1.HTTPRouteList{}):               "full reconcile should not use the object reader for HTTPRoute list scans",
-		reflect.TypeOf(&gatewayv1.GRPCRouteList{}):               "full reconcile should not use the object reader for GRPCRoute list scans",
-		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):          "full reconcile should not use the object reader for TCPRoute list scans",
-		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):          "full reconcile should not use the object reader for UDPRoute list scans",
-		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):          "full reconcile should not use the object reader for TLSRoute list scans",
-		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}):     "full reconcile should not use the object reader for ReferenceGrant list scans",
-		reflect.TypeOf(&backend.BackendLBPolicyList{}): "full reconcile should not use the object reader for BackendLBPolicy list scans",
-		reflect.TypeOf(&unstructured.UnstructuredList{}):         "full reconcile should not use the object reader for BackendTLSPolicy list scans",
-		reflect.TypeOf(&corev1.ServiceList{}):                    "full reconcile should not use the object reader for Service list scans",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):         "full reconcile should not use the object reader for EndpointSlice list scans",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):         "full reconcile should not use the object reader for ServiceImport list scans",
-		reflect.TypeOf(&corev1.NamespaceList{}):                  "full reconcile should not use the object reader for Namespace list scans",
-		reflect.TypeOf(&corev1.SecretList{}):                     "full reconcile should not use the object reader for Secret list scans",
-		reflect.TypeOf(&corev1.ConfigMapList{}):                  "full reconcile should not use the object reader for ConfigMap list scans",
+		reflect.TypeOf(&gatewayv1.GatewayClassList{}):        "full reconcile should not use the object reader for GatewayClass list scans",
+		reflect.TypeOf(&gatewayv1.GatewayList{}):             "full reconcile should not use the object reader for Gateway list scans",
+		reflect.TypeOf(&gatewayv1.HTTPRouteList{}):           "full reconcile should not use the object reader for HTTPRoute list scans",
+		reflect.TypeOf(&gatewayv1.GRPCRouteList{}):           "full reconcile should not use the object reader for GRPCRoute list scans",
+		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "full reconcile should not use the object reader for TCPRoute list scans",
+		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "full reconcile should not use the object reader for UDPRoute list scans",
+		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "full reconcile should not use the object reader for TLSRoute list scans",
+		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "full reconcile should not use the object reader for ReferenceGrant list scans",
+		reflect.TypeOf(&backend.BackendLBPolicyList{}):       "full reconcile should not use the object reader for BackendLBPolicy list scans",
+		reflect.TypeOf(&unstructured.UnstructuredList{}):     "full reconcile should not use the object reader for BackendTLSPolicy list scans",
+		reflect.TypeOf(&corev1.ServiceList{}):                "full reconcile should not use the object reader for Service list scans",
+		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "full reconcile should not use the object reader for EndpointSlice list scans",
+		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "full reconcile should not use the object reader for ServiceImport list scans",
+		reflect.TypeOf(&corev1.NamespaceList{}):              "full reconcile should not use the object reader for Namespace list scans",
+		reflect.TypeOf(&corev1.SecretList{}):                 "full reconcile should not use the object reader for Secret list scans",
+		reflect.TypeOf(&corev1.ConfigMapList{}):              "full reconcile should not use the object reader for ConfigMap list scans",
 	}
 }
 

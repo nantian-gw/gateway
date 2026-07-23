@@ -12,9 +12,9 @@ type Options struct {
 }
 
 type Limits struct {
-	MaxInputObjects            int
-	MaxSnapshotObjects         int
-	MaxSnapshotEndpoints       int
+	MaxInputObjects       int
+	MaxSnapshotObjects    int
+	MaxSnapshotEndpoints  int
 	DefaultConnectTimeout time.Duration
 }
 
@@ -22,10 +22,10 @@ const DefaultConnectTimeout = 5 * time.Second
 
 func NormalizeLimits(limits Limits) Limits {
 	return Limits{
-		MaxInputObjects:            PositiveIntOrZero(limits.MaxInputObjects),
-		MaxSnapshotObjects:         PositiveIntOrZero(limits.MaxSnapshotObjects),
-		MaxSnapshotEndpoints:       PositiveIntOrZero(limits.MaxSnapshotEndpoints),
-		DefaultConnectTimeout:      DefaultDurationIfZero(limits.DefaultConnectTimeout, DefaultConnectTimeout),
+		MaxInputObjects:       PositiveIntOrZero(limits.MaxInputObjects),
+		MaxSnapshotObjects:    PositiveIntOrZero(limits.MaxSnapshotObjects),
+		MaxSnapshotEndpoints:  PositiveIntOrZero(limits.MaxSnapshotEndpoints),
+		DefaultConnectTimeout: DefaultDurationIfZero(limits.DefaultConnectTimeout, DefaultConnectTimeout),
 	}
 }
 

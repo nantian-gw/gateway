@@ -73,7 +73,7 @@ func backendLine(sb *strings.Builder, routeNS string, br gatewayv1.BackendRef) {
 	}
 	port := int32(0)
 	if br.Port != nil {
-		port = int32(*br.Port)
+		port = *br.Port
 	}
 	fmt.Fprintf(sb, "    -> %s/%s:%d", sanitizeUntrusted(ns), sanitizeUntrusted(string(br.Name)), port)
 	if br.Weight != nil {
@@ -271,7 +271,7 @@ func renderWasmPlugin(p *wasmplugin.WasmPlugin) string {
 	fmt.Fprintf(&sb, "sandbox: maxMemoryBytes=%d maxExecutionTimeMs=%d allowNetwork=%t allowFileSystem=%t\n",
 		p.Spec.Sandbox.MaxMemoryBytes, p.Spec.Sandbox.MaxExecutionTimeMs, p.Spec.Sandbox.AllowNetwork, p.Spec.Sandbox.AllowFileSystem)
 	for _, tr := range p.Spec.TargetRefs {
-		fmt.Fprintf(&sb, "targetRef=%s/%s\n", sanitizeUntrusted(string(tr.Kind)), sanitizeUntrusted(string(tr.Name)))
+		fmt.Fprintf(&sb, "targetRef=%s/%s\n", sanitizeUntrusted(tr.Kind), sanitizeUntrusted(tr.Name))
 	}
 	status, _ := summarizeConditions(p.Status.Conditions)
 	writeConditions(&sb, status)

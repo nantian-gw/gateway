@@ -17,7 +17,7 @@ func TestRateLimiterMiddlewareLimitsRequestsPerRemoteAddress(t *testing.T) {
 
 	for i := 0; i < 2; i++ {
 		recorder := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+		req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 		req.RemoteAddr = "192.0.2.10:12345"
 		handler.ServeHTTP(recorder, req)
 		if recorder.Code != http.StatusNoContent {
@@ -26,7 +26,7 @@ func TestRateLimiterMiddlewareLimitsRequestsPerRemoteAddress(t *testing.T) {
 	}
 
 	recorder := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.RemoteAddr = "192.0.2.10:12345"
 	handler.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusTooManyRequests {
@@ -37,7 +37,7 @@ func TestRateLimiterMiddlewareLimitsRequestsPerRemoteAddress(t *testing.T) {
 	}
 
 	recorder = httptest.NewRecorder()
-	req = httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req = httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.RemoteAddr = "192.0.2.11:12345"
 	handler.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusNoContent {
@@ -53,7 +53,7 @@ func TestRateLimiterMiddlewareResetsAfterWindow(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.RemoteAddr = "192.0.2.10:12345"
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 
@@ -61,7 +61,7 @@ func TestRateLimiterMiddlewareResetsAfterWindow(t *testing.T) {
 	time.Sleep(time.Millisecond)
 
 	recorder := httptest.NewRecorder()
-	req = httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req = httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.RemoteAddr = "192.0.2.10:12345"
 	handler.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusNoContent {

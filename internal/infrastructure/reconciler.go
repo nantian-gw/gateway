@@ -44,7 +44,7 @@ type Options struct {
 	NodeStatus                *noderegistry.Registry
 	EnableExperimentalGateway bool
 
-	DataplaneAdminPort    int32
+	DataplaneAdminPort     int32
 	NodePortBasePrivileged int32
 	NodePortBaseUDP        int32
 	NodePortBaseDefault    int32

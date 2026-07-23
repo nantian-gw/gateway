@@ -8,8 +8,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestListGatewayClassesForControllerRequiresFieldIndex(t *testing.T) {

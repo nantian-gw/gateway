@@ -25,7 +25,7 @@ type gatewayServiceParameters struct {
 	Type                          corev1.ServiceType                   `yaml:"type"`
 	ExternalTrafficPolicy         *corev1.ServiceExternalTrafficPolicy `yaml:"externalTrafficPolicy"`
 	InternalTrafficPolicy         *corev1.ServiceInternalTrafficPolicy `yaml:"internalTrafficPolicy"`
-	IPFamilyPolicy                *corev1.IPFamilyPolicyType           `yaml:"ipFamilyPolicy"`
+	IPFamilyPolicy                *corev1.IPFamilyPolicy               `yaml:"ipFamilyPolicy"`
 	IPFamilies                    []corev1.IPFamily                    `yaml:"ipFamilies"`
 	SessionAffinity               *corev1.ServiceAffinity              `yaml:"sessionAffinity"`
 	SessionAffinityConfig         *sessionAffinityConfigParameters     `yaml:"sessionAffinityConfig"`

@@ -107,7 +107,7 @@ func TestBuildSnapshotIncludesBackendLBPolicyForServiceImport(t *testing.T) {
 	testutil.Must(gatewayv1beta1.Install(scheme), t)
 	testutil.Must(corev1.AddToScheme(scheme), t)
 	testutil.Must(discoveryv1.AddToScheme(scheme), t)
-	testutil.Must(mcsv1alpha1.AddToScheme(scheme), t)
+	testutil.Must(mcsv1alpha1.Install(scheme), t)
 
 	client := testutil.NewTranslatorClientBuilder(scheme).
 		WithObjects(

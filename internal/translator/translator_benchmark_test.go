@@ -383,11 +383,11 @@ func (f *translatorAttachDetachStormFixture) setRoutesAttached(ctx context.Conte
 
 		route.Generation++
 		if attached {
-			route.Spec.CommonRouteSpec.ParentRefs = []gatewayv1.ParentReference{{
+			route.Spec.ParentRefs = []gatewayv1.ParentReference{{
 				Name: "gw",
 			}}
 		} else {
-			route.Spec.CommonRouteSpec.ParentRefs = nil
+			route.Spec.ParentRefs = nil
 		}
 		if err := f.client.Update(ctx, &route); err != nil {
 			return err

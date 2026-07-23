@@ -6,10 +6,10 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/client-go/util/workqueue"
-	"golang.org/x/time/rate"
 	k8sptr "k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -40,7 +40,7 @@ func (s *Syncer) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Resu
 
 	bypassed := s.settleDelay <= 0 || s.shouldBypassSettleDelay(ctx, request)
 	span.SetAttributes(
-		attribute.String("controller.request", request.NamespacedName.String()),
+		attribute.String("controller.request", request.String()),
 		attribute.String("controller.scope", scope.String()),
 		attribute.Bool("controller.bypass_settle", bypassed),
 	)

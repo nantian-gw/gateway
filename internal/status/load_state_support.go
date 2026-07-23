@@ -307,7 +307,7 @@ func collectGatewayConfigMapRefs(
 			ref := gateway.Spec.Infrastructure.ParametersRef
 			if group := strings.TrimSpace(string(ref.Group)); group == "" &&
 				strings.EqualFold(strings.TrimSpace(string(ref.Kind)), "ConfigMap") {
-				addObjectKeyRef(out, gateway.Namespace, string(ref.Name))
+				addObjectKeyRef(out, gateway.Namespace, ref.Name)
 			}
 		}
 
@@ -317,7 +317,7 @@ func collectGatewayConfigMapRefs(
 			if namespace != "" &&
 				strings.TrimSpace(string(ref.Group)) == "" &&
 				strings.EqualFold(strings.TrimSpace(string(ref.Kind)), "ConfigMap") {
-				addObjectKeyRef(out, namespace, string(ref.Name))
+				addObjectKeyRef(out, namespace, ref.Name)
 			}
 		}
 

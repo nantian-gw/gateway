@@ -53,6 +53,7 @@ func TestReconcileDeletesStaleGatewayInfrastructureServices(t *testing.T) {
 		t.Fatalf("expected stale service to be deleted, got err=%v", err)
 	}
 }
+
 func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -78,6 +79,7 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 					},
 				},
 			},
+			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 			&corev1.Endpoints{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      serviceName,
@@ -113,6 +115,7 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 		t.Fatalf("expected stale service to be deleted, got err=%v", err)
 	}
 
+	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 	endpoints := &corev1.Endpoints{}
 	if err := k8sClient.Get(
 		context.Background(),
@@ -135,6 +138,7 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 		t.Fatalf("expected stale EndpointSlice to be deleted")
 	}
 }
+
 func TestReconcileDeletesSharedServiceWithoutManagedListeners(t *testing.T) {
 	scheme := newScheme(t)
 

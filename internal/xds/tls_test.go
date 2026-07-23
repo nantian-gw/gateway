@@ -60,6 +60,7 @@ func TestLoadServerTLSConfigBuildsMutualTLSSettings(t *testing.T) {
 	if len(tlsConfig.Certificates) != 1 {
 		t.Fatalf("expected 1 server certificate, got %d", len(tlsConfig.Certificates))
 	}
+	//nolint:staticcheck // Go 1.18 deprecation; correct usage for system cert pool validation
 	if tlsConfig.ClientCAs == nil || len(tlsConfig.ClientCAs.Subjects()) == 0 {
 		t.Fatal("expected client CA pool to be configured")
 	}

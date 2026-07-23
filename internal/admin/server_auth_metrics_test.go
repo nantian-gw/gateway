@@ -26,7 +26,7 @@ func TestAdminAuthProtectsManagementEndpoints(t *testing.T) {
 		t.Fatalf("expected 401 without token, got %d", recorder.Code)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.Header.Set("Authorization", "Bearer top-secret")
 	recorder = httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
@@ -59,7 +59,7 @@ func TestAdminServerRecordsUnauthorizedRequestMetrics(t *testing.T) {
 		Metrics:     metrics,
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
 	if recorder.Code != http.StatusUnauthorized {
@@ -82,7 +82,7 @@ func TestAdminMetricsRecordsFirstWrittenStatusCode(t *testing.T) {
 	}), metrics)
 
 	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/unmatched", nil))
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/unmatched", http.NoBody))
 
 	if recorder.Code != http.StatusNoContent {
 		t.Fatalf("response status = %d, want %d", recorder.Code, http.StatusNoContent)
@@ -102,7 +102,7 @@ func TestAdminMetricsNormalizesUnknownHTTPMethods(t *testing.T) {
 	}), metrics)
 
 	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, httptest.NewRequest("BREW", "/v1/summary", nil))
+	handler.ServeHTTP(recorder, httptest.NewRequest("BREW", "/v1/summary", http.NoBody))
 
 	if got := testutil.ToFloat64(metrics.AdminAPIRequestsTotal.WithLabelValues("OTHER", "summary", "2xx")); got != 1 {
 		t.Fatalf("admin request total for normalized method = %v, want 1", got)
@@ -153,7 +153,7 @@ func TestAdminRateLimiterUsesBurstAndRecords429Metrics(t *testing.T) {
 		Metrics:        metrics,
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+testAuthToken)
 	req.RemoteAddr = "203.0.113.10:12345"
 	recorder := httptest.NewRecorder()
@@ -205,7 +205,7 @@ func TestAdminTracingMiddlewareCreatesRequestSpan(t *testing.T) {
 	}), "summary")
 
 	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/v1/summary", nil))
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody))
 
 	spans := exporter.GetSpans()
 	if len(spans) != 1 {
@@ -262,7 +262,7 @@ func TestAdminAuthReloadsBearerTokenFile(t *testing.T) {
 
 	server := newTestServerWithOptions(t, Options{BearerTokenFile: path})
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.Header.Set("Authorization", "Bearer old-secret")
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
@@ -274,7 +274,7 @@ func TestAdminAuthReloadsBearerTokenFile(t *testing.T) {
 		t.Fatalf("rewrite token: %v", err)
 	}
 
-	req = httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req = httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.Header.Set("Authorization", "Bearer old-secret")
 	recorder = httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)
@@ -282,7 +282,7 @@ func TestAdminAuthReloadsBearerTokenFile(t *testing.T) {
 		t.Fatalf("expected 401 with stale token after rotation, got %d", recorder.Code)
 	}
 
-	req = httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req = httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	req.Header.Set("Authorization", "Bearer new-secret")
 	recorder = httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)

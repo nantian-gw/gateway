@@ -14,15 +14,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/nantian-gw/gateway/internal/admin"
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/controller"
-	"github.com/nantian-gw/gateway/internal/xds"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/lifecycle"
@@ -31,6 +30,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/status"
 	"github.com/nantian-gw/gateway/internal/translator"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
+	"github.com/nantian-gw/gateway/internal/xds"
 )
 
 const (
@@ -182,7 +182,7 @@ func run(configPath string) error {
 		RateLimiterQPS:            cfg.Controller.RateLimiterQPS,
 		RateLimiterBucketSize:     cfg.Controller.RateLimiterBucketSize,
 	}
-	statuser := status.NewWithAddressesAndReaderOptions(
+	stature := status.NewWithAddressesAndReaderOptions(
 		mgr.GetClient(),
 		mgr.GetAPIReader(),
 		cfg.ControllerName,
@@ -190,7 +190,7 @@ func run(configPath string) error {
 		logger,
 		statusOptions,
 	)
-	statuser.SetEventRecorder(mgr.GetEventRecorderFor("gateway-status"))
+	stature.SetEventRecorder(mgr.GetEventRecorderFor("gateway-status"))
 	if err := translator.SetupIndexes(ctx, mgr.GetFieldIndexer()); err != nil {
 		return fmt.Errorf("set up translator indexes: %w", err)
 	}
@@ -228,13 +228,13 @@ func run(configPath string) error {
 	statusScopedReconcile := func(ctx context.Context, scope controller.ReconcilerRunnerScope) error {
 		switch scope {
 		case controller.ReconcilerRunnerScopeGatewayStatus:
-			return statuser.ReconcileGatewayStatuses(ctx)
+			return stature.ReconcileGatewayStatuses(ctx)
 		case controller.ReconcilerRunnerScopeRouteStatus:
-			return statuser.ReconcileRouteStatuses(ctx)
+			return stature.ReconcileRouteStatuses(ctx)
 		case controller.ReconcilerRunnerScopePolicyStatus:
-			return statuser.ReconcilePolicyStatuses(ctx)
+			return stature.ReconcilePolicyStatuses(ctx)
 		default:
-			return statuser.Reconcile(ctx)
+			return stature.Reconcile(ctx)
 		}
 	}
 
@@ -245,7 +245,7 @@ func run(configPath string) error {
 		controller.NewScopedReconciler("infrastructure", infra, controller.ReconcilerRunnerScopeInfra),
 		controller.NewScopedReconcilerFunc(
 			"status",
-			statuser.Reconcile,
+			stature.Reconcile,
 			statusScopedReconcile,
 			controller.ReconcilerRunnerScopeGatewayStatus,
 			controller.ReconcilerRunnerScopeRouteStatus,
@@ -257,7 +257,7 @@ func run(configPath string) error {
 	nodes.SetOnChange(func() {
 		reconcilerRunner.QueueRunImmediateForScope(controller.ReconcilerRunnerScopeInfra)
 	})
-	statuser.SetTriggerInfrastructure(func() {
+	stature.SetTriggerInfrastructure(func() {
 		reconcilerRunner.QueueRunImmediateForScope(controller.ReconcilerRunnerScopeInfra)
 	})
 
@@ -285,7 +285,7 @@ func run(configPath string) error {
 	if err := mgr.Add(syncer); err != nil {
 		return fmt.Errorf("add syncer runnable: %w", err)
 	}
-	if err := status.SetupControllers(mgr, statuser, statusOptions); err != nil {
+	if err := status.SetupControllers(mgr, stature, statusOptions); err != nil {
 		return fmt.Errorf("set up status controllers: %w", err)
 	}
 	if err := mgr.Add(reconcilerRunner); err != nil {

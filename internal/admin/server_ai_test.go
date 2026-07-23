@@ -35,7 +35,7 @@ func TestHandleAIOverviewReturnsSortedModelsAndAverageLatency(t *testing.T) {
 	aiLatencySum.Store(5000)
 
 	recorder := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/ai/overview", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/ai/overview", http.NoBody)
 	(&Server{}).handleAIOverview(recorder, req)
 
 	if recorder.Code != http.StatusOK {

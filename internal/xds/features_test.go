@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
 	"github.com/nantian-gw/gateway/internal/config"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/noderegistry"
 	"github.com/nantian-gw/gateway/internal/observability"
-	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
 func TestCanonicalizeSupportedFeaturesTrimsSortsAndDeduplicates(t *testing.T) {

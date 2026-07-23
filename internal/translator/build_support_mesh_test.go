@@ -15,8 +15,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
@@ -141,6 +141,7 @@ func TestBuildLoadsMeshShadowBackendsOnDemand(t *testing.T) {
 		t.Fatalf("backend endpoint port = %d, want %d", got, 18080)
 	}
 }
+
 func TestBuildLoadsMeshWorkloadsPerRouteNamespace(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	portNumber := gatewayv1.PortNumber(8080)
@@ -226,6 +227,7 @@ func TestBuildLoadsMeshWorkloadsPerRouteNamespace(t *testing.T) {
 		t.Fatalf("unexpected workload set: %#v", snapshot.Workloads)
 	}
 }
+
 func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 
@@ -326,6 +328,7 @@ func TestBuildBackendsForSnapshotUsesMeshShadowServiceEndpoints(t *testing.T) {
 		t.Fatalf("backend endpoint port = %d, want %d", got, 18080)
 	}
 }
+
 func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 
@@ -426,6 +429,7 @@ func TestBuildBackendsForSnapshotRefreshesLogicalBackendFromShadowServiceChange(
 		t.Fatalf("backend endpoint port = %d, want %d", got, 18080)
 	}
 }
+
 func TestRebuildMeshServiceListenersLoadsParentServicesOnDemand(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	baseClient := testutil.NewTranslatorClientBuilder(scheme).

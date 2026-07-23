@@ -44,7 +44,7 @@ func summarizeRouteParents(parents []gatewayv1.RouteParentStatus) (string, bool)
 		if i > 0 {
 			sb.WriteString("; ")
 		}
-		sb.WriteString(fmt.Sprintf("parent[%s]: %s", sanitizeUntrusted(string(p.ParentRef.Name)), s))
+		fmt.Fprintf(&sb, "parent[%s]: %s", sanitizeUntrusted(string(p.ParentRef.Name)), s)
 	}
 	return sb.String(), anyAbnormal
 }
@@ -64,7 +64,7 @@ func summarizeAncestors(ancestors []gatewayv1.PolicyAncestorStatus) (string, boo
 		if i > 0 {
 			sb.WriteString("; ")
 		}
-		sb.WriteString(fmt.Sprintf("ancestor[%s]: %s", sanitizeUntrusted(string(a.AncestorRef.Name)), s))
+		fmt.Fprintf(&sb, "ancestor[%s]: %s", sanitizeUntrusted(string(a.AncestorRef.Name)), s)
 	}
 	return sb.String(), anyAbnormal
 }

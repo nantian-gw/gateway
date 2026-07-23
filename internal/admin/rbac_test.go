@@ -17,7 +17,7 @@ func TestWrapRBACHandler_Disabled(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}), nil, testRBACLogger())
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	rc := &routeContract{Permission: PermissionRead}
 	ctx := context.WithValue(req.Context(), routeContractKey, rc)
 	req = req.WithContext(ctx)
@@ -37,7 +37,7 @@ func TestWrapRBACHandler_NoPermissionRequired(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}), cfg, testRBACLogger())
 
-	req := httptest.NewRequest(http.MethodGet, "/livez", nil)
+	req := httptest.NewRequest(http.MethodGet, "/livez", http.NoBody)
 	rc := &routeContract{} // no Permission
 	ctx := context.WithValue(req.Context(), routeContractKey, rc)
 	req = req.WithContext(ctx)
@@ -57,7 +57,7 @@ func TestWrapRBACHandler_Denied_NoIdentity(t *testing.T) {
 		t.Fatal("handler should not be called")
 	}), cfg, testRBACLogger())
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	rc := &routeContract{Permission: PermissionRead}
 	ctx := context.WithValue(req.Context(), routeContractKey, rc)
 	req = req.WithContext(ctx)
@@ -81,7 +81,7 @@ func TestWrapRBACHandler_Denied_WrongPermissions(t *testing.T) {
 		t.Fatal("handler should not be called for write endpoint")
 	}), cfg, testRBACLogger())
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/resources", nil)
+	req := httptest.NewRequest(http.MethodPost, "/v1/resources", http.NoBody)
 	rc := &routeContract{Permission: PermissionWriteResources}
 	ctx := context.WithValue(req.Context(), routeContractKey, rc)
 	ctx = context.WithValue(ctx, identityKey, &Identity{Username: "reader", Subject: "reader"})
@@ -119,7 +119,7 @@ func TestWrapRBACHandler_Allowed_AdminFullAccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.method+" "+tt.path, func(t *testing.T) {
-			req := httptest.NewRequest(tt.method, tt.path, nil)
+			req := httptest.NewRequest(tt.method, tt.path, http.NoBody)
 			rc := &routeContract{Permission: tt.permission}
 			ctx := context.WithValue(req.Context(), routeContractKey, rc)
 			ctx = context.WithValue(ctx, identityKey, &Identity{Username: "admin", Subject: "admin"})
@@ -146,7 +146,7 @@ func TestWrapRBACHandler_Allowed_GroupMatching(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}), cfg, testRBACLogger())
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	rc := &routeContract{Permission: PermissionRead}
 	ctx := context.WithValue(req.Context(), routeContractKey, rc)
 	ctx = context.WithValue(ctx, identityKey, &Identity{
@@ -175,7 +175,7 @@ func TestWrapRBACHandler_Allowed_MultipleRoles(t *testing.T) {
 	}), cfg, testRBACLogger())
 
 	// ops should be able to read AND write resources
-	req := httptest.NewRequest(http.MethodPost, "/v1/resources", nil)
+	req := httptest.NewRequest(http.MethodPost, "/v1/resources", http.NoBody)
 	rc := &routeContract{Permission: PermissionWriteResources}
 	ctx := context.WithValue(req.Context(), routeContractKey, rc)
 	ctx = context.WithValue(ctx, identityKey, &Identity{Username: "ops", Subject: "ops"})

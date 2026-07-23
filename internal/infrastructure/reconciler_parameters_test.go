@@ -124,6 +124,7 @@ func TestReconcileResolvesGatewayServiceParametersOncePerGateway(t *testing.T) {
 		)
 	}
 }
+
 func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -229,6 +230,7 @@ func TestReconcileCachesGatewayClassParametersAcrossGateways(t *testing.T) {
 		)
 	}
 }
+
 func TestReconcileAppliesGatewayInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -362,6 +364,7 @@ allocateLoadBalancerNodePorts: false
 		t.Fatalf("loadBalancerSourceRanges = %#v", got)
 	}
 }
+
 func TestReconcileProgramsGatewayStaticIPAddressesOntoService(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -438,6 +441,7 @@ func TestReconcileProgramsGatewayStaticIPAddressesOntoService(t *testing.T) {
 		t.Fatalf("loadBalancerIP = %q, want 203.0.113.10", service.Spec.LoadBalancerIP)
 	}
 }
+
 func TestReconcileSkipsLoopbackGatewayStaticIPProjectionOntoService(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -512,6 +516,7 @@ func TestReconcileSkipsLoopbackGatewayStaticIPProjectionOntoService(t *testing.T
 	}
 	assertServicePort(t, service.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
 }
+
 func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -602,6 +607,7 @@ func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T)
 		t.Fatalf("loadBalancerSourceRanges = %#v, want empty", service.Spec.LoadBalancerSourceRanges)
 	}
 }
+
 func TestReconcileMergesGatewayClassInfrastructureParametersRef(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -709,6 +715,7 @@ allocateLoadBalancerNodePorts: false
 		t.Fatalf("allocateLoadBalancerNodePorts = %#v, want false", service.Spec.AllocateLoadBalancerNodePorts)
 	}
 }
+
 func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

@@ -18,18 +18,21 @@ func TestLoadServiceEndpointStateScopesPerServiceQueries(t *testing.T) {
 
 	baseClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
+			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 			&corev1.Endpoints{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "edge",
 					Namespace: "default",
 				},
 			},
+			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 			&corev1.Endpoints{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "edge-canary",
 					Namespace: "default",
 				},
 			},
+			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 			&corev1.Endpoints{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "shared",

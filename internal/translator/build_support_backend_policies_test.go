@@ -105,6 +105,7 @@ func TestBuildBackendsForSnapshotListsBackendPoliciesPerReferencedNamespace(t *t
 		t.Fatalf("expected backend LB policy to be applied, got %#v", backends[0])
 	}
 }
+
 func TestBuildBackendsForSnapshotPreservesUntouchedBackends(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 
@@ -227,6 +228,7 @@ func TestBuildBackendsForSnapshotPreservesUntouchedBackends(t *testing.T) {
 		t.Fatalf("spare backend endpoint address = %q, want %q", got, "10.0.0.90")
 	}
 }
+
 func TestLoadBackendTLSPoliciesForNamespacesScopesAndFilters(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
@@ -287,6 +289,7 @@ func TestLoadBackendTLSPoliciesForNamespacesScopesAndFilters(t *testing.T) {
 		t.Fatalf("unexpected scoped BackendTLSPolicy: %#v", policies[0])
 	}
 }
+
 func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	caBundle := gatewayv1.WellKnownCACertificatesSystem
@@ -365,6 +368,7 @@ func TestLoadBackendTLSPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing
 		t.Fatalf("unexpected indexed BackendTLSPolicy: %#v", policies[0])
 	}
 }
+
 func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupported(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 
@@ -436,6 +440,7 @@ func TestLoadBackendTLSPoliciesForNamespacesFallsBackWhenFieldSelectorUnsupporte
 		t.Fatalf("unexpected BackendTLSPolicy after fallback: %#v", policies[0])
 	}
 }
+
 func TestLoadBackendLBPoliciesForNamespacesUsesTargetRefFieldIndexes(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 

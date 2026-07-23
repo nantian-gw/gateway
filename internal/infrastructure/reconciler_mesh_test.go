@@ -236,11 +236,13 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 					}(),
 				}},
 			},
+			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 			&corev1.Endpoints{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "echo",
 					Namespace: "default",
 				},
+				//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 				Subsets: []corev1.EndpointSubset{{
 					Addresses: []corev1.EndpointAddress{{
 						IP: "10.0.0.10",
@@ -334,6 +336,7 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 	if endpointSlice.Name != "" {
 		t.Fatalf("expected stale service EndpointSlice to be removed, got %#v", endpointSlice.Endpoints)
 	}
+	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 	endpoints := &corev1.Endpoints{}
 	if err := k8sClient.Get(
 		context.Background(),

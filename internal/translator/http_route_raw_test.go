@@ -14,8 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 var httpRouteResource = schema.GroupResource{

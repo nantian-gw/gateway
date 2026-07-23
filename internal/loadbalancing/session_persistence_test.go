@@ -18,8 +18,8 @@ func TestValidateSessionPersistence_Nil(t *testing.T) {
 
 func TestValidateSessionPersistence_ValidCookie(t *testing.T) {
 	sp := &gatewayv1.SessionPersistence{
-		SessionName: ptr("my-session"),
-		Type:        ptr(gatewayv1.CookieBasedSessionPersistence),
+		SessionName:     ptr("my-session"),
+		Type:            ptr(gatewayv1.CookieBasedSessionPersistence),
 		AbsoluteTimeout: ptr(gatewayv1.Duration("5m")),
 		CookieConfig: &gatewayv1.CookieConfig{
 			LifetimeType: ptr(gatewayv1.SessionCookieLifetimeType),

@@ -2,6 +2,7 @@ package xds
 
 import (
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 

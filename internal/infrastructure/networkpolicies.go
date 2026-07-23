@@ -91,7 +91,7 @@ func dataplaneListenerNetworkPolicyPorts(
 			}
 
 			key := networkPolicyPortKey{
-				port:     int32(listener.Port),
+				port:     listener.Port,
 				protocol: protocol,
 			}
 			if _, exists := index[key]; exists {

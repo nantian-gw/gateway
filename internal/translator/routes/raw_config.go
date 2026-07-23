@@ -87,9 +87,7 @@ func rawHTTPRouteFilterConfigsFromObject(object map[string]any) RawHTTPRouteFilt
 			continue
 		}
 		ruleConfigs := make([]map[string]any, 0, len(filters))
-		for _, filter := range filters {
-			ruleConfigs = append(ruleConfigs, filter)
-		}
+		ruleConfigs = append(ruleConfigs, filters...)
 		routeConfigs = append(routeConfigs, ruleConfigs)
 	}
 	return routeConfigs

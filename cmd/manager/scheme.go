@@ -38,7 +38,7 @@ func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
 		{name: "gateway/v1alpha2", fn: gatewayv1alpha2.Install},
 		{name: "gateway/v1alpha3", fn: gatewayv1alpha3.Install},
 		{name: "gateway/v1beta1", fn: gatewayv1beta1.Install},
-		{name: "mcs/v1alpha1", fn: mcsv1alpha1.AddToScheme},
+		{name: "mcs/v1alpha1", fn: mcsv1alpha1.Install},
 	}
 
 	if cfg.Features.EnableExperimentalGateway {

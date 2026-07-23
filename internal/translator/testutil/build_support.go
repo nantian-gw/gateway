@@ -57,7 +57,7 @@ func BuildSupportScheme(t *testing.T) *runtime.Scheme {
 	Must(gatewayv1alpha3.Install(scheme), t)
 	Must(gatewayv1beta1.Install(scheme), t)
 	Must(backend.Install(scheme), t)
-	Must(mcsv1alpha1.AddToScheme(scheme), t)
+	Must(mcsv1alpha1.Install(scheme), t)
 	Must(corev1.AddToScheme(scheme), t)
 	Must(discoveryv1.AddToScheme(scheme), t)
 	return scheme
@@ -175,10 +175,10 @@ func (c *fakeScopedBuildDependencyValidatingClient) List(
 	switch typed := list.(type) {
 	case *corev1.PodList:
 		if len(c.ExpectedPodNamespaces) == 0 {
-			return fmt.Errorf("Build should not list Pods when no mesh route namespaces are referenced")
+			return fmt.Errorf("build should not list Pods when no mesh route namespaces are referenced")
 		}
 		if listOptions.Namespace == "" {
-			return fmt.Errorf("Pod list must be namespace-scoped")
+			return fmt.Errorf("pod list must be namespace-scoped")
 		}
 		if _, ok := c.ExpectedPodNamespaces[listOptions.Namespace]; !ok {
 			return fmt.Errorf("unexpected Pod list namespace %q", listOptions.Namespace)
@@ -279,7 +279,7 @@ func NewFakeIndexedPolicyListValidatingClient(
 	expectedLBTargets map[string]struct{},
 ) client.Client {
 	return &fakeIndexedPolicyListValidatingClient{
-		Client:                     c,
+		Client:                    c,
 		ExpectedBackendTLSTargets: expectedTLSTargets,
 		ExpectedBackendLBTargets:  expectedLBTargets,
 	}

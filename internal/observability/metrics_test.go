@@ -34,7 +34,7 @@ func TestHandlerIncludesControllerRuntimeRegistryMetrics(t *testing.T) {
 	testGauge.Set(1)
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 	Handler(metrics).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
@@ -65,7 +65,7 @@ func TestHandlerAvoidsDuplicateMetricFamiliesFromDefaultGatherer(t *testing.T) {
 	dupGauge.Set(7)
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 	Handler(metrics).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
@@ -82,7 +82,7 @@ func TestHandlerIncludesGoAndProcessCollectors(t *testing.T) {
 	metrics := NewMetrics()
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 	Handler(metrics).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
@@ -107,7 +107,7 @@ func TestHandlerExposesCustomMetricValuesAndPrometheusContentType(t *testing.T) 
 	metrics.AdminAPIRequestsTotal.WithLabelValues(http.MethodGet, "summary", "2xx").Add(2)
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 	Handler(metrics).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
@@ -134,7 +134,7 @@ func TestHandlerExposesBuildInfoAndActiveStreamGauges(t *testing.T) {
 	metrics.XDSActiveStreams.Set(3)
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 	Handler(metrics).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
@@ -167,7 +167,7 @@ func TestHandlerLimitsConcurrentMetricScrapes(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			recorder := httptest.NewRecorder()
-			request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+			request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 
 			handler.ServeHTTP(recorder, request)
 
@@ -187,7 +187,7 @@ func TestHandlerLimitsConcurrentMetricScrapes(t *testing.T) {
 	}
 
 	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	request := httptest.NewRequest(http.MethodGet, "/metrics", http.NoBody)
 	handler.ServeHTTP(recorder, request)
 
 	close(gatherer.release)

@@ -61,7 +61,7 @@ type FeaturesConfig struct {
 }
 
 type InfraConfig struct {
-	DataplaneAdminPort    int32 `yaml:"dataplaneAdminPort"`
+	DataplaneAdminPort     int32 `yaml:"dataplaneAdminPort"`
 	NodePortBasePrivileged int32 `yaml:"nodePortBasePrivileged"`
 	NodePortBaseUDP        int32 `yaml:"nodePortBaseUDP"`
 	NodePortBaseDefault    int32 `yaml:"nodePortBaseDefault"`
@@ -130,7 +130,7 @@ type AdminAuthConfig struct {
 	AllowedUsers            []string `yaml:"allowedUsers"`
 	AllowedGroups           []string `yaml:"allowedGroups"`
 	TrustedProxies          []string `yaml:"trustedProxies"`
-	AllowFromCIDRs          []string        `yaml:"allowFromCIDRs"`
+	AllowFromCIDRs          []string `yaml:"allowFromCIDRs"`
 	// RBAC enables role-based access control on admin API endpoints.
 	// When nil or empty, the existing binary auth model applies (backward compatible).
 	RBAC *AdminRBACConfig `yaml:"rbac"`

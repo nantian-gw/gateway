@@ -23,6 +23,7 @@ const (
 )
 
 type serviceEndpointState struct {
+	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 	endpoints     map[string]corev1.Endpoints
 	managedSlices map[string]map[string]discoveryv1.EndpointSlice
 	foreignSlices map[string]map[string]discoveryv1.EndpointSlice
@@ -35,6 +36,7 @@ func loadServiceEndpointState(
 	managedRole string,
 ) (serviceEndpointState, error) {
 	state := serviceEndpointState{
+		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 		endpoints:     make(map[string]corev1.Endpoints, len(serviceKeys)),
 		managedSlices: make(map[string]map[string]discoveryv1.EndpointSlice, len(serviceKeys)),
 		foreignSlices: make(map[string]map[string]discoveryv1.EndpointSlice, len(serviceKeys)),
@@ -49,6 +51,7 @@ func loadServiceEndpointState(
 			continue
 		}
 
+		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 		endpoint := &corev1.Endpoints{}
 		if err := cl.Get(
 			ctx,

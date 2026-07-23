@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -133,8 +134,8 @@ func TestToProtoRoutePolicy_ZeroValue(t *testing.T) {
 func TestToProtoRoutePolicy_PartialTimeoutOnly(t *testing.T) {
 	config := &ir.RoutePolicyConfig{
 		Timeout: &ir.RouteTimeoutConfig{
-			Request:    10 * time.Second,
-			Connect:    3 * time.Second,
+			Request: 10 * time.Second,
+			Connect: 3 * time.Second,
 		},
 	}
 
@@ -173,14 +174,14 @@ func TestToProtoRoutePolicy_PartialTimeoutOnly(t *testing.T) {
 func TestToProtoRoutePolicy_RoundTripSemantics(t *testing.T) {
 	original := &ir.RoutePolicyConfig{
 		Timeout: &ir.RouteTimeoutConfig{
-			Request:    60 * time.Second,
+			Request:        60 * time.Second,
 			BackendRequest: 45 * time.Second,
-			Connect:    10 * time.Second,
+			Connect:        10 * time.Second,
 			NextUpstream:   30 * time.Second,
 		},
 		BodyLimit: &ir.RouteBodyLimitConfig{
-			MaxRequestBodyBytes:    2097152,
-			MaxRequestHeaderBytes:  32768,
+			MaxRequestBodyBytes:   2097152,
+			MaxRequestHeaderBytes: 32768,
 		},
 		Proxy: &ir.RouteProxyConfig{
 			RequestBuffering:  false,
@@ -189,8 +190,8 @@ func TestToProtoRoutePolicy_RoundTripSemantics(t *testing.T) {
 			BufferCount:       8,
 		},
 		Connection: &ir.RouteConnectionConfig{
-			KeepaliveTime:     30 * time.Second,
-			KeepaliveTimeout:  10 * time.Second,
+			KeepaliveTime:    30 * time.Second,
+			KeepaliveTimeout: 10 * time.Second,
 		},
 	}
 
@@ -207,8 +208,8 @@ func TestToProtoRoutePolicy_RoundTripSemantics(t *testing.T) {
 			NextUpstream:   durationpb.New(30 * time.Second),
 		},
 		BodyLimit: &controlv1.RoutePolicyBodyLimit{
-			MaxRequestBodyBytes:    2097152,
-			MaxRequestHeaderBytes:  32768,
+			MaxRequestBodyBytes:   2097152,
+			MaxRequestHeaderBytes: 32768,
 		},
 		Proxy: &controlv1.RoutePolicyProxy{
 			ResponseBuffering: wrapperspb.Bool(true),

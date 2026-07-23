@@ -8,9 +8,10 @@ import (
 	"testing"
 	"time"
 
+	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
-	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
 func TestProjectedSnapshotLegacyFallbackRemovesUnsupportedHardSemantics(t *testing.T) {

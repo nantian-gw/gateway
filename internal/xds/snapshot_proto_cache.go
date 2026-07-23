@@ -7,8 +7,9 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
-	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
+	"github.com/nantian-gw/gateway/internal/ir"
 )
 
 type snapshotProtoBuilder func(context.Context, *ir.Snapshot, projectionProfile, *slog.Logger) *controlv1.ConfigSnapshot

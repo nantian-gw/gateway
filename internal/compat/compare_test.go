@@ -151,7 +151,8 @@ func TestCompareFilesRejectsRemovedEnum(t *testing.T) {
 func TestCompareFilesRejectsRemovedEnumValue(t *testing.T) {
 	prev := testFile()
 	prev.EnumType = []*descriptorpb.EnumDescriptorProto{
-		{Name: stringPtr("Status"),
+		{
+			Name: stringPtr("Status"),
 			Value: []*descriptorpb.EnumValueDescriptorProto{
 				{Name: stringPtr("OK"), Number: int32Ptr(0)},
 				{Name: stringPtr("ERROR"), Number: int32Ptr(1)},
@@ -160,7 +161,8 @@ func TestCompareFilesRejectsRemovedEnumValue(t *testing.T) {
 	}
 	curr := testFile()
 	curr.EnumType = []*descriptorpb.EnumDescriptorProto{
-		{Name: stringPtr("Status"),
+		{
+			Name: stringPtr("Status"),
 			Value: []*descriptorpb.EnumValueDescriptorProto{
 				{Name: stringPtr("OK"), Number: int32Ptr(0)},
 			},
@@ -176,7 +178,8 @@ func TestCompareFilesRejectsRemovedEnumValue(t *testing.T) {
 func TestCompareFilesWarnsOnEnumValueRename(t *testing.T) {
 	prev := testFile()
 	prev.EnumType = []*descriptorpb.EnumDescriptorProto{
-		{Name: stringPtr("Status"),
+		{
+			Name: stringPtr("Status"),
 			Value: []*descriptorpb.EnumValueDescriptorProto{
 				{Name: stringPtr("OLD"), Number: int32Ptr(0)},
 			},
@@ -184,7 +187,8 @@ func TestCompareFilesWarnsOnEnumValueRename(t *testing.T) {
 	}
 	curr := testFile()
 	curr.EnumType = []*descriptorpb.EnumDescriptorProto{
-		{Name: stringPtr("Status"),
+		{
+			Name: stringPtr("Status"),
 			Value: []*descriptorpb.EnumValueDescriptorProto{
 				{Name: stringPtr("NEW"), Number: int32Ptr(0)},
 			},
@@ -203,7 +207,8 @@ func TestCompareFilesWarnsOnEnumValueRename(t *testing.T) {
 func TestCompareFilesRejectsIncompatibleMethodSignature(t *testing.T) {
 	prev := testFile()
 	prev.Service = []*descriptorpb.ServiceDescriptorProto{
-		{Name: stringPtr("Svc"),
+		{
+			Name: stringPtr("Svc"),
 			Method: []*descriptorpb.MethodDescriptorProto{{
 				Name:       stringPtr("Do"),
 				InputType:  stringPtr(".v1.Request"),
@@ -213,7 +218,8 @@ func TestCompareFilesRejectsIncompatibleMethodSignature(t *testing.T) {
 	}
 	curr := testFile()
 	curr.Service = []*descriptorpb.ServiceDescriptorProto{
-		{Name: stringPtr("Svc"),
+		{
+			Name: stringPtr("Svc"),
 			Method: []*descriptorpb.MethodDescriptorProto{{
 				Name:       stringPtr("Do"),
 				InputType:  stringPtr(".v2.Request"),

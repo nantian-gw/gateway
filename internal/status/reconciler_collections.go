@@ -135,10 +135,10 @@ func gatewayNeedsGenerationProbe(
 		return true
 	}
 	attachedListenerSets := int32(0)
-		if gateway.Status.AttachedListenerSets != nil {
-			attachedListenerSets = *gateway.Status.AttachedListenerSets
-		}
-		if attachedListenerSets != int32(eval.attachedListenerSets) {
+	if gateway.Status.AttachedListenerSets != nil {
+		attachedListenerSets = *gateway.Status.AttachedListenerSets
+	}
+	if attachedListenerSets != eval.attachedListenerSets {
 		return true
 	}
 

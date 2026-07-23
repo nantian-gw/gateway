@@ -214,6 +214,5 @@ func TestHTTPRouteRuleMessageCompactsRepeatedMessages(t *testing.T) {
 }
 
 func portNumberPtr(port int32) *gatewayv1.PortNumber {
-	value := gatewayv1.PortNumber(port)
-	return &value
+	return &port
 }

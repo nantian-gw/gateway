@@ -68,14 +68,14 @@ type BackendSubjectName struct {
 }
 
 type HTTPRoute struct {
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace"`
-	Hostnames   []string          `json:"hostnames,omitempty"`
-	ParentRefs  []ParentRef       `json:"parentRefs,omitempty"`
-	Rules       []HTTPRule        `json:"rules,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Status      *RouteStatus      `json:"status,omitempty"`
+	Name        string             `json:"name"`
+	Namespace   string             `json:"namespace"`
+	Hostnames   []string           `json:"hostnames,omitempty"`
+	ParentRefs  []ParentRef        `json:"parentRefs,omitempty"`
+	Rules       []HTTPRule         `json:"rules,omitempty"`
+	Labels      map[string]string  `json:"labels,omitempty"`
+	Annotations map[string]string  `json:"annotations,omitempty"`
+	Status      *RouteStatus       `json:"status,omitempty"`
 	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
 }
 
@@ -87,7 +87,7 @@ type HTTPRule struct {
 	Timeouts           *RouteTimeouts            `json:"timeouts,omitempty"`
 	Retry              *RetryPolicy              `json:"retry,omitempty"`
 	SessionPersistence *SessionPersistencePolicy `json:"sessionPersistence,omitempty"`
-	RoutePolicy       *RoutePolicyConfig         `json:"routePolicy,omitempty"`
+	RoutePolicy        *RoutePolicyConfig        `json:"routePolicy,omitempty"`
 }
 
 type HTTPMatch struct {
@@ -99,14 +99,14 @@ type HTTPMatch struct {
 }
 
 type GRPCRoute struct {
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace"`
-	Hostnames   []string          `json:"hostnames,omitempty"`
-	ParentRefs  []ParentRef       `json:"parentRefs,omitempty"`
-	Rules       []GRPCRule        `json:"rules,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Status      *RouteStatus      `json:"status,omitempty"`
+	Name        string             `json:"name"`
+	Namespace   string             `json:"namespace"`
+	Hostnames   []string           `json:"hostnames,omitempty"`
+	ParentRefs  []ParentRef        `json:"parentRefs,omitempty"`
+	Rules       []GRPCRule         `json:"rules,omitempty"`
+	Labels      map[string]string  `json:"labels,omitempty"`
+	Annotations map[string]string  `json:"annotations,omitempty"`
+	Status      *RouteStatus       `json:"status,omitempty"`
 	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
 }
 
@@ -116,7 +116,7 @@ type GRPCRule struct {
 	Filters            []Filter                  `json:"filters,omitempty"`
 	BackendRefs        []BackendRef              `json:"backendRefs,omitempty"`
 	SessionPersistence *SessionPersistencePolicy `json:"sessionPersistence,omitempty"`
-	RoutePolicy       *RoutePolicyConfig         `json:"routePolicy,omitempty"`
+	RoutePolicy        *RoutePolicyConfig        `json:"routePolicy,omitempty"`
 }
 
 type GRPCMatch struct {
@@ -127,14 +127,14 @@ type GRPCMatch struct {
 }
 
 type StreamRoute struct {
-	Name        string            `json:"name"`
-	Namespace   string            `json:"namespace"`
-	Kind        string            `json:"kind"`
-	ParentRefs  []ParentRef       `json:"parentRefs,omitempty"`
-	Rules       []StreamRule      `json:"rules,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Status      *RouteStatus      `json:"status,omitempty"`
+	Name        string             `json:"name"`
+	Namespace   string             `json:"namespace"`
+	Kind        string             `json:"kind"`
+	ParentRefs  []ParentRef        `json:"parentRefs,omitempty"`
+	Rules       []StreamRule       `json:"rules,omitempty"`
+	Labels      map[string]string  `json:"labels,omitempty"`
+	Annotations map[string]string  `json:"annotations,omitempty"`
+	Status      *RouteStatus       `json:"status,omitempty"`
 	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
 }
 
@@ -218,9 +218,9 @@ type BackendCluster struct {
 	LoadBalancing        *LoadBalancingPolicy      `json:"loadBalancing,omitempty"`
 	CircuitBreaker       *CircuitBreakerConfig     `json:"circuitBreaker,omitempty"`
 	Metadata             map[string]string         `json:"metadata,omitempty"`
-	AIService            *AIServiceConfig           `json:"aiService,omitempty"`
-	TokenPolicy          *TokenPolicyConfig         `json:"tokenPolicy,omitempty"`
-	WasmPlugin           *WasmPluginConfig          `json:"wasmPlugin,omitempty"`
+	AIService            *AIServiceConfig          `json:"aiService,omitempty"`
+	TokenPolicy          *TokenPolicyConfig        `json:"tokenPolicy,omitempty"`
+	WasmPlugin           *WasmPluginConfig         `json:"wasmPlugin,omitempty"`
 }
 
 type BackendEndpoint struct {

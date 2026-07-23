@@ -179,7 +179,7 @@ func TestRefreshBackendRefUpdatesAndCleansValidationMetadata(t *testing.T) {
 			Metadata: map[string]string{
 				backends.BackendRefMetaValid:  "false",
 				backends.BackendRefMetaReason: string(gatewayv1.RouteReasonBackendNotFound),
-				"keep":               "value",
+				"keep":                        "value",
 			},
 		},
 		"apps",

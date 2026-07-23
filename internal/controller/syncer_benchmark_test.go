@@ -273,7 +273,7 @@ func (f *snapshotStormBenchmarkFixture) setRoutesAttached(ctx context.Context, a
 		}
 
 		route.Generation++
-		route.Spec.CommonRouteSpec.ParentRefs = []gatewayv1.ParentReference{{
+		route.Spec.ParentRefs = []gatewayv1.ParentReference{{
 			Name: parentName,
 		}}
 		if err := f.client.Update(ctx, &route); err != nil {
@@ -465,7 +465,7 @@ func snapshotStatusStormEvents(routeCount int) []event.UpdateEvent {
 			},
 		}
 		newRoute := oldRoute.DeepCopy()
-		newRoute.Status.RouteStatus.Parents = []gatewayv1.RouteParentStatus{{
+		newRoute.Status.Parents = []gatewayv1.RouteParentStatus{{
 			ControllerName: "gateway.networking.k8s.io/nantian-gw",
 		}}
 		events = append(events, event.UpdateEvent{
@@ -524,7 +524,7 @@ func newSnapshotBenchmarkScheme(b *testing.B) *runtime.Scheme {
 	snapshotBenchmarkMustAddToScheme(b, scheme, gatewayv1alpha3.Install)
 	snapshotBenchmarkMustAddToScheme(b, scheme, gatewayv1beta1.Install)
 	snapshotBenchmarkMustAddToScheme(b, scheme, backend.Install)
-	snapshotBenchmarkMustAddToScheme(b, scheme, mcsv1alpha1.AddToScheme)
+	snapshotBenchmarkMustAddToScheme(b, scheme, mcsv1alpha1.Install)
 	return scheme
 }
 

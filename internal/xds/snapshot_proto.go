@@ -10,8 +10,9 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
+	"github.com/nantian-gw/gateway/internal/ir"
 )
 
 var newStructPB = structpb.NewStruct

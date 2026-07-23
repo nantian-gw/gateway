@@ -22,8 +22,8 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
@@ -41,7 +41,7 @@ func newScheme(t *testing.T) *runtime.Scheme {
 	must(t, backend.Install(scheme))
 	must(t, gatewayv1alpha3.Install(scheme))
 	must(t, gatewayv1beta1.Install(scheme))
-	must(t, mcsv1alpha1.AddToScheme(scheme))
+	must(t, mcsv1alpha1.Install(scheme))
 	must(t, aiservice.AddToScheme(scheme))
 	must(t, tokenpolicy.AddToScheme(scheme))
 	must(t, wasmplugin.AddToScheme(scheme))
@@ -121,8 +121,7 @@ func must(t *testing.T, err error) {
 }
 
 func portPtr(port int32) *gatewayv1.PortNumber {
-	value := gatewayv1.PortNumber(port)
-	return &value
+	return &port
 }
 
 func namespacePtr(namespace string) *gatewayv1.Namespace {

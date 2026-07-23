@@ -11,10 +11,10 @@ import (
 // Translate converts an AIService CRD to the IR config.
 func Translate(svc aiservice.AIService) ir.AIServiceConfig {
 	cfg := ir.AIServiceConfig{
-		Provider:  svc.Spec.Provider,
-		Format:    svc.Spec.Format,
-		Model:     svc.Spec.Model,
-		Endpoint:  svc.Spec.Endpoint,
+		Provider: svc.Spec.Provider,
+		Format:   svc.Spec.Format,
+		Model:    svc.Spec.Model,
+		Endpoint: svc.Spec.Endpoint,
 		Auth: ir.AIServiceAuth{
 			Type:      svc.Spec.Auth.Type,
 			SecretRef: svc.Namespace + "/" + svc.Spec.Auth.Secret,

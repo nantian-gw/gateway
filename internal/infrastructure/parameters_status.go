@@ -141,7 +141,7 @@ func formatGatewayClassParametersRef(ref *gatewayv1.ParametersReference) string 
 		return ""
 	}
 	if ref == nil || ref.Namespace == nil || strings.TrimSpace(string(*ref.Namespace)) == "" {
-		return string(ref.Name)
+		return ref.Name
 	}
 	return formatNamespacedName(string(*ref.Namespace), ref.Name)
 }

@@ -217,7 +217,7 @@ func gatewayServicePorts(gateway gatewayv1.Gateway) []corev1.ServicePort {
 		if !ok {
 			continue
 		}
-		port := int32(listener.Port)
+		port := listener.Port
 		key := servicePortKey{port: port, protocol: protocol}
 		if _, exists := index[key]; exists {
 			continue
@@ -251,7 +251,7 @@ func collectListenerPorts(gateways []gatewayv1.Gateway) []corev1.ServicePort {
 				continue
 			}
 
-			port := int32(listener.Port)
+			port := listener.Port
 			key := servicePortKey{port: port, protocol: protocol}
 			if _, exists := index[key]; exists {
 				continue
@@ -635,7 +635,7 @@ func ipFamiliesEqual(left, right []corev1.IPFamily) bool {
 	return true
 }
 
-func ipFamilyPolicyEqual(left, right *corev1.IPFamilyPolicyType) bool {
+func ipFamilyPolicyEqual(left, right *corev1.IPFamilyPolicy) bool {
 	if left == nil || right == nil {
 		return left == nil && right == nil
 	}

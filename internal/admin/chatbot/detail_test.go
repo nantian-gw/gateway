@@ -102,7 +102,8 @@ func TestRenderDetail_GRPCRoute(t *testing.T) {
 		Spec: gatewayv1.GRPCRouteSpec{Rules: []gatewayv1.GRPCRouteRule{{
 			Matches: []gatewayv1.GRPCRouteMatch{{Method: &gatewayv1.GRPCMethodMatch{Service: &svc}}},
 			BackendRefs: []gatewayv1.GRPCBackendRef{{BackendRef: gatewayv1.BackendRef{
-				BackendObjectReference: gatewayv1.BackendObjectReference{Name: "grpc-svc", Port: ptr(gatewayv1.PortNumber(50051))}}}},
+				BackendObjectReference: gatewayv1.BackendObjectReference{Name: "grpc-svc", Port: ptr(gatewayv1.PortNumber(50051))},
+			}}},
 		}}},
 	}
 	out := renderDetail(r, IndexEntry{})

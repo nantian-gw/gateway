@@ -123,7 +123,7 @@ func (a *openAIAdapter) ChatCompletionStream(
 ) error {
 	messages := make([]openAIMessage, 0, len(history)+1)
 	for _, m := range history {
-		messages = append(messages, openAIMessage{Role: m.Role, Content: m.Content})
+		messages = append(messages, openAIMessage(m))
 	}
 	messages = append(messages, openAIMessage{Role: "user", Content: prompt})
 

@@ -3,9 +3,9 @@ package backends
 import (
 	"strings"
 
-	"github.com/nantian-gw/gateway/internal/loadbalancing"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/loadbalancing"
 )
 
 func BackendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancingPolicy {

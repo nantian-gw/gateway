@@ -150,7 +150,7 @@ func benchmarkLargeSnapshotHTTPRoute(index int, backendCount int) HTTPRoute {
 		},
 		Annotations: map[string]string{
 			"nantian.dev/access-log-template": "default",
-			"benchmark-index":                         fmt.Sprintf("%04d", index),
+			"benchmark-index":                 fmt.Sprintf("%04d", index),
 		},
 		Rules: []HTTPRule{{
 			Matches: []HTTPMatch{{

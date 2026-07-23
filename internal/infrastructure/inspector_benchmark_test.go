@@ -260,13 +260,13 @@ func (f *infrastructureAttachDetachStormFixture) setRoutesAttached(ctx context.C
 
 		route.Generation++
 		if attached {
-			route.Spec.CommonRouteSpec.ParentRefs = []gatewayv1.ParentReference{{
+			route.Spec.ParentRefs = []gatewayv1.ParentReference{{
 				Kind: &serviceKind,
 				Name: gatewayv1.ObjectName(infrastructureBenchmarkServiceName(idx)),
 				Port: &servicePort,
 			}}
 		} else {
-			route.Spec.CommonRouteSpec.ParentRefs = nil
+			route.Spec.ParentRefs = nil
 		}
 		if err := f.client.Update(ctx, &route); err != nil {
 			return err
@@ -295,7 +295,7 @@ func newInfrastructureBenchmarkScheme(tb testing.TB) *runtime.Scheme {
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, gatewayv1alpha3.Install)
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, gatewayv1beta1.Install)
 	infrastructureBenchmarkMustAddToScheme(tb, scheme, backend.Install)
-	infrastructureBenchmarkMustAddToScheme(tb, scheme, mcsv1alpha1.AddToScheme)
+	infrastructureBenchmarkMustAddToScheme(tb, scheme, mcsv1alpha1.Install)
 	return scheme
 }
 

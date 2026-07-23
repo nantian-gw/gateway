@@ -312,7 +312,7 @@ func listenerConflictsForRuntime(existing []gatewayv1.Listener, current gatewayv
 		if current.Port != other.Port {
 			continue
 		}
-		if strings.ToUpper(string(current.Protocol)) != strings.ToUpper(string(other.Protocol)) {
+		if !strings.EqualFold(string(current.Protocol), string(other.Protocol)) {
 			return true
 		}
 		if listenerHostnamesConflictForRuntime(current, other) {

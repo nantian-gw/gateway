@@ -437,7 +437,7 @@ func (r *testNodeRepository) Upsert(_ context.Context, status ir.NodeStatus) err
 func performRequest(t *testing.T, server *Server, method, path string, target any) *httptest.ResponseRecorder {
 	t.Helper()
 
-	req := httptest.NewRequest(method, path, nil)
+	req := httptest.NewRequest(method, path, http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+testAuthToken)
 	recorder := httptest.NewRecorder()
 	server.server.Handler.ServeHTTP(recorder, req)

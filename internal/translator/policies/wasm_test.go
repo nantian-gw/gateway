@@ -1,6 +1,7 @@
 package policies
 
 import (
+	"bytes"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
@@ -82,7 +83,7 @@ func TestTranslateWasmPluginFromConfigMap(t *testing.T) {
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from ConfigMap, got nil")
 	}
-	if string(cfg.WasmBytes) != string(wasmBytes) {
+	if !bytes.Equal(cfg.WasmBytes, wasmBytes) {
 		t.Errorf("expected wasm bytes %q, got %q", string(wasmBytes), string(cfg.WasmBytes))
 	}
 }
@@ -113,7 +114,7 @@ func TestTranslateWasmPluginFromConfigMapCustomKey(t *testing.T) {
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from ConfigMap with custom key, got nil")
 	}
-	if string(cfg.WasmBytes) != string(wasmBytes) {
+	if !bytes.Equal(cfg.WasmBytes, wasmBytes) {
 		t.Errorf("expected wasm bytes %q, got %q", string(wasmBytes), string(cfg.WasmBytes))
 	}
 }
@@ -207,7 +208,7 @@ func TestTranslateWasmPluginFromInline(t *testing.T) {
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from inline, got nil")
 	}
-	if string(cfg.WasmBytes) != string(wasmBytes) {
+	if !bytes.Equal(cfg.WasmBytes, wasmBytes) {
 		t.Errorf("expected wasm bytes %q, got %q", string(wasmBytes), string(cfg.WasmBytes))
 	}
 	if cfg.SHA256 != "inline-sha256" {
@@ -249,7 +250,7 @@ func TestTranslateWasmPluginFromURL(t *testing.T) {
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes from URL, got nil")
 	}
-	if string(cfg.WasmBytes) != string(wasmBytes) {
+	if !bytes.Equal(cfg.WasmBytes, wasmBytes) {
 		t.Errorf("expected wasm bytes %q, got %q", string(wasmBytes), string(cfg.WasmBytes))
 	}
 }
@@ -297,7 +298,7 @@ func TestTranslateWasmPluginURLOverridesInline(t *testing.T) {
 	if cfg.WasmBytes == nil {
 		t.Fatal("expected WasmBytes, got nil")
 	}
-	if string(cfg.WasmBytes) != string(wasmBytes) {
+	if !bytes.Equal(cfg.WasmBytes, wasmBytes) {
 		t.Errorf("expected url bytes %q, got %q", string(wasmBytes), string(cfg.WasmBytes))
 	}
 }

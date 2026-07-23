@@ -8,8 +8,8 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
-	"github.com/nantian-gw/gateway/internal/loadbalancing"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	"github.com/nantian-gw/gateway/internal/loadbalancing"
 )
 
 const (
@@ -251,7 +251,7 @@ func backendLBPolicyTargetAncestor(
 	return gatewayv1.ParentReference{
 		Group:     groupPtr(string(targetRef.Group)),
 		Kind:      kindPtr(string(targetRef.Kind)),
-		Name:      gatewayv1.ObjectName(targetRef.Name),
+		Name:      targetRef.Name,
 		Namespace: gatewayNamespacePtr(namespace),
 	}
 }

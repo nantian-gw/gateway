@@ -11,8 +11,8 @@ import (
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/nantian-gw/gateway/internal/xds"
 	"github.com/nantian-gw/gateway/internal/lifecycle"
+	"github.com/nantian-gw/gateway/internal/xds"
 )
 
 func newManagerComponent(mgr ctrl.Manager, leaderElectionEnabled bool) lifecycle.Component {

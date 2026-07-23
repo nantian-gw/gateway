@@ -97,6 +97,7 @@ func TestReconcileSharedServiceUpdateAvoidsRedundantReread(t *testing.T) {
 		t.Fatalf("shared Service get count = %d, want 1", sharedServiceGets)
 	}
 }
+
 func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -181,6 +182,7 @@ func TestReconcileGatewayServiceUpdateAvoidsRedundantReread(t *testing.T) {
 		t.Fatalf("gateway Service get count = %d, want 1", gatewayServiceGets)
 	}
 }
+
 func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -299,6 +301,7 @@ func TestReconcileSkipsInvalidGatewayListenersInDerivedResources(t *testing.T) {
 	assertNetworkPolicyPort(t, dataplanePolicy.Spec.Ingress, 80, corev1.ProtocolTCP)
 	assertMissingNetworkPolicyPort(t, dataplanePolicy.Spec.Ingress, 443, corev1.ProtocolTCP)
 }
+
 func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -415,6 +418,7 @@ func TestReconcileSkipsGatewayServiceUntilListenerRefsRecover(t *testing.T) {
 	}
 	assertServicePort(t, gatewayService.Spec.Ports, 443, corev1.ProtocolTCP, 0)
 }
+
 func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChanges(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -526,6 +530,7 @@ func TestReconcileUpdatesGatewayInfrastructureServiceForListenerAndMetadataChang
 	assertMissingServicePort(t, service.Spec.Ports, 80, corev1.ProtocolTCP)
 	assertMissingServicePort(t, service.Spec.Ports, 5300, corev1.ProtocolUDP)
 }
+
 func TestReconcilePropagatesGatewayInfrastructureMetadataToEndpointSlices(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

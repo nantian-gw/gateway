@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/nantian-gw/gateway/internal/admin/metrics"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/nantian-gw/gateway/internal/admin/metrics"
 )
 
 const (
@@ -17,10 +18,10 @@ type metricsConfigRequest struct {
 }
 
 type metricsQueryRequest struct {
-	Query  string `json:"query"`
-	Start  string `json:"start,omitempty"`
-	End    string `json:"end,omitempty"`
-	Step   string `json:"step,omitempty"`
+	Query string `json:"query"`
+	Start string `json:"start,omitempty"`
+	End   string `json:"end,omitempty"`
+	Step  string `json:"step,omitempty"`
 }
 
 // handleMetricsConfigGet reads the metrics configuration and returns it.

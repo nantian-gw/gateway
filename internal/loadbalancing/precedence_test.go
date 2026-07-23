@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
 func TestPolicyPrecedesUsesOldestTimestampFirst(t *testing.T) {

@@ -14,9 +14,11 @@ import (
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
-const defaultPersistTimeout = 2 * time.Second
-const defaultPersistDebounce = 250 * time.Millisecond
-const persistQueueSize = 128
+const (
+	defaultPersistTimeout  = 2 * time.Second
+	defaultPersistDebounce = 250 * time.Millisecond
+	persistQueueSize       = 128
+)
 
 type Repository interface {
 	Get(ctx context.Context, nodeID string) (ir.NodeStatus, bool, error)
@@ -368,7 +370,7 @@ func (r *Registry) persistNow(status ir.NodeStatus) {
 		return
 	}
 
-	ctx, cancel := r.operationContext(nil)
+	ctx, cancel := r.operationContext(context.TODO())
 	defer cancel()
 
 	if err := r.repository.Upsert(ctx, status); err != nil {

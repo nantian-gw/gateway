@@ -35,6 +35,7 @@ func (c *MetricsConfig) Validate() error {
 	}
 	return nil
 }
+
 // "nantian-gw-metrics-config" in the specified namespace.
 func LoadConfig(ctx context.Context, cl client.Client, namespace string) (*MetricsConfig, error) {
 	if namespace == "" {

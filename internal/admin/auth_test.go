@@ -86,7 +86,7 @@ func TestNoAuthHandlerAllowsGetBlocksPost(t *testing.T) {
 	handler := noAuthHandler(okHandler, Options{})
 
 	// GET should pass through
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -94,7 +94,7 @@ func TestNoAuthHandlerAllowsGetBlocksPost(t *testing.T) {
 	}
 
 	// POST should be blocked
-	req = httptest.NewRequest(http.MethodPost, "/v1/resources", nil)
+	req = httptest.NewRequest(http.MethodPost, "/v1/resources", http.NoBody)
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusUnauthorized {
@@ -103,7 +103,7 @@ func TestNoAuthHandlerAllowsGetBlocksPost(t *testing.T) {
 
 	// Probes always pass
 	for _, path := range []string{"/livez", "/readyz"} {
-		req = httptest.NewRequest(http.MethodPost, path, nil)
+		req = httptest.NewRequest(http.MethodPost, path, http.NoBody)
 		rec = httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 		if rec.Code != http.StatusOK {
@@ -120,7 +120,7 @@ func TestKubernetesAuthHandlerRejectsMissingToken(t *testing.T) {
 		AuthMode: "kubernetes",
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusUnauthorized {
@@ -135,7 +135,7 @@ func TestKubernetesAuthHandlerAllowsProbes(t *testing.T) {
 	handler := kubernetesAuthHandler(okHandler, Options{AuthMode: "kubernetes"})
 
 	for _, path := range []string{"/livez", "/readyz"} {
-		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req := httptest.NewRequest(http.MethodGet, path, http.NoBody)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 		if rec.Code != http.StatusOK {

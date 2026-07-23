@@ -18,14 +18,14 @@ type AIService struct {
 }
 
 type AIServiceSpec struct {
-	Provider      string                 `json:"provider"`
-	Format        string                 `json:"format,omitempty"`
-	Model         string                 `json:"model"`
-	Endpoint      string                 `json:"endpoint,omitempty"`
-	Auth          AIServiceAuth          `json:"auth,omitempty"`
-	Timeout       string                 `json:"timeout,omitempty"`
-	Retry         AIRetryConfig          `json:"retry,omitempty"`
-	Observability AIObservabilityConfig  `json:"observability,omitempty"`
+	Provider      string                `json:"provider"`
+	Format        string                `json:"format,omitempty"`
+	Model         string                `json:"model"`
+	Endpoint      string                `json:"endpoint,omitempty"`
+	Auth          AIServiceAuth         `json:"auth,omitempty"`
+	Timeout       string                `json:"timeout,omitempty"`
+	Retry         AIRetryConfig         `json:"retry,omitempty"`
+	Observability AIObservabilityConfig `json:"observability,omitempty"`
 }
 
 type AIServiceAuth struct {

@@ -190,6 +190,7 @@ func TestReconcileHTTPRouteScopedRequestRebuildsOnlyChangedRoute(t *testing.T) {
 		t.Fatalf("expected route-scoped rebuild to preserve listener attachments, got %#v", current.Listeners)
 	}
 }
+
 func TestReconcileHTTPRouteScopedRequestRefreshesMeshListenersForServiceParents(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 	servicePort := gatewayv1.PortNumber(8080)
@@ -323,6 +324,7 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshListenersForServiceParents(
 		t.Fatalf("expected updated mesh listener attachment, got %#v", current.Listeners[0].AttachedRoutes)
 	}
 }
+
 func TestReconcileHTTPRouteScopedRequestAttachesNewRouteToExistingGatewayListener(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -462,6 +464,7 @@ func TestReconcileHTTPRouteScopedRequestAttachesNewRouteToExistingGatewayListene
 		t.Fatalf("attached route = %q, want default/route", got)
 	}
 }
+
 func TestReconcileHTTPRouteScopedRequestRebuildsMissingParentGatewayListener(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
@@ -603,6 +606,7 @@ func TestReconcileHTTPRouteScopedRequestRebuildsMissingParentGatewayListener(t *
 		t.Fatalf("expected route-scoped rebuild to attach route to recreated listener, got %#v", current.Listeners[0].AttachedRoutes)
 	}
 }
+
 func TestReconcileHTTPRouteScopedRequestRefreshesMeshWorkloadsForCrossNamespaceServiceParents(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 

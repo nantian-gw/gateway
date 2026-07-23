@@ -131,7 +131,7 @@ func resourceManagerForTestWithLogger(t *testing.T, logger *slog.Logger) *Resour
 	if err := gatewayv1beta1.Install(scheme); err != nil {
 		t.Fatalf("install gateway v1beta1 scheme: %v", err)
 	}
-	if err := mcsv1alpha1.AddToScheme(scheme); err != nil {
+	if err := mcsv1alpha1.Install(scheme); err != nil {
 		t.Fatalf("install mcs v1alpha1 scheme: %v", err)
 	}
 	if err := corev1.AddToScheme(scheme); err != nil {

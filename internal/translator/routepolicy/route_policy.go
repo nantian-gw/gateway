@@ -177,8 +177,8 @@ func GrpcRoutesToHTTP(routes []ir.GRPCRoute) []ir.HTTPRoute {
 	out := make([]ir.HTTPRoute, len(routes))
 	for i, r := range routes {
 		out[i] = ir.HTTPRoute{
-			Name:      r.Name,
-			Namespace: r.Namespace,
+			Name:       r.Name,
+			Namespace:  r.Namespace,
 			ParentRefs: r.ParentRefs,
 		}
 	}

@@ -1120,7 +1120,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 					Labels: map[string]string{
 						discoveryv1.LabelManagedBy:               resources.ManagedByValue,
 						discoveryv1.LabelServiceName:             infrastructure.GatewayServiceName("gateway-static-addresses"),
-						resources.ServiceRoleKey:          resources.EndpointSliceRoleGatewayFrontend,
+						resources.ServiceRoleKey:                 resources.EndpointSliceRoleGatewayFrontend,
 						"app.kubernetes.io/managed-by":           "nantian-gw",
 						"gateway.networking.k8s.io/gateway-name": "gateway-static-addresses",
 						"nantian.dev/gateway-namespace":          "gateway-conformance-infra",
@@ -1253,7 +1253,7 @@ func gatewayInfrastructureServiceForGateway(gateway gatewayv1.Gateway) *corev1.S
 	service.Annotations["nantian.dev/owner-generation"] = strconv.FormatInt(gateway.Generation, 10)
 	service.Annotations["nantian.dev/gatewayclass-name"] = string(gateway.Spec.GatewayClassName)
 	if gateway.Spec.Infrastructure != nil && gateway.Spec.Infrastructure.ParametersRef != nil {
-		service.Annotations["nantian.dev/infrastructure-parameters-ref"] = gateway.Namespace + "/" + string(gateway.Spec.Infrastructure.ParametersRef.Name)
+		service.Annotations["nantian.dev/infrastructure-parameters-ref"] = gateway.Namespace + "/" + gateway.Spec.Infrastructure.ParametersRef.Name
 	} else {
 		delete(service.Annotations, "nantian.dev/infrastructure-parameters-ref")
 	}

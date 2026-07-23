@@ -32,7 +32,7 @@ func TestNewPprofHandlerServesIndexAndNamedProfiles(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(tc.method, tc.path, nil)
+			req := httptest.NewRequest(tc.method, tc.path, http.NoBody)
 			rec := httptest.NewRecorder()
 
 			handler.ServeHTTP(rec, req)
@@ -78,7 +78,7 @@ func TestPprofAuthMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}), token)
 
-		req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", http.NoBody)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
@@ -92,7 +92,7 @@ func TestPprofAuthMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}), token)
 
-		req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", http.NoBody)
 		req.Header.Set("Authorization", "Bearer wrong-token")
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -107,7 +107,7 @@ func TestPprofAuthMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}), token)
 
-		req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", http.NoBody)
 		req.Header.Set("Authorization", "Bearer "+token)
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -122,14 +122,14 @@ func TestNewPprofServerWithAuth(t *testing.T) {
 	token := "secure-token"
 	server := newPprofServer("127.0.0.1:6060", token, "", slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
-	req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", http.NoBody)
 	rec := httptest.NewRecorder()
 	server.Handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("without auth header, status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 
-	req = httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+	req = httptest.NewRequest(http.MethodGet, "/debug/pprof/", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+token)
 	rec = httptest.NewRecorder()
 	server.Handler.ServeHTTP(rec, req)
@@ -147,7 +147,7 @@ func TestNewPprofServerWithTokenFile(t *testing.T) {
 
 	server := newPprofServer("127.0.0.1:6060", "", tokenPath, slog.New(slog.NewTextHandler(os.Stderr, nil)))
 
-	req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/debug/pprof/", http.NoBody)
 	req.Header.Set("Authorization", "Bearer file-token")
 	rec := httptest.NewRecorder()
 	server.Handler.ServeHTTP(rec, req)

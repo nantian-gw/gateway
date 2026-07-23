@@ -32,10 +32,10 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "gateway service enqueues owning gateway",
 			object: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					resources.ManagedByLabel:          "nantian-gw",
-					resources.ServiceRoleKey:          "gateway-metadata",
+					resources.ManagedByLabel:                 "nantian-gw",
+					resources.ServiceRoleKey:                 "gateway-metadata",
 					"gateway.networking.k8s.io/gateway-name": "public",
-					"nantian.dev/gateway-namespace":               "default",
+					"nantian.dev/gateway-namespace":          "default",
 				}},
 			},
 			want: want,
@@ -44,10 +44,10 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "shared service is ignored",
 			object: &corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					resources.ManagedByLabel:          "nantian-gw",
-					resources.ServiceRoleKey:          "shared-dataplane",
+					resources.ManagedByLabel:                 "nantian-gw",
+					resources.ServiceRoleKey:                 "shared-dataplane",
 					"gateway.networking.k8s.io/gateway-name": "public",
-					"nantian.dev/gateway-namespace":               "default",
+					"nantian.dev/gateway-namespace":          "default",
 				}},
 			},
 		},
@@ -56,9 +56,9 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			object: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
 					discoveryv1.LabelManagedBy:               "nantian-gw",
-					resources.ServiceRoleKey:          "gateway-frontend-endpoints",
+					resources.ServiceRoleKey:                 "gateway-frontend-endpoints",
 					"gateway.networking.k8s.io/gateway-name": "public",
-					"nantian.dev/gateway-namespace":               "default",
+					"nantian.dev/gateway-namespace":          "default",
 				}},
 			},
 			want: want,
@@ -68,9 +68,9 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			object: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
 					discoveryv1.LabelManagedBy:               "nantian-gw",
-					resources.ServiceRoleKey:          "shared-frontend-endpoints",
+					resources.ServiceRoleKey:                 "shared-frontend-endpoints",
 					"gateway.networking.k8s.io/gateway-name": "public",
-					"nantian.dev/gateway-namespace":               "default",
+					"nantian.dev/gateway-namespace":          "default",
 				}},
 			},
 		},
@@ -78,8 +78,8 @@ func TestGatewayInfrastructureStatusRequests(t *testing.T) {
 			name: "missing gateway labels are ignored",
 			object: &discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-					discoveryv1.LabelManagedBy:      "nantian-gw",
-					resources.ServiceRoleKey: "gateway-frontend-endpoints",
+					discoveryv1.LabelManagedBy: "nantian-gw",
+					resources.ServiceRoleKey:   "gateway-frontend-endpoints",
 				}},
 			},
 		},
@@ -105,9 +105,9 @@ func TestGatewayFrontendEndpointSliceMetadataChanged(t *testing.T) {
 			Namespace: "default",
 			Labels: map[string]string{
 				discoveryv1.LabelManagedBy:               "nantian-gw",
-				resources.ServiceRoleKey:          resources.EndpointSliceRoleGatewayFrontend,
+				resources.ServiceRoleKey:                 resources.EndpointSliceRoleGatewayFrontend,
 				"gateway.networking.k8s.io/gateway-name": "public",
-				"nantian.dev/gateway-namespace":               "default",
+				"nantian.dev/gateway-namespace":          "default",
 			},
 			Annotations: map[string]string{
 				"nantian.dev/owner-generation": "1",
@@ -187,10 +187,10 @@ func TestGatewayInfrastructureServiceChanged(t *testing.T) {
 			Name:      "public-gateway",
 			Namespace: "default",
 			Labels: map[string]string{
-				resources.ManagedByLabel:          "nantian-gw",
-				resources.ServiceRoleKey:          resources.ServiceRoleGateway,
+				resources.ManagedByLabel:                 "nantian-gw",
+				resources.ServiceRoleKey:                 resources.ServiceRoleGateway,
 				"gateway.networking.k8s.io/gateway-name": "public",
-				"nantian.dev/gateway-namespace":               "default",
+				"nantian.dev/gateway-namespace":          "default",
 			},
 			Annotations: map[string]string{
 				"nantian.dev/owner-generation": "1",
@@ -309,10 +309,10 @@ func TestGatewayInfrastructureServicePredicateAllowsCreateAndDelete(t *testing.T
 	predicate := gatewayInfrastructureServicePredicate()
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
-			resources.ManagedByLabel:          resources.ManagedByValue,
-			resources.ServiceRoleKey:          resources.ServiceRoleGateway,
+			resources.ManagedByLabel:                 resources.ManagedByValue,
+			resources.ServiceRoleKey:                 resources.ServiceRoleGateway,
 			"gateway.networking.k8s.io/gateway-name": "public",
-			"nantian.dev/gateway-namespace":               "default",
+			"nantian.dev/gateway-namespace":          "default",
 		}},
 	}
 
@@ -331,9 +331,9 @@ func TestGatewayFrontendEndpointSlicePredicateAllowsCreateAndDelete(t *testing.T
 	slice := &discoveryv1.EndpointSlice{
 		ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
 			discoveryv1.LabelManagedBy:               resources.ManagedByValue,
-			resources.ServiceRoleKey:          resources.EndpointSliceRoleGatewayFrontend,
+			resources.ServiceRoleKey:                 resources.EndpointSliceRoleGatewayFrontend,
 			"gateway.networking.k8s.io/gateway-name": "public",
-			"nantian.dev/gateway-namespace":               "default",
+			"nantian.dev/gateway-namespace":          "default",
 		}},
 	}
 

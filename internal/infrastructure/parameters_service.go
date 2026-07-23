@@ -19,7 +19,7 @@ func (p *gatewayServiceParameters) normalize() {
 	}
 
 	if p.IPFamilyPolicy != nil {
-		value := corev1.IPFamilyPolicyType(strings.TrimSpace(string(*p.IPFamilyPolicy)))
+		value := corev1.IPFamilyPolicy(strings.TrimSpace(string(*p.IPFamilyPolicy)))
 		if value == "" {
 			p.IPFamilyPolicy = nil
 		} else {

@@ -22,13 +22,13 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
-	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	gwroutepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/listeners"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
@@ -269,15 +269,9 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		shared.MetricTranslationErrors.WithLabelValues("routes").Inc()
 		return nil, err
 	}
-	for i := range tcpResults {
-		snapshot.StreamRoutes = append(snapshot.StreamRoutes, tcpResults[i])
-	}
-	for i := range udpResults {
-		snapshot.StreamRoutes = append(snapshot.StreamRoutes, udpResults[i])
-	}
-	for i := range tlsStreamResults {
-		snapshot.StreamRoutes = append(snapshot.StreamRoutes, tlsStreamResults[i])
-	}
+	snapshot.StreamRoutes = append(snapshot.StreamRoutes, tcpResults...)
+	snapshot.StreamRoutes = append(snapshot.StreamRoutes, udpResults...)
+	snapshot.StreamRoutes = append(snapshot.StreamRoutes, tlsStreamResults...)
 
 	filteredServices := resources.FilterServices(services)
 	serviceKeyMap := make(map[string]client.ObjectKey, len(filteredServices))

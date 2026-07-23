@@ -62,11 +62,11 @@ type ProxyConfig struct {
 }
 
 type ConnectionConfig struct {
-	KeepaliveRequests          *uint32          `json:"keepaliveRequests,omitempty"`
-	UpstreamKeepalivePoolSize  *uint32          `json:"upstreamKeepalivePoolSize,omitempty"`
-	KeepaliveTime              *metav1.Duration `json:"keepaliveTime,omitempty"`
-	KeepaliveTimeout           *metav1.Duration `json:"keepaliveTimeout,omitempty"`
-	UpstreamKeepaliveIdle      *metav1.Duration `json:"upstreamKeepaliveIdle,omitempty"`
+	KeepaliveRequests         *uint32          `json:"keepaliveRequests,omitempty"`
+	UpstreamKeepalivePoolSize *uint32          `json:"upstreamKeepalivePoolSize,omitempty"`
+	KeepaliveTime             *metav1.Duration `json:"keepaliveTime,omitempty"`
+	KeepaliveTimeout          *metav1.Duration `json:"keepaliveTimeout,omitempty"`
+	UpstreamKeepaliveIdle     *metav1.Duration `json:"upstreamKeepaliveIdle,omitempty"`
 }
 
 func AddToScheme(scheme *runtime.Scheme) error {

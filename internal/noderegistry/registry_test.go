@@ -311,7 +311,7 @@ func TestRegistryListUsesLifecycleContextWhenCallerContextIsNil(t *testing.T) {
 	)
 	t.Cleanup(registry.Close)
 
-	_ = registry.List(nil)
+	_ = registry.List(context.TODO())
 
 	ctx, ok := repository.waitForListContext(time.Second)
 	if !ok {
@@ -797,17 +797,17 @@ func newBlockingTrackingRepository() *blockingTrackingRepository {
 }
 
 func (r *blockingTrackingRepository) Upsert(ctx context.Context, status ir.NodeStatus) error {
-	r.trackingRepository.mu.Lock()
-	r.trackingRepository.items[status.NodeID] = clone(status)
-	r.trackingRepository.upserts = append(r.trackingRepository.upserts, clone(status))
-	r.trackingRepository.mu.Unlock()
+	r.mu.Lock()
+	r.items[status.NodeID] = clone(status)
+	r.upserts = append(r.upserts, clone(status))
+	r.mu.Unlock()
 
 	r.startOnce.Do(func() {
 		close(r.started)
 	})
 
 	select {
-	case r.trackingRepository.ch <- struct{}{}:
+	case r.ch <- struct{}{}:
 	default:
 	}
 

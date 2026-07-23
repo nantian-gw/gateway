@@ -97,7 +97,7 @@ func (r *Reconciler) reconcileGatewayStatusWithSeed(
 			}
 		}
 
-	eval = gatewayEvaluationWithObservedGeneration(eval, current.Generation)
+		eval = gatewayEvaluationWithObservedGeneration(eval, current.Generation)
 		observeGatewayConvergenceMetrics(eval.convergence)
 
 		desired := current.DeepCopy()

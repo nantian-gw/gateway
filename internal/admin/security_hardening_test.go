@@ -89,7 +89,7 @@ func TestTokenReviewAuthenticatorAuthorization(t *testing.T) {
 
 func TestRateLimiterHonorsXFFOnlyFromTrustedProxy(t *testing.T) {
 	req := func() *http.Request {
-		r := httptest.NewRequest(http.MethodGet, "/v1/summary", nil)
+		r := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
 		r.RemoteAddr = "10.1.2.3:5000"
 		r.Header.Set("X-Forwarded-For", "203.0.113.9")
 		return r

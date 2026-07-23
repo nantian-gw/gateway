@@ -92,13 +92,13 @@ func (f *meshServiceStormBenchmarkFixture) setRoutesAttached(ctx context.Context
 
 		route.Generation++
 		if attached {
-			route.Spec.CommonRouteSpec.ParentRefs = []gatewayv1.ParentReference{{
+			route.Spec.ParentRefs = []gatewayv1.ParentReference{{
 				Kind: &serviceKind,
 				Name: gatewayv1.ObjectName(meshServiceBenchmarkServiceName(idx)),
 				Port: &servicePort,
 			}}
 		} else {
-			route.Spec.CommonRouteSpec.ParentRefs = nil
+			route.Spec.ParentRefs = nil
 		}
 		if err := f.client.Update(ctx, &route); err != nil {
 			return err
@@ -177,7 +177,7 @@ func meshServiceBenchmarkObjects(routeCount int, attached bool) []client.Object 
 			Spec: gatewayv1.HTTPRouteSpec{},
 		}
 		if attached {
-			route.Spec.CommonRouteSpec.ParentRefs = []gatewayv1.ParentReference{{
+			route.Spec.ParentRefs = []gatewayv1.ParentReference{{
 				Kind: &serviceKind,
 				Name: gatewayv1.ObjectName(serviceName),
 				Port: &servicePort,
@@ -254,12 +254,15 @@ func recreateMeshServiceBenchmarkObject[T client.Object](ctx context.Context, cl
 	return cl.Create(ctx, desired)
 }
 
+//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 func benchmarkSourceEndpoints(namespace string, serviceName string) *corev1.Endpoints {
+	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 	return &corev1.Endpoints{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
 			Namespace: namespace,
 		},
+		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
 		Subsets: []corev1.EndpointSubset{{
 			Addresses: []corev1.EndpointAddress{{
 				IP: "10.0.0.10",

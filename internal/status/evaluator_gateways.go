@@ -172,11 +172,7 @@ func listenerHostnamesOverlap(left, right gatewayv1.Listener) bool {
 func listenersProtocolConflict(left, right gatewayv1.Listener) bool {
 	leftProtocol := strings.ToUpper(string(left.Protocol))
 	rightProtocol := strings.ToUpper(string(right.Protocol))
-	if leftProtocol != rightProtocol {
-		return true
-	}
-
-	return false
+	return leftProtocol != rightProtocol
 }
 
 func listenerHostnamesConflict(left, right gatewayv1.Listener) bool {

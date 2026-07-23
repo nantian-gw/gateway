@@ -18,8 +18,8 @@ func TestDeepCopyRoundtrip(t *testing.T) {
 				URL:    "https://example.com/plugin.wasm",
 				SHA256: "abcdef",
 			},
-			Hooks:   []WasmHook{HookOnRequest, HookOnResponse},
-			Config:  `{"key": "value"}`,
+			Hooks:  []WasmHook{HookOnRequest, HookOnResponse},
+			Config: `{"key": "value"}`,
 			Sandbox: WasmSandbox{
 				MaxMemoryBytes:     65536,
 				MaxExecutionTimeMs: 100,

@@ -3,8 +3,9 @@ package xds
 import (
 	"testing"
 
-	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
+	"github.com/nantian-gw/gateway/internal/ir"
 )
 
 func TestToProtoCircuitBreaker(t *testing.T) {

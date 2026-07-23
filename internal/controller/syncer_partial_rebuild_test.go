@@ -395,6 +395,7 @@ func TestReconcileBackendScopedRequestRebuildsOnlyBackends(t *testing.T) {
 		t.Fatalf("expected backend-only rebuild to preserve listeners and attachments, got %#v", current.Listeners)
 	}
 }
+
 func TestReconcileBackendNamespaceScopedRequestRebuildsOnlyNamespaceBackends(t *testing.T) {
 	scheme := newPartialRebuildTestScheme(t)
 
@@ -597,6 +598,6 @@ func newPartialRebuildTestScheme(t *testing.T) *runtime.Scheme {
 	mustAddToScheme(t, scheme, gatewayv1alpha3.Install)
 	mustAddToScheme(t, scheme, gatewayv1beta1.Install)
 	mustAddToScheme(t, scheme, backend.Install)
-	mustAddToScheme(t, scheme, mcsv1alpha1.AddToScheme)
+	mustAddToScheme(t, scheme, mcsv1alpha1.Install)
 	return scheme
 }

@@ -9,8 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nantian-gw/gateway/internal/ir"
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
+	"github.com/nantian-gw/gateway/internal/ir"
 )
 
 func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
@@ -29,8 +30,8 @@ func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
 
 	snapshot := &ir.Snapshot{ID: "v1", GeneratedAt: time.Now().UTC()}
 	full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
-	first := cache.get(context.Background(),snapshot, full, nil)
-	second := cache.get(context.Background(),snapshot, full, nil)
+	first := cache.get(context.Background(), snapshot, full, nil)
+	second := cache.get(context.Background(), snapshot, full, nil)
 	if builds != 1 {
 		t.Fatalf("expected one proto build for repeated snapshot ID, got %d", builds)
 	}
@@ -38,7 +39,7 @@ func TestSnapshotProtoCacheBuildsOncePerSnapshotID(t *testing.T) {
 		t.Fatal("expected repeated snapshot ID to reuse cached proto object")
 	}
 
-	cache.get(context.Background(),&ir.Snapshot{ID: "v2", GeneratedAt: time.Now().UTC()}, full, nil)
+	cache.get(context.Background(), &ir.Snapshot{ID: "v2", GeneratedAt: time.Now().UTC()}, full, nil)
 	if builds != 2 {
 		t.Fatalf("expected cache miss for a new snapshot ID, got %d builds", builds)
 	}
@@ -60,10 +61,10 @@ func TestSnapshotProtoCacheSeparatesProjectionKeys(t *testing.T) {
 	full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
 	coreOnly := effectiveProjectionProfile([]string{featureCoreV1})
 
-	first := cache.get(context.Background(),snapshot, full, nil)
-	second := cache.get(context.Background(),snapshot, full, nil)
-	third := cache.get(context.Background(),snapshot, coreOnly, nil)
-	fourth := cache.get(context.Background(),snapshot, coreOnly, nil)
+	first := cache.get(context.Background(), snapshot, full, nil)
+	second := cache.get(context.Background(), snapshot, full, nil)
+	third := cache.get(context.Background(), snapshot, coreOnly, nil)
+	fourth := cache.get(context.Background(), snapshot, coreOnly, nil)
 
 	if builds != 2 {
 		t.Fatalf("expected one build per projection key, got %d", builds)
@@ -102,7 +103,7 @@ func TestSnapshotProtoCacheBuildsOnceForConcurrentReaders(t *testing.T) {
 	for i := 0; i < readers; i++ {
 		go func() {
 			defer wg.Done()
-			results <- cache.get(context.Background(),snapshot, full, nil)
+			results <- cache.get(context.Background(), snapshot, full, nil)
 		}()
 	}
 	wg.Wait()
@@ -145,7 +146,7 @@ func BenchmarkToProtoSnapshotFanout(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
 				for node := 0; node < nodes; node++ {
-					_ = cache.get(context.Background(),snapshot, full, nil)
+					_ = cache.get(context.Background(), snapshot, full, nil)
 				}
 			}
 		})

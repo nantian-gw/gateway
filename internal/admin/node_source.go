@@ -91,10 +91,10 @@ func decodeNodeStatusLease(lease *coordinationv1.Lease) (ir.NodeStatus, bool) {
 		return ir.NodeStatus{}, false
 	}
 	if status.LastSeenAt.IsZero() && lease.Spec.RenewTime != nil {
-		status.LastSeenAt = lease.Spec.RenewTime.Time.UTC()
+		status.LastSeenAt = lease.Spec.RenewTime.UTC()
 	}
 	if status.ConnectedAt.IsZero() && lease.Spec.AcquireTime != nil {
-		status.ConnectedAt = lease.Spec.AcquireTime.Time.UTC()
+		status.ConnectedAt = lease.Spec.AcquireTime.UTC()
 	}
 	if !status.ConnectedAt.IsZero() {
 		status.ConnectedAt = status.ConnectedAt.UTC()

@@ -375,11 +375,11 @@ func BackendRefsFromHTTP(refs []gatewayv1.HTTPBackendRef, defaultNamespace strin
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
-			Group:     shared.StringValue(ref.BackendRef.Group),
-			Kind:      shared.StringValue(ref.BackendRef.Kind),
-			Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, defaultNamespace),
-			Name:      string(ref.BackendRef.Name),
-			Port:      shared.PortValue(ref.BackendRef.Port),
+			Group:     shared.StringValue(ref.Group),
+			Kind:      shared.StringValue(ref.Kind),
+			Namespace: shared.NamespaceOrDefault(ref.Namespace, defaultNamespace),
+			Name:      string(ref.Name),
+			Port:      shared.PortValue(ref.Port),
 			Weight:    uint32(shared.WeightValue(ref.Weight)),
 			Filters:   FiltersFromHTTP(ref.Filters, defaultNamespace),
 		})
@@ -392,11 +392,11 @@ func BackendRefsFromGRPC(refs []gatewayv1.GRPCBackendRef, defaultNamespace strin
 	out := make([]ir.BackendRef, 0, len(refs))
 	for _, ref := range refs {
 		out = append(out, ir.BackendRef{
-			Group:     shared.StringValue(ref.BackendRef.Group),
-			Kind:      shared.StringValue(ref.BackendRef.Kind),
-			Namespace: shared.NamespaceOrDefault(ref.BackendRef.Namespace, defaultNamespace),
-			Name:      string(ref.BackendRef.Name),
-			Port:      shared.PortValue(ref.BackendRef.Port),
+			Group:     shared.StringValue(ref.Group),
+			Kind:      shared.StringValue(ref.Kind),
+			Namespace: shared.NamespaceOrDefault(ref.Namespace, defaultNamespace),
+			Name:      string(ref.Name),
+			Port:      shared.PortValue(ref.Port),
 			Weight:    uint32(shared.WeightValue(ref.Weight)),
 			Filters:   FiltersFromGRPC(ref.Filters, defaultNamespace),
 		})
@@ -420,4 +420,3 @@ func BackendRefsFromRouteRule(refs []gatewayv1.BackendRef, defaultNamespace stri
 
 	return out
 }
-

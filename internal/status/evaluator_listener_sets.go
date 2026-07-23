@@ -302,9 +302,7 @@ func evaluateGatewayListenerSetListeners(
 	sortListenerSetsByPrecedence(gwLSes)
 
 	allListeners := make([]gatewayv1.Listener, 0, len(gateway.Spec.Listeners))
-	for _, l := range gateway.Spec.Listeners {
-		allListeners = append(allListeners, l)
-	}
+	allListeners = append(allListeners, gateway.Spec.Listeners...)
 
 	var out []listenerEvaluation
 	for _, ls := range gwLSes {
@@ -405,7 +403,7 @@ func evaluateListenerSetTLSRefs(listener gatewayv1.Listener, ls gatewayv1.Listen
 			targetNamespace = string(*certRef.Namespace)
 		}
 		if targetNamespace != ls.Namespace {
-			certName := gatewayv1beta1.ObjectName(certRef.Name)
+			certName := certRef.Name
 			if !referenceGranted(
 				state.referenceGrants,
 				targetNamespace,

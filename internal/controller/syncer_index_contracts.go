@@ -74,9 +74,11 @@ type missingFieldIndexFallbackLogKey struct {
 	fallbackScope  string
 }
 
-type indexedListDecoder[T any] func(client.ObjectList) ([]T, error)
-type indexedListFallback[T any] func(context.Context) ([]T, error)
-type missingFieldIndexFallbackLogger func(indexFallbackSemantics, error)
+type (
+	indexedListDecoder[T any]       func(client.ObjectList) ([]T, error)
+	indexedListFallback[T any]      func(context.Context) ([]T, error)
+	missingFieldIndexFallbackLogger func(indexFallbackSemantics, error)
+)
 
 func ListByIndexOrFallback[T any](
 	ctx context.Context,

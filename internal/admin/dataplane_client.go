@@ -29,7 +29,7 @@ func NewDataplaneClient(config DataplaneClientConfig) *DataplaneClient {
 
 func (c *DataplaneClient) GetJSON(ctx context.Context, baseURL, path string, out any) error {
 	url := baseURL + path
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}

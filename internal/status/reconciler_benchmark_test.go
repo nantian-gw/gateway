@@ -175,7 +175,7 @@ func (f *statusStormBenchmarkFixture) setRoutesAttached(ctx context.Context, att
 		}
 
 		route.Generation++
-		route.Spec.CommonRouteSpec.ParentRefs = []gatewayv1.ParentReference{{
+		route.Spec.ParentRefs = []gatewayv1.ParentReference{{
 			Name: gatewayv1.ObjectName(parentName),
 		}}
 		if err := f.client.Update(ctx, &route); err != nil {
@@ -660,7 +660,7 @@ func newStatusBenchmarkScheme(b *testing.B) *runtime.Scheme {
 	benchmarkMustAddToScheme(b, scheme, backend.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1alpha3.Install)
 	benchmarkMustAddToScheme(b, scheme, gatewayv1beta1.Install)
-	benchmarkMustAddToScheme(b, scheme, mcsv1alpha1.AddToScheme)
+	benchmarkMustAddToScheme(b, scheme, mcsv1alpha1.Install)
 	return scheme
 }
 

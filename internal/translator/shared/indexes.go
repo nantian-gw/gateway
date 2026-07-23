@@ -16,6 +16,7 @@ type TranslatorIndexes struct {
 	endpointSlicesByServiceImportKey map[string][]discoveryv1.EndpointSlice
 	ReferenceGrantsByNamespace       map[string][]gatewayv1beta1.ReferenceGrant
 }
+
 func NewTranslatorIndexes(
 	services []corev1.Service,
 	serviceImports []mcsv1alpha1.ServiceImport,

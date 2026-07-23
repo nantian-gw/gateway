@@ -19,8 +19,8 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/translator/testutil"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
+	"github.com/nantian-gw/gateway/internal/translator/testutil"
 )
 
 func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T) {
@@ -172,6 +172,7 @@ func TestBuildScopesReferenceGrantAndPolicyListsByBackendNamespace(t *testing.T)
 		t.Fatalf("expected cross-namespace backend ref to remain valid, got %#v", got)
 	}
 }
+
 func TestRefreshBackendRefMetadataLoadsReferencedBackendsOnDemand(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	baseClient := testutil.NewTranslatorClientBuilder(scheme).
@@ -247,6 +248,7 @@ func TestRefreshBackendRefMetadataLoadsReferencedBackendsOnDemand(t *testing.T) 
 		t.Fatalf("expected referenced ServiceImport backend ref to remain valid, got %#v", got)
 	}
 }
+
 func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	baseClient := testutil.NewTranslatorClientBuilder(scheme).
@@ -321,6 +323,7 @@ func TestRefreshBackendRefMetadataListsReferenceGrantsPerBackendNamespace(t *tes
 		t.Fatalf("expected cross-namespace backend ref to remain valid, got %#v", got)
 	}
 }
+
 func TestRefreshBackendRefMetadataSkipsReferenceGrantLookupForSameNamespaceBackends(t *testing.T) {
 	scheme := testutil.BuildSupportScheme(t)
 	baseClient := testutil.NewTranslatorClientBuilder(scheme).

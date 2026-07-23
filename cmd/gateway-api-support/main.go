@@ -12,8 +12,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	gatewayfeatures "sigs.k8s.io/gateway-api/pkg/features"
+
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 )
 
 const (
@@ -57,7 +58,7 @@ func main() {
 		}
 	case namesFormat:
 		for _, name := range names {
-			fmt.Fprintln(os.Stdout, name)
+			_, _ = fmt.Fprintln(os.Stdout, name)
 		}
 	case auditFormat:
 		audit := buildFeatureAudit(upstreamFeatureNames(), features)

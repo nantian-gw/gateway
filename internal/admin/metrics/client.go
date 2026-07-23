@@ -46,7 +46,7 @@ func (c *PrometheusClient) InstantQuery(ctx context.Context, query string) (*Pro
 
 	apiURL := fmt.Sprintf("%s/api/v1/query?query=%s", c.baseURL, url.QueryEscape(query))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("prometheus: failed to build request: %w", err)
 	}
@@ -94,7 +94,7 @@ func (c *PrometheusClient) RangeQuery(ctx context.Context, query, start, end, st
 	params.Set("step", step)
 	apiURL := fmt.Sprintf("%s/api/v1/query_range?%s", c.baseURL, params.Encode())
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("prometheus: failed to build request: %w", err)
 	}

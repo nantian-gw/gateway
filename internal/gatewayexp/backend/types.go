@@ -21,10 +21,12 @@ const (
 	PolicyReasonTargetNotFound = gatewayv1.PolicyReasonTargetNotFound
 )
 
-type LocalPolicyTargetReference = gatewayv1.LocalPolicyTargetReference
-type PolicyAncestorStatus = gatewayv1.PolicyAncestorStatus
-type PolicyStatus = gatewayv1.PolicyStatus
-type SessionPersistence = gatewaycorev1alpha2.SessionPersistence
+type (
+	LocalPolicyTargetReference = gatewayv1.LocalPolicyTargetReference
+	PolicyAncestorStatus       = gatewayv1.PolicyAncestorStatus
+	PolicyStatus               = gatewayv1.PolicyStatus
+	SessionPersistence         = gatewaycorev1alpha2.SessionPersistence
+)
 
 type LoadBalancingStrategyType string
 

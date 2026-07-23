@@ -240,14 +240,18 @@ func normalizeGatewayProgrammedPendingReason(reason string) string {
 		string(gatewayv1.GatewayReasonInvalidParameters),
 		string(gatewayv1.GatewayReasonListenersNotResolved),
 		string(gatewayv1.GatewayReasonListenersNotValid),
+		//nolint:staticcheck // SA1019: deprecated but still valid for backward-compatible reason normalization
 		string(gatewayv1.GatewayReasonListenersNotReady),
 		string(gatewayv1.GatewayReasonNoResources),
+		//nolint:staticcheck // SA1019: deprecated but still valid for backward-compatible reason normalization
 		string(gatewayv1.GatewayReasonNotReconciled),
 		string(gatewayv1.GatewayReasonPending),
 		string(gatewayv1.GatewayReasonProgrammed),
+		//nolint:staticcheck // SA1019: deprecated but still valid for backward-compatible reason normalization
 		string(gatewayv1.GatewayReasonReady),
 		string(gatewayv1.GatewayReasonRefNotPermitted),
 		string(gatewayv1.GatewayReasonResolvedRefs),
+		//nolint:staticcheck // SA1019: deprecated but still valid for backward-compatible reason normalization
 		string(gatewayv1.GatewayReasonScheduled),
 		string(gatewayv1.GatewayReasonUnsupportedAddress):
 		return reason

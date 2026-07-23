@@ -5,6 +5,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
+
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
@@ -122,11 +123,8 @@ func toProtoRoutePolicyConnection(item *ir.RouteConnectionConfig) *controlv1.Rou
 		KeepaliveRequests:         item.KeepaliveRequests,
 		UpstreamKeepalivePoolSize: item.UpstreamKeepalivePoolSize,
 	}
-	anySet := false
+	anySet := item.KeepaliveRequests != 0
 
-	if item.KeepaliveRequests != 0 {
-		anySet = true
-	}
 	if item.UpstreamKeepalivePoolSize != 0 {
 		anySet = true
 	}

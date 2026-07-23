@@ -146,7 +146,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 			s.logger.Info("dataplane disconnected", "node_id", nodeID)
 			return terminate(streamTerminationClientDisconnect, nil)
 		case err := <-errCh:
-			if err == nil || err == io.EOF {
+			if err == nil || errors.Is(err, io.EOF) {
 				s.disconnectStreamIfActive(
 					stream.Context(),
 					registration,

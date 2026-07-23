@@ -49,11 +49,11 @@ type AITraceSummary struct {
 
 // AICostSummary is the cost overview returned by the cost endpoint.
 type AICostSummary struct {
-	TotalCost float64          `json:"totalCost"`
-	TodayCost float64          `json:"todayCost"`
-	MonthCost float64          `json:"monthCost"`
-	ByModel   []AICostByModel  `json:"byModel"`
-	Trend     []AICostTrend    `json:"trend"`
+	TotalCost float64         `json:"totalCost"`
+	TodayCost float64         `json:"todayCost"`
+	MonthCost float64         `json:"monthCost"`
+	ByModel   []AICostByModel `json:"byModel"`
+	Trend     []AICostTrend   `json:"trend"`
 }
 
 // AICostByModel is a per-model cost breakdown.
@@ -82,7 +82,7 @@ var (
 	aiTokenUsage    []AITokenUsage
 	aiTraces        []AITraceSummary
 	aiModelCosts    = make(map[string]float64)
-	aiTotalCost     atomic.Value // stores float64
+	aiTotalCost     atomic.Value  // stores float64
 	aiLatencySum    atomic.Uint64 // cumulative latency in microseconds
 	aiMu            sync.RWMutex
 )

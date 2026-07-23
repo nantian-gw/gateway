@@ -163,6 +163,7 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 	assertServicePort(t, gatewayService.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
 	assertServicePort(t, gatewayService.Spec.Ports, 5300, corev1.ProtocolUDP, 0)
 }
+
 func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
 	scheme := newScheme(t)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
