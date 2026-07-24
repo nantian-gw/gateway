@@ -163,7 +163,7 @@ func TestRegistryRoutingStateChangedIncludesSupportedFeatures(t *testing.T) {
 
 	now := time.Now().UTC()
 	registry.ConnectWithFeatures(context.Background(), "dp-features", "kind", []string{"*"}, []string{"core.v1"}, now)
-	if _, ok := repository.waitForUpserts(1); !ok {
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
 		t.Fatal("expected connect to persist immediately")
 	}
 	if triggered != 1 {
@@ -181,7 +181,7 @@ func TestRegistryRoutingStateChangedIncludesSupportedFeatures(t *testing.T) {
 		[]string{"core.v1"},
 		now.Add(time.Second),
 	)
-	if _, ok := repository.waitForUpserts(1); !ok {
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
 		t.Fatal("expected initial ack to persist immediately")
 	}
 	if triggered != 2 {
@@ -200,7 +200,7 @@ func TestRegistryRoutingStateChangedIncludesSupportedFeatures(t *testing.T) {
 		now.Add(2*time.Second),
 	)
 
-	items, ok := repository.waitForUpserts(1)
+	items, ok := repository.waitForUpserts(1, time.Second)
 	if !ok {
 		t.Fatal("expected supported feature change to persist immediately")
 	}
@@ -386,7 +386,7 @@ func TestRegistryDebouncesNonRoutingStatusPersistence(t *testing.T) {
 
 	now := time.Unix(1_700_000_900, 0).UTC()
 	registry.Connect(context.Background(), "dp-9", "kind", []string{"*"}, now)
-	if _, ok := repository.waitForUpserts(1); !ok {
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
 		t.Fatal("expected connect to persist immediately")
 	}
 	repository.reset()
@@ -394,7 +394,7 @@ func TestRegistryDebouncesNonRoutingStatusPersistence(t *testing.T) {
 	registry.ObserveReport(context.Background(), "dp-9", "", false, "warming-1", now.Add(time.Second))
 	registry.ObserveReport(context.Background(), "dp-9", "", false, "warming-2", now.Add(2*time.Second))
 
-	items, ok := repository.waitForUpserts(1)
+	items, ok := repository.waitForUpserts(1, time.Second)
 	if !ok {
 		t.Fatal("expected debounced persist to flush")
 	}
@@ -426,14 +426,14 @@ func TestRegistryImmediatelyPersistsRoutingStateChanges(t *testing.T) {
 
 	now := time.Unix(1_700_001_000, 0).UTC()
 	registry.Connect(context.Background(), "dp-10", "kind", []string{"*"}, now)
-	if _, ok := repository.waitForUpserts(1); !ok {
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
 		t.Fatal("expected connect to persist immediately")
 	}
 	repository.reset()
 
 	registry.ObserveAck(context.Background(), "dp-10", "kind", "v1", "nonce-1", []string{"*"}, now.Add(time.Second))
 
-	items, ok := repository.waitForUpserts(1)
+	items, ok := repository.waitForUpserts(1, time.Second)
 	if !ok {
 		t.Fatal("expected ack version change to persist immediately")
 	}
@@ -460,7 +460,7 @@ func TestRegistryImmediatelyPersistsNackStateChanges(t *testing.T) {
 	now := time.Unix(1_700_001_100, 0).UTC()
 	registry.Connect(context.Background(), "dp-11", "kind", []string{"*"}, now)
 	registry.ObserveAck(context.Background(), "dp-11", "kind", "v1", "nonce-1", []string{"*"}, now.Add(time.Second))
-	if _, ok := repository.waitForUpserts(2); !ok {
+	if _, ok := repository.waitForUpserts(2, time.Second); !ok {
 		t.Fatal("expected connect and ack to persist")
 	}
 	repository.reset()
@@ -476,7 +476,7 @@ func TestRegistryImmediatelyPersistsNackStateChanges(t *testing.T) {
 		now.Add(2*time.Second),
 	)
 
-	items, ok := repository.waitForUpserts(1)
+	items, ok := repository.waitForUpserts(1, time.Second)
 	if !ok {
 		t.Fatal("expected nack to persist immediately")
 	}
@@ -561,7 +561,7 @@ func TestRegistryRecordsPersistenceMetricsForImmediateAndDebouncedFlushes(t *tes
 
 	now := time.Unix(1_700_001_300, 0).UTC()
 	registry.Connect(context.Background(), "dp-12", "kind", []string{"*"}, now)
-	if _, ok := repository.waitForUpserts(1); !ok {
+	if _, ok := repository.waitForUpserts(1, time.Second); !ok {
 		t.Fatal("expected connect to persist immediately")
 	}
 	repository.reset()
@@ -569,7 +569,7 @@ func TestRegistryRecordsPersistenceMetricsForImmediateAndDebouncedFlushes(t *tes
 	registry.ObserveReport(context.Background(), "dp-12", "", false, "warming-1", now.Add(time.Second))
 	registry.ObserveReport(context.Background(), "dp-12", "", false, "warming-2", now.Add(2*time.Second))
 
-	items, ok := repository.waitForUpserts(1)
+	items, ok := repository.waitForUpserts(1, time.Second)
 	if !ok {
 		t.Fatal("expected debounced persist to flush")
 	}
@@ -878,8 +878,8 @@ func (r *trackingRepository) reset() {
 	}
 }
 
-func (r *trackingRepository) waitForUpserts(expected int) ([]ir.NodeStatus, bool) {
-	deadline := time.After(time.Second)
+func (r *trackingRepository) waitForUpserts(expected int, timeout time.Duration) ([]ir.NodeStatus, bool) {
+	deadline := time.After(timeout)
 	for {
 		r.mu.Lock()
 		if len(r.upserts) >= expected {

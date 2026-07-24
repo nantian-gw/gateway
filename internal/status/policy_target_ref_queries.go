@@ -183,6 +183,236 @@ func collectRouteBackendPolicyRefsForRoute(
 	}
 }
 
+func sortedBackendPolicyNamespaces(
+	serviceKeys map[string]client.ObjectKey,
+	serviceImportKeys map[string]client.ObjectKey,
+) []string {
+	namespaces := make(map[string]struct{}, len(serviceKeys)+len(serviceImportKeys))
+	for _, key := range serviceKeys {
+		if key.Namespace != "" {
+			namespaces[key.Namespace] = struct{}{}
+		}
+	}
+	for _, key := range serviceImportKeys {
+		if key.Namespace != "" {
+			namespaces[key.Namespace] = struct{}{}
+		}
+	}
+
+	out := make([]string, 0, len(namespaces))
+	for namespace := range namespaces {
+		out = append(out, namespace)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func loadBackendTLSPoliciesForNamespaces(
+	ctx context.Context,
+	reader client.Reader,
+	namespaces []string,
+	serviceKeys map[string]client.ObjectKey,
+	serviceImportKeys map[string]client.ObjectKey,
+) ([]gatewayv1alpha3.BackendTLSPolicy, error) {
+	if len(namespaces) == 0 {
+		return nil, nil
+	}
+
+	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
+	policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
+	seen := make(map[string]struct{})
+	for _, namespace := range namespaces {
+		items, err := listBackendTLSPoliciesForNamespaceTargets(
+			ctx,
+			reader,
+			namespace,
+			targetValuesByNamespace[namespace],
+		)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range items {
+			if !backendTLSPolicyTouchesKeys(item.Namespace, item.Spec.TargetRefs, serviceKeys, serviceImportKeys) {
+				continue
+			}
+			key := namespacedName(item.Namespace, item.Name)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			policies = append(policies, item)
+		}
+	}
+
+	sort.Slice(policies, func(i, j int) bool {
+		left := namespacedName(policies[i].Namespace, policies[i].Name)
+		right := namespacedName(policies[j].Namespace, policies[j].Name)
+		return left < right
+	})
+	return policies, nil
+}
+
+func loadBackendLBPoliciesForNamespaces(
+	ctx context.Context,
+	reader client.Reader,
+	namespaces []string,
+	serviceKeys map[string]client.ObjectKey,
+	serviceImportKeys map[string]client.ObjectKey,
+) ([]backend.BackendLBPolicy, error) {
+	if len(namespaces) == 0 {
+		return nil, nil
+	}
+
+	targetValuesByNamespace := backendPolicyTargetRefIndexValuesByNamespace(serviceKeys, serviceImportKeys)
+	policies := make([]backend.BackendLBPolicy, 0)
+	seen := make(map[string]struct{})
+	for _, namespace := range namespaces {
+		items, err := listBackendLBPoliciesForNamespaceTargets(
+			ctx,
+			reader,
+			namespace,
+			targetValuesByNamespace[namespace],
+		)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range items {
+			if !backendLBPolicyTouchesKeys(item.Namespace, item.Spec.TargetRefs, serviceKeys, serviceImportKeys) {
+				continue
+			}
+			key := namespacedName(item.Namespace, item.Name)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			policies = append(policies, item)
+		}
+	}
+
+	sort.Slice(policies, func(i, j int) bool {
+		left := namespacedName(policies[i].Namespace, policies[i].Name)
+		right := namespacedName(policies[j].Namespace, policies[j].Name)
+		return left < right
+	})
+	return policies, nil
+}
+
+func listBackendTLSPoliciesForNamespaceTargets(
+	ctx context.Context,
+	reader client.Reader,
+	namespace string,
+	targetValues []string,
+) ([]gatewayv1alpha3.BackendTLSPolicy, error) {
+	if len(targetValues) == 0 {
+		return nil, nil
+	}
+
+	items, usedIndex, err := listBackendTLSPoliciesByTargetRefIndex(ctx, reader, namespace, targetValues)
+	if err != nil {
+		return nil, err
+	}
+	if usedIndex {
+		return items, nil
+	}
+
+	return gatewayapi.ListBackendTLSPoliciesV1WithOptions(ctx, reader, client.InNamespace(namespace))
+}
+
+func listBackendTLSPoliciesByTargetRefIndex(
+	ctx context.Context,
+	reader client.Reader,
+	namespace string,
+	targetValues []string,
+) ([]gatewayv1alpha3.BackendTLSPolicy, bool, error) {
+	policies := make([]gatewayv1alpha3.BackendTLSPolicy, 0)
+	seen := make(map[string]struct{})
+
+	for _, targetValue := range targetValues {
+		items, err := gatewayapi.ListBackendTLSPoliciesV1WithOptions(
+			ctx,
+			reader,
+			client.InNamespace(namespace),
+			client.MatchingFields{statusBackendTLSPolicyTargetRefIndex: targetValue},
+		)
+		if err != nil {
+			if isMissingFieldIndexError(err) {
+				return nil, false, nil
+			}
+			return nil, false, err
+		}
+		for _, item := range items {
+			key := namespacedName(item.Namespace, item.Name)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			policies = append(policies, item)
+		}
+	}
+
+	return policies, true, nil
+}
+
+func listBackendLBPoliciesForNamespaceTargets(
+	ctx context.Context,
+	reader client.Reader,
+	namespace string,
+	targetValues []string,
+) ([]backend.BackendLBPolicy, error) {
+	if len(targetValues) == 0 {
+		return nil, nil
+	}
+
+	items, usedIndex, err := listBackendLBPoliciesByTargetRefIndex(ctx, reader, namespace, targetValues)
+	if err != nil {
+		return nil, err
+	}
+	if usedIndex {
+		return items, nil
+	}
+
+	var list backend.BackendLBPolicyList
+	if err := reader.List(ctx, &list, client.InNamespace(namespace)); err != nil {
+		return nil, err
+	}
+	return list.Items, nil
+}
+
+func listBackendLBPoliciesByTargetRefIndex(
+	ctx context.Context,
+	reader client.Reader,
+	namespace string,
+	targetValues []string,
+) ([]backend.BackendLBPolicy, bool, error) {
+	policies := make([]backend.BackendLBPolicy, 0)
+	seen := make(map[string]struct{})
+
+	for _, targetValue := range targetValues {
+		var list backend.BackendLBPolicyList
+		if err := reader.List(
+			ctx,
+			&list,
+			client.InNamespace(namespace),
+			client.MatchingFields{statusBackendLBPolicyTargetRefIndex: targetValue},
+		); err != nil {
+			if isMissingFieldIndexError(err) {
+				return nil, false, nil
+			}
+			return nil, false, err
+		}
+		for _, item := range list.Items {
+			key := namespacedName(item.Namespace, item.Name)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			policies = append(policies, item)
+		}
+	}
+
+	return policies, true, nil
+}
+
 func backendTLSPolicyTouchesKeys(
 	namespace string,
 	targetRefs []gatewayv1.LocalPolicyTargetReferenceWithSectionName,

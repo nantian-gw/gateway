@@ -34,7 +34,7 @@ func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr("test/fake-invalid-type"),
@@ -87,7 +87,7 @@ func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.IPAddressType),
@@ -139,7 +139,7 @@ func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusa
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.IPAddressType),
@@ -182,7 +182,7 @@ func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.HostnameAddressType),
 				Value: "Bad Hostname",
@@ -216,7 +216,7 @@ func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.IPAddressType),
 				Value: "127.0.0.1",
@@ -269,7 +269,7 @@ func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *te
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.IPAddressType),
@@ -317,7 +317,7 @@ func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testi
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.HostnameAddressType),
@@ -353,7 +353,7 @@ func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Value: "",
 			}}),
@@ -397,7 +397,7 @@ func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type: addressTypePtr(gatewayv1.HostnameAddressType),
 			}}),
@@ -439,7 +439,7 @@ func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *tes
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type: addressTypePtr(gatewayv1.HostnameAddressType),
 			}}),
@@ -492,7 +492,7 @@ func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testi
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			service,
 			gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend),
@@ -532,7 +532,7 @@ func TestReconcileGatewayStaticAddressesAcceptGatewayServiceExternalIP(t *testin
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.IPAddressType),
 				Value: "10.10.10.25",
@@ -616,7 +616,7 @@ func TestReconcileGatewayStatusWaitsForDerivedService(t *testing.T) {
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 		).
 		Build()
@@ -653,7 +653,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *test
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -700,7 +700,7 @@ func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMeta
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -756,7 +756,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *tes
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -879,7 +879,7 @@ func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataC
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.IPAddressType),
 				Value: "10.10.10.25",
@@ -933,7 +933,7 @@ func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerive
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Value: "",
 			}}),
@@ -988,7 +988,7 @@ func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerived
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type: addressTypePtr(gatewayv1.HostnameAddressType),
 			}}),
@@ -1039,7 +1039,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceCreation(t *t
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 		).
@@ -1072,7 +1072,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 			gatewayInfrastructureEndpointSlice(
@@ -1110,7 +1110,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 			&discoveryv1.EndpointSlice{
@@ -1158,7 +1158,7 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(),
+			staticAddressGatewayClass(controllerName),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 			gatewayInfrastructureEndpointSlice(
@@ -1182,11 +1182,11 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 	)
 }
 
-func staticAddressGatewayClass() *gatewayv1.GatewayClass {
+func staticAddressGatewayClass(controllerName gatewayv1.GatewayController) *gatewayv1.GatewayClass {
 	return &gatewayv1.GatewayClass{
 		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 		Spec: gatewayv1.GatewayClassSpec{
-			ControllerName: "gateway.networking.k8s.io/nantian-gw",
+			ControllerName: controllerName,
 		},
 	}
 }

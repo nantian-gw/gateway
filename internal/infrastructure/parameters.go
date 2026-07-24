@@ -65,6 +65,13 @@ func newGatewayServiceParameterResolver(reconciler *Reconciler) *gatewayServiceP
 	}
 }
 
+func (r *Reconciler) resolveGatewayServiceParameters(
+	ctx context.Context,
+	gateway gatewayv1.Gateway,
+) gatewayServiceParameters {
+	return newGatewayServiceParameterResolver(r).resolve(ctx, gateway)
+}
+
 func (r *gatewayServiceParameterResolver) resolve(
 	ctx context.Context,
 	gateway gatewayv1.Gateway,

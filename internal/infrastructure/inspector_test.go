@@ -592,3 +592,18 @@ func containsString(items []string, needle string) bool {
 	}
 	return false
 }
+
+func requireManagedInfrastructureSelector(key, value string) func(client.ListOptions) error {
+	return func(opts client.ListOptions) error {
+		if opts.LabelSelector == nil || opts.LabelSelector.Empty() {
+			return fmt.Errorf("list must include label selector %s=%s", key, value)
+		}
+		if !opts.LabelSelector.Matches(labels.Set{key: value}) {
+			return fmt.Errorf("selector %q does not match %s=%s", opts.LabelSelector.String(), key, value)
+		}
+		if opts.LabelSelector.Matches(labels.Set{key: value + "-other"}) {
+			return fmt.Errorf("selector %q is broader than %s=%s", opts.LabelSelector.String(), key, value)
+		}
+		return nil
+	}
+}

@@ -17,6 +17,22 @@ import (
 
 const meshEndpointSliceRoleValue = "mesh-frontend-endpoints"
 
+func reconcileMeshEndpointSlices(
+	ctx context.Context,
+	cl client.Client,
+	service corev1.Service,
+	dataplanePods []corev1.Pod,
+	current map[string]discoveryv1.EndpointSlice,
+) error {
+	return reconcileMeshEndpointSlicesFromDataplaneEndpoints(
+		ctx,
+		cl,
+		service,
+		meshDataplaneEndpoints(dataplanePods),
+		current,
+	)
+}
+
 func reconcileMeshEndpointSlicesFromDataplaneEndpoints(
 	ctx context.Context,
 	cl client.Client,

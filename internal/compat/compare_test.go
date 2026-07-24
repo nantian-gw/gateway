@@ -109,6 +109,10 @@ func int32Ptr(value int32) *int32 {
 	return &value
 }
 
+func boolPtr(value bool) *bool {
+	return &value
+}
+
 func int32ToEnumType(t *testing.T, value int32) *descriptorpb.FieldDescriptorProto_Type {
 	v := descriptorpb.FieldDescriptorProto_Type(value)
 	return &v

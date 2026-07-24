@@ -52,7 +52,7 @@ spec:
     sessionName: orders-session
     type: Header
 `)
-	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", backendLBPolicy)
+	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", backendLBPolicy, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected backend lb create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -90,7 +90,7 @@ spec:
     hostname: orders.internal.example
     wellKnownCACertificates: System
 `)
-	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", backendTLSPolicy)
+	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", backendTLSPolicy, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected backend tls create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -145,7 +145,7 @@ spec:
     - group: ""
       kind: Service
 `)
-	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody)
+	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected reference grant create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -213,7 +213,7 @@ metadata:
 spec:
   controllerName: gateway.nantian.dev/controller
 `)
-	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody)
+	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected gatewayclass create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -257,7 +257,7 @@ spec:
     "controllerName": "gateway.nantian.dev/controller"
   }
 }`)
-	recorder = performRequestWithBody(t, server, http.MethodPut, "/v1/resources/gatewayclass/_cluster/edge", updateBody)
+	recorder = performRequestWithBody(t, server, http.MethodPut, "/v1/resources/gatewayclass/_cluster/edge", updateBody, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected gatewayclass update 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -319,7 +319,7 @@ spec:
       protocol: TCP
       port: 8443
 `)
-	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody)
+	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected serviceimport create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}

@@ -15,6 +15,27 @@ type referencedBackendObjectKeys struct {
 	serviceImports []client.ObjectKey
 }
 
+func referencedBackendNamespaces(keys referencedBackendObjectKeys) []string {
+	namespaces := make(map[string]struct{}, len(keys.services)+len(keys.serviceImports))
+	for _, key := range keys.services {
+		if key.Namespace != "" {
+			namespaces[key.Namespace] = struct{}{}
+		}
+	}
+	for _, key := range keys.serviceImports {
+		if key.Namespace != "" {
+			namespaces[key.Namespace] = struct{}{}
+		}
+	}
+
+	out := make([]string, 0, len(namespaces))
+	for namespace := range namespaces {
+		out = append(out, namespace)
+	}
+	sort.Strings(out)
+	return out
+}
+
 func referencedBackendGrantNamespacesFromSnapshot(current *ir.Snapshot) []string {
 	namespaces := make(map[string]struct{})
 	if current == nil {

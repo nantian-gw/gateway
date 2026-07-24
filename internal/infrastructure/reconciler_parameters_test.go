@@ -514,7 +514,7 @@ func TestReconcileSkipsLoopbackGatewayStaticIPProjectionOntoService(t *testing.T
 	if service.Spec.LoadBalancerIP != "" {
 		t.Fatalf("loadBalancerIP = %q, want empty when static address is loopback", service.Spec.LoadBalancerIP)
 	}
-	assertServicePort(t, service.Spec.Ports, 8080, corev1.ProtocolTCP)
+	assertServicePort(t, service.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
 }
 
 func TestReconcileIgnoresInvalidGatewayInfrastructureParametersRef(t *testing.T) {
@@ -817,5 +817,5 @@ func TestReconcileResetsGatewayServiceFieldsWhenParametersRefRemoved(t *testing.
 	if len(service.Spec.LoadBalancerSourceRanges) != 0 {
 		t.Fatalf("loadBalancerSourceRanges = %#v, want empty", service.Spec.LoadBalancerSourceRanges)
 	}
-	assertServicePort(t, service.Spec.Ports, 80, corev1.ProtocolTCP)
+	assertServicePort(t, service.Spec.Ports, 80, corev1.ProtocolTCP, 0)
 }
