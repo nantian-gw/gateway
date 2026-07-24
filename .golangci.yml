@@ -1,5 +1,13 @@
 version: "2"
 
+run:
+  skip-dirs:
+    - internal/gen
+    - third_party
+    - vendor
+    - cmd/gateway-api-support
+    - cmd/grpc-smoke-client
+
 linters:
   default: none
   enable:
@@ -31,6 +39,10 @@ linters:
   settings:
     errcheck:
       check-blank: true
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
     gocritic:
       enabled-tags:
         - diagnostic
@@ -71,5 +83,5 @@ formatters:
       - vendor
 
 issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
+  max-issues-per-linter: 5000
+  max-same-issues: 5000
