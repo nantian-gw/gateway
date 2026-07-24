@@ -1,6 +1,7 @@
 package status
 
 import (
+	"maps"
 	"sort"
 	"strings"
 
@@ -32,6 +33,7 @@ func buildListenerPolicy(listener gatewayv1.Listener) listenerPolicy {
 
 	policy := listenerPolicy{
 		allowedKinds:   allowedKinds,
+		protocolKinds:  maps.Clone(allowedKinds), // snapshot before user-configured filtering
 		supportedKinds: []gatewayv1.RouteGroupKind{},
 		namespaceMode:  gatewayv1.NamespacesFromSame,
 	}
