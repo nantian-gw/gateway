@@ -34,59 +34,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.GetTimeout = 10 * time.Second
 	options.TimeoutConfig.TestIsolation = 10 * time.Second
 
-	options.SkipTests = append([]string{
-		// Data-plane dependent — hostname-based listener attachment matching
-		// is not yet implemented in the data plane. The control plane translator
-		// correctly computes listener-route hostname intersections.
-		"HTTPRouteListenerHostnameMatching",
-
-		// Kind cluster resource-contention flakes: fast status-update
-		// races between controller and conformance framework cause
-		// "object has been modified" conflict errors.
-		"GatewayWithAttachedRoutes",
-		"GRPCRouteListenerHostnameMatching",
-		"HTTPRouteHostnameIntersection",
-		"TLSRouteMixedTerminationSameNamespace",
-
-		// Kind cluster timeout flakes: conformance framework's 60s
-		// wait for route condition never resolves because the data plane
-		// does not implement these protocol-level checks.
-		"HTTPRouteDisallowedKind",
-		"TLSRouteInvalidNoMatchingListener",
-
-		// Kind cluster resource-contention flakes (fast update conflicts).
-		"GatewayModifyListeners",
-		"HTTPRouteListenerPortMatching",
-
-		// Mesh routing features not yet implemented in the data plane.
-		// All Mesh* tests depend on dataplane-level mesh routing which
-		// is not yet supported. Control plane translation is correct.
-		"MeshBasic",
-		"MeshConsumerRoute",
-		"MeshFrontend",
-		"MeshFrontendHostname",
-		"MeshGRPCRouteWeight",
-		"MeshHTTPRoute303Redirect",
-		"MeshHTTPRoute307Redirect",
-		"MeshHTTPRoute308Redirect",
-		"MeshHTTPRouteBackendRequestHeaderModifier",
-		"MeshHTTPRouteMatching",
-		"MeshHTTPRouteNamedRule",
-		"MeshHTTPRouteQueryParamMatching",
-		"MeshHTTPRouteRedirectHostAndStatus",
-		"MeshHTTPRouteRedirectPath",
-		"MeshHTTPRouteRedirectPort",
-		"MeshHTTPRouteRequestHeaderModifier",
-		"MeshHTTPRouteRewritePath",
-		"MeshHTTPRouteSchemeRedirect",
-		"MeshHTTPRouteSimpleSameNamespace",
-		"MeshHTTPRouteWeight",
-		"MeshPorts",
-		"MeshTrafficSplit",
-		"TLSRouteInvalidNoMatchingListenerHostname",
-		"HTTPRouteHTTPSListenerDetectMisdirectedRequests",
-		"TLSRouteHostnameIntersection",
-	}, parseEnvSkipTests()...)
+	options.SkipTests = parseEnvSkipTests()
 
 	manifestFS, err := gatewayAPIManifestFS()
 	if err != nil {
