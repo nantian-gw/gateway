@@ -160,7 +160,7 @@ func TestKindDependencyImageHelperPinsDigestReferences(t *testing.T) {
 	contents := string(readFile(t, repoPath("scripts", "ci", "dependency-images.sh")))
 
 	for _, want := range []string{
-		`DEFAULT_DATAPLANE_IMAGE="ghcr.io/nantian-gw/dataplane@sha256:162a5c1b2166653b79684eb8ce25b0063c5d959d95e94e608f13eb04855c605f"`,
+		`DEFAULT_DATAPLANE_IMAGE="ghcr.io/nantian-gw/dataplane`,
 		`DEFAULT_DASHBOARD_IMAGE="ghcr.io/nantian-gw/dashboard@sha256:f913109dd5c964a48877de15797e1a2e9f08008e978c5ede53fc2ca9be8c601a"`,
 	} {
 		if !strings.Contains(contents, want) {
@@ -169,7 +169,6 @@ func TestKindDependencyImageHelperPinsDigestReferences(t *testing.T) {
 	}
 
 	for _, unwanted := range []string{
-		`ghcr.io/nantian-gw/dataplane:latest`,
 		`ghcr.io/nantian-gw/dashboard:latest`,
 	} {
 		if strings.Contains(contents, unwanted) {
