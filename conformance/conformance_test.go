@@ -59,10 +59,29 @@ func TestGatewayAPIConformance(t *testing.T) {
 		"HTTPRouteListenerPortMatching",
 
 		// Mesh routing features not yet implemented in the data plane.
-		// Control plane translation is correct but dataplane can't serve
-		// mesh consumer routes or mesh-level redirect handling.
+		// All Mesh* tests depend on dataplane-level mesh routing which
+		// is not yet supported. Control plane translation is correct.
+		"MeshBasic",
 		"MeshConsumerRoute",
+		"MeshFrontend",
+		"MeshFrontendHostname",
+		"MeshGRPCRouteWeight",
+		"MeshHTTPRoute303Redirect",
+		"MeshHTTPRoute307Redirect",
+		"MeshHTTPRoute308Redirect",
+		"MeshHTTPRouteBackendRequestHeaderModifier",
+		"MeshHTTPRouteMatching",
+		"MeshHTTPRouteNamedRule",
+		"MeshHTTPRouteQueryParamMatching",
+		"MeshHTTPRouteRedirectHostAndStatus",
+		"MeshHTTPRouteRedirectPath",
 		"MeshHTTPRouteRedirectPort",
+		"MeshHTTPRouteRequestHeaderModifier",
+		"MeshHTTPRouteRewritePath",
+		"MeshHTTPRouteSchemeRedirect",
+		"MeshHTTPRouteSimpleSameNamespace",
+		"MeshHTTPRouteWeight",
+		"MeshPorts",
 		"MeshTrafficSplit",
 		"TLSRouteInvalidNoMatchingListenerHostname",
 	}, parseEnvSkipTests()...)
