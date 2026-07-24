@@ -13,7 +13,7 @@ import (
 
 func TestListenerProtocolForServicePortUsesAppProtocolHints(t *testing.T) {
 	appH2C := "kubernetes.io/h2c"
-	appWS := "kubernetes.io/ws" //nolint:gosec
+	appWS := "kubernetes.io/ws"   //nolint:gosec
 	appWSS := "kubernetes.io/wss" //nolint:gosec
 	appGRPC := "grpc"
 

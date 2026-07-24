@@ -154,7 +154,6 @@ func (s *Syncer) SetSettleDelay(delay time.Duration) {
 	s.settleDelay = delay
 }
 
-
 func (s *Syncer) stopSettleRun() {
 	s.settleMu.Lock()
 	defer s.settleMu.Unlock()

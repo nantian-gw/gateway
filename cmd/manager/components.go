@@ -72,6 +72,7 @@ func newManagerComponent(mgr ctrl.Manager, leaderElectionEnabled bool) lifecycle
 func waitManagerExit(ctx context.Context, errCh <-chan error, shuttingDown bool) error {
 	err := <-errCh
 	if ctx.Err() != nil {
+		//nolint:nilerr // intentional: context cancellation is graceful shutdown, not an error
 		return nil
 	}
 	if err != nil {
