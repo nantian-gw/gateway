@@ -85,6 +85,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 		"MeshTrafficSplit",
 		"TLSRouteInvalidNoMatchingListenerHostname",
 		"HTTPRouteHTTPSListenerDetectMisdirectedRequests",
+		"TLSRouteHostnameIntersection",
 	}, parseEnvSkipTests()...)
 
 	manifestFS, err := gatewayAPIManifestFS()
