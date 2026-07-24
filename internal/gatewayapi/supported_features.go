@@ -26,8 +26,9 @@ var experimentalGatewayFeatures = []gatewayfeatures.FeatureName{
 	gatewayfeatures.SupportUDPRoute,
 	gatewayfeatures.SupportTLSRoute,
 	gatewayfeatures.SupportTLSRouteModeTerminate,
-	gatewayfeatures.SupportTLSRouteModeMixed,
-}
+		gatewayfeatures.SupportTLSRouteModeMixed,
+		gatewayfeatures.SupportListenerSet,
+	}
 
 // SupportedFeatureNameSet returns the feature-name set this repository
 // advertises through the in-repo conformance profile.
@@ -88,6 +89,7 @@ func SupportedFeatureNameSet() sets.Set[gatewayfeatures.FeatureName] {
 		gatewayfeatures.SupportTLSRouteModeTerminate,
 		SupportedTCPRoute,
 		gatewayfeatures.SupportUDPRoute,
+		gatewayfeatures.SupportListenerSet,
 	)
 }
 

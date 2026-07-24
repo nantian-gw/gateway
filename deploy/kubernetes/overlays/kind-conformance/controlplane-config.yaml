@@ -52,5 +52,6 @@ grpcTLS:
   requireClientCert: false
 features:
   enableAiGateway: false
+  enableExperimentalGateway: true
 infra:
   nodePortBasePrivileged: 30100
