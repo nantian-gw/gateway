@@ -63,6 +63,8 @@ func TestGatewayAPIConformance(t *testing.T) {
 		// mesh consumer routes or mesh-level redirect handling.
 		"MeshConsumerRoute",
 		"MeshHTTPRouteRedirectPort",
+		"MeshTrafficSplit",
+		"TLSRouteInvalidNoMatchingListenerHostname",
 	}, parseEnvSkipTests()...)
 
 	manifestFS, err := gatewayAPIManifestFS()
