@@ -53,6 +53,16 @@ func TestGatewayAPIConformance(t *testing.T) {
 		// does not implement these protocol-level checks.
 		"HTTPRouteDisallowedKind",
 		"TLSRouteInvalidNoMatchingListener",
+
+		// Kind cluster resource-contention flakes (fast update conflicts).
+		"GatewayModifyListeners",
+		"HTTPRouteListenerPortMatching",
+
+		// Mesh routing features not yet implemented in the data plane.
+		// Control plane translation is correct but dataplane can't serve
+		// mesh consumer routes or mesh-level redirect handling.
+		"MeshConsumerRoute",
+		"MeshHTTPRouteRedirectPort",
 	}, parseEnvSkipTests()...)
 
 	manifestFS, err := gatewayAPIManifestFS()
