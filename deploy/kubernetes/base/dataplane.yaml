@@ -48,8 +48,8 @@ spec:
               app: nantian-gw-dataplane
       containers:
         - name: dataplane
-          image: nantian-dataplane:dev
-          imagePullPolicy: Always
+          image: ghcr.io/nantian-gw/dataplane:latest
+          imagePullPolicy: IfNotPresent
           env:
             # NANTIAN_GW_NODE_ID is the canonical name; keep AEG_NODE_ID for
             # backward compatibility with older dataplane images that predate
@@ -76,12 +76,18 @@ spec:
             httpGet:
               path: /livez
               port: admin
+              httpHeaders:
+                - name: Authorization
+                  value: Bearer test-token
             periodSeconds: 2
             failureThreshold: 45
           livenessProbe:
             httpGet:
               path: /livez
               port: admin
+              httpHeaders:
+                - name: Authorization
+                  value: Bearer test-token
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3
@@ -89,6 +95,9 @@ spec:
             httpGet:
               path: /readyz
               port: admin
+              httpHeaders:
+                - name: Authorization
+                  value: Bearer test-token
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 6

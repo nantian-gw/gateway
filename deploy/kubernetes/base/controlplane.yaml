@@ -47,8 +47,8 @@ spec:
               app: nantian-gw-controlplane
       containers:
         - name: controlplane
-          image: nantian-controlplane:dev
-          imagePullPolicy: Always
+          image: ghcr.io/nantian-gw/nantian-controlplane:latest
+          imagePullPolicy: IfNotPresent
           env:
             - name: POD_NAMESPACE
               valueFrom:
