@@ -80,7 +80,7 @@ spec:
                 - name: Authorization
                   value: Bearer test-token
             periodSeconds: 2
-            failureThreshold: 45
+            failureThreshold: 120
           livenessProbe:
             httpGet:
               path: /livez
