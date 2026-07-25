@@ -68,6 +68,7 @@ type Server struct {
 	logger                *slog.Logger
 	server                *http.Server
 	tlsConfig             *tls.Config
+	rateLimiter           *rateLimiter
 	readinessMode         string
 	driftWarningThreshold time.Duration
 	maxRequestBodyBytes   int64
@@ -113,6 +114,7 @@ func NewServer(
 	handler = wrapRBACHandler(handler, opts.RBAC, opts.Logger)
 	handler = wrapAuditHandler(handler, opts)
 	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst, opts.TrustedProxies); rl != nil {
+		s.rateLimiter = rl
 		handler = rl.middleware(handler)
 	}
 	handler = wrapTracingHandler(handler, "admin")
@@ -329,6 +331,9 @@ func (s *Server) Serve(listener net.Listener) error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	if s.rateLimiter != nil {
+		s.rateLimiter.Stop()
+	}
 	return s.server.Shutdown(ctx)
 }
 
