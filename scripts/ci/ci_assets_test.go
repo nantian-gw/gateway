@@ -512,7 +512,7 @@ func TestSecurityScanHelperSupportsAlternateScanRoot(t *testing.T) {
 	}
 }
 
-func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T) {
+func TestConformanceOverlayEnablesExperimentalGatewayFeatures(t *testing.T) {
 	data := readFile(t, repoPath("deploy", "kubernetes", "overlays", "kind-conformance", "controlplane-config.yaml"))
 
 	var config controlPlaneConfig
@@ -520,8 +520,8 @@ func TestConformanceOverlayDoesNotEnableExperimentalGatewayFeatures(t *testing.T
 		t.Fatalf("parse kind-conformance controlplane config: %v", err)
 	}
 
-	if config.Features.EnableExperimentalGateway {
-		t.Fatalf("kind conformance controlplane config must not enable experimental Gateway API support")
+	if !config.Features.EnableExperimentalGateway {
+		t.Fatalf("kind conformance controlplane config must enable experimental Gateway API support to run ListenerSet conformance tests")
 	}
 	if config.Features.EnableAiGateway {
 		t.Fatalf("kind conformance controlplane config should not enable AI Gateway features")

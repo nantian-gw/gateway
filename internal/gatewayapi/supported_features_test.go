@@ -57,6 +57,7 @@ func TestSupportedFeatureNamesAreSortedAndComplete(t *testing.T) {
 		gatewayfeatures.SupportHTTPRouteRequestPercentageMirror,
 		gatewayfeatures.SupportHTTPRouteRequestTimeout,
 		gatewayfeatures.SupportHTTPRouteResponseHeaderModification,
+		gatewayfeatures.SupportListenerSet,
 		gatewayfeatures.SupportMesh,
 		gatewayfeatures.SupportMeshClusterIPMatching,
 		gatewayfeatures.SupportMeshConsumerRoute,
@@ -108,30 +109,6 @@ func TestSupportedFeatureNamesForOptionsExcludesExperimentalGatewayFeaturesWhenD
 	}
 }
 
-func TestSupportedFeatureNamesForOptionsExcludesUnsupportedFrontendClientCertificateValidation(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		options FeatureOptions
-	}{
-		{name: "default runtime", options: FeatureOptions{EnableExperimentalGateway: false}},
-		{name: "experimental runtime", options: FeatureOptions{EnableExperimentalGateway: true}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got := SupportedFeatureNamesForOptions(tc.options)
-			names := featureNameSet(got)
-
-			for _, name := range []gatewayfeatures.FeatureName{
-				gatewayfeatures.SupportGatewayFrontendClientCertificateValidation,
-				gatewayfeatures.SupportGatewayFrontendClientCertificateValidationInsecureFallback,
-			} {
-				if names[name] {
-					t.Fatalf("feature %s should not be advertised until strict frontend client certificate validation is supported: %#v", name, got)
-				}
-			}
-		})
-	}
-}
-
 func TestSupportedFeatureNamesForOptionsIncludesExperimentalGatewayFeaturesWhenEnabled(t *testing.T) {
 	got := SupportedFeatureNamesForOptions(FeatureOptions{EnableExperimentalGateway: true})
 	names := featureNameSet(got)
@@ -150,11 +127,16 @@ func TestSupportedFeatureNamesForOptionsIncludesExperimentalGatewayFeaturesWhenE
 
 	want := sortedFeatureNames([]gatewayfeatures.FeatureName{
 		SupportedBackendLBSessionPersistence,
+		gatewayfeatures.SupportBackendTLSPolicy,
+		gatewayfeatures.SupportBackendTLSPolicySANValidation,
 		gatewayfeatures.SupportGRPCRoute,
 		gatewayfeatures.SupportGRPCRouteNamedRouteRule,
 		gatewayfeatures.SupportGateway,
 		gatewayfeatures.SupportGatewayAddressEmpty,
 		gatewayfeatures.SupportGatewayBackendClientCertificate,
+		gatewayfeatures.SupportGatewayFrontendClientCertificateValidation,
+		gatewayfeatures.SupportGatewayFrontendClientCertificateValidationInsecureFallback,
+		gatewayfeatures.SupportGatewayHTTPListenerIsolation,
 		gatewayfeatures.SupportGatewayHTTPSListenerDetectMisdirectedRequests,
 		gatewayfeatures.SupportGatewayInfrastructurePropagation,
 		gatewayfeatures.SupportGatewayPort8080,
@@ -175,12 +157,15 @@ func TestSupportedFeatureNamesForOptionsIncludesExperimentalGatewayFeaturesWhenE
 		gatewayfeatures.SupportHTTPRouteParentRefPort,
 		gatewayfeatures.SupportHTTPRoutePathRedirect,
 		gatewayfeatures.SupportHTTPRoutePathRewrite,
+		gatewayfeatures.SupportHTTPRoutePortRedirect,
 		gatewayfeatures.SupportHTTPRouteQueryParamMatching,
+		gatewayfeatures.SupportHTTPRouteSchemeRedirect,
 		gatewayfeatures.SupportHTTPRouteRequestMirror,
 		gatewayfeatures.SupportHTTPRouteRequestMultipleMirrors,
 		gatewayfeatures.SupportHTTPRouteRequestPercentageMirror,
 		gatewayfeatures.SupportHTTPRouteRequestTimeout,
 		gatewayfeatures.SupportHTTPRouteResponseHeaderModification,
+		gatewayfeatures.SupportListenerSet,
 		gatewayfeatures.SupportMesh,
 		gatewayfeatures.SupportMeshClusterIPMatching,
 		gatewayfeatures.SupportMeshConsumerRoute,
