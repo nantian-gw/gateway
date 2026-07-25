@@ -15,7 +15,14 @@ import (
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 )
 
-func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryService_StreamConfigurationServer) error {
+func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryService_StreamConfigurationServer) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("panic recovered in StreamConfiguration handler", "panic", r)
+			err = status.Error(codes.Internal, "internal server error")
+		}
+	}()
+
 	req, err := s.recvInitialRequest(stream)
 	if err != nil {
 		if status.Code(err) == codes.Unavailable {
