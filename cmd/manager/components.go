@@ -110,11 +110,15 @@ func newHTTPComponent(
 
 				if err := shutdown(shutdownCtx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 					logger.Warn("http component shutdown returned error", "component", name, "error", err)
-					_ = closeServer()
+					if closeErr := closeServer(); closeErr != nil {
+						logger.Warn("http component force-close returned error", "component", name, "error", closeErr)
+					}
 				}
 				if shutdownCtx.Err() == context.DeadlineExceeded {
 					logger.Warn("http component shutdown timed out, forcing close", "component", name)
-					_ = closeServer()
+					if closeErr := closeServer(); closeErr != nil {
+						logger.Warn("http component force-close returned error", "component", name, "error", closeErr)
+					}
 				}
 			}()
 

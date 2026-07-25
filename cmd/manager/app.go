@@ -96,7 +96,9 @@ func run(configPath string) error {
 	defer func() {
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
 		defer shutdownCancel()
-		_ = tracingShutdown(shutdownCtx)
+		if err := tracingShutdown(shutdownCtx); err != nil {
+			logger.Warn("tracing shutdown returned error", "error", err)
+		}
 	}()
 
 	scheme, err := buildScheme(cfg)
