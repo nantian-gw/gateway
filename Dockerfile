@@ -28,10 +28,6 @@ USER 65532:65532
 # provide equivalent functionality.
 ENTRYPOINT ["/usr/local/bin/nantian-controlplane"]
 
-# No HEALTHCHECK: the runtime base is distroless/static (no shell/curl).
-# Kubernetes liveness (httpGet /livez) and readiness (httpGet /readyz)
-# probes on port 18081 provide equivalent health monitoring.
-
 # ──────────────────────────────────────────────
 # Debug image (for troubleshooting, not for production)
 # Build with: docker build --target=debug -t nantian-controlplane:debug .

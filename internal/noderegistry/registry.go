@@ -370,7 +370,7 @@ func (r *Registry) persistNow(status ir.NodeStatus) {
 		return
 	}
 
-	ctx, cancel := r.operationContext(context.TODO())
+	ctx, cancel := r.operationContext(context.Background())
 	defer cancel()
 
 	if err := r.repository.Upsert(ctx, status); err != nil {
