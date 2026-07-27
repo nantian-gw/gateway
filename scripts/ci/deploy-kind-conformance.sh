@@ -62,11 +62,13 @@ fi
 kustomize build "$overlay" --load-restrictor LoadRestrictionsNone >"$rendered"
 
 for expected in \
-  "image: $CONTROLPLANE_IMAGE" \
-  "image: $KIND_DATAPLANE_IMAGE" \
-  "image: $KIND_DASHBOARD_IMAGE"; do
-  if ! grep -F "$expected" "$rendered" >/dev/null; then
-    echo "rendered manifests do not use expected image: $expected" >&2
+  "$CONTROLPLANE_IMAGE" \
+  "$KIND_DATAPLANE_IMAGE" \
+  "$KIND_DASHBOARD_IMAGE"; do
+  if ! grep -q "image:.*${expected}" "$rendered"; then
+    echo "rendered manifests do not use expected image: image: $expected" >&2
+    echo "--- Actual image references in rendered manifest:" >&2
+    grep -E '^\s+image:' "$rendered" | head -10 >&2 || true
     exit 1
   fi
 done
