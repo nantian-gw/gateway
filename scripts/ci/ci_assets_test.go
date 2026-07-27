@@ -243,8 +243,8 @@ func TestKindLoadHelpersResolveLocalRuntimeTags(t *testing.T) {
 	for _, want := range []string{
 		`KIND_DATAPLANE_IMAGE="${KIND_DATAPLANE_IMAGE:-$(kind_runtime_image_ref "$DATAPLANE_IMAGE")}"`,
 		`KIND_DASHBOARD_IMAGE="${KIND_DASHBOARD_IMAGE:-$(kind_runtime_image_ref "$DASHBOARD_IMAGE")}"`,
-		`kustomize edit set image "nantian-dataplane=$KIND_DATAPLANE_IMAGE"`,
-		`kustomize edit set image "nantian-gw-dashboard=$KIND_DASHBOARD_IMAGE"`,
+		`kustomize edit set image "ghcr.io/nantian-gw/dataplane=$KIND_DATAPLANE_IMAGE"`,
+		`kustomize edit set image "ghcr.io/nantian-gw/dashboard=$KIND_DASHBOARD_IMAGE"`,
 	} {
 		if !strings.Contains(deployContents, want) {
 			t.Fatalf("deploy-kind-conformance.sh missing %q", want)

@@ -21,6 +21,7 @@ import (
 
 type Server struct {
 	controlv1.UnimplementedConfigurationDiscoveryServiceServer
+	controlv1.UnimplementedDeltaDiscoveryServiceServer
 	addr          string
 	store         *ir.SnapshotStore
 	nodes         *noderegistry.Registry
@@ -98,6 +99,7 @@ func (s *Server) Run(ctx context.Context) error {
 func (s *Server) Serve(ctx context.Context, lis net.Listener, markStarted func()) error {
 	grpcServer := grpc.NewServer(s.serverOptions...)
 	controlv1.RegisterConfigurationDiscoveryServiceServer(grpcServer, s)
+	controlv1.RegisterDeltaDiscoveryServiceServer(grpcServer, s)
 
 	go func() {
 		<-ctx.Done()
