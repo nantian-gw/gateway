@@ -66,11 +66,19 @@ func (g *StartupGate) Check(_ *http.Request) error {
 	return errors.New(g.message)
 }
 
+type managedComponent struct {
+	Component
+	ctx    context.Context
+	cancel context.CancelFunc
+	done   chan error
+}
+
 type Supervisor struct {
-	logger         *slog.Logger
-	startupTimeout time.Duration
-	startupGate    *StartupGate
-	components     []Component
+	logger          *slog.Logger
+	startupTimeout  time.Duration
+	shutdownTimeout time.Duration
+	startupGate     *StartupGate
+	components      []managedComponent
 }
 
 func NewSupervisor(
@@ -86,11 +94,20 @@ func NewSupervisor(
 		startupTimeout = 30 * time.Second
 	}
 
+	managed := make([]managedComponent, len(components))
+	for i, c := range components {
+		managed[i] = managedComponent{
+			Component: c,
+			done:      make(chan error, 1),
+		}
+	}
+
 	return &Supervisor{
-		logger:         logger,
-		startupTimeout: startupTimeout,
-		startupGate:    startupGate,
-		components:     slices.Clone(components),
+		logger:          logger,
+		startupTimeout:  startupTimeout,
+		shutdownTimeout: 30 * time.Second,
+		startupGate:     startupGate,
+		components:      managed,
 	}
 }
 
@@ -109,26 +126,32 @@ func (s *Supervisor) Run(parent context.Context) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithCancel(parent)
-	defer cancel()
+	ctx, cancelAll := context.WithCancel(parent)
 
-	resultCh := make(chan componentResult, len(s.components))
 	startedCh := make(chan string, len(s.components))
+	resultCh := make(chan componentResult, len(s.components))
 
-	for _, component := range s.components {
+	for i := range s.components {
+		mc := &s.components[i]
+		mc.ctx, mc.cancel = context.WithCancel(context.Background())
+	}
+
+	for i := range s.components {
+		mc := &s.components[i]
 		go func() {
 			var started sync.Once
-			err := component.Run(ctx, func() {
+			err := mc.Run(mc.ctx, func() {
 				started.Do(func() {
-					startedCh <- component.Name
+					startedCh <- mc.Name
 				})
 			})
-			resultCh <- componentResult{name: component.Name, err: err}
+			mc.done <- err
+			resultCh <- componentResult{name: mc.Name, err: err}
 		}()
 	}
 
 	started := make(map[string]struct{}, len(s.components))
-	consumedResults := 0
+	var consumed int
 	timer := time.NewTimer(s.startupTimeout)
 	defer timer.Stop()
 
@@ -141,33 +164,27 @@ func (s *Supervisor) Run(parent context.Context) error {
 			started[name] = struct{}{}
 			s.logger.Info("component started", "component", name)
 		case result := <-resultCh:
-			consumedResults++
+			consumed++
 			if result.err == nil {
-				return s.collectAfterCancel(
-					cancel,
-					resultCh,
-					len(s.components)-consumedResults,
+				return s.stopInReverseAndDrain(
+					cancelAll, resultCh, len(s.components)-consumed,
 					fmt.Errorf(`component %q exited before startup completed`, result.name),
 				)
 			}
-			return s.collectAfterCancel(
-				cancel,
-				resultCh,
-				len(s.components)-consumedResults,
+			return s.stopInReverseAndDrain(
+				cancelAll, resultCh, len(s.components)-consumed,
 				fmt.Errorf(`component %q failed during startup: %w`, result.name, result.err),
 			)
 		case <-timer.C:
-			return s.collectAfterCancel(
-				cancel,
-				resultCh,
-				len(s.components)-consumedResults,
+			return s.stopInReverseAndDrain(
+				cancelAll, resultCh, len(s.components)-consumed,
 				fmt.Errorf(
 					"timed out waiting for components to start: %s",
-					strings.Join(missingComponents(s.components, started), ", "),
+					strings.Join(missingManagedComponents(s.components, started), ", "),
 				),
 			)
 		case <-ctx.Done():
-			return s.collectAfterCancel(cancel, resultCh, len(s.components)-consumedResults, nil)
+			return s.stopInReverseAndDrain(cancelAll, resultCh, len(s.components)-consumed, nil)
 		}
 	}
 
@@ -176,38 +193,77 @@ func (s *Supervisor) Run(parent context.Context) error {
 	}
 	s.logger.Info("all lifecycle components started")
 
-	for {
-		select {
-		case result := <-resultCh:
-			consumedResults++
-			if result.err == nil {
-				return s.collectAfterCancel(
-					cancel,
-					resultCh,
-					len(s.components)-consumedResults,
-					fmt.Errorf(`component %q stopped unexpectedly`, result.name),
-				)
-			}
-			return s.collectAfterCancel(
-				cancel,
-				resultCh,
-				len(s.components)-consumedResults,
-				fmt.Errorf(`component %q failed: %w`, result.name, result.err),
+	select {
+	case result := <-resultCh:
+		consumed++
+		if result.err == nil {
+			return s.stopInReverseAndDrain(
+				cancelAll, resultCh, len(s.components)-consumed,
+				fmt.Errorf(`component %q stopped unexpectedly`, result.name),
 			)
-		case <-ctx.Done():
-			return s.collectAfterCancel(cancel, resultCh, len(s.components)-consumedResults, nil)
+		}
+		return s.stopInReverseAndDrain(
+			cancelAll, resultCh, len(s.components)-consumed,
+			fmt.Errorf(`component %q failed: %w`, result.name, result.err),
+		)
+	case <-ctx.Done():
+		return s.stopInReverseAndDrain(cancelAll, resultCh, len(s.components)-consumed, nil)
+	}
+}
+
+func (s *Supervisor) stopInReverseAndDrain(
+	cancelAll context.CancelFunc,
+	resultCh <-chan componentResult,
+	remaining int,
+	primary error,
+) error {
+	defer cancelAll()
+
+	// Drain shared resultCh without blocking; individual done channels
+	// provide ordered shutdown signals. Use a non-blocking drain to avoid
+	// hanging on components that may never exit (e.g. stuck goroutines).
+	for i := 0; i < remaining; i++ {
+		select {
+		case <-resultCh:
+		default:
 		}
 	}
+
+	// Stop in reverse registration order using individual cancel+done.
+	var errs []error
+	if primary != nil {
+		errs = append(errs, primary)
+	}
+
+	for i := len(s.components) - 1; i >= 0; i-- {
+		mc := &s.components[i]
+		s.logger.Info("stopping component", "component", mc.Name)
+		mc.cancel()
+
+		select {
+		case err := <-mc.done:
+			if err != nil {
+				errs = append(errs, fmt.Errorf("component %q shutdown error: %w", mc.Name, err))
+			}
+		case <-time.After(s.shutdownTimeout):
+			errs = append(errs, fmt.Errorf("component %q did not stop within %v", mc.Name, s.shutdownTimeout))
+		}
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+	return errors.Join(errs...)
 }
 
 func (s *Supervisor) validate() error {
 	seen := make(map[string]struct{}, len(s.components))
-	for _, component := range s.components {
-		name := strings.TrimSpace(component.Name)
+	for _, mc := range s.components {
+		name := strings.TrimSpace(mc.Name)
 		if name == "" {
 			return errors.New("lifecycle component name is required")
 		}
-		if component.Run == nil {
+		if mc.Run == nil {
 			return fmt.Errorf(`lifecycle component %q has no Run function`, name)
 		}
 		if _, exists := seen[name]; exists {
@@ -218,39 +274,13 @@ func (s *Supervisor) validate() error {
 	return nil
 }
 
-func (s *Supervisor) collectAfterCancel(
-	cancel context.CancelFunc,
-	resultCh <-chan componentResult,
-	remaining int,
-	primary error,
-) error {
-	cancel()
-
-	errs := make([]error, 0, remaining+1)
-	if primary != nil {
-		errs = append(errs, primary)
-	}
-
-	for i := 0; i < remaining; i++ {
-		result := <-resultCh
-		if result.err != nil {
-			errs = append(errs, fmt.Errorf(`component %q shutdown error: %w`, result.name, result.err))
-		}
-	}
-
-	if len(errs) == 0 {
-		return nil
-	}
-	return errors.Join(errs...)
-}
-
-func missingComponents(components []Component, started map[string]struct{}) []string {
+func missingManagedComponents(components []managedComponent, started map[string]struct{}) []string {
 	out := make([]string, 0, len(components))
-	for _, component := range components {
-		if _, ok := started[component.Name]; ok {
+	for _, mc := range components {
+		if _, ok := started[mc.Name]; ok {
 			continue
 		}
-		out = append(out, component.Name)
+		out = append(out, mc.Name)
 	}
 	slices.Sort(out)
 	return out

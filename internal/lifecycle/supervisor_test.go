@@ -138,6 +138,133 @@ func TestSupervisorCancelsPeersWhenComponentFailsAfterStartup(t *testing.T) {
 	}
 }
 
+func TestSupervisorStopsComponentsInReverseOrder(t *testing.T) {
+	t.Parallel()
+
+	stopped := make([]string, 0, 3)
+	gate := NewStartupGate("controlplane startup incomplete")
+	supervisor := NewSupervisor(
+		testLogger(),
+		100*time.Millisecond,
+		gate,
+		Component{
+			Name: "first",
+			Run: func(ctx context.Context, markStarted func()) error {
+				markStarted()
+				<-ctx.Done()
+				stopped = append(stopped, "first")
+				return nil
+			},
+		},
+		Component{
+			Name: "second",
+			Run: func(ctx context.Context, markStarted func()) error {
+				markStarted()
+				<-ctx.Done()
+				stopped = append(stopped, "second")
+				return nil
+			},
+		},
+		Component{
+			Name: "third",
+			Run: func(ctx context.Context, markStarted func()) error {
+				markStarted()
+				<-ctx.Done()
+				stopped = append(stopped, "third")
+				return nil
+			},
+		},
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- supervisor.Run(ctx)
+	}()
+
+	waitFor(t, time.Second, func() bool {
+		return gate.Check(nil) == nil
+	}, "expected startup gate to become ready")
+
+	cancel()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("Run returned error: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("supervisor did not exit after cancellation")
+	}
+
+	if len(stopped) != 3 {
+		t.Fatalf("expected 3 components to stop, got %d: %v", len(stopped), stopped)
+	}
+	if stopped[0] != "third" || stopped[1] != "second" || stopped[2] != "first" {
+		t.Fatalf("expected reverse stop order [third second first], got %v", stopped)
+	}
+}
+
+func TestSupervisorShutdownTimeout(t *testing.T) {
+	t.Parallel()
+
+	stuckCh := make(chan struct{})
+
+	gate := NewStartupGate("controlplane startup incomplete")
+	supervisor := NewSupervisor(
+		testLogger(),
+		100*time.Millisecond,
+		gate,
+		Component{
+			Name: "hanging",
+			Run: func(ctx context.Context, markStarted func()) error {
+				markStarted()
+				<-ctx.Done()
+				return nil
+			},
+		},
+		Component{
+			Name: "stuck",
+			Run: func(ctx context.Context, markStarted func()) error {
+				markStarted()
+				<-stuckCh
+				return nil
+			},
+		},
+	)
+	supervisor.shutdownTimeout = 50 * time.Millisecond
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- supervisor.Run(ctx)
+	}()
+
+	waitFor(t, time.Second, func() bool {
+		return gate.Check(nil) == nil
+	}, "expected startup gate to become ready")
+
+	cancel()
+
+	select {
+	case err := <-done:
+		if err == nil {
+			t.Fatal("expected timeout error from stuck component")
+		}
+		if !strings.Contains(err.Error(), `did not stop within`) {
+			t.Fatalf("expected shutdown timeout error, got %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("supervisor did not exit after shutdown timeout")
+	}
+
+	close(stuckCh)
+}
+
 func TestSupervisorTimesOutWaitingForStartup(t *testing.T) {
 	t.Parallel()
 
