@@ -10,7 +10,7 @@ Do not use this repository for Rust data plane, Dashboard, Helm chart, Website, 
 
 The workspace root is not a Git repository. This component directory is its own Git repository.
 
-Make changes in an isolated worktree under `~/.config/superpowers/worktrees/`, not directly in the checked-out `gateway/` main checkout. Do not merge a worktree branch back to `main` until the user explicitly approves. Do not push `main` until the user explicitly asks after merge approval.
+Make changes in an isolated worktree under `~/.opencode/worktrees/`, not directly in the checked-out `gateway/` main checkout. Do not merge a worktree branch back to `main` until the user explicitly approves. Do not push `main` until the user explicitly asks after merge approval.
 
 Root `docs/` files are workspace notes and do not need to be committed with gateway changes unless the user explicitly asks for archival handling.
 
@@ -168,6 +168,7 @@ For behavior changes, add focused tests first and then run all affected package 
 ## Pending Improvements & Audit Findings
 
 Last audited: 2026-07-14
+> **Sync with root TODO.md**: Item 3 (Package Rename) is complete. Items 1-2, 4-5 remain pending with detailed analysis below. Root TODO.md may mark related sub-tasks as done (e.g., DeepEqual skip for status batching), but the full improvements here have not been implemented.
 
 ### Item 1: Control Plane Memory Optimization (P2)
 
