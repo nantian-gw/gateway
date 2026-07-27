@@ -5,13 +5,13 @@ resources:
   - ../../base
 
 images:
-  - name: nantian-controlplane
+  - name: ghcr.io/nantian-gw/nantian-controlplane
     newName: ghcr.io/nantian-gw/nantian-controlplane
     newTag: latest
-  - name: nantian-dataplane
+  - name: ghcr.io/nantian-gw/dataplane
     newName: ghcr.io/nantian-gw/dataplane
     newTag: latest
-  - name: nantian-gw-dashboard
+  - name: ghcr.io/nantian-gw/dashboard
     newName: ghcr.io/nantian-gw/dashboard
     newTag: latest
 

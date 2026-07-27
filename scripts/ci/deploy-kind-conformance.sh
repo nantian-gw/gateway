@@ -35,9 +35,9 @@ rendered="$tmpdir/kind-conformance.yaml"
 
 (
   cd "$overlay"
-  kustomize edit set image "nantian-controlplane=$CONTROLPLANE_IMAGE"
-  kustomize edit set image "nantian-dataplane=$KIND_DATAPLANE_IMAGE"
-  kustomize edit set image "nantian-gw-dashboard=$KIND_DASHBOARD_IMAGE"
+  kustomize edit set image "ghcr.io/nantian-gw/nantian-controlplane=$CONTROLPLANE_IMAGE"
+  kustomize edit set image "ghcr.io/nantian-gw/dataplane=$KIND_DATAPLANE_IMAGE"
+  kustomize edit set image "ghcr.io/nantian-gw/dashboard=$KIND_DASHBOARD_IMAGE"
 )
 
 if [[ "$CONFORMANCE_EXPERIMENTAL" == "true" ]]; then
