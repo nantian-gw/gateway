@@ -166,6 +166,7 @@ func run(configPath string) error {
 	translatorLimits := cfg.TranslatorResourceLimits()
 	xlator := translator.NewWithOptions(
 		cfg.ControllerName,
+		cfg.Namespace,
 		logger,
 		shared.Options{
 			Limits: shared.Limits{

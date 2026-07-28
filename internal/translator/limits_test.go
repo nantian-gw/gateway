@@ -24,6 +24,7 @@ func TestBuildReturnsErrorWhenInputObjectLimitExceeded(t *testing.T) {
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
+		"",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		shared.Options{
 			Limits: shared.Limits{
@@ -47,6 +48,7 @@ func TestBuildReturnsErrorWhenSnapshotObjectLimitExceeded(t *testing.T) {
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
+		"",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		shared.Options{
 			Limits: shared.Limits{
@@ -70,6 +72,7 @@ func TestBuildReturnsErrorWhenSnapshotEndpointLimitExceeded(t *testing.T) {
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
+		"",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		shared.Options{
 			Limits: shared.Limits{
@@ -93,6 +96,7 @@ func TestBuildIgnoresDisabledSnapshotLimits(t *testing.T) {
 	client := newTranslatorLimitsFixture(t)
 	xlator := NewWithOptions(
 		"gateway.networking.k8s.io/nantian-gw",
+		"",
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		shared.Options{
 			Limits: shared.Limits{

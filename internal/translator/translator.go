@@ -41,6 +41,7 @@ import (
 
 type Translator struct {
 	controllerName string
+	namespace      string
 	logger         *slog.Logger
 	limits         shared.Limits
 	fallbackCerts  *gwtls.FallbackCertManager
@@ -52,12 +53,13 @@ const (
 )
 
 func New(controllerName string, logger *slog.Logger) *Translator {
-	return NewWithOptions(controllerName, logger, shared.Options{})
+	return NewWithOptions(controllerName, "", logger, shared.Options{})
 }
 
-func NewWithOptions(controllerName string, logger *slog.Logger, options shared.Options) *Translator {
+func NewWithOptions(controllerName, namespace string, logger *slog.Logger, options shared.Options) *Translator {
 	return &Translator{
 		controllerName: controllerName,
+		namespace:      namespace,
 		logger:         logger,
 		limits:         shared.NormalizeLimits(options.Limits),
 		fallbackCerts:  gwtls.NewFallbackCertManager(),
@@ -568,7 +570,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		backends.TranslateSecrets(supportObjects.secrets),
 		listenerSecretMaterialKeys(snapshot.Listeners),
 	)
-	t.injectFallbackCertificates(snapshot)
+	t.injectFallbackCertificates(ctx, cl, snapshot)
 	if err := t.limits.ValidateSnapshot(snapshot); err != nil {
 		return nil, err
 	}
@@ -576,7 +578,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	return snapshot, nil
 }
 
-func (t *Translator) injectFallbackCertificates(snapshot *ir.Snapshot) {
+func (t *Translator) injectFallbackCertificates(ctx context.Context, cl client.Client, snapshot *ir.Snapshot) {
 	for i := range snapshot.Listeners {
 		l := &snapshot.Listeners[i]
 		if l.TLS == nil || len(l.TLS.SecretRefs) > 0 {
@@ -593,7 +595,7 @@ func (t *Translator) injectFallbackCertificates(snapshot *ir.Snapshot) {
 			hostnames = []string{l.Name}
 		}
 
-		if err := t.fallbackCerts.EnsureCA(); err != nil {
+		if err := t.fallbackCerts.LoadOrCreateCA(ctx, cl, t.namespace); err != nil {
 			t.logger.Warn("fallback cert: failed to initialize CA", "error", err)
 			continue
 		}

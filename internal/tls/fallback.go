@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -13,10 +14,19 @@ import (
 	"sync"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
-const fallbackCAName = "nantian-gw-fallback-ca"
+const (
+	fallbackCAName      = "nantian-gw-fallback-ca"
+	fallbackCASecretKey = "tls.crt"
+	fallbackCAKeyKey    = "tls.key"
+)
 
 type FallbackCertManager struct {
 	mu        sync.Mutex
@@ -28,12 +38,27 @@ func NewFallbackCertManager() *FallbackCertManager {
 	return &FallbackCertManager{}
 }
 
-func (m *FallbackCertManager) EnsureCA() error {
+func (m *FallbackCertManager) LoadOrCreateCA(ctx context.Context, cl client.Client, namespace string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if m.caKeyPEM != "" {
 		return nil
+	}
+
+	secret := &corev1.Secret{}
+	err := cl.Get(ctx, client.ObjectKey{Namespace: namespace, Name: fallbackCAName}, secret)
+	if err == nil {
+		certPEM, hasCert := secret.Data[fallbackCASecretKey]
+		keyPEM, hasKey := secret.Data[fallbackCAKeyKey]
+		if hasCert && hasKey {
+			m.caCertPEM = string(certPEM)
+			m.caKeyPEM = string(keyPEM)
+			return nil
+		}
+	}
+	if err != nil && !kerrors.IsNotFound(err) {
+		return fmt.Errorf("fallback ca: read secret: %w", err)
 	}
 
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -69,6 +94,29 @@ func (m *FallbackCertManager) EnsureCA() error {
 
 	m.caCertPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}))
 	m.caKeyPEM = string(pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER}))
+
+	caSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fallbackCAName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/managed-by": "nantian-gw",
+				"nantian.dev/component":        "fallback-ca",
+			},
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: map[string][]byte{
+			fallbackCASecretKey: []byte(m.caCertPEM),
+			fallbackCAKeyKey:    []byte(m.caKeyPEM),
+		},
+	}
+
+	if err := cl.Create(ctx, caSecret); err != nil {
+		if kerrors.IsAlreadyExists(err) {
+			return nil
+		}
+		return fmt.Errorf("fallback ca: create secret: %w", err)
+	}
 
 	return nil
 }
