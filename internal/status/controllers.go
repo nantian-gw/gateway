@@ -24,8 +24,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
 
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
@@ -628,7 +629,7 @@ func (c *backendTLSPolicyController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("backendtlspolicy-status").
 		WithOptions(statusControllerOptions(c.reconciler.options)).
-		For(&gatewayv1alpha3.BackendTLSPolicy{}, generationChanged).
+		For(gatewayapi.NewBackendTLSPolicyV1Object(), generationChanged).
 		Complete(c)
 }
 
