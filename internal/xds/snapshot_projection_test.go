@@ -176,6 +176,7 @@ func TestProjectedSnapshotPreservesListenerWhenAllAttachedRoutesArePruned(t *tes
 	}
 }
 
+//nolint:dupl // HTTP variant of port-qualified backend test; gRPC variant follows same pattern
 func TestProjectedSnapshotKeepsHTTPRouteWithPortQualifiedBackendName(t *testing.T) {
 	t.Parallel()
 

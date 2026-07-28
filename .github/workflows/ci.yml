@@ -119,7 +119,7 @@ jobs:
       - name: Run benchmarks
         run: go test -bench=. -benchtime=3x -count=3 ./... | tee benchmark-output.txt
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@91707969585b9fc14d98849f100f929fbad59237
+        uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: go
           output-file-path: benchmark-output.txt
