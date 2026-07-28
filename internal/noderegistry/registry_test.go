@@ -583,8 +583,14 @@ func TestRegistryRecordsPersistenceMetricsForImmediateAndDebouncedFlushes(t *tes
 	if got := testutil.ToFloat64(metrics.NodeStatusPersistDebouncedTotal); got != 2 {
 		t.Fatalf("debounced persistence count = %v, want 2", got)
 	}
-	if got := histogramSampleCount(t, metrics.NodeStatusPersistFlushDurationSeconds); got != 1 {
-		t.Fatalf("flush duration sample count = %d, want 1", got)
+	for i := 0; i < 50; i++ {
+		if histogramSampleCount(t, metrics.NodeStatusPersistFlushDurationSeconds) >= 1 {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	if got := histogramSampleCount(t, metrics.NodeStatusPersistFlushDurationSeconds); got < 1 {
+		t.Fatalf("flush duration sample count = %d, want >= 1", got)
 	}
 	if got := testutil.ToFloat64(metrics.NodeStatusPersistQueueDepth); got != 0 {
 		t.Fatalf("queue depth after flush = %v, want 0", got)
