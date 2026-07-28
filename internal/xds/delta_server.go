@@ -2,6 +2,7 @@ package xds
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -62,7 +63,7 @@ func (s *Server) DeltaStreamConfiguration(stream controlv1.DeltaDiscoveryService
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("delta stream context: %w", ctx.Err())
 		case snap, ok := <-ds.snapshotCh:
 			if !ok {
 				return nil
@@ -73,11 +74,11 @@ func (s *Server) DeltaStreamConfiguration(stream controlv1.DeltaDiscoveryService
 		}
 
 		req, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("delta stream recv: %w", err)
 		}
 
 		ds.handleAckNack(req)
@@ -85,25 +86,24 @@ func (s *Server) DeltaStreamConfiguration(stream controlv1.DeltaDiscoveryService
 }
 
 type deltaStream struct {
-	logger     *slog.Logger
-	stream     controlv1.DeltaDiscoveryService_DeltaStreamConfigurationServer
-	store      *ir.SnapshotStore
-	snapshotCh <-chan *ir.Snapshot
-	unsub      func()
-	subscribed map[string]bool
-	versions   map[string]string
+	logger       *slog.Logger
+	stream       controlv1.DeltaDiscoveryService_DeltaStreamConfigurationServer
+	snapshotCh   <-chan *ir.Snapshot
+	unsub        func()
+	subscribed   map[string]bool
+	versions     map[string]string
 	lastSnapshot *ir.Snapshot
-	mu         sync.Mutex
-	versionSeq uint64
+	mu           sync.Mutex
+	versionSeq   uint64
 }
 
-func (ds *deltaStream) pushDelta(ctx context.Context, old, new *ir.Snapshot) {
+func (ds *deltaStream) pushDelta(ctx context.Context, prev, curr *ir.Snapshot) {
 	ds.mu.Lock()
 	ds.versionSeq++
 	ver := fmt.Sprintf("%d", ds.versionSeq)
 	ds.mu.Unlock()
 
-	delta := SnapshotDelta(old, new)
+	delta := SnapshotDelta(prev, curr)
 	hasChanges := false
 
 	typeResources := []struct {
@@ -130,7 +130,7 @@ func (ds *deltaStream) pushDelta(ctx context.Context, old, new *ir.Snapshot) {
 			Nonce:             nonce,
 			TypeUrl:           tr.typeURL,
 			RemovedResources:  tr.rd.Removed,
-			NonIncremental:    tr.rd.HasNonIncremental(typeResourceCount(tr.typeURL, old)),
+			NonIncremental:    tr.rd.HasNonIncremental(typeResourceCount(tr.typeURL, prev)),
 		}
 
 		if err := ds.stream.Send(resp); err != nil {
@@ -142,10 +142,10 @@ func (ds *deltaStream) pushDelta(ctx context.Context, old, new *ir.Snapshot) {
 		return
 	}
 
-	if new != nil {
+	if curr != nil {
 		_, span := otel.Tracer("").Start(ctx, "xds.push_delta_snapshot")
 		span.SetAttributes(
-			attribute.String("snapshot_id", new.ID),
+			attribute.String("snapshot_id", curr.ID),
 			attribute.String("system_version", ver),
 		)
 		span.End()
