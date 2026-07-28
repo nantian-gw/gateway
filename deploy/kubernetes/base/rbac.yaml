@@ -74,10 +74,10 @@ rules:
     resources: ["serviceimports"]
     verbs: ["create", "delete", "get", "list", "update", "watch"]
   - apiGroups: ["gateway.nantian.dev"]
-    resources: ["aiservices", "tokenpolicies", "wasmplugins"]
+    resources: ["aiservices", "tokenpolicies", "wasmplugins", "routepolicies"]
     verbs: ["create", "delete", "get", "list", "update", "watch"]
   - apiGroups: ["gateway.nantian.dev"]
-    resources: ["aiservices/status", "tokenpolicies/status", "wasmplugins/status"]
+    resources: ["aiservices/status", "tokenpolicies/status", "wasmplugins/status", "routepolicies/status"]
     verbs: ["get", "patch", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
