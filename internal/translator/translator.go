@@ -2,6 +2,7 @@ package translator
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	gwtls "github.com/nantian-gw/gateway/internal/tls"
 	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/listeners"
@@ -41,6 +43,7 @@ type Translator struct {
 	controllerName string
 	logger         *slog.Logger
 	limits         shared.Limits
+	fallbackCerts  *gwtls.FallbackCertManager
 }
 
 const (
@@ -57,6 +60,7 @@ func NewWithOptions(controllerName string, logger *slog.Logger, options shared.O
 		controllerName: controllerName,
 		logger:         logger,
 		limits:         shared.NormalizeLimits(options.Limits),
+		fallbackCerts:  gwtls.NewFallbackCertManager(),
 	}
 }
 
@@ -564,11 +568,51 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		backends.TranslateSecrets(supportObjects.secrets),
 		listenerSecretMaterialKeys(snapshot.Listeners),
 	)
+	t.injectFallbackCertificates(snapshot)
 	if err := t.limits.ValidateSnapshot(snapshot); err != nil {
 		return nil, err
 	}
 
 	return snapshot, nil
+}
+
+func (t *Translator) injectFallbackCertificates(snapshot *ir.Snapshot) {
+	for i := range snapshot.Listeners {
+		l := &snapshot.Listeners[i]
+		if l.TLS == nil || len(l.TLS.SecretRefs) > 0 {
+			continue
+		}
+		// Only inject fallback when the listener truly has no user-configured certs.
+		// If the listener had certRefs that were rejected (e.g. no ReferenceGrant),
+		// don't silently replace them — let the invalid config surface.
+		if l.TLS.HasUserCertRefs {
+			continue
+		}
+		hostnames := l.Hostnames
+		if len(hostnames) == 0 {
+			hostnames = []string{l.Name}
+		}
+
+		if err := t.fallbackCerts.EnsureCA(); err != nil {
+			t.logger.Warn("fallback cert: failed to initialize CA", "error", err)
+			continue
+		}
+
+		leaf, err := t.fallbackCerts.IssueLeafCert(hostnames)
+		if err != nil {
+			t.logger.Warn("fallback cert: failed to issue leaf", "error", err)
+			continue
+		}
+
+		snapshot.Secrets = append(snapshot.Secrets, leaf)
+		l.TLS.SecretRefs = append(l.TLS.SecretRefs, fmt.Sprintf("%s/%s", leaf.Namespace, leaf.Name))
+
+		t.logger.Info(
+			"injected fallback TLS certificate for listener without user-configured cert",
+			"listener", l.Name,
+			"hostnames", hostnames,
+		)
+	}
 }
 
 func isOptionalResourceMissing(err error) bool {

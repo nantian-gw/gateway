@@ -91,6 +91,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 				tlsConfig.Passthrough = string(*listener.TLS.Mode) == "Passthrough"
 			}
 			tlsConfig.SecretRefs = listenerCertificateSecretRefsWithIndexes(gateway, listener, indexes)
+			tlsConfig.HasUserCertRefs = len(listener.TLS.CertificateRefs) > 0
 			tlsConfig.FrontendValidation = lsnr.FrontendValidationForListenerWithIndexes(gateway, listener, indexes)
 			item.TLS = tlsConfig
 		}

@@ -38,6 +38,7 @@ type TLSConfig struct {
 	Enabled            bool                `json:"enabled"`
 	Passthrough        bool                `json:"passthrough"`
 	SecretRefs         []string            `json:"secretRefs,omitempty"`
+	HasUserCertRefs    bool                `json:"-"` // set when user configured certificateRefs (even if rejected)
 	SNIHosts           []string            `json:"sniHosts,omitempty"`
 	MinVersion         string              `json:"minVersion,omitempty"`
 	MaxVersion         string              `json:"maxVersion,omitempty"`
