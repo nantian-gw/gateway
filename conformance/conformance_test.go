@@ -34,6 +34,14 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.GetTimeout = 10 * time.Second
 	options.TimeoutConfig.TestIsolation = 10 * time.Second
 
+	// Dataplane listener readiness: the proxy needs time to receive xDS
+	// config and open listener ports after Gateway/HTTPRoute creation.
+	// Default MaxEventsToWaitFor (10) means ~10s of retries, which is
+	// insufficient for Kind clusters where dataplane startup can take 15-30s.
+	if options.RoundTripper.MaxEventsToWaitFor < 30 {
+		options.RoundTripper.MaxEventsToWaitFor = 30
+	}
+
 	options.SkipTests = parseEnvSkipTests()
 
 	manifestFS, err := gatewayAPIManifestFS()
