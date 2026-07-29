@@ -23,8 +23,6 @@ const (
 )
 
 type serviceEndpointState struct {
-	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-	endpoints     map[string]corev1.Endpoints
 	managedSlices map[string]map[string]discoveryv1.EndpointSlice
 	foreignSlices map[string]map[string]discoveryv1.EndpointSlice
 }
@@ -36,33 +34,11 @@ func loadServiceEndpointState(
 	managedRole string,
 ) (serviceEndpointState, error) {
 	state := serviceEndpointState{
-		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-		endpoints:     make(map[string]corev1.Endpoints, len(serviceKeys)),
 		managedSlices: make(map[string]map[string]discoveryv1.EndpointSlice, len(serviceKeys)),
 		foreignSlices: make(map[string]map[string]discoveryv1.EndpointSlice, len(serviceKeys)),
 	}
 	if len(serviceKeys) == 0 {
 		return state, nil
-	}
-
-	for _, key := range sortedServiceKeys(serviceKeys) {
-		namespace, serviceName, ok := splitServiceKey(key)
-		if !ok {
-			continue
-		}
-
-		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-		endpoint := &corev1.Endpoints{}
-		if err := cl.Get(
-			ctx,
-			client.ObjectKey{Namespace: namespace, Name: serviceName},
-			endpoint,
-		); client.IgnoreNotFound(err) != nil {
-			return state, err
-		}
-		if endpoint.Name != "" {
-			state.endpoints[key] = *endpoint
-		}
 	}
 
 	if err := loadEndpointSlicesForServices(
@@ -184,9 +160,6 @@ func cleanupServiceEndpointResources(
 	key string,
 	state serviceEndpointState,
 ) error {
-	if err := deleteServiceEndpoints(ctx, cl, state.endpoints[key]); err != nil {
-		return err
-	}
 	if err := deleteFrontendEndpointSlices(ctx, cl, state.managedSlices[key]); err != nil {
 		return err
 	}

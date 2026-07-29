@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -18,27 +17,6 @@ func TestLoadServiceEndpointStateScopesPerServiceQueries(t *testing.T) {
 
 	baseClient := newInfrastructureClientBuilder(scheme).
 		WithObjects(
-			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-			&corev1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "edge",
-					Namespace: "default",
-				},
-			},
-			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-			&corev1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "edge-canary",
-					Namespace: "default",
-				},
-			},
-			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-			&corev1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "shared",
-					Namespace: defaultDataplaneNamespace,
-				},
-			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "edge-v4",
@@ -84,9 +62,6 @@ func TestLoadServiceEndpointStateScopesPerServiceQueries(t *testing.T) {
 		validatingClient{
 			Client: baseClient,
 			listValidators: map[reflect.Type]func(client.ListOptions) error{
-				reflect.TypeOf(&corev1.EndpointsList{}): func(client.ListOptions) error {
-					return fmt.Errorf("endpoint state loader must use Get for Endpoints")
-				},
 				reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireBatchedServiceEndpointSliceList(
 					map[string][]string{
 						"default":                 {"edge", "edge-canary"},
@@ -107,9 +82,6 @@ func TestLoadServiceEndpointStateScopesPerServiceQueries(t *testing.T) {
 		t.Fatalf("loadServiceEndpointState returned error: %v", err)
 	}
 
-	if len(state.endpoints) != 3 {
-		t.Fatalf("expected 2 scoped Endpoints gets, got %#v", state.endpoints)
-	}
 	if len(state.managedSlices) != 3 {
 		t.Fatalf("expected managed EndpointSlices for all services, got %#v", state.managedSlices)
 	}

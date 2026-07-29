@@ -236,23 +236,6 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 					}(),
 				}},
 			},
-			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-			&corev1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "echo",
-					Namespace: "default",
-				},
-				//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-				Subsets: []corev1.EndpointSubset{{
-					Addresses: []corev1.EndpointAddress{{
-						IP: "10.0.0.10",
-					}},
-					Ports: []corev1.EndpointPort{{
-						Name: "http",
-						Port: 8080,
-					}},
-				}},
-			},
 			&gatewayv1.HTTPRoute{
 				ObjectMeta: metav1.ObjectMeta{Name: "mesh", Namespace: "default"},
 				Spec: gatewayv1.HTTPRouteSpec{
@@ -336,19 +319,6 @@ func TestReconcileFrontsMeshServiceAndCreatesShadow(t *testing.T) {
 	if endpointSlice.Name != "" {
 		t.Fatalf("expected stale service EndpointSlice to be removed, got %#v", endpointSlice.Endpoints)
 	}
-	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-	endpoints := &corev1.Endpoints{}
-	if err := k8sClient.Get(
-		context.Background(),
-		client.ObjectKey{Name: "echo", Namespace: "default"},
-		endpoints,
-	); client.IgnoreNotFound(err) != nil {
-		t.Fatalf("Get mesh frontend Endpoints returned error: %v", err)
-	}
-	if endpoints.Name != "" {
-		t.Fatalf("expected stale service Endpoints to be removed, got %#v", endpoints.Subsets)
-	}
-
 	shadowName := mesh.ShadowServiceName("default", "echo")
 	shadow, err := mustGetService(context.Background(), k8sClient, client.ObjectKey{Name: shadowName, Namespace: "default"})
 	if err != nil {

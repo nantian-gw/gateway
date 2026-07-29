@@ -20,8 +20,6 @@ type meshServiceState struct {
 }
 
 type meshServiceEndpointState struct {
-	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-	endpointsByService             map[string]corev1.Endpoints
 	managedEndpointSlicesByService map[string]map[string]discoveryv1.EndpointSlice
 	foreignEndpointSlicesByService map[string]map[string]discoveryv1.EndpointSlice
 }
@@ -132,30 +130,8 @@ func loadMeshServiceEndpointState(
 	serviceKeys map[string]struct{},
 ) (meshServiceEndpointState, error) {
 	state := meshServiceEndpointState{
-		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-		endpointsByService:             make(map[string]corev1.Endpoints, len(serviceKeys)),
 		managedEndpointSlicesByService: make(map[string]map[string]discoveryv1.EndpointSlice),
 		foreignEndpointSlicesByService: make(map[string]map[string]discoveryv1.EndpointSlice, len(serviceKeys)),
-	}
-
-	for _, key := range sortedServiceKeys(serviceKeys) {
-		namespace, serviceName, ok := splitServiceKey(key)
-		if !ok {
-			continue
-		}
-
-		//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-		endpoint := &corev1.Endpoints{}
-		if err := cl.Get(
-			ctx,
-			client.ObjectKey{Namespace: namespace, Name: serviceName},
-			endpoint,
-		); client.IgnoreNotFound(err) != nil {
-			return state, err
-		}
-		if endpoint.Name != "" {
-			state.endpointsByService[key] = *endpoint
-		}
 	}
 
 	if err := loadEndpointSlicesForServices(

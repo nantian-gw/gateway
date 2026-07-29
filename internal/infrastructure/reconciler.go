@@ -371,9 +371,6 @@ func (r *Reconciler) reconcileSharedService(
 		return err
 	}
 
-	if err := deleteServiceEndpoints(ctx, r.client, state.endpoints[serviceID]); err != nil {
-		return err
-	}
 	if err := reconcileFrontendEndpointSlices(
 		ctx,
 		r.client,
@@ -461,9 +458,6 @@ func (r *Reconciler) reconcileGatewayServices(
 				return err
 			}
 			continue
-		}
-		if err := deleteServiceEndpoints(ctx, r.client, state.endpoints[serviceID]); err != nil {
-			return err
 		}
 		if err := reconcileFrontendEndpointSlices(
 			ctx,

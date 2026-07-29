@@ -98,9 +98,6 @@ func (r *Reconciler) reconcileMeshServicesWithPods(ctx context.Context, eligible
 		if err != nil {
 			return err
 		}
-		if err := deleteServiceEndpoints(ctx, r.client, endpointState.endpointsByService[key]); err != nil {
-			return err
-		}
 		if err := deleteMeshEndpointSlices(ctx, r.client, endpointState.foreignEndpointSlicesByService[key]); err != nil {
 			return err
 		}
@@ -510,15 +507,4 @@ func sourceService(current corev1.Service, shadow corev1.Service) corev1.Service
 		return shadow
 	}
 	return current
-}
-
-func deleteServiceEndpoints(
-	ctx context.Context,
-	cl client.Client,
-	endpoints corev1.Endpoints,
-) error {
-	if endpoints.Name == "" {
-		return nil
-	}
-	return client.IgnoreNotFound(cl.Delete(ctx, &endpoints))
 }

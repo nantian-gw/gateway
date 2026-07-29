@@ -1,0 +1,163 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backendlbpolicies.gateway.networking.k8s.io
+spec:
+  group: gateway.networking.k8s.io
+  names:
+    categories:
+    - gateway-api
+    kind: BackendLBPolicy
+    listKind: BackendLBPolicyList
+    plural: backendlbpolicies
+    singular: backendlbpolicy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required: [targetRefs]
+            properties:
+              targetRefs:
+                type: array
+                items:
+                  type: object
+                  required: [group, kind, name]
+                  properties:
+                    group:
+                      type: string
+                      maxLength: 253
+                    kind:
+                      type: string
+                      maxLength: 63
+                    name:
+                      type: string
+                      maxLength: 253
+              sessionPersistence:
+                type: object
+                properties:
+                  sessionName:
+                    type: string
+                    maxLength: 253
+                  absoluteTimeout:
+                    type: string
+                    pattern: ^([0-9]{1,5}(h|m|s|ms)){1,4}$
+                  idleTimeout:
+                    type: string
+                    pattern: ^([0-9]{1,5}(h|m|s|ms)){1,4}$
+                  cookieConfig:
+                    type: object
+                    properties:
+                      lifetimeType:
+                        type: string
+                        enum: [Session, Permanent]
+              loadBalancing:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                    - RoundRobin
+                    - ConsistentHash
+                    - LeastRequest
+                    - Random
+                  consistentHash:
+                    type: object
+                    properties:
+                      keyType:
+                        type: string
+                        enum:
+                        - SourceIP
+                        - Header
+                        - Hostname
+                      headerName:
+                        type: string
+                        maxLength: 253
+              circuitBreaker:
+                type: object
+                properties:
+                  maxInflightRequests:
+                    type: integer
+                    format: int32
+                    minimum: 1
+          status:
+            type: object
+            properties:
+              ancestors:
+                type: array
+                maxItems: 16
+                items:
+                  type: object
+                  required: [ancestorRef, controllerName]
+                  properties:
+                    ancestorRef:
+                      type: object
+                      required: [name]
+                      properties:
+                        group:
+                          type: string
+                          maxLength: 253
+                          default: gateway.networking.k8s.io
+                        kind:
+                          type: string
+                          maxLength: 63
+                          default: Gateway
+                        name:
+                          type: string
+                          maxLength: 253
+                          minLength: 1
+                        namespace:
+                          type: string
+                          maxLength: 63
+                        port:
+                          type: integer
+                          format: int32
+                          minimum: 1
+                          maximum: 65535
+                        sectionName:
+                          type: string
+                          maxLength: 253
+                    controllerName:
+                      type: string
+                      maxLength: 253
+                    conditions:
+                      type: array
+                      maxItems: 8
+                      items:
+                        type: object
+                        required: [type, status, lastTransitionTime, reason, message]
+                        properties:
+                          type:
+                            type: string
+                            maxLength: 316
+                            pattern: "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
+                          status:
+                            type: string
+                            enum: ["True", "False", "Unknown"]
+                          observedGeneration:
+                            type: integer
+                            format: int64
+                            minimum: 0
+                          lastTransitionTime:
+                            type: string
+                            format: date-time
+                          reason:
+                            type: string
+                            minLength: 1
+                            maxLength: 1024
+                            pattern: "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$"
+                          message:
+                            type: string
+                            maxLength: 32768
+    served: true
+    storage: true
+    subresources:
+      status: {}

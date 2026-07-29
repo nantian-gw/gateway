@@ -79,13 +79,6 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 					},
 				},
 			},
-			//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-			&corev1.Endpoints{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      serviceName,
-					Namespace: "default",
-				},
-			},
 			&discoveryv1.EndpointSlice{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "nantian-gw-gateway-ep-stale",
@@ -113,18 +106,6 @@ func TestReconcileDeletesStaleGatewayInfrastructureEndpointResources(t *testing.
 	)
 	if !serviceMissing(err) {
 		t.Fatalf("expected stale service to be deleted, got err=%v", err)
-	}
-
-	//nolint:staticcheck // SA1019: deprecated API used correctly for backward compatibility
-	endpoints := &corev1.Endpoints{}
-	if err := k8sClient.Get(
-		context.Background(),
-		client.ObjectKey{Namespace: "default", Name: serviceName},
-		endpoints,
-	); client.IgnoreNotFound(err) != nil {
-		t.Fatalf("Get stale Endpoints returned error: %v", err)
-	} else if err == nil {
-		t.Fatalf("expected stale Endpoints to be deleted")
 	}
 
 	endpointSlice := &discoveryv1.EndpointSlice{}
