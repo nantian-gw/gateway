@@ -202,40 +202,72 @@ func backendTLSPolicyValidationSupported(
 			if kind == "" {
 				kind = "ConfigMap"
 			}
-			if kind != "ConfigMap" {
+
+			switch kind {
+			case "ConfigMap":
+				configMap, ok := state.configMapByKey[namespacedName(policy.Namespace, string(ref.Name))]
+				caPEM := []byte(configMap.Data["ca.crt"])
+				if !ok || len(caPEM) == 0 {
+					if resolvedMessage == "" {
+						resolvedReason = backendTLSPolicyReasonInvalidCACertRef
+						resolvedMessage = fmt.Sprintf(
+							"BackendTLSPolicy CA ref ConfigMap %s/%s was not found or does not contain ca.crt",
+							policy.Namespace,
+							ref.Name,
+						)
+					}
+					continue
+				}
+
+				pool := x509.NewCertPool()
+				if !pool.AppendCertsFromPEM(caPEM) {
+					if resolvedMessage == "" {
+						resolvedReason = backendTLSPolicyReasonInvalidCACertRef
+						resolvedMessage = fmt.Sprintf(
+							"BackendTLSPolicy CA ref ConfigMap %s/%s does not contain a valid PEM certificate bundle",
+							policy.Namespace,
+							ref.Name,
+						)
+					}
+					continue
+				}
+			case "Secret":
+				secret, ok := state.secretByKey[namespacedName(policy.Namespace, string(ref.Name))]
+				caPEM := secret.Data["ca.crt"]
+				if len(caPEM) == 0 {
+					caPEM = secret.Data["tls.crt"]
+				}
+				if !ok || len(caPEM) == 0 {
+					if resolvedMessage == "" {
+						resolvedReason = backendTLSPolicyReasonInvalidCACertRef
+						resolvedMessage = fmt.Sprintf(
+							"BackendTLSPolicy CA ref Secret %s/%s was not found or does not contain ca.crt",
+							policy.Namespace,
+							ref.Name,
+						)
+					}
+					continue
+				}
+
+				pool := x509.NewCertPool()
+				if !pool.AppendCertsFromPEM(caPEM) {
+					if resolvedMessage == "" {
+						resolvedReason = backendTLSPolicyReasonInvalidCACertRef
+						resolvedMessage = fmt.Sprintf(
+							"BackendTLSPolicy CA ref Secret %s/%s does not contain a valid PEM certificate bundle",
+							policy.Namespace,
+							ref.Name,
+						)
+					}
+					continue
+				}
+			default:
 				if resolvedMessage == "" {
 					resolvedReason = backendTLSPolicyReasonInvalidKind
 					resolvedMessage = fmt.Sprintf(
 						"BackendTLSPolicy CA ref %q uses unsupported kind %q",
 						ref.Name,
 						kind,
-					)
-				}
-				continue
-			}
-
-			configMap, ok := state.configMapByKey[namespacedName(policy.Namespace, string(ref.Name))]
-			caPEM := []byte(configMap.Data["ca.crt"])
-			if !ok || len(caPEM) == 0 {
-				if resolvedMessage == "" {
-					resolvedReason = backendTLSPolicyReasonInvalidCACertRef
-					resolvedMessage = fmt.Sprintf(
-						"BackendTLSPolicy CA ref ConfigMap %s/%s was not found or does not contain ca.crt",
-						policy.Namespace,
-						ref.Name,
-					)
-				}
-				continue
-			}
-
-			pool := x509.NewCertPool()
-			if !pool.AppendCertsFromPEM(caPEM) {
-				if resolvedMessage == "" {
-					resolvedReason = backendTLSPolicyReasonInvalidCACertRef
-					resolvedMessage = fmt.Sprintf(
-						"BackendTLSPolicy CA ref ConfigMap %s/%s does not contain a valid PEM certificate bundle",
-						policy.Namespace,
-						ref.Name,
 					)
 				}
 				continue

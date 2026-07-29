@@ -97,6 +97,20 @@ func (i TranslatorIndexes) ConfigMapCAPEM(namespace, name string) string {
 	return i.configMapCAPEMsByKey[BackendObjectKey(namespace, name)]
 }
 
+func (i TranslatorIndexes) SecretCAPEM(namespace, name string) string {
+	secret, ok := i.tlsSecretsByKey[BackendObjectKey(namespace, name)]
+	if !ok {
+		return ""
+	}
+	if data, ok := secret.Data["ca.crt"]; ok && len(data) > 0 {
+		return string(data)
+	}
+	if data, ok := secret.Data["tls.crt"]; ok && len(data) > 0 {
+		return string(data)
+	}
+	return ""
+}
+
 func (i TranslatorIndexes) ServiceEndpointSlices(namespace, name string) []discoveryv1.EndpointSlice {
 	return i.endpointSlicesByServiceKey[BackendObjectKey(namespace, name)]
 }

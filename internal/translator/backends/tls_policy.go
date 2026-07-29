@@ -186,11 +186,17 @@ func backendTLSPolicyCAPEMsWithIndexes(
 		if kind == "" {
 			kind = "ConfigMap"
 		}
-		if kind != "ConfigMap" {
+
+		var caPEM string
+		switch kind {
+		case "ConfigMap":
+			caPEM = indexes.ConfigMapCAPEM(namespace, string(ref.Name))
+		case "Secret":
+			caPEM = indexes.SecretCAPEM(namespace, string(ref.Name))
+		default:
 			continue
 		}
 
-		caPEM := indexes.ConfigMapCAPEM(namespace, string(ref.Name))
 		if !validBackendTLSPolicyCAPEM(caPEM) {
 			continue
 		}
