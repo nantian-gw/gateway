@@ -73,8 +73,5 @@ for expected in \
   fi
 done
 
-# Clean up stale CRD lacking api-approved annotation before re-apply
-kubectl delete crd backendlbpolicies.gateway.networking.k8s.io --ignore-not-found 2>/dev/null || true
-
-kubectl apply -f "$rendered"
+kubectl apply --server-side -f "$rendered"
 kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout="$TIMEOUT"
