@@ -16,6 +16,9 @@ CONTROLPLANE_LATEST_IMAGE="${CONTROLPLANE_LATEST_IMAGE:-ghcr.io/nantian-gw/nanti
 docker pull "$DATAPLANE_IMAGE"
 docker pull "$DASHBOARD_IMAGE"
 
+CONFORMANCE_ECHO_IMAGE="registry.k8s.io/gateway-api/conformance/echo-basic:v0.1.0"
+docker pull "$CONFORMANCE_ECHO_IMAGE" 2>/dev/null || true
+
 dataplane_image_id="$(docker image inspect --format '{{.Id}}' "$DATAPLANE_IMAGE")"
 dashboard_image_id="$(docker image inspect --format '{{.Id}}' "$DASHBOARD_IMAGE")"
 
@@ -28,6 +31,7 @@ kind load docker-image "$CONTROLPLANE_IMAGE" --name "$CLUSTER_NAME"
 kind load docker-image "$CONTROLPLANE_LATEST_IMAGE" --name "$CLUSTER_NAME"
 kind load docker-image "$KIND_DATAPLANE_IMAGE" --name "$CLUSTER_NAME"
 kind load docker-image "$KIND_DASHBOARD_IMAGE" --name "$CLUSTER_NAME"
+kind load docker-image "$CONFORMANCE_ECHO_IMAGE" --name "$CLUSTER_NAME" 2>/dev/null || true
 
 # Force restart control plane pods to pick up the latest image if they exist
 kubectl rollout restart deployment/nantian-gw-controlplane -n nantian-gw --ignore-not-found=true 2>/dev/null || true
