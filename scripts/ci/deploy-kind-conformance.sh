@@ -73,5 +73,5 @@ for expected in \
   fi
 done
 
-kubectl apply -f "$rendered" --validate=false
+kubectl apply -f "$rendered"
 kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout="$TIMEOUT"
