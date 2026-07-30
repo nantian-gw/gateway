@@ -28,6 +28,9 @@ curl -fsSL --connect-timeout 15 --max-time 120 --retry 3 --retry-delay 5 --retry
 apply_with_retries() {
   local manifest="$1"
 
+  # Remove stale CRDs that may lack api-approved annotation
+  kubectl delete crd backendlbpolicies.gateway.networking.k8s.io --ignore-not-found 2>/dev/null || true
+
   for attempt in 1 2 3; do
     if kubectl apply --server-side -f "$manifest"; then
       return 0
