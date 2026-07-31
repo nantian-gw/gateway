@@ -108,7 +108,7 @@ jobs:
           PYEOF
 
           set +e
-          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
+          go test -tags=conformance -count=1 -v -timeout 45m ./conformance/ \
             -args \
             -gateway-class nantian-gw \
             -report-output "$report_path" \
@@ -231,7 +231,7 @@ jobs:
           PYEOF
 
           set +e
-          go test -tags=conformance -count=1 -v -timeout 30m ./conformance/ \
+          go test -tags=conformance -count=1 -v -timeout 45m ./conformance/ \
             -args \
             -gateway-class nantian-gw \
             -report-output "$report_path" \

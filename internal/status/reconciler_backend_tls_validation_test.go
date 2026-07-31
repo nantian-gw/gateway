@@ -842,7 +842,7 @@ func TestReconcileRejectsBackendTLSPolicyWithInvalidCustomCAConfigMap(t *testing
 		t,
 		policy.Status.Ancestors[0].Conditions,
 		string(gatewayv1.PolicyConditionAccepted),
-		metav1.ConditionTrue,
+		metav1.ConditionFalse,
 		backendTLSPolicyReasonNoValidCACert,
 		1,
 	)
