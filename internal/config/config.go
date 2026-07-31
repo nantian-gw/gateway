@@ -240,6 +240,7 @@ type GRPCRuntimeConfig struct {
 	MaxRecvMsgSize        int    `yaml:"maxRecvMsgSize"`
 	PermitWithoutStream   bool   `yaml:"permitWithoutStream"`
 	EnableCompression     bool   `yaml:"enableCompression"`
+	XDSProtocol           string `yaml:"xdsProtocol"`
 }
 
 func Load(path string) (*Config, error) {
@@ -345,6 +346,9 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.GRPCRuntime.GracefulStopTimeout == "" {
 		cfg.GRPCRuntime.GracefulStopTimeout = "3s"
+	}
+	if cfg.GRPCRuntime.XDSProtocol == "" {
+		cfg.GRPCRuntime.XDSProtocol = "sotw"
 	}
 	if cfg.Pprof.Addr == "" {
 		cfg.Pprof.Addr = "127.0.0.1:6060"

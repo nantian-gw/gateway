@@ -35,6 +35,7 @@ type Server struct {
 	streamsMu     sync.Mutex
 	nextStreamID  uint64
 	activeStreams map[string]*streamRegistration
+	enableDelta   bool
 }
 
 const (
@@ -85,6 +86,7 @@ func New(
 		serverOptions: serverOptions,
 		shutdownCh:    make(chan struct{}),
 		activeStreams: make(map[string]*streamRegistration, 64),
+		enableDelta:   runtimeConfig.XDSProtocol == "delta",
 	}, nil
 }
 
@@ -99,7 +101,9 @@ func (s *Server) Run(ctx context.Context) error {
 func (s *Server) Serve(ctx context.Context, lis net.Listener, markStarted func()) error {
 	grpcServer := grpc.NewServer(s.serverOptions...)
 	controlv1.RegisterConfigurationDiscoveryServiceServer(grpcServer, s)
-	controlv1.RegisterDeltaDiscoveryServiceServer(grpcServer, s)
+	if s.enableDelta {
+		controlv1.RegisterDeltaDiscoveryServiceServer(grpcServer, s)
+	}
 
 	go func() {
 		<-ctx.Done()

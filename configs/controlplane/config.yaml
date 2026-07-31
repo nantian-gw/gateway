@@ -97,6 +97,8 @@ grpcRuntime:
   snapshotSendTimeout: "5s"
   snapshotAckTimeout: "30s"
   permitWithoutStream: false
+  enableCompression: false
+  xdsProtocol: "sotw"
 features:
   enableExperimentalGateway: false
   enableAiGateway: false
