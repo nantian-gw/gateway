@@ -57,6 +57,7 @@ func (s *Server) DeltaStreamConfiguration(stream controlv1.DeltaDiscoveryService
 	initial := s.store.Current()
 	if initial != nil {
 		ds.pushDelta(ctx, nil, initial)
+		ds.lastSnapshot = initial
 	}
 
 	// Main loop: handle client requests and snapshot changes
