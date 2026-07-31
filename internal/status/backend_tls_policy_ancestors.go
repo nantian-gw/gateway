@@ -365,7 +365,7 @@ func invalidAcceptedPolicyCondition(generation int64, message string) conditionS
 func noValidCACertificateAcceptedCondition(generation int64) conditionSpec {
 	return acceptedPolicyCondition(
 		generation,
-		metav1.ConditionFalse,
+		metav1.ConditionTrue,
 		backendTLSPolicyReasonNoValidCACert,
 		"BackendTLSPolicy does not contain any valid CA certificate references",
 	)

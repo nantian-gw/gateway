@@ -113,10 +113,7 @@ func translateBackendTLSPolicyValidationWithIndexes(
 			return nil, false
 		}
 
-		caPEMs, ok := backendTLSPolicyCAPEMsWithIndexes(indexes, policy.Namespace, validation.CACertificateRefs)
-		if !ok || len(caPEMs) == 0 {
-			return nil, false
-		}
+		caPEMs, _ := backendTLSPolicyCAPEMsWithIndexes(indexes, policy.Namespace, validation.CACertificateRefs)
 
 		return &ir.BackendTLSValidation{
 			Hostname:        string(validation.Hostname),
