@@ -739,3 +739,70 @@ func sectionNamePtr(value string) *gatewayv1.SectionName {
 	name := gatewayv1.SectionName(value)
 	return &name
 }
+
+func TestBuildSnapshotProducesBackendTLSValidationWithAllInvalidCARefs(t *testing.T) {
+	scheme := runtime.NewScheme()
+	testutil.Must(gatewayv1.Install(scheme), t)
+	testutil.Must(gatewayv1alpha2.Install(scheme), t)
+	testutil.Must(gatewayv1alpha3.Install(scheme), t)
+	testutil.Must(gatewayv1beta1.Install(scheme), t)
+	testutil.Must(corev1.AddToScheme(scheme), t)
+	testutil.Must(discoveryv1.AddToScheme(scheme), t)
+
+	client := testutil.NewTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: "default"},
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{{
+						Name: "https",
+						Port: 8443,
+					}},
+				},
+			},
+			&gatewayv1alpha3.BackendTLSPolicy{
+				ObjectMeta: metav1.ObjectMeta{Name: "orders-tls", Namespace: "default"},
+				Spec: gatewayv1.BackendTLSPolicySpec{
+					TargetRefs: []gatewayv1.LocalPolicyTargetReferenceWithSectionName{{
+						LocalPolicyTargetReference: gatewayv1.LocalPolicyTargetReference{
+							Group: "",
+							Kind:  "Service",
+							Name:  "orders",
+						},
+						SectionName: sectionNamePtr("https"),
+					}},
+					Validation: gatewayv1.BackendTLSPolicyValidation{
+						Hostname: "orders.internal.example",
+						CACertificateRefs: []gatewayv1.LocalObjectReference{
+							{Name: "orders-ca-missing"},
+							{Name: "orders-ca-also-missing"},
+						},
+					},
+				},
+			},
+		).
+		Build()
+
+	snapshot, err := translator.New(
+		"gateway.networking.k8s.io/nantian-gw",
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	).Build(context.Background(), client)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	if len(snapshot.Backends) != 1 {
+		t.Fatalf("expected 1 backend, got %d", len(snapshot.Backends))
+	}
+	validation := snapshot.Backends[0].BackendTLSValidation
+	if validation == nil {
+		t.Fatal("expected BackendTLSValidation to be non-nil even when all CA refs are invalid")
+	}
+	if len(validation.CAPEMs) != 0 {
+		t.Fatalf("expected 0 custom CA PEMs (all refs invalid), got %d", len(validation.CAPEMs))
+	}
+	if validation.Hostname != "orders.internal.example" {
+		t.Fatalf("unexpected hostname: %q", validation.Hostname)
+	}
+}
