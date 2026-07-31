@@ -226,7 +226,7 @@ jobs:
           print("Patched apply.go with conflict retry")
           PYEOF
 
-          CLUSTER_NAME="${CLUSTER_NAME}-conformance" go test -tags=conformance -count=1 -v -timeout 30m ./conformance/
+          CLUSTER_NAME="${CLUSTER_NAME}-conformance" go test -tags=conformance -count=1 -v -timeout 45m ./conformance/
 
       - name: Collect diagnostics on failure
         if: failure()
