@@ -157,7 +157,6 @@ type routeState struct {
 type listenerPolicy struct {
 	supportedKinds  []gatewayv1.RouteGroupKind
 	allowedKinds    map[routeKind]struct{}
-	protocolKinds   map[routeKind]struct{} // protocol-level support, not filtered by user config
 	invalidKindRefs bool
 	namespaceMode   gatewayv1.FromNamespaces
 	selector        labels.Selector

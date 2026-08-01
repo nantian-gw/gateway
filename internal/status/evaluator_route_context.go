@@ -136,13 +136,6 @@ func (c *routeEvaluationContext) evaluateParentRef(
 		}
 
 		policy := c.gatewayPolicy(gateway, listener)
-		// Only count this listener as a "matching parent" if its protocol
-		// can potentially support this route kind. Without this check, a
-		// TLSRoute pointing to an HTTP-only Gateway would incorrectly report
-		// NotAllowedByListeners instead of NoMatchingParent.
-		if _, protocolSupportsKind := policy.protocolKinds[route.kind]; !protocolSupportsKind {
-			continue
-		}
 		matchedParent = true
 
 		if !listenerAllowsRoute(policy, route.kind, gateway.Namespace, route.namespace, namespace) {
@@ -334,9 +327,6 @@ func (c *routeEvaluationContext) evaluateListenerSetParentRef(
 
 		entryListener := listenerEntryToInternalListener(entry, ls)
 		policy := c.listenerSetPolicy(ls, entry)
-		if _, protocolSupportsKind := policy.protocolKinds[route.kind]; !protocolSupportsKind {
-			continue
-		}
 		matchedParent = true
 
 		if !listenerAllowsRoute(policy, route.kind, ls.Namespace, route.namespace, namespace) {
