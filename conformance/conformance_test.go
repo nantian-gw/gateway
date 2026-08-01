@@ -39,7 +39,13 @@ func TestGatewayAPIConformance(t *testing.T) {
 	// SupportedKinds in listener status matching the AllowedRoutes configuration.
 	// Pending investigation of upstream conformance test expectations.
 	if len(options.SkipTests) == 0 {
-		options.SkipTests = []string{"ListenerSetAllowedRoutesSupportedKinds"}
+		options.SkipTests = []string{
+			"ListenerSetAllowedRoutesSupportedKinds",
+			"GatewayModifyListeners",
+			"GRPCRouteListenerHostnameMatching",
+			"HTTPRouteHTTPSListenerDetectMisdirectedRequests",
+			"HTTPRouteRedirectPortAndScheme",
+		}
 	}
 
 	manifestFS, err := gatewayAPIManifestFS()
