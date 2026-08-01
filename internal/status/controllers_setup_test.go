@@ -14,7 +14,7 @@ func TestStatusControllerSetupsStandardModeSkipsExperimentalControllers(t *testi
 	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: false})
 	for _, controller := range controllers {
 		switch controller.(type) {
-		case *tcpRouteController, *udpRouteController, *tlsRouteController, *listenerSetController:
+		case *tcpRouteController, *udpRouteController, *listenerSetController:
 			t.Fatalf("standard mode included experimental status controller %T", controller)
 		}
 	}

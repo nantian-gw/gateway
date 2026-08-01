@@ -59,13 +59,13 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 		},
 		&httpRouteController{reconciler: reconciler},
 		&grpcRouteController{reconciler: reconciler},
+		&tlsRouteController{reconciler: reconciler},
 	}
 
 	if opts.EnableExperimentalGateway {
 		controllers = append(controllers,
 			&tcpRouteController{reconciler: reconciler},
 			&udpRouteController{reconciler: reconciler},
-			&tlsRouteController{reconciler: reconciler},
 			&listenerSetController{reconciler: reconciler},
 		)
 	}

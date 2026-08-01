@@ -252,6 +252,12 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 	}
 	state.grpcRoutes = grpcRoutes
 
+	tlsRoutes, err := listTLSRoutesForGateway(ctx, r.reader, key)
+	if err != nil {
+		return err
+	}
+	state.tlsRoutes = tlsRoutes
+
 	if !r.experimentalGatewayEnabled() {
 		if gatewayapi.GatewayActsAsDefault(gateway) {
 			return r.loadDefaultGatewayRoutes(ctx, state, gateway)
@@ -271,11 +277,6 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 	}
 	state.udpRoutes = udpRoutes
 
-	tlsRoutes, err := listTLSRoutesForGateway(ctx, r.reader, key)
-	if err != nil {
-		return err
-	}
-	state.tlsRoutes = tlsRoutes
 
 	if len(state.listenerSets) > 0 {
 		listenerSetRoutes, err := listHTTPRoutesWithListenerSetParents(ctx, r.reader)
@@ -321,6 +322,12 @@ func (r *Reconciler) loadDefaultGatewayRoutes(
 	}
 	state.grpcRoutes = mergeGRPCRoutesByKey(state.grpcRoutes, filterGRPCRoutesByDefaultScope(grpcRoutes.Items, gateway.Spec.DefaultScope))
 
+	var tlsRoutes gatewayv1alpha2.TLSRouteList
+	if err := r.reader.List(ctx, &tlsRoutes); err != nil {
+		return err
+	}
+	state.tlsRoutes = mergeTLSRoutesByKey(state.tlsRoutes, filterTLSRoutesByDefaultScope(tlsRoutes.Items, gateway.Spec.DefaultScope))
+
 	if !r.experimentalGatewayEnabled() {
 		return nil
 	}
@@ -336,12 +343,6 @@ func (r *Reconciler) loadDefaultGatewayRoutes(
 		return err
 	}
 	state.udpRoutes = mergeUDPRoutesByKey(state.udpRoutes, filterUDPRoutesByDefaultScope(udpRoutes.Items, gateway.Spec.DefaultScope))
-
-	var tlsRoutes gatewayv1alpha2.TLSRouteList
-	if err := r.reader.List(ctx, &tlsRoutes); err != nil {
-		return err
-	}
-	state.tlsRoutes = mergeTLSRoutesByKey(state.tlsRoutes, filterTLSRoutesByDefaultScope(tlsRoutes.Items, gateway.Spec.DefaultScope))
 
 	return nil
 }
