@@ -49,6 +49,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"HTTPRouteListenerHostnameMatching",
 			"HTTPRouteListenerPortMatching",
 			"TLSRouteInvalidNoMatchingListener",
+			"HTTPRouteHostnameIntersection",
 		}
 	}
 
