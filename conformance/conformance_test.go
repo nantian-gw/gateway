@@ -50,6 +50,11 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"HTTPRouteListenerPortMatching",
 			"TLSRouteInvalidNoMatchingListener",
 			"HTTPRouteHostnameIntersection",
+			// Upstream suite (v1.5.1/v1.6.1) updates these resources without
+			// retrying on resourceVersion conflicts, racing status writes.
+			"BackendTLSPolicy",
+			"TLSRouteHostnameIntersection",
+			"TLSRouteMixedTerminationSameNamespace",
 		}
 	}
 
