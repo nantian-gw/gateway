@@ -224,7 +224,8 @@ func isMissingFieldIndexError(err error) bool {
 	message := err.Error()
 	return strings.Contains(message, "no index with name") ||
 		(strings.Contains(message, "specifies selector on field") && strings.Contains(message, "has been registered")) ||
-		strings.Contains(message, "field label not supported")
+		strings.Contains(message, "field label not supported") ||
+		(strings.Contains(message, "Index with name") && strings.Contains(message, "does not exist"))
 }
 
 func requiredFieldIndexError(kind, field string, err error) error {

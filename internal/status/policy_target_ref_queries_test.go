@@ -47,10 +47,28 @@ func TestSetupIndexesStandardModeSkipsExperimentalRouteIndexes(t *testing.T) {
 		t.Fatalf("SetupIndexes returned error: %v", err)
 	}
 
+	seen := map[reflect.Type]bool{}
 	for _, object := range indexer.objects {
-		switch object.(type) {
-		case *gatewayv1alpha2.TCPRoute, *gatewayv1alpha2.UDPRoute, *gatewayv1alpha2.TLSRoute:
-			t.Fatalf("standard mode registered experimental route index for %T", object)
+		seen[reflect.TypeOf(object)] = true
+	}
+
+	for _, skipped := range []client.Object{
+		&gatewayv1alpha2.TCPRoute{},
+		&gatewayv1alpha2.UDPRoute{},
+	} {
+		if seen[reflect.TypeOf(skipped)] {
+			t.Fatalf("standard mode registered experimental route index for %T", skipped)
+		}
+	}
+
+	// TLSRoute support is declared in SupportedFeatureNameSet() and the
+	// status evaluator loads TLS routes without any experimental gate, so
+	// its indexes must be registered in standard mode too.
+	for _, want := range []client.Object{
+		&gatewayv1alpha2.TLSRoute{},
+	} {
+		if !seen[reflect.TypeOf(want)] {
+			t.Fatalf("standard mode did not register index for %T", want)
 		}
 	}
 }

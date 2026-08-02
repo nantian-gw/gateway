@@ -277,7 +277,6 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 	}
 	state.udpRoutes = udpRoutes
 
-
 	if len(state.listenerSets) > 0 {
 		listenerSetRoutes, err := listHTTPRoutesWithListenerSetParents(ctx, r.reader)
 		if err != nil {
