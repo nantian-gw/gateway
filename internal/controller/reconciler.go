@@ -26,6 +26,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/resources"
@@ -205,6 +206,13 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 	if resourceSupported(mgr, &wasmplugin.WasmPlugin{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&wasmplugin.WasmPlugin{},
+			snapshotRequests,
+			snapshotMutationPredicate,
+		)
+	}
+	if resourceSupported(mgr, &routepolicy.RoutePolicy{}) {
+		controllerBuilder = controllerBuilder.Watches(
+			&routepolicy.RoutePolicy{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)

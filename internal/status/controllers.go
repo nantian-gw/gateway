@@ -40,14 +40,40 @@ type controllerSetup interface {
 	SetupWithManager(ctrl.Manager) error
 }
 
+// resourceBackedController is implemented by controllers whose primary watched
+// object is an optional CRD. When the CRD is not installed in the cluster (for
+// example an experimental or AI-gateway extension type that the deployment did
+// not ship), the controller must not be registered: controller-runtime would
+// otherwise fail to start its informer cache, timing out "cache to sync" and
+// crashing the whole control plane.
+type resourceBackedController interface {
+	watchedObject() client.Object
+}
+
 func SetupControllers(mgr ctrl.Manager, reconciler *Reconciler, options ...Options) error {
-	for _, controller := range statusControllerSetups(reconciler, normalizeOptions(options)) {
+	controllerSupported := func(object client.Object) bool {
+		return resourceSupported(mgr.GetScheme(), mgr.GetRESTMapper(), object)
+	}
+	for _, controller := range supportedControllers(statusControllerSetups(reconciler, normalizeOptions(options)), controllerSupported) {
 		if err := controller.SetupWithManager(mgr); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func supportedControllers(controllers []controllerSetup, supported func(client.Object) bool) []controllerSetup {
+	out := make([]controllerSetup, 0, len(controllers))
+	for _, controller := range controllers {
+		if gated, ok := controller.(resourceBackedController); ok {
+			if !supported(gated.watchedObject()) {
+				continue
+			}
+		}
+		out = append(out, controller)
+	}
+	return out
 }
 
 func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSetup {
@@ -447,6 +473,10 @@ func (c *tcpRouteController) Reconcile(
 	return ctrl.Result{}, c.reconciler.ReconcileTCPRouteObject(ctx, req.NamespacedName)
 }
 
+func (c *tcpRouteController) watchedObject() client.Object {
+	return &gatewayv1alpha2.TCPRoute{}
+}
+
 func (c *tcpRouteController) SetupWithManager(mgr ctrl.Manager) error {
 	serviceRequests := handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, object client.Object) []reconcile.Request {
 		return tcpRouteStatusRequestsForService(ctx, mgr.GetClient(), object)
@@ -485,6 +515,10 @@ func (c *udpRouteController) Reconcile(
 	req ctrl.Request,
 ) (ctrl.Result, error) {
 	return ctrl.Result{}, c.reconciler.ReconcileUDPRouteObject(ctx, req.NamespacedName)
+}
+
+func (c *udpRouteController) watchedObject() client.Object {
+	return &gatewayv1alpha2.UDPRoute{}
 }
 
 func (c *udpRouteController) SetupWithManager(mgr ctrl.Manager) error {
@@ -567,6 +601,10 @@ func (c *listenerSetController) Reconcile(
 	return ctrl.Result{}, c.reconciler.ReconcileListenerSetObject(ctx, req.NamespacedName)
 }
 
+func (c *listenerSetController) watchedObject() client.Object {
+	return &gatewayv1.ListenerSet{}
+}
+
 func (c *listenerSetController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("listenerset-status").
@@ -604,6 +642,10 @@ func (c *backendLBPolicyController) Reconcile(
 	req ctrl.Request,
 ) (ctrl.Result, error) {
 	return ctrl.Result{}, c.reconciler.reconcileBackendLBPolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *backendLBPolicyController) watchedObject() client.Object {
+	return &backend.BackendLBPolicy{}
 }
 
 func (c *backendLBPolicyController) SetupWithManager(mgr ctrl.Manager) error {
@@ -644,6 +686,10 @@ func (c *aiserviceController) Reconcile(
 	return ctrl.Result{}, c.reconciler.reconcileAIServiceObject(ctx, req.NamespacedName)
 }
 
+func (c *aiserviceController) watchedObject() client.Object {
+	return &aiservice.AIService{}
+}
+
 func (c *aiserviceController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("aiservice-status").
@@ -661,6 +707,10 @@ func (c *tokenPolicyController) Reconcile(
 	req ctrl.Request,
 ) (ctrl.Result, error) {
 	return ctrl.Result{}, c.reconciler.reconcileTokenPolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *tokenPolicyController) watchedObject() client.Object {
+	return &tokenpolicy.TokenPolicy{}
 }
 
 func (c *tokenPolicyController) SetupWithManager(mgr ctrl.Manager) error {
@@ -682,6 +732,10 @@ func (c *wasmPluginController) Reconcile(
 	return ctrl.Result{}, c.reconciler.reconcileWasmPluginObject(ctx, req.NamespacedName)
 }
 
+func (c *wasmPluginController) watchedObject() client.Object {
+	return &wasmplugin.WasmPlugin{}
+}
+
 func (c *wasmPluginController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("wasmplugin-status").
@@ -699,6 +753,10 @@ func (c *routePolicyController) Reconcile(
 	req ctrl.Request,
 ) (ctrl.Result, error) {
 	return ctrl.Result{}, c.reconciler.reconcileRoutePolicyObject(ctx, req.NamespacedName)
+}
+
+func (c *routePolicyController) watchedObject() client.Object {
+	return &routepolicy.RoutePolicy{}
 }
 
 func (c *routePolicyController) SetupWithManager(mgr ctrl.Manager) error {

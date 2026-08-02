@@ -5,7 +5,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+
+	"github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	"github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 )
 
 func TestStatusControllerSetupsStandardModeSkipsExperimentalControllers(t *testing.T) {
@@ -69,5 +73,52 @@ func TestResourceSupportedReturnsTrueWhenRESTMappingPresent(t *testing.T) {
 
 	if !resourceSupported(scheme, restMapper, &mcsv1alpha1.ServiceImport{}) {
 		t.Fatal("expected ServiceImport to be supported when a REST mapping exists")
+	}
+}
+
+func TestSupportedControllersSkipsGatedControllersWhenCRDAbsent(t *testing.T) {
+	t.Parallel()
+
+	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: true, EnableAiGateway: true})
+	supported := func(object client.Object) bool {
+		switch object.(type) {
+		case *backend.BackendLBPolicy, *routepolicy.RoutePolicy:
+			return false
+		default:
+			return true
+		}
+	}
+
+	gated := supportedControllers(controllers, supported)
+	for _, controller := range gated {
+		switch controller.(type) {
+		case *backendLBPolicyController, *routePolicyController:
+			t.Fatalf("expected controller %T to be skipped when its CRD is absent", controller)
+		}
+	}
+}
+
+func TestSupportedControllersKeepsSupportedExperimentalControllers(t *testing.T) {
+	t.Parallel()
+
+	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: true})
+	gated := supportedControllers(controllers, func(client.Object) bool { return true })
+
+	seen := map[string]bool{}
+	for _, controller := range gated {
+		switch controller.(type) {
+		case *tcpRouteController:
+			seen["tcp"] = true
+		case *udpRouteController:
+			seen["udp"] = true
+		case *backendLBPolicyController:
+			seen["backendlbp"] = true
+		}
+	}
+
+	for _, name := range []string{"tcp", "udp", "backendlbp"} {
+		if !seen[name] {
+			t.Fatalf("expected %s controller to be kept when supported", name)
+		}
 	}
 }
