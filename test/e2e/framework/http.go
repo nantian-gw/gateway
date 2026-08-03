@@ -10,11 +10,11 @@ import (
 )
 
 type HTTPGetOptions struct {
-	Timeout      time.Duration
-	Headers      map[string]string
-	Insecure     bool
-	Method       string
-	Body         string
+	Timeout         time.Duration
+	Headers         map[string]string
+	Insecure        bool
+	Method          string
+	Body            string
 	FollowRedirects bool
 }
 
@@ -28,8 +28,8 @@ func HTTPGetFromPod(t T, podNS, podName, url string, opts ...func(*HTTPGetOption
 	t.Helper()
 
 	o := &HTTPGetOptions{
-		Timeout: 10 * time.Second,
-		Method:  "GET",
+		Timeout:         10 * time.Second,
+		Method:          "GET",
 		FollowRedirects: true,
 	}
 	for _, fn := range opts {

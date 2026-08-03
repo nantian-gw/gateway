@@ -13,10 +13,10 @@ import (
 const (
 	ControlPlaneNS = "nantian-gw"
 
-	gatewayAPIVersion       = "v1.5.1"
-	gatewayAPIBaseURL       = "https://github.com/kubernetes-sigs/gateway-api/releases/download/" + gatewayAPIVersion
-	gatewayAPIStandard      = "standard-install.yaml"
-	gatewayAPIExperimental  = "experimental-install.yaml"
+	gatewayAPIVersion      = "v1.5.1"
+	gatewayAPIBaseURL      = "https://github.com/kubernetes-sigs/gateway-api/releases/download/" + gatewayAPIVersion
+	gatewayAPIStandard     = "standard-install.yaml"
+	gatewayAPIExperimental = "experimental-install.yaml"
 )
 
 func InstallGatewayAPICRDs(t T) {
