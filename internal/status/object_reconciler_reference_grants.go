@@ -14,15 +14,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/mesh"
 )
 
-func (r *Reconciler) listReferenceGrants(ctx context.Context, state *clusterState) error {
-	var grants gatewayv1beta1.ReferenceGrantList
-	if err := r.listReader.List(ctx, &grants); err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-	state.referenceGrants = grants.Items
-	return nil
-}
-
 func (r *Reconciler) loadRouteReferenceGrants(ctx context.Context, state *clusterState, route routeInput) error {
 	namespaces := referenceGrantTargetNamespacesForRoute(route, state.gateways)
 	return r.loadReferenceGrantsForNamespaces(ctx, state, namespaces)

@@ -30,7 +30,7 @@ func (r *Reconciler) reconcileListenerSetStatus(
 	key client.ObjectKey,
 	eval listenerSetEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, "listenerset", func() error {
+	return r.retryStatusUpdate("listenerset", func() error {
 		var current gatewayv1.ListenerSet
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if !apierrors.IsNotFound(err) {

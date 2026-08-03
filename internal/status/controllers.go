@@ -641,7 +641,7 @@ func (c *backendLBPolicyController) Reconcile(
 	ctx context.Context,
 	req ctrl.Request,
 ) (ctrl.Result, error) {
-	return ctrl.Result{}, c.reconciler.reconcileBackendLBPolicyObject(ctx, req.NamespacedName)
+	return ctrl.Result{}, c.reconciler.reconcileBackendLBPolicyObject(ctx)
 }
 
 func (c *backendLBPolicyController) watchedObject() client.Object {
@@ -664,7 +664,7 @@ func (c *backendTLSPolicyController) Reconcile(
 	ctx context.Context,
 	req ctrl.Request,
 ) (ctrl.Result, error) {
-	return ctrl.Result{}, c.reconciler.reconcileBackendTLSPolicyObject(ctx, req.NamespacedName)
+	return ctrl.Result{}, c.reconciler.reconcileBackendTLSPolicyObject(ctx)
 }
 
 func (c *backendTLSPolicyController) SetupWithManager(mgr ctrl.Manager) error {

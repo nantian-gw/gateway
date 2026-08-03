@@ -234,16 +234,6 @@ func backendLBPolicyTargets(
 		true
 }
 
-func backendLBPolicyFallbackAncestors(
-	policy backend.BackendLBPolicy,
-) []gatewayv1.ParentReference {
-	out := make([]gatewayv1.ParentReference, 0, len(policy.Spec.TargetRefs))
-	for _, targetRef := range policy.Spec.TargetRefs {
-		out = append(out, backendLBPolicyTargetAncestor(policy.Namespace, targetRef))
-	}
-	return out
-}
-
 func backendLBPolicyTargetAncestor(
 	namespace string,
 	targetRef backend.LocalPolicyTargetReference,

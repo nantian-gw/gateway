@@ -10,8 +10,6 @@ import (
 )
 
 func TestReconcileGatewayStaticAddressIgnoresStaleDerivedServiceAdvertisements(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	oldGateway := staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 		Type:  addressTypePtr(gatewayv1.IPAddressType),
 		Value: "203.0.113.13",
@@ -35,13 +33,13 @@ func TestReconcileGatewayStaticAddressIgnoresStaleDerivedServiceAdvertisements(t
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			currentGateway,
 			oldService,
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(

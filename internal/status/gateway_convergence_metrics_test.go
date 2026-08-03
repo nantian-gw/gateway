@@ -14,7 +14,7 @@ import (
 )
 
 func TestGatewayConvergenceObservationTracksServiceMetadataLag(t *testing.T) {
-	gateway := gatewayWithGenerationForConvergenceTest(3)
+	gateway := gatewayWithGenerationForConvergenceTest()
 	service := gatewayInfrastructureServiceForGateway(*gateway)
 	service.Annotations[gatewayConvergenceOwnerGenerationAnnotation] = "2"
 
@@ -44,7 +44,7 @@ func TestGatewayConvergenceObservationTracksServiceMetadataLag(t *testing.T) {
 }
 
 func TestGatewayConvergenceObservationTracksFrontendEndpointSliceLag(t *testing.T) {
-	gateway := gatewayWithGenerationForConvergenceTest(3)
+	gateway := gatewayWithGenerationForConvergenceTest()
 	service := gatewayInfrastructureServiceForGateway(*gateway)
 	endpointSlice := gatewayInfrastructureEndpointSlice("default", "gw", "shared-frontend-endpoints")
 	endpointSlice.Annotations[gatewayConvergenceOwnerGenerationAnnotation] = "2"
@@ -76,7 +76,7 @@ func TestGatewayConvergenceObservationTracksFrontendEndpointSliceLag(t *testing.
 }
 
 func TestGatewayConvergenceObservationTracksMissingFrontendEndpointSliceLag(t *testing.T) {
-	gateway := gatewayWithGenerationForConvergenceTest(3)
+	gateway := gatewayWithGenerationForConvergenceTest()
 	service := gatewayInfrastructureServiceForGateway(*gateway)
 
 	state := &clusterState{
@@ -117,7 +117,7 @@ func TestGatewayRequiresInfrastructureRefreshIgnoresMissingFrontendEndpointSlice
 }
 
 func TestGatewayConvergenceObservationTracksProgrammedObservedGenerationLag(t *testing.T) {
-	gateway := gatewayWithGenerationForConvergenceTest(3)
+	gateway := gatewayWithGenerationForConvergenceTest()
 	setCondition(&gateway.Status.Conditions, conditionSpec{
 		Type:               string(gatewayv1.GatewayConditionProgrammed),
 		Status:             metav1.ConditionTrue,
@@ -157,7 +157,7 @@ func TestGatewayConvergenceObservationTracksProgrammedObservedGenerationLag(t *t
 }
 
 func TestGatewayConvergenceObservationTracksProgrammedPendingReason(t *testing.T) {
-	gateway := gatewayWithGenerationForConvergenceTest(3)
+	gateway := gatewayWithGenerationForConvergenceTest()
 	setCondition(&gateway.Status.Conditions, conditionSpec{
 		Type:               string(gatewayv1.GatewayConditionProgrammed),
 		Status:             metav1.ConditionFalse,
@@ -197,7 +197,7 @@ func TestGatewayConvergenceObservationTracksProgrammedPendingReason(t *testing.T
 }
 
 func TestGatewayConvergenceObservationNormalizesUnknownProgrammedPendingReason(t *testing.T) {
-	gateway := gatewayWithGenerationForConvergenceTest(3)
+	gateway := gatewayWithGenerationForConvergenceTest()
 	setCondition(&gateway.Status.Conditions, conditionSpec{
 		Type:               string(gatewayv1.GatewayConditionProgrammed),
 		Status:             metav1.ConditionFalse,
@@ -375,8 +375,8 @@ nantian_gateway_controlplane_gateway_convergence_stage_current{stage="translated
 	}
 }
 
-func gatewayWithGenerationForConvergenceTest(generation int64) *gatewayv1.Gateway {
-	return gatewayWithNameAndGenerationForConvergenceTest("gw", generation)
+func gatewayWithGenerationForConvergenceTest() *gatewayv1.Gateway {
+	return gatewayWithNameAndGenerationForConvergenceTest("gw", 3)
 }
 
 func gatewayWithNameAndGenerationForConvergenceTest(name string, generation int64) *gatewayv1.Gateway {

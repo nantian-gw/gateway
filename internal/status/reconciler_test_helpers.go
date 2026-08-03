@@ -425,19 +425,6 @@ func hasGatewayParentIndexValue(parentRefs []gatewayv1.ParentReference, namespac
 	return false
 }
 
-func requireMatchingFieldOption(opts []client.ListOption, field string, value string) error {
-	for _, opt := range opts {
-		matching, ok := opt.(client.MatchingFields)
-		if !ok {
-			continue
-		}
-		if matching[field] == value {
-			return nil
-		}
-	}
-	return fmt.Errorf("list must include matching field %s=%s", field, value)
-}
-
 func requireNamespaceOption(opts []client.ListOption, namespace string) error {
 	for _, opt := range opts {
 		inNamespace, ok := opt.(client.InNamespace)

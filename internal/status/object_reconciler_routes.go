@@ -152,44 +152,6 @@ func (r *Reconciler) loadRouteObjectState(ctx context.Context, route routeInput)
 	return state, nil
 }
 
-func (r *Reconciler) listAllRoutes(ctx context.Context, state *clusterState) error {
-	var httpRoutes gatewayv1.HTTPRouteList
-	if err := r.reader.List(ctx, &httpRoutes); err != nil {
-		return err
-	}
-	state.httpRoutes = httpRoutes.Items
-
-	var grpcRoutes gatewayv1.GRPCRouteList
-	if err := r.reader.List(ctx, &grpcRoutes); err != nil {
-		return err
-	}
-	state.grpcRoutes = grpcRoutes.Items
-
-	if !r.experimentalGatewayEnabled() {
-		return nil
-	}
-
-	var tcpRoutes gatewayv1alpha2.TCPRouteList
-	if err := r.reader.List(ctx, &tcpRoutes); err != nil {
-		return err
-	}
-	state.tcpRoutes = tcpRoutes.Items
-
-	var udpRoutes gatewayv1alpha2.UDPRouteList
-	if err := r.reader.List(ctx, &udpRoutes); err != nil {
-		return err
-	}
-	state.udpRoutes = udpRoutes.Items
-
-	var tlsRoutes gatewayv1alpha2.TLSRouteList
-	if err := r.reader.List(ctx, &tlsRoutes); err != nil {
-		return err
-	}
-	state.tlsRoutes = tlsRoutes.Items
-
-	return nil
-}
-
 func (r *Reconciler) loadRouteParentGateways(
 	ctx context.Context,
 	state *clusterState,
@@ -437,11 +399,11 @@ func (r *Reconciler) loadRouteExtensionConfigMaps(
 	return nil
 }
 
-func (r *Reconciler) reconcileBackendLBPolicyObject(ctx context.Context, key client.ObjectKey) error {
+func (r *Reconciler) reconcileBackendLBPolicyObject(ctx context.Context) error {
 	return r.Reconcile(ctx)
 }
 
-func (r *Reconciler) reconcileBackendTLSPolicyObject(ctx context.Context, key client.ObjectKey) error {
+func (r *Reconciler) reconcileBackendTLSPolicyObject(ctx context.Context) error {
 	return r.Reconcile(ctx)
 }
 

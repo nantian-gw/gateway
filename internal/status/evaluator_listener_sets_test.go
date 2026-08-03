@@ -1155,7 +1155,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 	hostname := func(h gatewayv1.Hostname) *gatewayv1.Hostname { return &h }
 
 	t.Run("no listenerSets returns empty", func(t *testing.T) {
-		result := evaluateGatewayListenerSetListeners(defaultState, defaultGateway, nil, nil)
+		result := evaluateGatewayListenerSetListeners(defaultState, defaultGateway, nil)
 		if len(result) != 0 {
 			t.Fatalf("expected 0 evaluations, got %d", len(result))
 		}
@@ -1190,7 +1190,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			Reason: string(gatewayv1.ListenerSetReasonAccepted),
 		}}
 
-		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
 		if len(result) != 1 {
 			t.Fatalf("expected 1 evaluation, got %d", len(result))
 		}
@@ -1226,7 +1226,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			},
 		}}
 
-		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
 		if len(result) != 0 {
 			t.Fatalf("expected 0 evaluations (listenerset not accepted), got %d", len(result))
 		}
@@ -1260,7 +1260,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			Reason: string(gatewayv1.ListenerSetReasonAccepted),
 		}}
 
-		result := evaluateGatewayListenerSetListeners(state, *gw, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, *gw, lses)
 		if len(result) != 0 {
 			t.Fatalf("expected 0 evaluations (namespace policy denied), got %d", len(result))
 		}
@@ -1298,7 +1298,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			Reason: string(gatewayv1.ListenerSetReasonAccepted),
 		}}
 
-		result := evaluateGatewayListenerSetListeners(state, *gw, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, *gw, lses)
 		if len(result) != 0 {
 			t.Fatalf("expected 0 evaluations (gateway spec listener conflicts), got %d", len(result))
 		}
@@ -1352,7 +1352,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			}}
 		}
 
-		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
 		if len(result) != 1 {
 			t.Fatalf("expected 1 evaluation (earlier wins), got %d", len(result))
 		}
@@ -1407,7 +1407,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			}}
 		}
 
-		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
 		if len(result) != 2 {
 			t.Fatalf("expected 2 evaluations, got %d", len(result))
 		}
@@ -1455,7 +1455,7 @@ func TestEvaluateGatewayListenerSetListeners(t *testing.T) {
 			}}
 		}
 
-		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses, nil)
+		result := evaluateGatewayListenerSetListeners(state, defaultGateway, lses)
 		if len(result) != 2 {
 			t.Fatalf("expected 2 evaluations (different hostnames), got %d", len(result))
 		}

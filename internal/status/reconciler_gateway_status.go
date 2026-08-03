@@ -33,7 +33,7 @@ func (r *Reconciler) reconcileGatewayClassStatusWithSupportResolver(
 	name string,
 	resolver *gatewayClassStatusSupportResolver,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceGatewayClass, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceGatewayClass, func() error {
 		var current gatewayv1.GatewayClass
 		if err := r.reader.Get(ctx, client.ObjectKey{Name: name}, &current); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -68,21 +68,13 @@ func (r *Reconciler) reconcileGatewayClassStatusWithSupportResolver(
 	})
 }
 
-func (r *Reconciler) reconcileGatewayStatus(
-	ctx context.Context,
-	key client.ObjectKey,
-	eval gatewayEvaluation,
-) error {
-	return r.reconcileGatewayStatusWithSeed(ctx, key, nil, eval)
-}
-
 func (r *Reconciler) reconcileGatewayStatusWithSeed(
 	ctx context.Context,
 	key client.ObjectKey,
 	seed *gatewayv1.Gateway,
 	eval gatewayEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceGateway, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceGateway, func() error {
 		var current gatewayv1.Gateway
 		if seed != nil {
 			current = *seed.DeepCopy()

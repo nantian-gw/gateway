@@ -16,7 +16,7 @@ func (r *Reconciler) reconcileBackendTLSPolicyStatus(
 	key client.ObjectKey,
 	eval backendTLSPolicyEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceBackendTLSPolicy, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceBackendTLSPolicy, func() error {
 		currentRaw, current, err := gatewayapi.GetBackendTLSPolicyV1(ctx, r.client, key)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -44,7 +44,7 @@ func (r *Reconciler) reconcileBackendLBPolicyStatus(
 	key client.ObjectKey,
 	eval backendLBPolicyEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceBackendLBPolicy, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceBackendLBPolicy, func() error {
 		var current backend.BackendLBPolicy
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {

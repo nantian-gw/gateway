@@ -15,7 +15,7 @@ func (r *Reconciler) reconcileHTTPRouteStatus(
 	key client.ObjectKey,
 	desiredParents []routeParentEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceHTTPRoute, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceHTTPRoute, func() error {
 		var current gatewayv1.HTTPRoute
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -40,7 +40,7 @@ func (r *Reconciler) reconcileGRPCRouteStatus(
 	key client.ObjectKey,
 	desiredParents []routeParentEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceGRPCRoute, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceGRPCRoute, func() error {
 		var current gatewayv1.GRPCRoute
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -65,7 +65,7 @@ func (r *Reconciler) reconcileTCPRouteStatus(
 	key client.ObjectKey,
 	desiredParents []routeParentEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceTCPRoute, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceTCPRoute, func() error {
 		var current gatewayv1alpha2.TCPRoute
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -90,7 +90,7 @@ func (r *Reconciler) reconcileUDPRouteStatus(
 	key client.ObjectKey,
 	desiredParents []routeParentEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceUDPRoute, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceUDPRoute, func() error {
 		var current gatewayv1alpha2.UDPRoute
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {
@@ -115,7 +115,7 @@ func (r *Reconciler) reconcileTLSRouteStatus(
 	key client.ObjectKey,
 	desiredParents []routeParentEvaluation,
 ) error {
-	return r.retryStatusUpdate(ctx, statusUpdateResourceTLSRoute, func() error {
+	return r.retryStatusUpdate(statusUpdateResourceTLSRoute, func() error {
 		var current gatewayv1alpha2.TLSRoute
 		if err := r.reader.Get(ctx, key, &current); err != nil {
 			if apierrors.IsNotFound(err) {

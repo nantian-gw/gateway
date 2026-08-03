@@ -24,8 +24,6 @@ const (
 )
 
 func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -34,7 +32,7 @@ func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr("test/fake-invalid-type"),
@@ -52,7 +50,7 @@ func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -77,8 +75,6 @@ func TestReconcileGatewayStaticAddressesRejectsUnsupportedAddressType(t *testing
 }
 
 func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -87,7 +83,7 @@ func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.IPAddressType),
@@ -101,7 +97,7 @@ func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -126,7 +122,6 @@ func TestReconcileGatewayStaticAddressesMarksUnusableAddress(t *testing.T) {
 }
 
 func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusable(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	service.Spec.ExternalIPs = []string{"203.0.113.13", "127.0.0.1"}
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
@@ -139,7 +134,7 @@ func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusa
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.IPAddressType),
@@ -155,7 +150,7 @@ func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusa
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -172,8 +167,6 @@ func TestReconcileGatewayStaticAddressesMarksAdvertisedDocumentationAddressUnusa
 }
 
 func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -182,7 +175,7 @@ func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.HostnameAddressType),
 				Value: "Bad Hostname",
@@ -190,7 +183,7 @@ func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -204,7 +197,6 @@ func TestReconcileGatewayStaticAddressesRejectsInvalidHostnameValue(t *testing.T
 }
 
 func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
@@ -216,7 +208,7 @@ func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.IPAddressType),
 				Value: "127.0.0.1",
@@ -226,7 +218,7 @@ func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -257,7 +249,6 @@ func TestReconcileGatewayStaticAddressesPublishesUsableAddress(t *testing.T) {
 }
 
 func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
@@ -269,7 +260,7 @@ func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *te
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.IPAddressType),
@@ -288,7 +279,6 @@ func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *te
 	reconcileGatewayAddressesWithAdvertised(
 		t,
 		k8sClient,
-		controllerName,
 		[]string{"127.0.0.1", "127.0.0.2"},
 	)
 
@@ -307,8 +297,6 @@ func TestReconcileGatewayStaticAddressesAcceptsMultipleAdvertisedAddresses(t *te
 }
 
 func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -317,7 +305,7 @@ func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testi
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{
 				{
 					Type:  addressTypePtr(gatewayv1.HostnameAddressType),
@@ -332,7 +320,7 @@ func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testi
 		).
 		Build()
 
-	reconcileGatewayAddressesWithAdvertised(t, k8sClient, controllerName, []string{"gw.example.com"})
+	reconcileGatewayAddressesWithAdvertised(t, k8sClient, []string{"gw.example.com"})
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	if len(gateway.Status.Addresses) != 1 {
@@ -341,7 +329,6 @@ func TestReconcileGatewayStaticAddressesDeduplicatesNormalizedHostnames(t *testi
 }
 
 func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
@@ -353,7 +340,7 @@ func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Value: "",
 			}}),
@@ -362,7 +349,7 @@ func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *
 		).
 		Build()
 
-	reconcileGatewayAddressesWithAdvertised(t, k8sClient, controllerName, []string{"127.0.0.1"})
+	reconcileGatewayAddressesWithAdvertised(t, k8sClient, []string{"127.0.0.1"})
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -385,7 +372,6 @@ func TestReconcileGatewayStaticAddressesAssignsDefaultIPAddressForEmptyValue(t *
 }
 
 func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	endpointSlice := gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend)
 
@@ -397,7 +383,7 @@ func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type: addressTypePtr(gatewayv1.HostnameAddressType),
 			}}),
@@ -406,7 +392,7 @@ func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *
 		).
 		Build()
 
-	reconcileGatewayAddressesWithAdvertised(t, k8sClient, controllerName, []string{"gw.example.com"})
+	reconcileGatewayAddressesWithAdvertised(t, k8sClient, []string{"gw.example.com"})
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -429,8 +415,6 @@ func TestReconcileGatewayStaticAddressesAssignsHostnameForEmptyHostnameValue(t *
 }
 
 func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -439,7 +423,7 @@ func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *tes
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type: addressTypePtr(gatewayv1.HostnameAddressType),
 			}}),
@@ -447,7 +431,7 @@ func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *tes
 		).
 		Build()
 
-	reconcileGatewayAddressesWithAdvertised(t, k8sClient, controllerName, []string{"127.0.0.1"})
+	reconcileGatewayAddressesWithAdvertised(t, k8sClient, []string{"127.0.0.1"})
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -472,7 +456,6 @@ func TestReconcileGatewayStaticAddressesMarksEmptyHostnameValueUnassigned(t *tes
 }
 
 func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	service.Spec.Type = corev1.ServiceTypeLoadBalancer
 	service.Status = corev1.ServiceStatus{
@@ -492,14 +475,14 @@ func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testi
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			service,
 			gatewayInfrastructureEndpointSliceForService(service, resources.EndpointSliceRoleGatewayFrontend),
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -519,7 +502,6 @@ func TestReconcileGatewayStatusPrefersGatewayServiceLoadBalancerIngress(t *testi
 }
 
 func TestReconcileGatewayStaticAddressesAcceptGatewayServiceExternalIP(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	service := gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses")
 	service.Spec.Type = corev1.ServiceTypeNodePort
 	service.Spec.ExternalIPs = []string{"10.10.10.25"}
@@ -532,7 +514,7 @@ func TestReconcileGatewayStaticAddressesAcceptGatewayServiceExternalIP(t *testin
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.IPAddressType),
 				Value: "10.10.10.25",
@@ -542,7 +524,7 @@ func TestReconcileGatewayStaticAddressesAcceptGatewayServiceExternalIP(t *testin
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -606,8 +588,6 @@ func TestBuildStatusAddressesCanonicalizesPublishedValues(t *testing.T) {
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedService(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -616,12 +596,12 @@ func TestReconcileGatewayStatusWaitsForDerivedService(t *testing.T) {
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -643,8 +623,6 @@ func TestReconcileGatewayStatusWaitsForDerivedService(t *testing.T) {
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -653,7 +631,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *test
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -673,7 +651,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *test
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -690,8 +668,6 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceMetadataConvergence(t *test
 }
 
 func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -700,7 +676,7 @@ func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMeta
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -726,7 +702,7 @@ func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMeta
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -746,8 +722,6 @@ func TestReconcileGatewayStatusFallsBackToGlobalAddressesUntilDerivedServiceMeta
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -756,7 +730,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *tes
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			&corev1.Service{
 				ObjectMeta: metav1.ObjectMeta{
@@ -782,7 +756,7 @@ func TestReconcileGatewayStatusWaitsForDerivedServiceOwnershipConvergence(t *tes
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -849,7 +823,7 @@ func TestReconcileGatewayStatusWaitsForGatewayClassParametersReferenceConvergenc
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -869,8 +843,6 @@ func TestReconcileGatewayStatusWaitsForGatewayClassParametersReferenceConvergenc
 }
 
 func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -879,7 +851,7 @@ func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataC
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type:  addressTypePtr(gatewayv1.IPAddressType),
 				Value: "10.10.10.25",
@@ -903,7 +875,7 @@ func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataC
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -923,8 +895,6 @@ func TestReconcileGatewayStaticAddressRemainsPendingWhileDerivedServiceMetadataC
 }
 
 func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -933,7 +903,7 @@ func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerive
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Value: "",
 			}}),
@@ -961,7 +931,7 @@ func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerive
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -978,8 +948,6 @@ func TestReconcileGatewayAssignedIPAddressFallsBackToPublishedAddressWhileDerive
 }
 
 func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerivedServiceMetadataConverges(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -988,7 +956,7 @@ func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerived
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway([]gatewayv1.GatewaySpecAddress{{
 				Type: addressTypePtr(gatewayv1.HostnameAddressType),
 			}}),
@@ -1012,7 +980,7 @@ func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerived
 		).
 		Build()
 
-	reconcileGatewayAddressesWithAdvertised(t, k8sClient, controllerName, []string{"gw.example.com"})
+	reconcileGatewayAddressesWithAdvertised(t, k8sClient, []string{"gw.example.com"})
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -1029,8 +997,6 @@ func TestReconcileGatewayAssignedHostnameFallsBackToPublishedAddressWhileDerived
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceCreation(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -1039,13 +1005,13 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceCreation(t *t
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -1062,8 +1028,6 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceCreation(t *t
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -1072,7 +1036,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 			gatewayInfrastructureEndpointSlice(
@@ -1083,7 +1047,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -1100,8 +1064,6 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceConvergence(t
 }
 
 func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConvergence(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -1110,7 +1072,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 			&discoveryv1.EndpointSlice{
@@ -1131,7 +1093,7 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -1148,8 +1110,6 @@ func TestReconcileGatewayStatusWaitsForDerivedFrontendEndpointSliceOwnershipConv
 }
 
 func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T) {
-	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
-
 	k8sClient := fake.NewClientBuilder().
 		WithScheme(newScheme(t)).
 		WithStatusSubresource(
@@ -1158,7 +1118,7 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 		).
 		WithObjects(
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "gateway-conformance-infra"}},
-			staticAddressGatewayClass(controllerName),
+			staticAddressGatewayClass(),
 			staticAddressGateway(nil),
 			gatewayInfrastructureService("gateway-conformance-infra", "gateway-static-addresses"),
 			gatewayInfrastructureEndpointSlice(
@@ -1169,7 +1129,7 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 		).
 		Build()
 
-	reconcileGatewayAddresses(t, k8sClient, controllerName)
+	reconcileGatewayAddresses(t, k8sClient)
 
 	gateway := getStaticAddressGateway(t, k8sClient)
 	assertCondition(
@@ -1182,11 +1142,11 @@ func TestReconcileGatewayStatusAcceptsManagedFrontendEndpointSlice(t *testing.T)
 	)
 }
 
-func staticAddressGatewayClass(controllerName gatewayv1.GatewayController) *gatewayv1.GatewayClass {
+func staticAddressGatewayClass() *gatewayv1.GatewayClass {
 	return &gatewayv1.GatewayClass{
 		ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw", Generation: 1},
 		Spec: gatewayv1.GatewayClassSpec{
-			ControllerName: controllerName,
+			ControllerName: "gateway.networking.k8s.io/nantian-gw",
 		},
 	}
 }
@@ -1318,21 +1278,20 @@ func gatewayInfrastructureEndpointSliceForService(service *corev1.Service, role 
 	}
 }
 
-func reconcileGatewayAddresses(t *testing.T, k8sClient client.Client, controllerName gatewayv1.GatewayController) {
+func reconcileGatewayAddresses(t *testing.T, k8sClient client.Client) {
 	t.Helper()
 
-	reconcileGatewayAddressesWithAdvertised(t, k8sClient, controllerName, []string{"127.0.0.1"})
+	reconcileGatewayAddressesWithAdvertised(t, k8sClient, []string{"127.0.0.1"})
 }
 
 func reconcileGatewayAddressesWithAdvertised(
 	t *testing.T,
 	k8sClient client.Client,
-	controllerName gatewayv1.GatewayController,
 	advertised []string,
 ) {
 	t.Helper()
 
-	reconciler := NewWithAddresses(k8sClient, string(controllerName), advertised, discardLogger())
+	reconciler := NewWithAddresses(k8sClient, "gateway.networking.k8s.io/nantian-gw", advertised, discardLogger())
 	if err := reconciler.Reconcile(context.Background()); err != nil {
 		t.Fatalf("Reconcile returned error: %v", err)
 	}

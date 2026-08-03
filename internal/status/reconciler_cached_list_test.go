@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -1140,24 +1139,6 @@ func requireNamespaceScopedList(namespace string) func(client.ListOptions) error
 		}
 		if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 			return fmt.Errorf("list field selector = %q, want empty", opts.FieldSelector.String())
-		}
-		return nil
-	}
-}
-
-func requireEndpointSliceServiceList(namespace, serviceName string) func(client.ListOptions) error {
-	return func(opts client.ListOptions) error {
-		if opts.Namespace != namespace {
-			return fmt.Errorf("endpoint slice list namespace = %q, want %q", opts.Namespace, namespace)
-		}
-		if opts.LabelSelector == nil || opts.LabelSelector.Empty() {
-			return fmt.Errorf("endpoint slice list must include a service label selector")
-		}
-		if !opts.LabelSelector.Matches(labels.Set{discoveryv1.LabelServiceName: serviceName}) {
-			return fmt.Errorf("endpoint slice list selector = %q does not match service %q", opts.LabelSelector.String(), serviceName)
-		}
-		if opts.LabelSelector.Matches(labels.Set{discoveryv1.LabelServiceName: serviceName + "-other"}) {
-			return fmt.Errorf("endpoint slice list selector = %q is broader than service %q", opts.LabelSelector.String(), serviceName)
 		}
 		return nil
 	}

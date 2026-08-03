@@ -419,7 +419,7 @@ func TestReconcileLoadsGatewayAPICRDsOncePerFullReconcile(t *testing.T) {
 		validatingListReader{
 			Reader: k8sClient,
 			listValidators: map[reflect.Type]func(client.ListOptions) error{
-				reflect.TypeOf(&apiextensionsv1.CustomResourceDefinitionList{}): func(client.ListOptions) error {
+				reflect.TypeOf(&apiextensionsv1.CustomResourceDefinitionList{}): func(client.ListOptions) error { //nolint:unparam // signature constrained by listValidators map type
 					crdLists++
 					return nil
 				},

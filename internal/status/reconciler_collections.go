@@ -321,32 +321,6 @@ func (r *Reconciler) refreshGatewayInfrastructureEvaluations(
 	return nil
 }
 
-func (r *Reconciler) refreshGatewayInfrastructureEvaluation(
-	ctx context.Context,
-	key client.ObjectKey,
-	gateway gatewayv1.Gateway,
-	eval gatewayEvaluation,
-) (gatewayEvaluation, bool, error) {
-	state := r.newClusterState()
-	state.gateways = append(state.gateways, gateway)
-
-	if err := r.loadGatewayClassesForLoadedGateways(ctx, state); err != nil {
-		return gatewayEvaluation{}, false, err
-	}
-	if len(state.gateways) == 0 {
-		return gatewayEvaluation{}, false, nil
-	}
-	if err := r.loadGatewayService(ctx, state, gateway); err != nil {
-		return gatewayEvaluation{}, false, err
-	}
-	if err := r.loadGatewayFrontendEndpointSlices(ctx, state, gateway); err != nil {
-		return gatewayEvaluation{}, false, err
-	}
-	state.index()
-
-	return refreshGatewayInfrastructureEvaluationFromState(gateway, eval, state), true, nil
-}
-
 func refreshGatewayInfrastructureEvaluationFromState(
 	gateway gatewayv1.Gateway,
 	eval gatewayEvaluation,

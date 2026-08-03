@@ -61,7 +61,6 @@ func init() {
 }
 
 func (r *Reconciler) retryStatusUpdate(
-	ctx context.Context,
 	resource string,
 	update func() error,
 ) error {

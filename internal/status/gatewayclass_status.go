@@ -43,13 +43,6 @@ func newGatewayClassStatusSupportResolver(reconciler *Reconciler) *gatewayClassS
 	return &gatewayClassStatusSupportResolver{reconciler: reconciler}
 }
 
-func (r *Reconciler) gatewayClassStatusSupport(
-	ctx context.Context,
-	generation int64,
-) (conditionSpec, []gatewayv1.SupportedFeature, error) {
-	return newGatewayClassStatusSupportResolver(r).resolve(ctx, generation)
-}
-
 func (r *gatewayClassStatusSupportResolver) resolve(
 	ctx context.Context,
 	generation int64,

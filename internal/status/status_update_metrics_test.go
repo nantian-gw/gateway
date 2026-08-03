@@ -1,7 +1,6 @@
 package status
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -15,7 +14,7 @@ func TestRetryStatusUpdateRecordsConflictRetryAndErrorMetrics(t *testing.T) {
 		resetStatusUpdateMetricsForTest()
 
 		attempts := 0
-		err := (&Reconciler{}).retryStatusUpdate(context.Background(), statusUpdateResourceGateway, func() error {
+		err := (&Reconciler{}).retryStatusUpdate(statusUpdateResourceGateway, func() error {
 			attempts++
 			if attempts == 1 {
 				return apierrors.NewConflict(
@@ -47,7 +46,7 @@ func TestRetryStatusUpdateRecordsConflictRetryAndErrorMetrics(t *testing.T) {
 		resetStatusUpdateMetricsForTest()
 
 		wantErr := errors.New("boom")
-		err := (&Reconciler{}).retryStatusUpdate(context.Background(), statusUpdateResourceGateway, func() error {
+		err := (&Reconciler{}).retryStatusUpdate(statusUpdateResourceGateway, func() error {
 			return wantErr
 		})
 		if !errors.Is(err, wantErr) {
@@ -69,7 +68,7 @@ func TestRetryStatusUpdateNormalizesUnknownResourceMetricLabel(t *testing.T) {
 	resetStatusUpdateMetricsForTest()
 
 	wantErr := errors.New("boom")
-	err := (&Reconciler{}).retryStatusUpdate(context.Background(), "tenant-specific-resource", func() error {
+	err := (&Reconciler{}).retryStatusUpdate("tenant-specific-resource", func() error {
 		return wantErr
 	})
 	if !errors.Is(err, wantErr) {

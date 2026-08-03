@@ -149,7 +149,7 @@ func statusHTTPRouteListenerSetParentIndexKeys(object client.Object) []string {
 	if !ok {
 		return nil
 	}
-	return listenerSetParentStatusIndexKeys(route.Spec.ParentRefs, route.Namespace)
+	return listenerSetParentStatusIndexKeys(route.Spec.ParentRefs)
 }
 
 func statusGRPCRouteServiceParentIndexKeys(object client.Object) []string {
@@ -256,7 +256,6 @@ func serviceParentStatusIndexKeys(
 
 func listenerSetParentStatusIndexKeys(
 	parentRefs []gatewayv1.ParentReference,
-	defaultNamespace string,
 ) []string {
 	if len(parentRefs) == 0 {
 		return nil

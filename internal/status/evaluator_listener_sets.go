@@ -17,12 +17,6 @@ type listenerSetEvaluation struct {
 	listeners  []gatewayv1.ListenerEntryStatus
 }
 
-type lsKey struct {
-	port     gatewayv1.PortNumber
-	protocol string
-	hostname string
-}
-
 func evaluateListenerSets(
 	state *clusterState,
 	lses []gatewayv1.ListenerSet,
@@ -287,7 +281,6 @@ func evaluateGatewayListenerSetListeners(
 	state *clusterState,
 	gateway gatewayv1.Gateway,
 	listenerSets []gatewayv1.ListenerSet,
-	attachments map[listenerKey]routeAttachmentSet,
 ) []listenerEvaluation {
 	if len(listenerSets) == 0 {
 		return nil
@@ -324,12 +317,7 @@ func evaluateGatewayListenerSetListeners(
 			listener := listenerEntryToInternalListener(entry, ls)
 			allListeners = append(allListeners, listener)
 
-			key := listenerKey{
-				gatewayNamespace: gateway.Namespace,
-				gatewayName:      gateway.Name,
-				listenerName:     listener.Name,
-			}
-			eval := evaluateGatewayListener(state, gateway, allListeners, listener, int32(len(attachments[key]))) //nolint:gosec
+			eval := evaluateGatewayListener(state, gateway, allListeners, listener, 0)
 			out = append(out, eval)
 		}
 	}
