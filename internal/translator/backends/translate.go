@@ -16,8 +16,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
-const defaultConnectTimeout = 5 * time.Second
-
 // DefaultConnectTimeout is the exported version for external callers.
 const DefaultConnectTimeout = 5 * time.Second
 

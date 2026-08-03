@@ -457,7 +457,6 @@ func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *t
 
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
 	allNamespaces := gatewayv1.NamespacesFromAll
-	servicePort := gatewayv1.PortNumber(8080)
 	parentGroup := gatewayv1.Group(gatewayv1.GroupName)
 	listenerSetKind := gatewayv1.Kind("ListenerSet")
 	gatewayNamespace := gatewayv1.Namespace("gateway-conformance-infra")
@@ -589,14 +588,12 @@ func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *t
 				},
 				"/route",
 				"infra-backend-v1",
-				servicePort,
 			),
 			httpRouteForListenerSetHTTPRouting(
 				"gateway-route",
 				[]gatewayv1.ParentReference{{Name: "gateway-with-listener-sets-http-routing", Namespace: &gatewayNamespace}},
 				"/gateway-route",
 				"infra-backend-v2",
-				servicePort,
 			),
 			httpRouteForListenerSetHTTPRouting(
 				"gateway-section-route",
@@ -607,14 +604,12 @@ func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *t
 				}},
 				"/gateway-section-route",
 				"infra-backend-v3",
-				servicePort,
 			),
 			httpRouteForListenerSetHTTPRouting(
 				"listener-set-http-routing-1-route",
 				[]gatewayv1.ParentReference{{Group: &parentGroup, Kind: &listenerSetKind, Name: "listener-set-http-routing-1", Namespace: &gatewayNamespace}},
 				"/listener-set-http-routing-1-route",
 				"infra-backend-v2",
-				servicePort,
 			),
 			httpRouteForListenerSetHTTPRouting(
 				"listener-set-http-routing-1-section-route",
@@ -627,14 +622,12 @@ func TestBuildSnapshotAttachesSecondListenerSetHTTPRoutingConformanceRoutes(t *t
 				}},
 				"/listener-set-http-routing-1-section-route",
 				"infra-backend-v3",
-				servicePort,
 			),
 			httpRouteForListenerSetHTTPRouting(
 				"listener-set-http-routing-2-route",
 				[]gatewayv1.ParentReference{{Group: &parentGroup, Kind: &listenerSetKind, Name: "listener-set-http-routing-2", Namespace: &gatewayNamespace}},
 				"/listener-set-http-routing-2-route",
 				"infra-backend-v2",
-				servicePort,
 			),
 			serviceForListenerSetHTTPRouting("infra-backend-v1"),
 			serviceForListenerSetHTTPRouting("infra-backend-v2"),
@@ -676,7 +669,6 @@ func httpRouteForListenerSetHTTPRouting(
 	parentRefs []gatewayv1.ParentReference,
 	path string,
 	backendName gatewayv1.ObjectName,
-	servicePort gatewayv1.PortNumber,
 ) *gatewayv1.HTTPRoute {
 	pathType := gatewayv1.PathMatchPathPrefix
 	return &gatewayv1.HTTPRoute{
@@ -696,7 +688,7 @@ func httpRouteForListenerSetHTTPRouting(
 					BackendRef: gatewayv1.BackendRef{
 						BackendObjectReference: gatewayv1.BackendObjectReference{
 							Name: backendName,
-							Port: &servicePort,
+							Port: ptr(gatewayv1.PortNumber(8080)),
 						},
 					},
 				}},

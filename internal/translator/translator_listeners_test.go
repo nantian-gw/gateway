@@ -48,7 +48,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-https", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-https", "default", []gatewayv1.ListenerEntry{
 				{Name: "https", Port: 443, Protocol: gatewayv1.HTTPSProtocolType},
 			}),
 		}
@@ -78,7 +78,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls", "default", []gatewayv1.ListenerEntry{
 				{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 			}),
 		}
@@ -104,7 +104,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			{Name: "http-gw", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-extra", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-extra", "default", []gatewayv1.ListenerEntry{
 				{Name: "http-ls", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 			}),
 		}
@@ -130,7 +130,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			{Name: "http-gw", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-extra", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-extra", "default", []gatewayv1.ListenerEntry{
 				{Name: "tcp-ls", Port: 80, Protocol: gatewayv1.TCPProtocolType},
 			}),
 		}
@@ -155,7 +155,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 		base := []gatewayv1.Listener{
 			{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 		}
-		rejected := listenerSet("ls-rejected", "default", "gw", []gatewayv1.ListenerEntry{
+		rejected := listenerSet("ls-rejected", "default", []gatewayv1.ListenerEntry{
 			{Name: "https", Port: 443, Protocol: gatewayv1.HTTPSProtocolType},
 		})
 		rejected.Generation = 2
@@ -187,7 +187,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			{Name: "http-foo", Port: 80, Protocol: gatewayv1.HTTPProtocolType, Hostname: host("foo.example.com")},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-bar", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-bar", "default", []gatewayv1.ListenerEntry{
 				{Name: "http-bar", Port: 80, Protocol: gatewayv1.HTTPProtocolType, Hostname: host("bar.example.com")},
 			}),
 		}
@@ -313,7 +313,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-other", "other-ns", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-other", "other-ns", []gatewayv1.ListenerEntry{
 				{Name: "https", Port: 443, Protocol: gatewayv1.HTTPSProtocolType},
 			}),
 		}
@@ -339,10 +339,10 @@ func TestMergeListenerSetListeners(t *testing.T) {
 			{Name: "http", Port: 80, Protocol: gatewayv1.HTTPProtocolType},
 		}
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-https", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-https", "default", []gatewayv1.ListenerEntry{
 				{Name: "https", Port: 443, Protocol: gatewayv1.HTTPSProtocolType},
 			}),
-			listenerSet("ls-grpc", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-grpc", "default", []gatewayv1.ListenerEntry{
 				{Name: "grpc", Port: 9090, Protocol: gatewayv1.HTTPProtocolType},
 			}),
 		}
@@ -364,7 +364,7 @@ func TestMergeListenerSetListeners(t *testing.T) {
 		base := []gatewayv1.Listener{}
 		tlsMode := gatewayv1.TLSModeTerminate
 		sets := []gatewayv1.ListenerSet{
-			listenerSet("ls-tls", "default", "gw", []gatewayv1.ListenerEntry{
+			listenerSet("ls-tls", "default", []gatewayv1.ListenerEntry{
 				{
 					Name:     "https",
 					Port:     443,
@@ -612,7 +612,7 @@ func TestGatewayAllowsListenerSet(t *testing.T) {
 
 // --- helpers ---
 
-func listenerSet(name, namespace, gwName string, entries []gatewayv1.ListenerEntry) gatewayv1.ListenerSet {
+func listenerSet(name, namespace string, entries []gatewayv1.ListenerEntry) gatewayv1.ListenerSet {
 	return gatewayv1.ListenerSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -620,7 +620,7 @@ func listenerSet(name, namespace, gwName string, entries []gatewayv1.ListenerEnt
 		},
 		Spec: gatewayv1.ListenerSetSpec{
 			ParentRef: gatewayv1.ParentGatewayReference{
-				Name: gatewayv1.ObjectName(gwName),
+				Name: "gw",
 			},
 			Listeners: entries,
 		},

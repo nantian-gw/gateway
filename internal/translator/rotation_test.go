@@ -490,7 +490,7 @@ func buildRotationSnapshot(t *testing.T, cl client.Client, controllerName string
 	return snapshot
 }
 
-func findSnapshotSecret(t *testing.T, snapshot *ir.Snapshot, namespace, name string) ir.SecretMaterial {
+func findSnapshotSecret(t *testing.T, snapshot *ir.Snapshot, namespace, name string) ir.SecretMaterial { //nolint:unparam // namespace receives both "default" and "shared" across callers
 	t.Helper()
 
 	for _, secret := range snapshot.Secrets {

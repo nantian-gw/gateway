@@ -2,7 +2,6 @@ package backends
 
 import (
 	"crypto/x509"
-	"sort"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
@@ -19,18 +18,6 @@ type translatedBackendTLSPolicy struct {
 	backendSpecificity map[string]int
 	validation         *ir.BackendTLSValidation
 	policy             gatewayv1alpha3.BackendTLSPolicy
-}
-
-func backendTLSValidationIndex(
-	services []corev1.Service,
-	serviceImports []mcsv1alpha1.ServiceImport,
-	configMaps []corev1.ConfigMap,
-	policies []gatewayv1alpha3.BackendTLSPolicy,
-) map[string]*ir.BackendTLSValidation {
-	return BackendTLSValidationIndexWithIndexes(
-		policies,
-		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, configMaps, nil),
-	)
 }
 
 func BackendTLSValidationIndexWithIndexes(
@@ -77,16 +64,6 @@ func BackendTLSValidationIndexWithIndexes(
 	}
 
 	return out
-}
-
-func translateBackendTLSPolicyValidation(
-	policy gatewayv1alpha3.BackendTLSPolicy,
-	configMaps []corev1.ConfigMap,
-) (*ir.BackendTLSValidation, bool) {
-	return translateBackendTLSPolicyValidationWithIndexes(
-		policy,
-		shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, nil),
-	)
 }
 
 func translateBackendTLSPolicyValidationWithIndexes(
@@ -156,18 +133,6 @@ func backendTLSPolicySubjectAltNames(
 	return out, true
 }
 
-func backendTLSPolicyCAPEMs(
-	configMaps []corev1.ConfigMap,
-	namespace string,
-	refs []gatewayv1.LocalObjectReference,
-) ([]string, bool) {
-	return backendTLSPolicyCAPEMsWithIndexes(
-		shared.NewTranslatorIndexes(nil, nil, nil, nil, configMaps, nil),
-		namespace,
-		refs,
-	)
-}
-
 func backendTLSPolicyCAPEMsWithIndexes(
 	indexes shared.TranslatorIndexes,
 	namespace string,
@@ -210,38 +175,6 @@ func validBackendTLSPolicyCAPEM(value string) bool {
 
 	pool := x509.NewCertPool()
 	return pool.AppendCertsFromPEM([]byte(value))
-}
-
-func backendTLSPolicyBackendKeys(
-	policy gatewayv1alpha3.BackendTLSPolicy,
-	services []corev1.Service,
-	serviceImports []mcsv1alpha1.ServiceImport,
-) ([]string, bool) {
-	specificity, ok := backendTLSPolicyBackendSpecificityWithIndexes(
-		policy,
-		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
-	)
-	if !ok || len(specificity) == 0 {
-		return nil, false
-	}
-
-	keys := make([]string, 0, len(specificity))
-	for key := range specificity {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	return keys, true
-}
-
-func backendTLSPolicyBackendSpecificity(
-	policy gatewayv1alpha3.BackendTLSPolicy,
-	services []corev1.Service,
-	serviceImports []mcsv1alpha1.ServiceImport,
-) (map[string]int, bool) {
-	return backendTLSPolicyBackendSpecificityWithIndexes(
-		policy,
-		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
-	)
 }
 
 func backendTLSPolicyBackendSpecificityWithIndexes(
@@ -316,32 +249,6 @@ func backendTLSPolicyAssignmentPrecedes(
 		return leftSpecificity > rightSpecificity
 	}
 	return backendtls.PolicyPrecedes(left, right)
-}
-
-func findServiceForPolicy(
-	services []corev1.Service,
-	namespace string,
-	name string,
-) (corev1.Service, bool) {
-	for _, service := range services {
-		if service.Namespace == namespace && service.Name == name {
-			return service, true
-		}
-	}
-	return corev1.Service{}, false
-}
-
-func findServiceImportForPolicy(
-	serviceImports []mcsv1alpha1.ServiceImport,
-	namespace string,
-	name string,
-) (mcsv1alpha1.ServiceImport, bool) {
-	for _, serviceImport := range serviceImports {
-		if serviceImport.Namespace == namespace && serviceImport.Name == name {
-			return serviceImport, true
-		}
-	}
-	return mcsv1alpha1.ServiceImport{}, false
 }
 
 func serviceBackendKeys(

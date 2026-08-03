@@ -275,7 +275,7 @@ func (t BackendRefTranslator) BackendRefMetadata(
 		t.referenceGrantsByNamespace[ref.Namespace],
 		ref.Namespace,
 		gatewayv1beta1.ReferenceGrantFrom{
-			Group:     gatewayv1beta1.Group(routeGroupForKind(routeKind)),
+			Group:     gatewayv1beta1.Group(routeGroupForKind()),
 			Kind:      gatewayv1beta1.Kind(routeKindName(routeKind)),
 			Namespace: gatewayv1beta1.Namespace(routeNamespace),
 		},
@@ -416,13 +416,8 @@ func routeKindName(kind RouteKind) string {
 	return string(kind)
 }
 
-func routeGroupForKind(kind RouteKind) string {
-	switch kind {
-	case RouteKindHTTP, RouteKindGRPC, RouteKindTCP, RouteKindUDP, RouteKindTLS:
-		return gatewayv1.GroupName
-	default:
-		return gatewayv1.GroupName
-	}
+func routeGroupForKind() string {
+	return gatewayv1.GroupName
 }
 
 // RouteUsesOnlyServiceParents reports whether every parent ref targets a

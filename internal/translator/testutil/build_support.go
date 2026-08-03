@@ -100,37 +100,6 @@ func listenerSetParentGatewayIndexKeys(object client.Object) []string {
 }
 
 // backendTLSPolicyTargetRefIndexKeys mirrored from translator.
-func backendTLSPolicyTargetRefIndexKeys(object client.Object) []string {
-	policy, ok := object.(*gatewayv1alpha3.BackendTLSPolicy)
-	if !ok || policy == nil {
-		return nil
-	}
-	out := make([]string, 0, len(policy.Spec.TargetRefs))
-	seen := make(map[string]struct{}, len(policy.Spec.TargetRefs))
-	for _, ref := range policy.Spec.TargetRefs {
-		value := backendPolicyTargetRefValue(string(ref.Group), string(ref.Kind), string(ref.Name))
-		if value == "" {
-			continue
-		}
-		if _, exists := seen[value]; exists {
-			continue
-		}
-		seen[value] = struct{}{}
-		out = append(out, value)
-	}
-	return out
-}
-
-// -- Fake-client wrapper constructors ------------------------------------------
-//
-// Each constructor returns a concrete wrapper type whose name contains
-// the substring "fake".  This is required by looksLikeFakeReader in
-// the gatewayapi package, which detects fake clients via
-// strings.Contains(fmt.Sprintf("%%T", reader), "fake") and enables
-// typed-list fallback paths.
-
-// NewFakeValidatingTranslatorClient returns a client that rejects List
-// calls for types listed in forbiddenLists.
 func NewFakeValidatingTranslatorClient(c client.Client, forbiddenLists map[reflect.Type]string) client.Client {
 	return &fakeValidatingTranslatorClient{Client: c, ForbiddenLists: forbiddenLists}
 }

@@ -60,21 +60,21 @@ func (c missingExperimentalGatewayCRDClient) List(
 ) error {
 	switch list.(type) {
 	case *gatewayv1alpha2.TCPRouteList:
-		return noKindMatch("gateway.networking.k8s.io", "TCPRoute", "v1alpha2")
+		return noKindMatch("TCPRoute", "v1alpha2")
 	case *gatewayv1alpha2.UDPRouteList:
-		return noKindMatch("gateway.networking.k8s.io", "UDPRoute", "v1alpha2")
+		return noKindMatch("UDPRoute", "v1alpha2")
 	case *gatewayv1alpha2.TLSRouteList:
-		return noKindMatch("gateway.networking.k8s.io", "TLSRoute", "v1alpha2")
+		return noKindMatch("TLSRoute", "v1alpha2")
 	case *gatewayv1.ListenerSetList:
-		return noKindMatch("gateway.networking.k8s.io", "ListenerSet", "v1")
+		return noKindMatch("ListenerSet", "v1")
 	}
 	return c.Client.List(ctx, list, opts...)
 }
 
-func noKindMatch(group, kind, version string) error {
+func noKindMatch(kind, version string) error {
 	return &meta.NoKindMatchError{
 		GroupKind: schema.GroupKind{
-			Group: group,
+			Group: "gateway.networking.k8s.io",
 			Kind:  kind,
 		},
 		SearchedVersions: []string{version},

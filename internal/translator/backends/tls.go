@@ -3,7 +3,6 @@ package backends
 import (
 	"crypto/tls"
 
-	corev1 "k8s.io/api/core/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -11,17 +10,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
-
-func backendTLSForGateway(
-	gateway gatewayv1.Gateway,
-	secrets []corev1.Secret,
-	referenceGrants []gatewayv1beta1.ReferenceGrant,
-) *ir.BackendTLSConfig {
-	return BackendTLSForGatewayWithIndexes(
-		gateway,
-		shared.NewTranslatorIndexes(nil, nil, nil, secrets, nil, referenceGrants),
-	)
-}
 
 func BackendTLSForGatewayWithIndexes(
 	gateway gatewayv1.Gateway,
@@ -71,10 +59,6 @@ func BackendTLSForGatewayWithIndexes(
 	return &ir.BackendTLSConfig{
 		ClientCertificateRef: targetNamespace + "/" + string(ref.Name),
 	}
-}
-
-func tlsSecret(secrets []corev1.Secret, namespace, name string) (corev1.Secret, bool) {
-	return shared.NewTranslatorIndexes(nil, nil, nil, secrets, nil, nil).TLSSecret(namespace, name)
 }
 
 func RefGroup(ref *gatewayv1.SecretObjectReference) string {

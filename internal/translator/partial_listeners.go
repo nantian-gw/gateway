@@ -94,7 +94,7 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 		}
 		updated = ApplyPartialSnapshot(current, nil, listeners)
 	}
-	secrets := rebuildGatewaySecretMaterials(current.Secrets, current.Listeners, listeners, gatewayKeys, supportObjects.secrets)
+	secrets := rebuildGatewaySecretMaterials(current.Secrets, listeners, gatewayKeys, supportObjects.secrets)
 	return ApplyPartialSnapshotWithSecrets(updated, nil, listeners, secrets), nil
 }
 
@@ -339,18 +339,6 @@ func listenerSetParentGatewayKey(listenerSet gatewayv1.ListenerSet) string {
 	return namespace + "/" + string(listenerSet.Spec.ParentRef.Name)
 }
 
-func listenerSetParentGatewayIndexKeys(object client.Object) []string {
-	listenerSet, ok := object.(*gatewayv1.ListenerSet)
-	if !ok || listenerSet == nil {
-		return nil
-	}
-	key := listenerSetParentGatewayKey(*listenerSet)
-	if key == "" {
-		return nil
-	}
-	return []string{key}
-}
-
 func namespacesByName(namespaces []corev1.Namespace) map[string]corev1.Namespace {
 	out := make(map[string]corev1.Namespace, len(namespaces))
 	for _, namespace := range namespaces {
@@ -493,7 +481,6 @@ func (t *Translator) rebuildGatewayListenersWithIndexes(
 
 func rebuildGatewaySecretMaterials(
 	currentSecrets []ir.SecretMaterial,
-	currentListeners []ir.Listener,
 	updatedListeners []ir.Listener,
 	gatewayKeys []client.ObjectKey,
 	secrets []corev1.Secret,

@@ -3,7 +3,6 @@ package backends
 import (
 	"sort"
 
-	corev1 "k8s.io/api/core/v1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
@@ -24,17 +23,6 @@ type BackendLBPolicyIndexes struct {
 	sessionPersistence map[string]*ir.SessionPersistencePolicy
 	loadBalancing      map[string]*ir.LoadBalancingPolicy
 	circuitBreaker     map[string]*ir.CircuitBreakerConfig
-}
-
-func buildBackendLBPolicyIndexes(
-	services []corev1.Service,
-	serviceImports []mcsv1alpha1.ServiceImport,
-	policies []backend.BackendLBPolicy,
-) BackendLBPolicyIndexes {
-	return BuildBackendLBPolicyIndexesWithIndexes(
-		policies,
-		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
-	)
 }
 
 func BuildBackendLBPolicyIndexesWithIndexes(
@@ -104,17 +92,6 @@ func BuildBackendLBPolicyIndexesWithIndexes(
 		loadBalancing:      loadBalancing,
 		circuitBreaker:     circuitBreaker,
 	}
-}
-
-func backendLBPolicyBackendKeys(
-	policy backend.BackendLBPolicy,
-	services []corev1.Service,
-	serviceImports []mcsv1alpha1.ServiceImport,
-) ([]string, bool) {
-	return backendLBPolicyBackendKeysWithIndexes(
-		policy,
-		shared.NewTranslatorIndexes(services, serviceImports, nil, nil, nil, nil),
-	)
 }
 
 func backendLBPolicyBackendKeysWithIndexes(
