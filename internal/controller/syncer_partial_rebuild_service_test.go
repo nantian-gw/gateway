@@ -146,9 +146,7 @@ func TestReconcileServiceImportScopedRequestRefreshesBackendRefsAndBackends(t *t
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
-			"default",
 			mcsv1alpha1.LabelServiceName,
-			"echo",
 		),
 	}
 
@@ -295,9 +293,7 @@ func TestReconcileServiceScopedRequestRefreshesMeshListenersBackendsAndBackendRe
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
-			"default",
 			discoveryv1.LabelServiceName,
-			"echo",
 		),
 	}
 
@@ -475,9 +471,7 @@ func TestReconcileServiceScopedRequestRefreshesOnlyAffectedBackendRefs(t *testin
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
-			"default",
 			discoveryv1.LabelServiceName,
-			"echo",
 		),
 	}
 

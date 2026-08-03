@@ -468,12 +468,6 @@ func (s *Syncer) consumePendingBuild() (snapshotBuildScope, []string, []string, 
 	return s.settlePending.consume()
 }
 
-func (s *Syncer) clearPendingBuild() {
-	s.settleMu.Lock()
-	defer s.settleMu.Unlock()
-	s.clearPendingBuildLocked()
-}
-
 func (s *Syncer) clearPendingBuildLocked() {
 	s.settlePending.clear()
 }

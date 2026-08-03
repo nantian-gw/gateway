@@ -74,7 +74,7 @@ func TestReconcilerRunnerSettleDelayCoalescesBurstTriggers(t *testing.T) {
 		t.Fatalf("settled triggers = %v, want 2", got)
 	}
 
-	waitForCondition(t, 200*time.Millisecond, func() bool {
+	waitForCondition(t, func() bool {
 		return testutil.ToFloat64(runner.metrics.ReconcilerRunnerQueueDepth) == 1
 	}, "expected settle timer to enqueue a single trigger")
 
@@ -163,7 +163,7 @@ func TestReconcilerRunnerSettleDelayMergesScopedTriggers(t *testing.T) {
 	runner.QueueRunForScope(ReconcilerRunnerScopeInfra)
 	runner.QueueRunForScope(ReconcilerRunnerScopeRouteStatus)
 
-	waitForCondition(t, 200*time.Millisecond, func() bool {
+	waitForCondition(t, func() bool {
 		return testutil.ToFloat64(runner.metrics.ReconcilerRunnerQueueDepth) == 1
 	}, "expected settle timer to enqueue merged scoped trigger")
 
@@ -195,7 +195,7 @@ func TestReconcilerRunnerRetryPreservesFailedScope(t *testing.T) {
 	runner.runOnce(context.Background(), ReconcilerRunnerScopeRouteStatus)
 	status.setErr(nil)
 
-	waitForCondition(t, 200*time.Millisecond, func() bool {
+	waitForCondition(t, func() bool {
 		return testutil.ToFloat64(runner.metrics.ReconcilerRunnerQueueDepth) == 1
 	}, "expected retry backoff to enqueue route-status trigger")
 
@@ -437,7 +437,7 @@ func TestReconcilerRunnerFailureSchedulesRetry(t *testing.T) {
 		t.Fatalf("retry pending after failure = %v, want 1", got)
 	}
 
-	waitForCondition(t, 200*time.Millisecond, func() bool {
+	waitForCondition(t, func() bool {
 		return testutil.ToFloat64(runner.metrics.ReconcilerRunnerQueueDepth) == 1
 	}, "expected retry backoff to enqueue a trigger")
 
@@ -632,10 +632,10 @@ func testReconcilerRunnerMetrics() *observability.Metrics {
 	}
 }
 
-func waitForCondition(t *testing.T, timeout time.Duration, condition func() bool, message string) {
+func waitForCondition(t *testing.T, condition func() bool, message string) {
 	t.Helper()
 
-	deadline := time.Now().Add(timeout)
+	deadline := time.Now().Add(200 * time.Millisecond)
 	for time.Now().Before(deadline) {
 		if condition() {
 			return
