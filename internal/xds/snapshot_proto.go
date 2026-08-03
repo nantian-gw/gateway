@@ -257,10 +257,6 @@ func toProtoCircuitBreaker(item *ir.CircuitBreakerConfig) *controlv1.CircuitBrea
 	}
 }
 
-func snapshotExtensions(snapshot *ir.Snapshot) *structpb.Struct {
-	return snapshotExtensionsWithLogger(snapshot, nil)
-}
-
 func snapshotExtensionsWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *structpb.Struct {
 	if snapshot == nil || len(snapshot.Workloads) == 0 {
 		return nil
@@ -457,10 +453,6 @@ func toRouteKind(kind string) controlv1.RouteKind {
 	default:
 		return controlv1.RouteKind_ROUTE_KIND_UNSPECIFIED
 	}
-}
-
-func toEmptyStruct() *structpb.Struct {
-	return toEmptyStructWithLogger(nil)
 }
 
 func toEmptyStructWithLogger(logger *slog.Logger) *structpb.Struct {

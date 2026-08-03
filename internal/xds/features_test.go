@@ -81,7 +81,7 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 
 	snapshot := &ir.Snapshot{GeneratedAt: time.Now().UTC()}
 	store.Publish(snapshot)
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, time.Second)
 
 	stream.pushRecv(&controlv1.DiscoveryRequest{
 		NodeId:        "dp-1",

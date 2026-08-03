@@ -978,7 +978,7 @@ func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testi
 	}()
 
 	waitForNodeConnection(t, nodes, "dp-1")
-	stream.waitForSendCount(t, 1, 200*time.Millisecond)
+	stream.waitForSendCount(t, 200*time.Millisecond)
 
 	responses := stream.snapshotSentResponses()
 	if len(responses) != 1 {
@@ -1068,8 +1068,8 @@ func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfi
 
 	store.Publish(projectionTestSnapshot())
 
-	fullStream.waitForSendCount(t, 1, time.Second)
-	coreOnlyStream.waitForSendCount(t, 1, time.Second)
+	fullStream.waitForSendCount(t, time.Second)
+	coreOnlyStream.waitForSendCount(t, time.Second)
 
 	fullResponses := fullStream.snapshotSentResponses()
 	coreOnlyResponses := coreOnlyStream.snapshotSentResponses()
@@ -1265,18 +1265,18 @@ func (f *fakeConfigStream) recordSend(response *controlv1.DiscoveryResponse) {
 	}
 }
 
-func (f *fakeConfigStream) waitForSendCount(t *testing.T, want int, timeout time.Duration) {
+func (f *fakeConfigStream) waitForSendCount(t *testing.T, timeout time.Duration) {
 	t.Helper()
 
 	deadline := time.After(timeout)
 	for {
-		if len(f.snapshotSentResponses()) >= want {
+		if len(f.snapshotSentResponses()) >= 1 {
 			return
 		}
 
 		select {
 		case <-deadline:
-			t.Fatalf("timed out waiting for %d sends", want)
+			t.Fatalf("timed out waiting for sends")
 		case <-f.sendNotify:
 		}
 	}

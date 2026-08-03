@@ -94,8 +94,8 @@ func (f *fakeDeltaStream) Recv() (*controlv1.DeltaDiscoveryRequest, error) {
 		default:
 		}
 		return &controlv1.DeltaDiscoveryRequest{
-			NodeId:                "dp-delta-1",
-			Cluster:               "default",
+			NodeId:                 "dp-delta-1",
+			Cluster:                "default",
 			ResourceNamesSubscribe: allDeltaTypeURLs(),
 		}, nil
 	}
@@ -131,9 +131,9 @@ func (f *fakeDeltaStream) sentResponses() []*controlv1.DeltaDiscoveryResponse {
 	return out
 }
 
-func (f *fakeDeltaStream) waitForSendCount(t *testing.T, want int, timeout time.Duration) {
+func (f *fakeDeltaStream) waitForSendCount(t *testing.T, want int) {
 	t.Helper()
-	deadline := time.After(timeout)
+	deadline := time.After(time.Second)
 	for {
 		if len(f.sentResponses()) >= want {
 			return
@@ -207,7 +207,7 @@ func makeTestSnapshot(extra ...func(*ir.Snapshot)) *ir.Snapshot {
 	return snap
 }
 
-func setupDeltaTestServer(t *testing.T) (*Server, *ir.SnapshotStore, *noderegistry.Registry) {
+func setupDeltaTestServer(t *testing.T) (*Server, *ir.SnapshotStore) {
 	t.Helper()
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	store := ir.NewSnapshotStore(logger)
@@ -221,7 +221,7 @@ func setupDeltaTestServer(t *testing.T) (*Server, *ir.SnapshotStore, *noderegist
 		store, nodes, logger, metrics,
 	)
 	require.NoError(t, err)
-	return server, store, nodes
+	return server, store
 }
 
 // unblockRecv sends a no-op delta request so the main loop's Recv()
@@ -236,7 +236,7 @@ func unblockRecv(stream *fakeDeltaStream, nodeID string) {
 // Tests
 
 func TestDeltaServer_InitialFullSnapshot(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream()
 	snap := makeTestSnapshot()
 	store.Publish(snap)
@@ -244,7 +244,7 @@ func TestDeltaServer_InitialFullSnapshot(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, len(allDeltaTypeURLs()), time.Second)
+	stream.waitForSendCount(t, len(allDeltaTypeURLs()))
 	responses := stream.sentResponses()
 
 	for _, typeURL := range allDeltaTypeURLs() {
@@ -263,10 +263,10 @@ func TestDeltaServer_InitialFullSnapshot(t *testing.T) {
 }
 
 func TestDeltaServer_SubscribedTypesOnly(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-2",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-2",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLListener, typeURLBackend},
 	})
 	snap := makeTestSnapshot()
@@ -275,7 +275,7 @@ func TestDeltaServer_SubscribedTypesOnly(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, 2, time.Second)
+	stream.waitForSendCount(t, 2)
 	responses := stream.sentResponses()
 
 	require.NotNil(t, findLastResponseByTypeURL(responses, typeURLListener))
@@ -293,10 +293,10 @@ func TestDeltaServer_SubscribedTypesOnly(t *testing.T) {
 }
 
 func TestDeltaServer_NonIncremental(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-3",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-3",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLListener},
 	})
 
@@ -306,7 +306,7 @@ func TestDeltaServer_NonIncremental(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, 1)
 
 	before := len(stream.sentResponses())
 	snap2 := makeTestSnapshot(func(s *ir.Snapshot) {
@@ -320,7 +320,7 @@ func TestDeltaServer_NonIncremental(t *testing.T) {
 	store.Publish(snap2)
 	unblockRecv(stream, "dp-delta-3")
 
-	stream.waitForSendCount(t, before+1, time.Second)
+	stream.waitForSendCount(t, before+1)
 	secondResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, secondResp)
 	require.True(t, secondResp.GetNonIncremental(),
@@ -338,7 +338,7 @@ func TestDeltaServer_NonIncremental(t *testing.T) {
 	store.Publish(snap3)
 	unblockRecv(stream, "dp-delta-3")
 
-	stream.waitForSendCount(t, before+1, time.Second)
+	stream.waitForSendCount(t, before+1)
 	thirdResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, thirdResp)
 	require.False(t, thirdResp.GetNonIncremental(),
@@ -354,10 +354,10 @@ func TestDeltaServer_NonIncremental(t *testing.T) {
 }
 
 func TestDeltaServer_AckNonce(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-4",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-4",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLListener},
 	})
 
@@ -367,7 +367,7 @@ func TestDeltaServer_AckNonce(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, 1)
 	initialResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, initialResp)
 
@@ -389,7 +389,7 @@ func TestDeltaServer_AckNonce(t *testing.T) {
 	store.Publish(snap2)
 	unblockRecv(stream, "dp-delta-4")
 
-	stream.waitForSendCount(t, before+1, time.Second)
+	stream.waitForSendCount(t, before+1)
 	secondResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, secondResp, "expected new response after ACK")
 
@@ -403,12 +403,12 @@ func TestDeltaServer_AckNonce(t *testing.T) {
 }
 
 func TestDeltaServer_DynamicSubscription(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 
 	// Start with BOTH listener and backend subscriptions.
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-6",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-6",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLListener, typeURLBackend},
 	})
 
@@ -423,7 +423,7 @@ func TestDeltaServer_DynamicSubscription(t *testing.T) {
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
 	// 1. Initial push sends both listener and backend.
-	stream.waitForSendCount(t, 2, time.Second)
+	stream.waitForSendCount(t, 2)
 	all := stream.sentResponses()
 	require.NotNil(t, findLastResponseByTypeURL(all, typeURLListener))
 	require.NotNil(t, findLastResponseByTypeURL(all, typeURLBackend))
@@ -431,7 +431,7 @@ func TestDeltaServer_DynamicSubscription(t *testing.T) {
 	// 2. Unsubscribe from listeners.
 	unblockRecv(stream, "dp-delta-6")
 	stream.pushRecv(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                    "dp-delta-6",
+		NodeId:                   "dp-delta-6",
 		ResourceNamesUnsubscribe: []string{typeURLListener},
 	})
 
@@ -450,7 +450,7 @@ func TestDeltaServer_DynamicSubscription(t *testing.T) {
 	unblockRecv(stream, "dp-delta-6")
 
 	// 4. Expect new responses — should be backend only, not listener.
-	stream.waitForSendCount(t, 3, time.Second)
+	stream.waitForSendCount(t, 3)
 	responses := stream.sentResponses()
 	resp3 := responses[len(responses)-1]
 	require.NotEqual(t, typeURLListener, resp3.GetTypeUrl(),
@@ -468,10 +468,10 @@ func TestDeltaServer_DynamicSubscription(t *testing.T) {
 }
 
 func TestDeltaServer_RemovedResources(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-7",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-7",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLBackend},
 	})
 
@@ -485,7 +485,7 @@ func TestDeltaServer_RemovedResources(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, 1)
 	unblockRecv(stream, "dp-delta-7")
 
 	before := len(stream.sentResponses())
@@ -498,7 +498,7 @@ func TestDeltaServer_RemovedResources(t *testing.T) {
 	store.Publish(snap2)
 	unblockRecv(stream, "dp-delta-7")
 
-	stream.waitForSendCount(t, before+1, time.Second)
+	stream.waitForSendCount(t, before+1)
 	secondResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLBackend)
 	require.NotNil(t, secondResp)
 	require.Contains(t, secondResp.GetRemovedResources(), "svc-b:80")
@@ -513,10 +513,10 @@ func TestDeltaServer_RemovedResources(t *testing.T) {
 }
 
 func TestDeltaServer_NackHandling(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-8",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-8",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLListener},
 	})
 
@@ -526,7 +526,7 @@ func TestDeltaServer_NackHandling(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, 1)
 	initialResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, initialResp)
 
@@ -549,7 +549,7 @@ func TestDeltaServer_NackHandling(t *testing.T) {
 	store.Publish(snap2)
 	unblockRecv(stream, "dp-delta-8")
 
-	stream.waitForSendCount(t, before+1, time.Second)
+	stream.waitForSendCount(t, before+1)
 	secondResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, secondResp, "stream should continue sending after NACK")
 
@@ -563,10 +563,10 @@ func TestDeltaServer_NackHandling(t *testing.T) {
 }
 
 func TestDeltaServer_RemovedResourceNonIncremental(t *testing.T) {
-	server, store, _ := setupDeltaTestServer(t)
+	server, store := setupDeltaTestServer(t)
 	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
-		NodeId:                "dp-delta-9",
-		Cluster:               "default",
+		NodeId:                 "dp-delta-9",
+		Cluster:                "default",
 		ResourceNamesSubscribe: []string{typeURLBackend},
 	})
 
@@ -580,7 +580,7 @@ func TestDeltaServer_RemovedResourceNonIncremental(t *testing.T) {
 	result := make(chan error, 1)
 	go func() { result <- server.DeltaStreamConfiguration(stream) }()
 
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, 1)
 	unblockRecv(stream, "dp-delta-9")
 
 	before := len(stream.sentResponses())
@@ -591,7 +591,7 @@ func TestDeltaServer_RemovedResourceNonIncremental(t *testing.T) {
 	store.Publish(snap2)
 	unblockRecv(stream, "dp-delta-9")
 
-	stream.waitForSendCount(t, before+1, time.Second)
+	stream.waitForSendCount(t, before+1)
 	secondResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLBackend)
 	require.NotNil(t, secondResp)
 	require.True(t, secondResp.GetNonIncremental(),

@@ -187,12 +187,12 @@ func typeDelta[T any](prev, curr []T, nameFn func(*T) string) ResourceDelta {
 	return ResourceDelta{AddedChanged: added, Removed: removed}
 }
 
-func listenerNameFn(l *ir.Listener) string        { return fmt.Sprintf("%s/%d", l.Name, l.Port) }
-func httpRouteNameFn(r *ir.HTTPRoute) string       { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
-func grpcRouteNameFn(r *ir.GRPCRoute) string       { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
-func streamRouteNameFn(r *ir.StreamRoute) string    { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
-func backendNameFn(b *ir.BackendCluster) string     { return b.Name }
-func secretNameFn(s *ir.SecretMaterial) string      { return s.Name }
+func listenerNameFn(l *ir.Listener) string       { return fmt.Sprintf("%s/%d", l.Name, l.Port) }
+func httpRouteNameFn(r *ir.HTTPRoute) string     { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
+func grpcRouteNameFn(r *ir.GRPCRoute) string     { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
+func streamRouteNameFn(r *ir.StreamRoute) string { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
+func backendNameFn(b *ir.BackendCluster) string  { return b.Name }
+func secretNameFn(s *ir.SecretMaterial) string   { return s.Name }
 
 func newNonce() (string, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(1<<62))

@@ -12,16 +12,16 @@ func makeListener(name string, port uint32) ir.Listener {
 	return ir.Listener{Name: name, Port: port}
 }
 
-func makeHTTPRoute(ns, name string) ir.HTTPRoute {
-	return ir.HTTPRoute{Namespace: ns, Name: name}
+func makeHTTPRoute(name string) ir.HTTPRoute {
+	return ir.HTTPRoute{Namespace: "default", Name: name}
 }
 
-func makeGRPCRoute(ns, name string) ir.GRPCRoute {
-	return ir.GRPCRoute{Namespace: ns, Name: name}
+func makeGRPCRoute(name string) ir.GRPCRoute {
+	return ir.GRPCRoute{Namespace: "default", Name: name}
 }
 
-func makeStreamRoute(ns, name string) ir.StreamRoute {
-	return ir.StreamRoute{Namespace: ns, Name: name}
+func makeStreamRoute(name string) ir.StreamRoute {
+	return ir.StreamRoute{Namespace: "default", Name: name}
 }
 
 func makeBackend(name string) ir.BackendCluster {
@@ -235,13 +235,13 @@ func TestDeltaDiff_modify(t *testing.T) {
 }
 
 func TestDeltaDiff_mixed(t *testing.T) {
-	a := makeHTTPRoute("default", "a")
-	b := makeHTTPRoute("default", "b")
-	cModified := makeHTTPRoute("default", "c")
+	a := makeHTTPRoute("a")
+	b := makeHTTPRoute("b")
+	cModified := makeHTTPRoute("c")
 	cModified.Hostnames = []string{"added.example.com"}
-	cOriginal := makeHTTPRoute("default", "c")
-	d := makeHTTPRoute("default", "d")
-	e := makeHTTPRoute("default", "e")
+	cOriginal := makeHTTPRoute("c")
+	d := makeHTTPRoute("d")
+	e := makeHTTPRoute("e")
 
 	old := []ir.HTTPRoute{a, b, cOriginal, d}
 	new := []ir.HTTPRoute{b, cModified, e}
@@ -295,9 +295,9 @@ func TestDeltaDiff_sortedOutput(t *testing.T) {
 func TestSnapshotDelta_nilPrev_AllAdded(t *testing.T) {
 	curr := &ir.Snapshot{
 		Listeners:    []ir.Listener{makeListener("http", 80), makeListener("https", 443)},
-		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("default", "route1")},
-		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("default", "grpc1")},
-		StreamRoutes: []ir.StreamRoute{makeStreamRoute("default", "stream1")},
+		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("route1")},
+		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("grpc1")},
+		StreamRoutes: []ir.StreamRoute{makeStreamRoute("stream1")},
 		Backends:     []ir.BackendCluster{makeBackend("backend1")},
 		Secrets:      []ir.SecretMaterial{makeSecret("secret1")},
 	}
@@ -329,9 +329,9 @@ func TestSnapshotDelta_nilPrev_AllAdded(t *testing.T) {
 func TestSnapshotDelta_prevHasData_currEmpty_AllRemoved(t *testing.T) {
 	prev := &ir.Snapshot{
 		Listeners:    []ir.Listener{makeListener("http", 80)},
-		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("default", "route1")},
-		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("default", "grpc1")},
-		StreamRoutes: []ir.StreamRoute{makeStreamRoute("default", "stream1")},
+		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("route1")},
+		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("grpc1")},
+		StreamRoutes: []ir.StreamRoute{makeStreamRoute("stream1")},
 		Backends:     []ir.BackendCluster{makeBackend("backend1")},
 		Secrets:      []ir.SecretMaterial{makeSecret("secret1")},
 	}
@@ -364,7 +364,7 @@ func TestSnapshotDelta_prevHasData_currEmpty_AllRemoved(t *testing.T) {
 
 func TestSnapshotDelta_noChanges(t *testing.T) {
 	listeners := []ir.Listener{makeListener("http", 80), makeListener("https", 443)}
-	routes := []ir.HTTPRoute{makeHTTPRoute("default", "route1"), makeHTTPRoute("default", "route2")}
+	routes := []ir.HTTPRoute{makeHTTPRoute("route1"), makeHTTPRoute("route2")}
 	backends := []ir.BackendCluster{makeBackend("backend1")}
 
 	prev := &ir.Snapshot{Listeners: listeners, HTTPRoutes: routes, Backends: backends}
@@ -387,8 +387,8 @@ func TestSnapshotDelta_noChanges(t *testing.T) {
 }
 
 func TestSnapshotDelta_singleResourceAdded(t *testing.T) {
-	a := makeHTTPRoute("default", "a")
-	b := makeHTTPRoute("default", "b")
+	a := makeHTTPRoute("a")
+	b := makeHTTPRoute("b")
 	prev := &ir.Snapshot{HTTPRoutes: []ir.HTTPRoute{a}}
 	curr := &ir.Snapshot{HTTPRoutes: []ir.HTTPRoute{a, b}}
 
@@ -453,7 +453,7 @@ func TestSnapshotDelta_nonIncremental_MoreThanHalf(t *testing.T) {
 	modified := makeBackend("b")
 	modified.Protocol = "gRPC"
 	new := []ir.BackendCluster{
-		modified, // modified
+		modified,         // modified
 		makeBackend("d"), // new (removes a and c, adds d)
 	}
 	prev := &ir.Snapshot{Backends: old}
@@ -492,15 +492,15 @@ func TestSnapshotDelta_nonIncremental_NotExceeded(t *testing.T) {
 func TestSnapshotDelta_multipleResourceTypes(t *testing.T) {
 	prev := &ir.Snapshot{
 		Listeners:  []ir.Listener{makeListener("http", 80)},
-		HTTPRoutes: []ir.HTTPRoute{makeHTTPRoute("default", "r1"), makeHTTPRoute("default", "r2")},
+		HTTPRoutes: []ir.HTTPRoute{makeHTTPRoute("r1"), makeHTTPRoute("r2")},
 		Backends:   []ir.BackendCluster{makeBackend("b1")},
 	}
 
 	currListeners := makeListener("http", 80)
 	currListeners.Hostnames = []string{"example.com"} // modified
 	curr := &ir.Snapshot{
-		Listeners:  []ir.Listener{currListeners, makeListener("https", 443)}, // modified + added
-		HTTPRoutes: []ir.HTTPRoute{makeHTTPRoute("default", "r2")},           // r1 removed
+		Listeners:  []ir.Listener{currListeners, makeListener("https", 443)},  // modified + added
+		HTTPRoutes: []ir.HTTPRoute{makeHTTPRoute("r2")},                       // r1 removed
 		Backends:   []ir.BackendCluster{makeBackend("b1"), makeBackend("b2")}, // b2 added
 	}
 
@@ -528,9 +528,9 @@ func TestSnapshotDelta_multipleResourceTypes(t *testing.T) {
 func TestSnapshotVersions_returnsAllTypes(t *testing.T) {
 	snap := &ir.Snapshot{
 		Listeners:    []ir.Listener{makeListener("http", 80)},
-		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("default", "r1")},
-		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("default", "grpc1")},
-		StreamRoutes: []ir.StreamRoute{makeStreamRoute("default", "stream1")},
+		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("r1")},
+		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("grpc1")},
+		StreamRoutes: []ir.StreamRoute{makeStreamRoute("stream1")},
 		Backends:     []ir.BackendCluster{makeBackend("b1")},
 		Secrets:      []ir.SecretMaterial{makeSecret("s1")},
 	}
@@ -587,9 +587,9 @@ func TestTypeResourceCount_nilSnapshot(t *testing.T) {
 func TestTypeResourceCount(t *testing.T) {
 	snap := &ir.Snapshot{
 		Listeners:    []ir.Listener{makeListener("l1", 80), makeListener("l2", 443)},
-		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("default", "r1")},
-		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("default", "g1")},
-		StreamRoutes: []ir.StreamRoute{makeStreamRoute("default", "s1")},
+		HTTPRoutes:   []ir.HTTPRoute{makeHTTPRoute("r1")},
+		GRPCRoutes:   []ir.GRPCRoute{makeGRPCRoute("g1")},
+		StreamRoutes: []ir.StreamRoute{makeStreamRoute("s1")},
 		Backends:     []ir.BackendCluster{makeBackend("b1"), makeBackend("b2"), makeBackend("b3")},
 		Secrets:      []ir.SecretMaterial{makeSecret("s1")},
 	}
@@ -638,10 +638,10 @@ func TestDeltaDiff_secret(t *testing.T) {
 }
 
 func TestDeltaDiff_bothAddedAndRemoved(t *testing.T) {
-	a := makeGRPCRoute("default", "a")
-	b := makeGRPCRoute("default", "b")
-	c := makeGRPCRoute("default", "c")
-	d := makeGRPCRoute("default", "d")
+	a := makeGRPCRoute("a")
+	b := makeGRPCRoute("b")
+	c := makeGRPCRoute("c")
+	d := makeGRPCRoute("d")
 
 	old := []ir.GRPCRoute{a, b, c}
 	new := []ir.GRPCRoute{c, d}

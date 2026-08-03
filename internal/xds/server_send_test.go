@@ -32,7 +32,7 @@ func TestDiscoveryResponseSenderSendsResponse(t *testing.T) {
 		t.Fatal("timed out waiting for send result")
 	}
 
-	stream.waitForSendCount(t, 1, time.Second)
+	stream.waitForSendCount(t, time.Second)
 	responses := stream.snapshotSentResponses()
 	if len(responses) != 1 || responses[0].GetVersion() != "v-test" {
 		t.Fatalf("unexpected sent responses: %#v", responses)
