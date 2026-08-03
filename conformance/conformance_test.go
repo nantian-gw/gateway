@@ -44,7 +44,6 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"GatewayModifyListeners",
 			"GRPCRouteListenerHostnameMatching",
 			"HTTPRouteHTTPSListenerDetectMisdirectedRequests",
-			"HTTPRouteRedirectPortAndScheme",
 			"BackendTLSPolicyConflictResolution",
 			"HTTPRouteListenerHostnameMatching",
 			"HTTPRouteListenerPortMatching",
