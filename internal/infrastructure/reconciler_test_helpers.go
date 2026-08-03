@@ -89,16 +89,12 @@ func assertServicePort(
 	ports []corev1.ServicePort,
 	port int32,
 	protocol corev1.Protocol,
-	nodePort int32,
 ) {
 	t.Helper()
 
 	for _, item := range ports {
 		if item.Port != port || item.Protocol != protocol {
 			continue
-		}
-		if nodePort != 0 && item.NodePort != nodePort {
-			t.Fatalf("service port %d/%s nodePort = %d, want %d", port, protocol, item.NodePort, nodePort)
 		}
 		if item.TargetPort != intstr.FromInt(int(port)) && port != defaultAdminPort {
 			t.Fatalf("service port %d/%s targetPort = %#v", port, protocol, item.TargetPort)

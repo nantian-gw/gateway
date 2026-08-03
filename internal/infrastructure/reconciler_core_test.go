@@ -115,9 +115,9 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 	if shared.Spec.Selector == nil || shared.Spec.Selector["app"] != "nantian-gw-dataplane" {
 		t.Fatalf("shared service selector = %#v, want map[app:nantian-gw-dataplane]", shared.Spec.Selector)
 	}
-	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 0)
-	assertServicePort(t, shared.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
-	assertServicePort(t, shared.Spec.Ports, 5300, corev1.ProtocolUDP, 0)
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP)
+	assertServicePort(t, shared.Spec.Ports, 8080, corev1.ProtocolTCP)
+	assertServicePort(t, shared.Spec.Ports, 5300, corev1.ProtocolUDP)
 	assertMissingServicePort(t, shared.Spec.Ports, defaultAdminPort, corev1.ProtocolTCP)
 
 	dataplanePolicy := &networkingv1.NetworkPolicy{}
@@ -160,8 +160,8 @@ func TestReconcileCreatesGatewayInfrastructureServiceAndUpdatesSharedPorts(t *te
 	if gatewayService.Spec.Selector != nil {
 		t.Fatalf("gateway service selector = %#v, want nil with managed EndpointSlices", gatewayService.Spec.Selector)
 	}
-	assertServicePort(t, gatewayService.Spec.Ports, 8080, corev1.ProtocolTCP, 0)
-	assertServicePort(t, gatewayService.Spec.Ports, 5300, corev1.ProtocolUDP, 0)
+	assertServicePort(t, gatewayService.Spec.Ports, 8080, corev1.ProtocolTCP)
+	assertServicePort(t, gatewayService.Spec.Ports, 5300, corev1.ProtocolUDP)
 }
 
 func TestReconcileListsDataplanePodsOncePerRun(t *testing.T) {
@@ -462,7 +462,7 @@ func TestReconcileTwoGatewaysSamePortNoConflict(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get shared Service returned error: %v", err)
 	}
-	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+	assertServicePort(t, shared.Spec.Ports, 80, corev1.ProtocolTCP)
 
 	gatewayAService, err := mustGetService(
 		context.Background(),
@@ -472,7 +472,7 @@ func TestReconcileTwoGatewaysSamePortNoConflict(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get gateway-a Service returned error: %v", err)
 	}
-	assertServicePort(t, gatewayAService.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+	assertServicePort(t, gatewayAService.Spec.Ports, 80, corev1.ProtocolTCP)
 
 	gatewayBService, err := mustGetService(
 		context.Background(),
@@ -482,7 +482,7 @@ func TestReconcileTwoGatewaysSamePortNoConflict(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get gateway-b Service returned error: %v", err)
 	}
-	assertServicePort(t, gatewayBService.Spec.Ports, 80, corev1.ProtocolTCP, 0)
+	assertServicePort(t, gatewayBService.Spec.Ports, 80, corev1.ProtocolTCP)
 }
 
 func TestReconcileSkipsGatewayServiceForUnsupportedProtocol(t *testing.T) {
