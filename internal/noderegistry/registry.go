@@ -541,12 +541,6 @@ func clonePersistRequest(request persistRequest) persistRequest {
 	}
 }
 
-func mergePersistRequest(current, next persistRequest) persistRequest {
-	merged := clonePersistRequest(next)
-	merged.immediate = current.immediate || next.immediate
-	return merged
-}
-
 func (r *Registry) persistBacklogDepthLocked() int {
 	return len(r.persistImmediate) + len(r.persistDebounced)
 }
