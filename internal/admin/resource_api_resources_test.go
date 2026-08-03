@@ -57,7 +57,7 @@ spec:
         - name: api
           port: 80
 `)
-	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody, nil)
+	recorder = performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -93,7 +93,7 @@ spec:
     ]
   }
 }`)
-	recorder = performRequestWithBody(t, server, http.MethodPut, "/v1/resources/httproute/default/created", updateBody, nil)
+	recorder = performRequestWithBody(t, server, http.MethodPut, "/v1/resources/httproute/default/created", updateBody)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected update 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -137,7 +137,7 @@ spec:
         - name: api
           port: 80
 `)
-	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/resources", createBody)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected create 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -152,7 +152,7 @@ spec:
 	}
 
 	logBuf.Reset()
-	recorder = performRequestWithBody(t, server, http.MethodPut, "/v1/resources/httproute/default/created", []byte(`{"kind":"Gateway"}`), nil)
+	recorder = performRequestWithBody(t, server, http.MethodPut, "/v1/resources/httproute/default/created", []byte(`{"kind":"Gateway"}`))
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected invalid update 400, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -188,7 +188,7 @@ spec:
         - name: api
           port: 80
 `)
-	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/resources", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/resources", body)
 	if recorder.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("expected 413, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -654,7 +654,7 @@ spec:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			recorder := performRequestWithBody(t, tc.server, tc.method, tc.path, tc.body, nil)
+			recorder := performRequestWithBody(t, tc.server, tc.method, tc.path, tc.body)
 			if recorder.Code != tc.statusCode {
 				t.Fatalf("expected %d, got %d: %s", tc.statusCode, recorder.Code, recorder.Body.String())
 			}

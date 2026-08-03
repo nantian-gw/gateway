@@ -157,7 +157,7 @@ func TestPutChatbotConfig_CreatesNewSecret(t *testing.T) {
 		"temperature": 0.1
 	}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPut, "/v1/chatbot/config", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPut, "/v1/chatbot/config", body)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -194,7 +194,7 @@ func TestPutChatbotConfig_MaskedKeyPreservesExisting(t *testing.T) {
 		"apiKey": "sk-••••4key"
 	}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPut, "/v1/chatbot/config", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPut, "/v1/chatbot/config", body)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -229,7 +229,7 @@ func TestPutChatbotConfig_EmptyKeyPreservesExisting(t *testing.T) {
 		"model": "gpt-4-turbo"
 	}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPut, "/v1/chatbot/config", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPut, "/v1/chatbot/config", body)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -294,7 +294,7 @@ func TestPostChatbotChat_ReturnsSSEStream(t *testing.T) {
 
 	body := []byte(`{"prompt": "What is a Gateway?"}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
@@ -325,7 +325,7 @@ func TestPostChatbotChat_NotConfiguredReturnsError(t *testing.T) {
 
 	body := []byte(`{"prompt": "What is a Gateway?"}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body)
 
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for unconfigured chatbot, got %d", recorder.Code)
@@ -342,7 +342,7 @@ func TestPostChatbotChat_EmptyPromptReturnsError(t *testing.T) {
 
 	body := []byte(`{"prompt": ""}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body)
 	if recorder.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for empty prompt, got %d", recorder.Code)
 	}
@@ -384,7 +384,7 @@ func TestPostChatbotChat_StreamsWithHistory(t *testing.T) {
 		]
 	}`)
 
-	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body, nil)
+	recorder := performRequestWithBody(t, server, http.MethodPost, "/v1/chatbot/chat", body)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
