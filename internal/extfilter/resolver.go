@@ -286,22 +286,22 @@ func corsConfig(item *corsFilter) (map[string]any, error) {
 	}
 
 	config := map[string]any{}
-	if allowOrigins, err := stringItems("CORS", "allowOrigins", item.AllowOrigins); err != nil {
+	if allowOrigins, err := stringItems("allowOrigins", item.AllowOrigins); err != nil {
 		return nil, err
 	} else if len(allowOrigins) > 0 {
 		config["allowOrigins"] = allowOrigins
 	}
-	if allowMethods, err := stringItems("CORS", "allowMethods", item.AllowMethods); err != nil {
+	if allowMethods, err := stringItems("allowMethods", item.AllowMethods); err != nil {
 		return nil, err
 	} else if len(allowMethods) > 0 {
 		config["allowMethods"] = allowMethods
 	}
-	if allowHeaders, err := stringItems("CORS", "allowHeaders", item.AllowHeaders); err != nil {
+	if allowHeaders, err := stringItems("allowHeaders", item.AllowHeaders); err != nil {
 		return nil, err
 	} else if len(allowHeaders) > 0 {
 		config["allowHeaders"] = allowHeaders
 	}
-	if exposeHeaders, err := stringItems("CORS", "exposeHeaders", item.ExposeHeaders); err != nil {
+	if exposeHeaders, err := stringItems("exposeHeaders", item.ExposeHeaders); err != nil {
 		return nil, err
 	} else if len(exposeHeaders) > 0 {
 		config["exposeHeaders"] = exposeHeaders
@@ -625,12 +625,12 @@ func removeHeaders(filterType string, items []string) ([]any, error) {
 	return out, nil
 }
 
-func stringItems(filterType string, field string, items []string) ([]any, error) {
+func stringItems(field string, items []string) ([]any, error) {
 	out := make([]any, 0, len(items))
 	for idx, item := range items {
 		item = strings.TrimSpace(item)
 		if item == "" {
-			return nil, fmt.Errorf("%s ExtensionRef %s[%d] must not be empty", filterType, field, idx)
+			return nil, fmt.Errorf("CORS ExtensionRef %s[%d] must not be empty", field, idx)
 		}
 		out = append(out, item)
 	}

@@ -466,19 +466,19 @@ func (c *Config) TranslatorResourceLimits() TranslatorLimitsConfig {
 }
 
 func (c *Config) DashboardEnabled() bool {
-	return boolValueOrDefault(c.Dashboard.Enabled, true)
+	return boolValueOrDefault(c.Dashboard.Enabled)
 }
 
 func (c *Config) DashboardCapabilities() ResolvedDashboardCapabilities {
 	return ResolvedDashboardCapabilities{
-		AIOverview:      boolValueOrDefault(c.Dashboard.Capabilities.AIOverview, true),
-		AIServices:      boolValueOrDefault(c.Dashboard.Capabilities.AIServices, true),
-		AITokenPolicies: boolValueOrDefault(c.Dashboard.Capabilities.AITokenPolicies, true),
-		AICost:          boolValueOrDefault(c.Dashboard.Capabilities.AICost, true),
-		AITraces:        boolValueOrDefault(c.Dashboard.Capabilities.AITraces, true),
-		AIUsage:         boolValueOrDefault(c.Dashboard.Capabilities.AIUsage, true),
-		WasmPlugins:     boolValueOrDefault(c.Dashboard.Capabilities.WasmPlugins, true),
-		Chatbot:         boolValueOrDefault(c.Dashboard.Capabilities.Chatbot, true),
+		AIOverview:      boolValueOrDefault(c.Dashboard.Capabilities.AIOverview),
+		AIServices:      boolValueOrDefault(c.Dashboard.Capabilities.AIServices),
+		AITokenPolicies: boolValueOrDefault(c.Dashboard.Capabilities.AITokenPolicies),
+		AICost:          boolValueOrDefault(c.Dashboard.Capabilities.AICost),
+		AITraces:        boolValueOrDefault(c.Dashboard.Capabilities.AITraces),
+		AIUsage:         boolValueOrDefault(c.Dashboard.Capabilities.AIUsage),
+		WasmPlugins:     boolValueOrDefault(c.Dashboard.Capabilities.WasmPlugins),
+		Chatbot:         boolValueOrDefault(c.Dashboard.Capabilities.Chatbot),
 	}
 }
 
@@ -646,9 +646,9 @@ func positiveIntOrZero(value int) int {
 	return 0
 }
 
-func boolValueOrDefault(value *bool, fallback bool) bool {
+func boolValueOrDefault(value *bool) bool {
 	if value == nil {
-		return fallback
+		return true
 	}
 	return *value
 }

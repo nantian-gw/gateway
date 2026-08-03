@@ -44,10 +44,7 @@ func ConfigureTracing(ctx context.Context, cfg TracingConfig) (func(context.Cont
 		return func(context.Context) error { return nil }, nil
 	}
 
-	exporterOptions, err := buildTraceExporterOptions(cfg)
-	if err != nil {
-		return nil, err
-	}
+	exporterOptions := buildTraceExporterOptions(cfg)
 
 	exporter, err := otlptracegrpc.New(ctx, exporterOptions...)
 	if err != nil {
@@ -72,7 +69,7 @@ func ConfigureTracing(ctx context.Context, cfg TracingConfig) (func(context.Cont
 	return provider.Shutdown, nil
 }
 
-func buildTraceExporterOptions(cfg TracingConfig) ([]otlptracegrpc.Option, error) {
+func buildTraceExporterOptions(cfg TracingConfig) []otlptracegrpc.Option {
 	options := make([]otlptracegrpc.Option, 0, 3)
 	if endpoint := strings.TrimSpace(cfg.Endpoint); endpoint != "" {
 		options = append(options, otlptracegrpc.WithEndpoint(endpoint))
@@ -83,7 +80,7 @@ func buildTraceExporterOptions(cfg TracingConfig) ([]otlptracegrpc.Option, error
 	if headers := traceHeaders(cfg.Headers); len(headers) > 0 {
 		options = append(options, otlptracegrpc.WithHeaders(headers))
 	}
-	return options, nil
+	return options
 }
 
 func clampSamplerRatio(ratio float64) float64 {

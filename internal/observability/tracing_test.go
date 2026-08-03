@@ -32,10 +32,7 @@ func TestConfigureTracingClampsSamplerAndAppliesHeaders(t *testing.T) {
 		},
 	}
 
-	opts, err := buildTraceExporterOptions(cfg)
-	if err != nil {
-		t.Fatalf("buildTraceExporterOptions returned error: %v", err)
-	}
+	opts := buildTraceExporterOptions(cfg)
 	if len(opts) != 3 {
 		t.Fatalf("unexpected exporter option count: %d", len(opts))
 	}
