@@ -69,6 +69,14 @@ func meshWorkloadNamespacesFromSnapshot(current *ir.Snapshot) []string {
 			if routeNamespace != "" {
 				namespaces[routeNamespace] = struct{}{}
 			}
+			// Also collect the parent service's namespace for cross-namespace mesh
+			// routes (e.g. MeshConsumerRoute). This ensures workloads from the
+			// parent service's namespace are included in the snapshot, so the
+			// dataplane's source_namespace derivation can resolve client pod IPs
+			// from all relevant namespaces, not just the route's namespace.
+			if parentRef.Namespace != "" && parentRef.Namespace != routeNamespace {
+				namespaces[parentRef.Namespace] = struct{}{}
+			}
 			return
 		}
 	}
