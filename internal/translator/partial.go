@@ -436,7 +436,7 @@ func (t *Translator) refreshBackendRefMetadataForSnapshot(
 	}
 
 	annotator := backends.NewBackendRefTranslator(
-		services,
+		resources.FilterServices(services),
 		serviceImports,
 		referenceGrants,
 		extfilter.Resolver{},
