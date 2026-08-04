@@ -697,8 +697,11 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshWorkloadsForCrossNamespaceS
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped mesh rebuild should not list ConfigMaps",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
-		reflect.TypeOf(&corev1.PodList{}): requireNamespaceScopedList(
-			"gateway-conformance-mesh-consumer",
+		reflect.TypeOf(&corev1.PodList{}): requireNamespaceScopedListAny(
+			[]string{
+				"gateway-conformance-mesh-consumer",
+				"gateway-conformance-mesh",
+			},
 			"pod",
 		),
 	}

@@ -585,6 +585,17 @@ func requireNamespaceScopedList(namespace, resource string) func(client.ListOpti
 	}
 }
 
+func requireNamespaceScopedListAny(namespaces []string, resource string) func(client.ListOptions) error {
+	return func(opts client.ListOptions) error {
+		for _, ns := range namespaces {
+			if opts.Namespace == ns {
+				return nil
+			}
+		}
+		return fmt.Errorf("%s list namespace = %q, want one of %v", resource, opts.Namespace, namespaces)
+	}
+}
+
 func newPartialRebuildTestScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
 
