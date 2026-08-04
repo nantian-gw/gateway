@@ -342,6 +342,26 @@ func reconcilerRunnerScopesForSnapshotBuildScope(scope snapshotBuildScope) []Rec
 
 	return scopes.sortedOrFull()
 }
+// hasMeshRouteChanges checks if any of the changed routes have Service parentRefs,
+// indicating a mesh route change that requires rebuilding backends, backend ref
+// metadata, and mesh listeners.
+func (s *Syncer) hasMeshRouteChanges(current *ir.Snapshot, routeKeys snapshotRouteObjectKeys) bool {
+	if current == nil {
+		return false
+	}
+	for _, key := range routeKeys.http {
+		for _, route := range current.HTTPRoutes {
+			if route.Namespace == key.Namespace && route.Name == key.Name {
+				for _, ref := range route.ParentRefs {
+					if ref.Group == "" && ref.Kind == "Service" {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}
 
 func (s *Syncer) buildSnapshot(
 	ctx context.Context,
@@ -362,6 +382,12 @@ func (s *Syncer) buildSnapshot(
 		return s.translator.Build(ctx, s.client)
 	}
 
+	// If the route change involves mesh routes (Service parentRefs), also rebuild
+	// backends, backend ref metadata, and mesh listeners. This ensures the dataplane
+	// has the correct backend clusters and listener attachments for the new mesh route.
+	if scope&snapshotBuildScopeRoutes != 0 && s.hasMeshRouteChanges(current, routeKeys) {
+		scope |= snapshotBuildScopeBackends | snapshotBuildScopeRouteBackendRefs | snapshotBuildScopeMeshListeners
+	}
 	next := current
 	var err error
 	if scope&snapshotBuildScopeRoutes != 0 {
