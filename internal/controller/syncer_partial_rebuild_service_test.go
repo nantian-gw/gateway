@@ -138,11 +138,8 @@ func TestReconcileServiceImportScopedRequestRefreshesBackendRefsAndBackends(t *t
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):  "serviceimport-scoped rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):  "serviceimport-scoped rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):  "serviceimport-scoped rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):            "serviceimport-scoped rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}): "serviceimport-scoped rebuild should not list ServiceImports",
 		reflect.TypeOf(&corev1.SecretList{}):             "serviceimport-scoped rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):          "serviceimport-scoped rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                "serviceimport-scoped rebuild should not list Pods",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
@@ -284,12 +281,9 @@ func TestReconcileServiceScopedRequestRefreshesMeshListenersBackendsAndBackendRe
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):  "service-scoped rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):  "service-scoped rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):  "service-scoped rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):            "service-scoped rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}): "service-scoped rebuild should not list ServiceImports",
 		reflect.TypeOf(&corev1.NamespaceList{}):          "service-scoped rebuild should not list Namespaces",
 		reflect.TypeOf(&corev1.SecretList{}):             "service-scoped rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):          "service-scoped rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                "service-scoped rebuild should not list Pods",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
@@ -462,12 +456,9 @@ func TestReconcileServiceScopedRequestRefreshesOnlyAffectedBackendRefs(t *testin
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):  "service-scoped rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):  "service-scoped rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):  "service-scoped rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):            "service-scoped rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}): "service-scoped rebuild should not list ServiceImports",
 		reflect.TypeOf(&corev1.NamespaceList{}):          "service-scoped rebuild should not list Namespaces",
 		reflect.TypeOf(&corev1.SecretList{}):             "service-scoped rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):          "service-scoped rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                "service-scoped rebuild should not list Pods",
 	}
 	validatingClient.listValidators = map[reflect.Type]func(client.ListOptions) error{
 		reflect.TypeOf(&discoveryv1.EndpointSliceList{}): requireEndpointSliceList(
@@ -581,9 +572,6 @@ func TestReconcilePodEventRefreshesMeshWorkloadsAfterPodIPAssignment(t *testing.
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "route-scoped mesh rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "route-scoped mesh rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "route-scoped mesh rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "route-scoped mesh rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "route-scoped mesh rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "route-scoped mesh rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "route-scoped mesh rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.SecretList{}):                 "route-scoped mesh rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped mesh rebuild should not list ConfigMaps",
@@ -644,9 +632,6 @@ func TestReconcilePodEventRefreshesMeshWorkloadsAfterPodIPAssignment(t *testing.
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "workload-only rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "workload-only rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "workload-only rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "workload-only rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "workload-only rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "workload-only rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "workload-only rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.NamespaceList{}):              "workload-only rebuild should not list Namespaces",
 		reflect.TypeOf(&corev1.SecretList{}):                 "workload-only rebuild should not list Secrets",

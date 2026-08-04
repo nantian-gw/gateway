@@ -347,17 +347,23 @@ func reconcilerRunnerScopesForSnapshotBuildScope(scope snapshotBuildScope) []Rec
 // metadata, and mesh listeners.
 func (s *Syncer) hasMeshRouteChanges(current *ir.Snapshot, routeKeys snapshotRouteObjectKeys) bool {
 	if current == nil {
-		return false
+		return true
 	}
 	for _, key := range routeKeys.http {
+		found := false
 		for _, route := range current.HTTPRoutes {
 			if route.Namespace == key.Namespace && route.Name == key.Name {
+				found = true
 				for _, ref := range route.ParentRefs {
 					if ref.Group == "" && ref.Kind == "Service" {
 						return true
 					}
 				}
+				break
 			}
+		}
+		if !found {
+			return true
 		}
 	}
 	return false

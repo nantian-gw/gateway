@@ -16,7 +16,6 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
-	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
@@ -150,13 +149,9 @@ func TestReconcileHTTPRouteScopedRequestRebuildsOnlyChangedRoute(t *testing.T) {
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "route-scoped rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "route-scoped rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "route-scoped rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "route-scoped rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "route-scoped rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "route-scoped rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "route-scoped rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.SecretList{}):                 "route-scoped rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                    "route-scoped rebuild should not list Pods",
 	}
 
 	if _, err := syncer.Reconcile(
@@ -430,13 +425,9 @@ func TestReconcileHTTPRouteScopedRequestAttachesNewRouteToExistingGatewayListene
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "route-scoped rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "route-scoped rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "route-scoped rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "route-scoped rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "route-scoped rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "route-scoped rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "route-scoped rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.SecretList{}):                 "route-scoped rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                    "route-scoped rebuild should not list Pods",
 	}
 
 	if _, err := syncer.Reconcile(
@@ -572,13 +563,9 @@ func TestReconcileHTTPRouteScopedRequestRebuildsMissingParentGatewayListener(t *
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "route-scoped rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "route-scoped rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "route-scoped rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "route-scoped rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "route-scoped rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "route-scoped rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "route-scoped rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.SecretList{}):                 "route-scoped rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                    "route-scoped rebuild should not list Pods",
 	}
 
 	if _, err := syncer.Reconcile(
@@ -685,9 +672,6 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshWorkloadsForCrossNamespaceS
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "route-scoped mesh rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "route-scoped mesh rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "route-scoped mesh rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "route-scoped mesh rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "route-scoped mesh rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "route-scoped mesh rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "route-scoped mesh rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.SecretList{}):                 "route-scoped mesh rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped mesh rebuild should not list ConfigMaps",
