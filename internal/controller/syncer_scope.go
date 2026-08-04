@@ -418,7 +418,7 @@ func (s *Syncer) buildSnapshot(
 		} else if len(backendNamespaces) != 0 {
 			backends, err = s.translator.BuildBackendsForNamespaces(ctx, s.client, next, backendNamespaces)
 		} else {
-			backends, err = s.translator.BuildBackends(ctx, s.client)
+			backends, err = s.translator.BuildBackendsForSnapshot(ctx, s.client, next, nil, nil)
 		}
 		if err != nil {
 			return nil, err
