@@ -28,6 +28,7 @@ import (
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
 	gwtls "github.com/nantian-gw/gateway/internal/tls"
 	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
@@ -575,6 +576,28 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		return nil, err
 	}
 
+	var meshListenerReport []string
+	for _, l := range snapshot.Listeners {
+		if l.Metadata[mesh.FrontendKindMetadataKey] == mesh.FrontendKindService {
+			meshListenerReport = append(meshListenerReport, fmt.Sprintf("%s port=%d attached=%v", l.Name, l.Port, l.AttachedRoutes))
+		}
+	}
+	t.logger.Info("mesh listener report",
+		"listeners", meshListenerReport,
+		"workloads", len(snapshot.Workloads),
+	)
+
+	for _, r := range snapshot.HTTPRoutes {
+		if len(r.ParentRefs) > 0 && r.ParentRefs[0].Kind == "Service" {
+			var refs []string
+			for _, rule := range r.Rules {
+				for _, ref := range rule.BackendRefs {
+					refs = append(refs, fmt.Sprintf("%s:%d", ref.Name, ref.Port))
+				}
+			}
+			t.logger.Info("mesh route", "ns", r.Namespace, "name", r.Name, "backendRefs", refs)
+		}
+	}
 	return snapshot, nil
 }
 
