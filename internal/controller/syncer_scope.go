@@ -280,19 +280,19 @@ func (s *Syncer) buildScopeForRequest(
 		return snapshotBuildScopeGatewayListeners, "", "", []client.ObjectKey{key}, nil, nil, snapshotRouteObjectKeys{}
 	}
 	if key, ok := snapshotScopedObjectKeyForRequest(request, snapshotHTTPRoutesReconcileRequestName); ok {
-		return snapshotBuildScopeRoutes, "", "", nil, nil, nil, snapshotRouteObjectKeys{http: []client.ObjectKey{key}}
+		return snapshotBuildScopeRoutes | snapshotBuildScopeMeshListeners, "", "", nil, nil, nil, snapshotRouteObjectKeys{http: []client.ObjectKey{key}}
 	}
 	if key, ok := snapshotScopedObjectKeyForRequest(request, snapshotGRPCRoutesReconcileRequestName); ok {
-		return snapshotBuildScopeRoutes, "", "", nil, nil, nil, snapshotRouteObjectKeys{grpc: []client.ObjectKey{key}}
+		return snapshotBuildScopeRoutes | snapshotBuildScopeMeshListeners, "", "", nil, nil, nil, snapshotRouteObjectKeys{grpc: []client.ObjectKey{key}}
 	}
 	if key, ok := snapshotScopedObjectKeyForRequest(request, snapshotTCPRoutesReconcileRequestName); ok {
-		return snapshotBuildScopeRoutes, "", "", nil, nil, nil, snapshotRouteObjectKeys{tcp: []client.ObjectKey{key}}
+		return snapshotBuildScopeRoutes | snapshotBuildScopeMeshListeners, "", "", nil, nil, nil, snapshotRouteObjectKeys{tcp: []client.ObjectKey{key}}
 	}
 	if key, ok := snapshotScopedObjectKeyForRequest(request, snapshotUDPRoutesReconcileRequestName); ok {
-		return snapshotBuildScopeRoutes, "", "", nil, nil, nil, snapshotRouteObjectKeys{udp: []client.ObjectKey{key}}
+		return snapshotBuildScopeRoutes | snapshotBuildScopeMeshListeners, "", "", nil, nil, nil, snapshotRouteObjectKeys{udp: []client.ObjectKey{key}}
 	}
 	if key, ok := snapshotScopedObjectKeyForRequest(request, snapshotTLSRoutesReconcileRequestName); ok {
-		return snapshotBuildScopeRoutes, "", "", nil, nil, nil, snapshotRouteObjectKeys{tls: []client.ObjectKey{key}}
+		return snapshotBuildScopeRoutes | snapshotBuildScopeMeshListeners, "", "", nil, nil, nil, snapshotRouteObjectKeys{tls: []client.ObjectKey{key}}
 	}
 
 	switch request.Name {
