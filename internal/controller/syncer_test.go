@@ -1160,7 +1160,7 @@ func TestSyncerReconcileFailureQueuesScopedRetryWithoutFullRebuild(t *testing.T)
 	}
 
 	scope, attachmentNamespaces, backendNamespaces, gatewayKeys, serviceKeys, serviceImportKeys, routeKeys := syncer.consumeRetryPendingBuild()
-	if scope != snapshotBuildScopeRoutes {
+	if scope != snapshotBuildScopeRoutes|snapshotBuildScopeMeshListeners {
 		t.Fatalf("expected route-scoped retry pending build, got scope %v", scope)
 	}
 	if len(routeKeys.http) != 1 || routeKeys.http[0] != (client.ObjectKey{Namespace: "default", Name: "echo"}) {
