@@ -54,38 +54,6 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"BackendTLSPolicy",
 			"TLSRouteHostnameIntersection",
 			"TLSRouteMixedTerminationSameNamespace",
-			// Mesh routing instability: dataplane accepts the snapshot but
-			// intermittently stops applying mesh routes (route "flash" back
-			// to direct backend 200 after the first requests) and rejects
-			// mesh traffic with InvalidBackendRefs 500. Nightly red since
-			// 2026-07-26 after 7df441d re-enabled these tests. Failures are
-			// broadly distributed across all 22 mesh tests — different mesh
-			// tests fail on each run (verified across two independent runs),
-			// so no fixed subset can be reliability green. Skipped
-			// temporarily pending dataplane fix — see
-			// .scratch/mesh-conformance-stability/README.md.
-			"MeshBasic",
-			"MeshConsumerRoute",
-			"MeshFrontend",
-			"MeshFrontendHostname",
-			"MeshGRPCRouteWeight",
-			"MeshHTTPRoute303Redirect",
-			"MeshHTTPRoute307Redirect",
-			"MeshHTTPRoute308Redirect",
-			"MeshHTTPRouteBackendRequestHeaderModifier",
-			"MeshHTTPRouteMatching",
-			"MeshHTTPRouteNamedRule",
-			"MeshHTTPRouteQueryParamMatching",
-			"MeshHTTPRouteRedirectHostAndStatus",
-			"MeshHTTPRouteRedirectPath",
-			"MeshHTTPRouteRedirectPort",
-			"MeshHTTPRouteRequestHeaderModifier",
-			"MeshHTTPRouteRewritePath",
-			"MeshHTTPRouteSchemeRedirect",
-			"MeshHTTPRouteSimpleSameNamespace",
-			"MeshHTTPRouteWeight",
-			"MeshPorts",
-			"MeshTrafficSplit",
 		}
 	}
 
