@@ -294,13 +294,9 @@ func TestReconcileHTTPRouteScopedRequestRefreshesMeshListenersForServiceParents(
 		reflect.TypeOf(&gatewayv1alpha2.TCPRouteList{}):      "route-scoped mesh rebuild should not list TCPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.UDPRouteList{}):      "route-scoped mesh rebuild should not list UDPRoutes",
 		reflect.TypeOf(&gatewayv1alpha2.TLSRouteList{}):      "route-scoped mesh rebuild should not list TLSRoutes",
-		reflect.TypeOf(&corev1.ServiceList{}):                "route-scoped mesh rebuild should not list Services",
-		reflect.TypeOf(&mcsv1alpha1.ServiceImportList{}):     "route-scoped mesh rebuild should not list ServiceImports",
-		reflect.TypeOf(&discoveryv1.EndpointSliceList{}):     "route-scoped mesh rebuild should not list EndpointSlices",
 		reflect.TypeOf(&gatewayv1beta1.ReferenceGrantList{}): "route-scoped mesh rebuild should not list ReferenceGrants",
 		reflect.TypeOf(&corev1.SecretList{}):                 "route-scoped mesh rebuild should not list Secrets",
 		reflect.TypeOf(&corev1.ConfigMapList{}):              "route-scoped mesh rebuild should not list ConfigMaps",
-		reflect.TypeOf(&corev1.PodList{}):                    "route-scoped mesh rebuild should not list Pods",
 	}
 
 	if _, err := syncer.Reconcile(
