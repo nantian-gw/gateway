@@ -29,6 +29,7 @@ func (s *Syncer) snapshotReconcileRequests(ctx context.Context, object client.Ob
 	case *gatewayv1.Gateway:
 		return s.gatewayReconcileRequests(ctx, item)
 	case *gatewayv1.HTTPRoute:
+		s.logger.Info("HTTPRoute watch triggered", "ns", item.Namespace, "name", item.Name)
 		return []reconcile.Request{snapshotHTTPRoutesReconcileRequestForKey(client.ObjectKeyFromObject(item))}
 	case *gatewayv1.GRPCRoute:
 		return []reconcile.Request{snapshotGRPCRoutesReconcileRequestForKey(client.ObjectKeyFromObject(item))}
