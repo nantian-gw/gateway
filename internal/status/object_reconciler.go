@@ -191,6 +191,18 @@ func (r *Reconciler) loadGatewayClassesForLoadedGateways(ctx context.Context, st
 		if err != nil {
 			return err
 		}
+		if !found {
+			// Fallback to direct API call in case the cache is not up to date.
+			// This is important for per-object reconciliation paths where the
+			// GatewayClass may have been created recently.
+			found, err = r.getOptionalFromClient(ctx, client.ObjectKey{Name: name}, &gatewayClass)
+			if err != nil {
+				return err
+			}
+		}
+		if err != nil {
+			return err
+		}
 		if !found || string(gatewayClass.Spec.ControllerName) != r.controllerName {
 			continue
 		}
@@ -566,6 +578,13 @@ func (r *Reconciler) getOptional(
 	obj client.Object,
 ) (bool, error) {
 	return getOptionalWithReader(ctx, r.reader, key, obj)
+}
+func (r *Reconciler) getOptionalFromClient(
+	ctx context.Context,
+	key client.ObjectKey,
+	obj client.Object,
+) (bool, error) {
+	return getOptionalWithReader(ctx, r.client, key, obj)
 }
 
 func (r *Reconciler) getOptionalFromListReader(
