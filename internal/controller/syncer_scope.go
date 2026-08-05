@@ -383,6 +383,7 @@ func (s *Syncer) buildSnapshot(
 	if scope == snapshotBuildScopeNone || scope == snapshotBuildScopeFull {
 		return s.translator.Build(ctx, s.client)
 	}
+	s.logger.Info("buildSnapshot called", "scope", scope.String(), "routeKeys", fmt.Sprintf("%v", routeKeys.http))
 
 	current := s.store.Current()
 	if current == nil {
