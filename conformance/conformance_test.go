@@ -35,12 +35,12 @@ func TestGatewayAPIConformance(t *testing.T) {
 	options.TimeoutConfig.TestIsolation = 5 * time.Second
 
 	options.SkipTests = parseEnvSkipTests()
-	// ListenerSetAllowedRoutesSupportedKinds requires the evaluator to report
-	// SupportedKinds in listener status matching the AllowedRoutes configuration.
-	// Pending investigation of upstream conformance test expectations.
+	// ListenerSetAllowedRoutesSupportedKinds: fixed - buildListenerPolicy now falls back
+	// to protocol defaults when all user-specified kinds are invalid, so SupportedKinds
+	// is correctly populated even for InvalidRouteKinds scenarios.
 	if len(options.SkipTests) == 0 {
 		options.SkipTests = []string{
-			"ListenerSetAllowedRoutesSupportedKinds",
+			"GatewayModifyListeners",
 			"GatewayModifyListeners",
 			"GRPCRouteListenerHostnameMatching",
 			"HTTPRouteHTTPSListenerDetectMisdirectedRequests",

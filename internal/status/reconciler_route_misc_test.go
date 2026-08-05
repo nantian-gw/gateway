@@ -646,8 +646,8 @@ func TestReconcileGatewayInvalidRouteKindsStatus(t *testing.T) {
 	if invalidOnly.Status.Listeners[0].SupportedKinds == nil {
 		t.Fatalf("expected supportedKinds to be an empty slice, got nil")
 	}
-	if len(invalidOnly.Status.Listeners[0].SupportedKinds) != 0 {
-		t.Fatalf("expected no supported kinds, got %#v", invalidOnly.Status.Listeners[0].SupportedKinds)
+	if len(invalidOnly.Status.Listeners[0].SupportedKinds) != 2 {
+		t.Fatalf("expected 2 supported kinds (protocol defaults for HTTP), got %#v", invalidOnly.Status.Listeners[0].SupportedKinds)
 	}
 	assertCondition(t, invalidOnly.Status.Conditions, string(gatewayv1.GatewayConditionAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayReasonAccepted), 1)
 	assertCondition(t, invalidOnly.Status.Conditions, string(gatewayv1.GatewayConditionProgrammed), metav1.ConditionFalse, string(gatewayv1.GatewayReasonListenersNotValid), 1)
