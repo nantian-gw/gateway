@@ -75,12 +75,6 @@ func buildListenerPolicy(listener gatewayv1.Listener) listenerPolicy {
 	sort.Slice(policy.supportedKinds, func(i, j int) bool {
 		return policy.supportedKinds[i].Kind < policy.supportedKinds[j].Kind
 	})
-	// If all user-specified kinds were invalid, fall back to protocol defaults.
-	// This matches the upstream conformance test expectation: SupportedKinds should
-	// report what the listener actually supports, even when the user specified invalid kinds.
-	if len(policy.supportedKinds) == 0 {
-		policy.supportedKinds = supportedKindsForRoutes(defaultKinds)
-	}
 	return policy
 }
 

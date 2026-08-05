@@ -163,6 +163,10 @@ func evaluateListenerSetEntry(
 		resolvedRefsCond.Reason = string(gatewayv1.ListenerReasonInvalidRouteKinds)
 		resolvedRefsCond.Message = "Listener contains unsupported route kinds"
 		entryValid = false
+		// When all user-specified kinds are invalid, fall back to protocol defaults
+		// for SupportedKinds. This matches the upstream ListenerSet conformance test
+		// expectation: SupportedKinds should report what the listener actually supports.
+		policy.supportedKinds = supportedKindsForRoutes(defaultListenerKinds(entry.Protocol))
 	}
 	if entryValid {
 		if reason, message, ok := evaluateListenerSpec(entryListener); !ok {
