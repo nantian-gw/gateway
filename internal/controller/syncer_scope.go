@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -393,6 +394,10 @@ func (s *Syncer) buildSnapshot(
 	// has the correct backend clusters and listener attachments for the new mesh route.
 	if scope&snapshotBuildScopeRoutes != 0 && s.hasMeshRouteChanges(current, routeKeys) {
 		scope |= snapshotBuildScopeBackends | snapshotBuildScopeRouteBackendRefs | snapshotBuildScopeMeshListeners
+		s.logger.Info("mesh route change detected, expanded scope",
+			"scope", scope.String(),
+			"routeKeys", fmt.Sprintf("%v", routeKeys.http),
+		)
 	}
 	next := current
 	var err error
