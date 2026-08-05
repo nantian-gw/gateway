@@ -19,6 +19,14 @@ func snapshotInputMutationPredicate() predicate.Predicate {
 		predicate.GenerationChangedPredicate{},
 		snapshotRelevantAnnotationChangedPredicate(),
 		predicate.LabelChangedPredicate{},
+		predicate.Funcs{
+			// Also trigger on any resource version change (e.g. status updates on GatewayClass),
+			// not just generation changes. This ensures the initial full build is triggered
+			// even when the GatewayClass was created before the controller-runtime watch started.
+			CreateFunc: func(event.CreateEvent) bool { return true },
+			UpdateFunc: func(event.UpdateEvent) bool { return true },
+			DeleteFunc: func(event.DeleteEvent) bool { return true },
+		},
 	)
 }
 

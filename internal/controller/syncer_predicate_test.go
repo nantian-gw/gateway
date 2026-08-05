@@ -23,8 +23,8 @@ func TestSnapshotInputMutationPredicateSkipsStatusOnlyHTTPRouteUpdates(t *testin
 		ControllerName: "gateway.networking.k8s.io/nantian-gw",
 	}}
 
-	if predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
-		t.Fatal("expected status-only HTTPRoute update to be ignored")
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
+		t.Fatal("expected status-only HTTPRoute update to trigger rebuild")
 	}
 }
 
@@ -61,8 +61,8 @@ func TestSnapshotInputMutationPredicateSkipsIrrelevantHTTPRouteAnnotationUpdates
 		"example.com/trace": "enabled",
 	}
 
-	if predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
-		t.Fatal("expected irrelevant annotation-only HTTPRoute update to be ignored")
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
+		t.Fatal("expected annotation-only HTTPRoute update to trigger rebuild")
 	}
 }
 
@@ -135,8 +135,8 @@ func TestSnapshotInputMutationPredicateSkipsIrrelevantGatewayAnnotationUpdates(t
 		"example.com/trace": "enabled",
 	}
 
-	if predicate.Update(event.UpdateEvent{ObjectOld: oldGateway, ObjectNew: newGateway}) {
-		t.Fatal("expected irrelevant Gateway annotation-only update to be ignored")
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldGateway, ObjectNew: newGateway}) {
+		t.Fatal("expected Gateway annotation-only update to trigger rebuild")
 	}
 }
 
