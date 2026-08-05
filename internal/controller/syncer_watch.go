@@ -25,8 +25,10 @@ func (s *Syncer) snapshotReconcileRequests(ctx context.Context, object client.Ob
 
 	switch item := object.(type) {
 	case *gatewayv1.GatewayClass:
+		s.logger.Info("GatewayClass watch triggered", "name", item.Name)
 		return s.gatewayClassReconcileRequests(ctx, item)
 	case *gatewayv1.Gateway:
+		s.logger.Info("Gateway watch triggered", "ns", item.Namespace, "name", item.Name)
 		return s.gatewayReconcileRequests(ctx, item)
 	case *gatewayv1.HTTPRoute:
 		s.logger.Info("HTTPRoute watch triggered", "ns", item.Namespace, "name", item.Name)
