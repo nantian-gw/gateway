@@ -2,7 +2,10 @@
 
 # Pinned dependency images for gateway kind validation.
 # These digests currently back the shared v2026.06.0-rc1 dependency release.
-DEFAULT_DATAPLANE_IMAGE="ghcr.io/nantian-gw/dataplane:latest-amd64"
+# Use sha-<commit>-amd64 tags (not latest-amd64) to avoid timing issues where
+# the Conformance workflow starts before the Docker workflow finishes updating
+# the latest-amd64 tag.
+DEFAULT_DATAPLANE_IMAGE="ghcr.io/nantian-gw/dataplane:sha-29beb12-amd64"
 DEFAULT_DASHBOARD_IMAGE="ghcr.io/nantian-gw/dashboard@sha256:f913109dd5c964a48877de15797e1a2e9f08008e978c5ede53fc2ca9be8c601a"
 
 sanitize_kind_tag_part() {
