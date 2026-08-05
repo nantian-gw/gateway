@@ -1,7 +1,7 @@
 # Nantian Gateway
 
 <p align="center">
-  <strong>A Kubernetes Gateway API control plane for split-plane ingress, API routing, and AI gateway workloads.</strong>
+  <strong>Kubernetes Gateway API control plane with a built-in AI gateway — no separate AI proxy needed.</strong>
 </p>
 
 <p align="center">
