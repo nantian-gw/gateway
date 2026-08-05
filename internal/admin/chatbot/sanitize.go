@@ -1,56 +1,73 @@
 package chatbot
 
 import (
+	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
-// maxUntrustedLen bounds a single untrusted field value so a free-text field
-// cannot exhaust the RAG budget or smuggle a large injection payload.
-const maxUntrustedLen = 200
+// maxUntrustedValueLen bounds a single sanitized value so one field cannot
+// dominate the RAG context.
+const maxUntrustedValueLen = 200
 
-// sanitizeUntrusted neutralizes a single untrusted string value sourced from a
-// live cluster resource before it is interpolated into the RAG Markdown context.
+// sanitizeUntrusted neutralizes an untrusted, cluster-sourced string before it
+// is embedded into the Markdown RAG context. It uses visible escaping so values
+// stay readable while losing the ability to break out of their line or forge the
+// system-prompt data boundary:
 //
-// It is a structural defense, not a semantic one: it prevents a value from
-// breaking out of its inline position (forging a new Markdown line/heading, a
-// code fence, or the nonce boundary marker) but does not attempt to detect
-// natural-language injection phrases — that is the job of the nonce framing in
-// buildSystemPrompt.
+//   - backtick -> apostrophe            (cannot open/close a code fence)
+//   - ASCII '<' -> '‹' (U+2039)         (cannot emit ASCII '<' -> cannot forge <<nonce>>)
+//   - ASCII '>' -> '›' (U+203A)
+//   - any whitespace run -> a single space (cannot start a new line)
+//   - other control chars (< 0x20, 0x7F) -> dropped
+//   - longer than maxUntrustedValueLen runes -> truncated with an ellipsis
 //
-// Rules, applied in order:
-//  1. Replace newlines and other C0 control characters (and DEL) with a single
-//     space, forcing the value onto one line.
-//  2. Replace backticks with single quotes so a value cannot open or forge a
-//     code fence (which would also disturb downstream YAML extraction).
-//  3. Replace "<<"/">>" sequences with unicode angle quotes so a value cannot
-//     assemble a real boundary marker even if the per-request nonce were known.
-//  4. Cap the length (rune-aware), appending an ellipsis when truncated.
+// Normal DNS-1123 names and typical field values contain none of these, so they
+// pass through unchanged. The function is total.
 func sanitizeUntrusted(s string) string {
 	if s == "" {
 		return ""
 	}
-
 	var b strings.Builder
 	b.Grow(len(s))
+	prevSpace := false
 	for _, r := range s {
 		switch {
-		case r == 0x7F || r < 0x20:
-			// C0 control characters, including \n \r \t.
-			b.WriteByte(' ')
+		case unicode.IsSpace(r):
+			if !prevSpace {
+				b.WriteByte(' ')
+				prevSpace = true
+			}
+			continue
 		case r == '`':
 			b.WriteByte('\'')
+		case r == '<':
+			b.WriteRune('‹')
+		case r == '>':
+			b.WriteRune('›')
+		case r < 0x20 || r == 0x7f:
+			continue
 		default:
 			b.WriteRune(r)
 		}
+		prevSpace = false
 	}
-	out := b.String()
-
-	out = strings.ReplaceAll(out, "<<", "‹‹")
-	out = strings.ReplaceAll(out, ">>", "››")
-
-	if utf8.RuneCountInString(out) > maxUntrustedLen {
-		out = string([]rune(out)[:maxUntrustedLen]) + "…"
+	out := strings.TrimSpace(b.String())
+	if utf8.RuneCountInString(out) > maxUntrustedValueLen {
+		count := 0
+		for i := range out {
+			if count == maxUntrustedValueLen {
+				out = out[:i]
+				break
+			}
+			count++
+		}
+		out += "…"
 	}
 	return out
 }
+
+// suAny sanitizes any value's default string form for safe embedding at an
+// injection point. Numeric/bool values are unaffected (no special chars).
+func suAny(v any) string { return sanitizeUntrusted(fmt.Sprint(v)) }
