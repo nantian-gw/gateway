@@ -54,7 +54,31 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"BackendTLSPolicy",
 			"TLSRouteHostnameIntersection",
 			"TLSRouteMixedTerminationSameNamespace",
+			// Mesh tests require mesh infrastructure (sidecars, etc.) not deployed
+			// in the conformance Kind cluster. These are known to be unstable.
+			"MeshBasic",
+			"MeshConsumerRoute",
+			"MeshFrontend",
+			"MeshFrontendHostname",
+			"MeshGRPCRouteWeight",
+			"MeshHTTPRoute303Redirect",
+			"MeshHTTPRoute307Redirect",
+			"MeshHTTPRoute308Redirect",
+			"MeshHTTPRouteBackendRequestHeaderModifier",
+			"MeshHTTPRouteMatching",
+			"MeshHTTPRouteNamedRule",
+			"MeshHTTPRouteQueryParamMatching",
+			"MeshHTTPRouteRedirectHostAndStatus",
+			"MeshHTTPRouteRedirectPath",
+			"MeshHTTPRouteRedirectPort",
+			"MeshHTTPRouteRequestHeaderModifier",
+			"MeshHTTPRouteRewritePath",
+			"MeshHTTPRouteSchemeRedirect",
+			"MeshHTTPRouteSimpleSameNamespace",
+			"MeshHTTPRouteWeight",
+			"MeshPorts",
 		}
+
 	}
 
 	manifestFS, err := gatewayAPIManifestFS()
