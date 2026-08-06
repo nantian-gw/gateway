@@ -94,7 +94,7 @@ func run(configPath string) error {
 	}
 	logControlplaneTracingStatus(logger, tracingCfg)
 	defer func() {
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, defaultShutdownTimeout)
 		defer shutdownCancel()
 		if err := tracingShutdown(shutdownCtx); err != nil {
 			logger.Warn("tracing shutdown returned error", "error", err)

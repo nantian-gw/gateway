@@ -230,7 +230,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	extensionResolver := extfilter.NewResolver(supportObjects.configMaps)
 
 	// Translate all routes in parallel — each route's translation is independent.
-	transGroup, _ := errgroup.WithContext(ctx)
+	transGroup, groupCtx := errgroup.WithContext(ctx)
 	snapshot.HTTPRoutes = make([]ir.HTTPRoute, len(httpRoutes.Items))
 	for i := range httpRoutes.Items {
 		transGroup.Go(func() error {
@@ -475,7 +475,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		},
 	)
 
-	annotGroup, _ := errgroup.WithContext(ctx)
+	annotGroup, groupCtx := errgroup.WithContext(ctx)
 	for idx := range httpRoutes.Items {
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
