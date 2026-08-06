@@ -2,7 +2,7 @@
 package main
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"flag"
 	"fmt"
 	"io"
@@ -49,7 +49,7 @@ func main() {
 	case markdownFormat:
 		renderMarkdown(os.Stdout, names)
 	case jsonFormat:
-		if err := json.NewEncoder(os.Stdout).Encode(output{
+		if err := jsoniter.NewEncoder(os.Stdout).Encode(output{
 			Count:    len(names),
 			Features: names,
 		}); err != nil {

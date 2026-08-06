@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
@@ -183,7 +183,7 @@ func gatewayServiceParametersHash(params gatewayServiceParameters) string {
 	normalized := cloneGatewayServiceParameters(params)
 	normalized.normalize()
 
-	raw, err := json.Marshal(normalized)
+	raw, err := jsoniter.Marshal(normalized)
 	if err != nil {
 		return ""
 	}

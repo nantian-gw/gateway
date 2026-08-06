@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"errors"
 	"flag"
 	"fmt"
@@ -128,7 +128,7 @@ func moduleDir(repoRoot, moduleQuery string) (string, error) {
 	}
 
 	var info moduleInfo
-	if err := json.Unmarshal(downloadOutput, &info); err != nil {
+	if err := jsoniter.Unmarshal(downloadOutput, &info); err != nil {
 		return "", fmt.Errorf("parse go mod download output: %w", err)
 	}
 	if info.Dir == "" {

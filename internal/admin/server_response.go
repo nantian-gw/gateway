@@ -3,20 +3,34 @@ package admin
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"errors"
 	"net/http"
+	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
+
+var bufferPool = sync.Pool{
+	New: func() any { return new(bytes.Buffer) },
+}
+
+var slicePool = sync.Pool{
+	New: func() any { s := make([]byte, 0, 4096); return &s },
+}
 
 func (s *Server) respondJSON(w http.ResponseWriter, payload any) {
 	if payload == nil {
 		payload = map[string]any{}
 	}
 
+	buf := bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufferPool.Put(buf)
+
 	buffer := newLimitedBuffer(s.maxResponseBodyBytes, errPayloadTooLarge("response exceeds admin response size limit"))
-	if err := json.NewEncoder(buffer).Encode(payload); err != nil {
+	buffer.buf = *buf
+	if err := jsoniter.NewEncoder(buffer).Encode(payload); err != nil {
 		if isPayloadTooLarge(err) {
 			s.respondRequestError(w, err)
 			return

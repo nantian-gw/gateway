@@ -1,11 +1,11 @@
 package ir
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"sort"
-	"time"
+"crypto/sha256"
+"encoding/hex"
+	jsoniter "github.com/json-iterator/go"
+"sort"
+"time"
 )
 
 type Snapshot struct {
@@ -641,7 +641,7 @@ func (s Snapshot) Digest() (string, error) {
 func (s Snapshot) computeDigest() (string, error) {
 	copy := s.snapshotForDigest()
 
-	raw, err := json.Marshal(copy)
+	raw, err := jsoniter.Marshal(copy)
 	if err != nil {
 		return "", err
 	}

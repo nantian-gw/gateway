@@ -2,7 +2,7 @@ package admin
 
 import (
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"fmt"
 	"net/http"
 	"time"
@@ -48,7 +48,7 @@ func (c *DataplaneClient) GetJSON(ctx context.Context, baseURL, path string, out
 		return fmt.Errorf("status %d", resp.StatusCode)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+	if err := jsoniter.NewDecoder(resp.Body).Decode(out); err != nil {
 		return fmt.Errorf("decode response: %w", err)
 	}
 

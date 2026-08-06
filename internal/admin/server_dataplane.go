@@ -1,7 +1,8 @@
 package admin
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -19,9 +20,11 @@ func (s *Server) handleDataplanes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	if err := jsoniter.NewEncoder(w).Encode(map[string]any{
 		"dataplanes": endpoints,
-	})
+	}); err != nil {
+		slog.Warn("failed to encode dataplanes response", "path", "handleDataplanes", "error", err)
+	}
 }
 
 func (s *Server) handleDataplaneSummary(w http.ResponseWriter, r *http.Request) {
@@ -63,5 +66,7 @@ func (s *Server) handleDataplaneSummary(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(summary)
+	if err := jsoniter.NewEncoder(w).Encode(summary); err != nil {
+		slog.Warn("failed to encode dataplane summary response", "path", "handleDataplaneSummary", "error", err)
+	}
 }

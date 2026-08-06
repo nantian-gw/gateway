@@ -1,19 +1,20 @@
 package xds
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"math/big"
-	"sort"
+"crypto/rand"
+"crypto/sha256"
+"encoding/hex"
+jsoniter "github.com/json-iterator/go"
+"fmt"
+"math/big"
+"sort"
+"strconv"
 
 	"github.com/nantian-gw/gateway/internal/ir"
 )
 
 func ResourceVersion(r interface{}) string {
-	raw, err := json.Marshal(r)
+	raw, err := jsoniter.Marshal(r)
 	if err != nil {
 		return ""
 	}
@@ -187,10 +188,10 @@ func typeDelta[T any](prev, curr []T, nameFn func(*T) string) ResourceDelta {
 	return ResourceDelta{AddedChanged: added, Removed: removed}
 }
 
-func listenerNameFn(l *ir.Listener) string       { return fmt.Sprintf("%s/%d", l.Name, l.Port) }
-func httpRouteNameFn(r *ir.HTTPRoute) string     { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
-func grpcRouteNameFn(r *ir.GRPCRoute) string     { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
-func streamRouteNameFn(r *ir.StreamRoute) string { return fmt.Sprintf("%s/%s", r.Namespace, r.Name) }
+func listenerNameFn(l *ir.Listener) string       { return l.Name + "/" + strconv.Itoa(int(l.Port)) }
+func httpRouteNameFn(r *ir.HTTPRoute) string     { return r.Namespace + "/" + r.Name }
+func grpcRouteNameFn(r *ir.GRPCRoute) string     { return r.Namespace + "/" + r.Name }
+func streamRouteNameFn(r *ir.StreamRoute) string { return r.Namespace + "/" + r.Name }
 func backendNameFn(b *ir.BackendCluster) string  { return b.Name }
 func secretNameFn(s *ir.SecretMaterial) string   { return s.Name }
 

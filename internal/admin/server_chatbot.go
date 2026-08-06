@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -84,7 +84,7 @@ type chatbotConfigRequest struct {
 // key is preserved.
 func (s *Server) handleChatbotConfigPut(w http.ResponseWriter, r *http.Request) {
 	var req chatbotConfigRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := jsoniter.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.respondRequestError(w, errInvalidRequest("invalid request body: "+err.Error()))
 		return
 	}
@@ -168,7 +168,7 @@ type chatRequest struct {
 // and dry-run validated with auto-correction on failure.
 func (s *Server) handleChatbotChat(w http.ResponseWriter, r *http.Request) {
 	var req chatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := jsoniter.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.respondRequestError(w, errInvalidRequest("invalid request body: "+err.Error()))
 		return
 	}

@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"errors"
 	"fmt"
 	"io"
@@ -134,7 +134,7 @@ func (a *openAIAdapter) ChatCompletionStream(
 		Stream:      true,
 	}
 
-	reqBytes, err := json.Marshal(body)
+	reqBytes, err := jsoniter.Marshal(body)
 	if err != nil {
 		return fmt.Errorf("openai adapter: marshal request: %w", err)
 	}
@@ -208,7 +208,7 @@ func (a *openAIAdapter) readSSEStream(r io.Reader, chunkChan chan<- string) erro
 
 func parseStreamChunk(raw string) (string, error) {
 	var chunk openAIStreamResponse
-	if err := json.Unmarshal([]byte(raw), &chunk); err != nil {
+	if err := jsoniter.Unmarshal([]byte(raw), &chunk); err != nil {
 		return "", fmt.Errorf("parse stream chunk: %w", err)
 	}
 

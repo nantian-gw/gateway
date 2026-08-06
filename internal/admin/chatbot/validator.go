@@ -2,7 +2,7 @@ package chatbot
 
 import (
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"fmt"
 	"log/slog"
 	"math"
@@ -89,7 +89,7 @@ func DryRunValidate(ctx context.Context, controllerName string, yamlManifests st
 		}
 
 		obj := &unstructured.Unstructured{}
-		if err := json.Unmarshal(jsonBytes, obj); err != nil {
+		if err := jsoniter.Unmarshal(jsonBytes, obj); err != nil {
 			return nil, fmt.Errorf("dry-run: document %d: decode JSON: %w", i+1, err)
 		}
 

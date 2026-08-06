@@ -2,7 +2,7 @@ package admin
 
 import (
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"strings"
 	"time"
 
@@ -77,7 +77,7 @@ func decodeNodeStatusLease(lease *coordinationv1.Lease) (ir.NodeStatus, bool) {
 	}
 
 	var status ir.NodeStatus
-	if err := json.Unmarshal([]byte(raw), &status); err != nil {
+	if err := jsoniter.Unmarshal([]byte(raw), &status); err != nil {
 		return ir.NodeStatus{}, false
 	}
 

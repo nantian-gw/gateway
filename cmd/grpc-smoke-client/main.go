@@ -3,7 +3,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"errors"
 	"flag"
 	"fmt"
@@ -88,7 +88,7 @@ func main() {
 		return
 	}
 
-	if err := json.NewEncoder(os.Stdout).Encode(summary); err != nil {
+	if err := jsoniter.NewEncoder(os.Stdout).Encode(summary); err != nil {
 		log.Fatalf("encode summary: %v", err)
 	}
 

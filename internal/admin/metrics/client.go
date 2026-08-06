@@ -2,7 +2,7 @@ package metrics
 
 import (
 	"context"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,7 +15,7 @@ const defaultQueryTimeout = 2 * time.Second
 // PrometheusResponse mirrors the Prometheus HTTP API v1 response envelope.
 type PrometheusResponse struct {
 	Status string          `json:"status"`
-	Data   json.RawMessage `json:"data,omitempty"`
+	Data   jsoniter.RawMessage `json:"data,omitempty"`
 	Error  string          `json:"error,omitempty"`
 }
 
@@ -67,7 +67,7 @@ func (c *PrometheusClient) InstantQuery(ctx context.Context, query string) (*Pro
 	}
 
 	var promResp PrometheusResponse
-	if err := json.Unmarshal(body, &promResp); err != nil {
+	if err := jsoniter.Unmarshal(body, &promResp); err != nil {
 		return nil, fmt.Errorf("prometheus: failed to parse response: %w", err)
 	}
 
@@ -115,7 +115,7 @@ func (c *PrometheusClient) RangeQuery(ctx context.Context, query, start, end, st
 	}
 
 	var promResp PrometheusResponse
-	if err := json.Unmarshal(body, &promResp); err != nil {
+	if err := jsoniter.Unmarshal(body, &promResp); err != nil {
 		return nil, fmt.Errorf("prometheus: failed to parse response: %w", err)
 	}
 

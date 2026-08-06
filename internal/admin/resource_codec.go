@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"fmt"
 	"strings"
 
@@ -50,7 +50,7 @@ func decodeManagedResource(raw []byte, expectedKind string) (resourceKindSpec, c
 	var envelope struct {
 		Kind string `json:"kind"`
 	}
-	if err := json.Unmarshal(jsonBody, &envelope); err != nil {
+	if err := jsoniter.Unmarshal(jsonBody, &envelope); err != nil {
 		return resourceKindSpec{}, nil, errInvalidRequest(fmt.Sprintf("decode resource kind: %v", err))
 	}
 
@@ -72,7 +72,7 @@ func decodeManagedResource(raw []byte, expectedKind string) (resourceKindSpec, c
 	}
 
 	obj := spec.newObject()
-	if err := json.Unmarshal(jsonBody, obj); err != nil {
+	if err := jsoniter.Unmarshal(jsonBody, obj); err != nil {
 		return resourceKindSpec{}, nil, errInvalidRequest(fmt.Sprintf("decode resource manifest: %v", err))
 	}
 

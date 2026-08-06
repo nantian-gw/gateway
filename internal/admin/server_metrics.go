@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,7 +47,7 @@ func (s *Server) handleMetricsConfigGet(w http.ResponseWriter, r *http.Request) 
 // handleMetricsConfigPut saves the metrics configuration.
 func (s *Server) handleMetricsConfigPut(w http.ResponseWriter, r *http.Request) {
 	var req metricsConfigRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := jsoniter.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.respondRequestError(w, errInvalidRequest("invalid request body: "+err.Error()))
 		return
 	}
@@ -70,7 +70,7 @@ func (s *Server) handleMetricsConfigPut(w http.ResponseWriter, r *http.Request) 
 // Prometheus instance and returns the raw Prometheus API response.
 func (s *Server) handleMetricsQuery(w http.ResponseWriter, r *http.Request) {
 	var req metricsQueryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := jsoniter.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.respondRequestError(w, errInvalidRequest("invalid request body: "+err.Error()))
 		return
 	}
@@ -100,7 +100,7 @@ func (s *Server) handleMetricsQuery(w http.ResponseWriter, r *http.Request) {
 // Prometheus instance and returns the raw Prometheus API response.
 func (s *Server) handleMetricsRangeQuery(w http.ResponseWriter, r *http.Request) {
 	var req metricsQueryRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := jsoniter.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.respondRequestError(w, errInvalidRequest("invalid request body: "+err.Error()))
 		return
 	}

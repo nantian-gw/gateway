@@ -3,7 +3,7 @@ package noderegistry
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"fmt"
 	"log/slog"
 	"os"
@@ -169,7 +169,7 @@ func (r *LeaseRepository) Upsert(ctx context.Context, status ir.NodeStatus) erro
 }
 
 func applyStatusToLease(lease *coordinationv1.Lease, status ir.NodeStatus) error {
-	payload, err := json.Marshal(clone(status))
+	payload, err := jsoniter.Marshal(clone(status))
 	if err != nil {
 		return fmt.Errorf("marshal node status: %w", err)
 	}
@@ -208,7 +208,7 @@ func parseLease(lease *coordinationv1.Lease) (ir.NodeStatus, error) {
 	}
 
 	var status ir.NodeStatus
-	if err := json.Unmarshal([]byte(raw), &status); err != nil {
+	if err := jsoniter.Unmarshal([]byte(raw), &status); err != nil {
 		return ir.NodeStatus{}, fmt.Errorf("unmarshal node status: %w", err)
 	}
 

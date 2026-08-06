@@ -1,7 +1,8 @@
 package admin
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
+	"log/slog"
 	"net/http"
 	"sort"
 	"sync"
@@ -117,26 +118,34 @@ func (s *Server) handleAIOverview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(overview)
+	if err := jsoniter.NewEncoder(w).Encode(overview); err != nil {
+		slog.Warn("failed to encode AI overview", "path", "handleAIOverview", "error", err)
+	}
 }
 
 func (s *Server) handleAIServices(w http.ResponseWriter, r *http.Request) {
 	services := s.listAIServices()
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(services)
+	if err := jsoniter.NewEncoder(w).Encode(services); err != nil {
+		slog.Warn("failed to encode AI services", "path", "handleAIServices", "error", err)
+	}
 }
 
 func (s *Server) handleAITokenUsage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	aiMu.RLock()
-	_ = json.NewEncoder(w).Encode(aiTokenUsage)
+	if err := jsoniter.NewEncoder(w).Encode(aiTokenUsage); err != nil {
+		slog.Warn("failed to encode AI token usage", "path", "handleAITokenUsage", "error", err)
+	}
 	aiMu.RUnlock()
 }
 
 func (s *Server) handleAITraces(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	aiMu.RLock()
-	_ = json.NewEncoder(w).Encode(aiTraces)
+	if err := jsoniter.NewEncoder(w).Encode(aiTraces); err != nil {
+		slog.Warn("failed to encode AI traces", "path", "handleAITraces", "error", err)
+	}
 	aiMu.RUnlock()
 }
 
@@ -151,7 +160,9 @@ func (s *Server) handleAICost(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(cost)
+	if err := jsoniter.NewEncoder(w).Encode(cost); err != nil {
+		slog.Warn("failed to encode AI cost", "path", "handleAICost", "error", err)
+	}
 }
 
 // listAIServices returns AI services from the resource cache.
