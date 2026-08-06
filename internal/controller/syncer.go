@@ -85,7 +85,7 @@ func NewSyncer(
 		interval:    interval,
 		logger:      logger,
 		leaderRun:   leaderRun,
-		settleDelay: 0,
+		settleDelay: 100 * time.Millisecond,
 		options:     defaultSyncerOptions(),
 	}
 }

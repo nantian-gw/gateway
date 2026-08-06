@@ -70,6 +70,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 	var ackTimer *time.Timer
 	var ackTimerCh <-chan time.Time
 	pendingAckVersion := ""
+	lastPushedVersion := ""
 
 	stopAckTimer := func() {
 		if ackTimer == nil {
@@ -303,6 +304,11 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 			if !s.isActiveStream(registration) {
 				return terminate(streamTerminationSuperseded, supersededStreamError())
 			}
+			if snapshot.ID == lastPushedVersion {
+				continue
+			}
+			lastPushedVersion = snapshot.ID
+
 			profile := effectiveProjectionProfile(advertisedFeatures)
 
 			tracer := otel.Tracer("github.com/nantian-gw/gateway/internal/xds")
