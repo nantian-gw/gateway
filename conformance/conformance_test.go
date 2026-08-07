@@ -43,7 +43,9 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"GatewayModifyListeners",
 			"GatewayModifyListeners",
 			"GRPCRouteListenerHostnameMatching",
-			"HTTPRouteHTTPSListenerDetectMisdirectedRequests",
+			// HTTPRouteHTTPSListenerDetectMisdirectedRequests: test was passing on 2026-07-31,
+			// incorrectly skipped. Dataplane implementation is complete.
+			// "HTTPRouteHTTPSListenerDetectMisdirectedRequests",
 			// BackendTLSPolicyConflictResolution: CI timing issue (resourceVersion conflict),
 			// not a functional problem. Keep in skip list until retry logic is added.
 			"BackendTLSPolicyConflictResolution",
@@ -51,7 +53,9 @@ func TestGatewayAPIConformance(t *testing.T) {
 			// HTTPRouteListenerPortMatching: fixed - dataplane supports port-based
 			// listener matching via visit_candidate_listeners and parse_authority_port.
 			// "HTTPRouteListenerPortMatching",
-			"TLSRouteInvalidNoMatchingListener",
+			// TLSRouteInvalidNoMatchingListener: status evaluation logic already handles
+			// all three cases correctly. Unskip to verify.
+			// "TLSRouteInvalidNoMatchingListener",
 			"HTTPRouteHostnameIntersection",
 			// Upstream suite (v1.5.1/v1.6.1) updates these resources without
 			// retrying on resourceVersion conflicts, racing status writes.
