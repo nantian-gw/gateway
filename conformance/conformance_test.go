@@ -43,7 +43,6 @@ func TestGatewayAPIConformance(t *testing.T) {
 			// GatewayModifyListeners: controller pipeline already supports dynamic listener
 			// add/remove via partial rebuild + status evaluation.
 			// "GatewayModifyListeners",
-			// "GatewayModifyListeners",
 			// GRPCRouteListenerHostnameMatching: reuses same hostname matching as HTTP.
 			// "GRPCRouteListenerHostnameMatching",
 			// HTTPRouteHTTPSListenerDetectMisdirectedRequests: test was passing on 2026-07-31,

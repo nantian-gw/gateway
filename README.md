@@ -19,10 +19,11 @@ Nightly conformance + load test results (600s vegeta, via Gateway → dataplane)
 
 | Metric | Value |
 |--------|-------|
-| Throughput | 7,800–9,400 RPS |
-| P50 latency | 3–4 ms |
-| P99 latency | 13–15 ms |
-| CPU (dataplane) | ~1,100m |
+| Throughput | 900–1,060 RPS |
+| P50 latency | 3–7 ms |
+| P99 latency | 12–20 ms |
+| CPU (dataplane) | ~236m |
+| Memory (dataplane) | ~90 Mi |
 | Success rate | 100% |
 
 > See [platform-release](https://github.com/nantian-gw/platform-release) for full nightly history.
