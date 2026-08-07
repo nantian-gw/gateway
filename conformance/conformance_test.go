@@ -42,21 +42,26 @@ func TestGatewayAPIConformance(t *testing.T) {
 		options.SkipTests = []string{
 			"GatewayModifyListeners",
 			"GatewayModifyListeners",
-			"GRPCRouteListenerHostnameMatching",
+			// GRPCRouteListenerHostnameMatching: reuses same hostname matching as HTTP.
+			// "GRPCRouteListenerHostnameMatching",
 			// HTTPRouteHTTPSListenerDetectMisdirectedRequests: test was passing on 2026-07-31,
 			// incorrectly skipped. Dataplane implementation is complete.
 			// "HTTPRouteHTTPSListenerDetectMisdirectedRequests",
 			// BackendTLSPolicyConflictResolution: CI timing issue (resourceVersion conflict),
 			// not a functional problem. Keep in skip list until retry logic is added.
 			"BackendTLSPolicyConflictResolution",
-			"HTTPRouteListenerHostnameMatching",
+			// HTTPRouteListenerHostnameMatching: dataplane supports listener hostname matching
+			// via listener_hostname_score and HostnameRouteIndex.
+			// "HTTPRouteListenerHostnameMatching",
 			// HTTPRouteListenerPortMatching: fixed - dataplane supports port-based
 			// listener matching via visit_candidate_listeners and parse_authority_port.
 			// "HTTPRouteListenerPortMatching",
 			// TLSRouteInvalidNoMatchingListener: status evaluation logic already handles
 			// all three cases correctly. Unskip to verify.
 			// "TLSRouteInvalidNoMatchingListener",
-			"HTTPRouteHostnameIntersection",
+			// HTTPRouteHostnameIntersection: dataplane dual filtering (listener + route hostname)
+			// implicitly enforces intersection. Control plane listenerMatchesHostnames is correct.
+			// "HTTPRouteHostnameIntersection",
 			// Upstream suite (v1.5.1/v1.6.1) updates these resources without
 			// retrying on resourceVersion conflicts, racing status writes.
 			// BackendTLSPolicy: CI timing issue (resourceVersion conflict),
