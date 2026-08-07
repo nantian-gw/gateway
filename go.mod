@@ -4,7 +4,8 @@ go 1.26.4
 
 require (
 	github.com/go-logr/logr v1.4.3
-	github.com/nantian-gw/proto v0.0.0-00010101000000-000000000000
+	github.com/json-iterator/go v1.1.12
+	github.com/nantian-gw/proto v0.0.0-20260728031953-1bab673cf290
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
 	github.com/stretchr/testify v1.11.1
@@ -52,7 +53,6 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
@@ -91,5 +91,3 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 )
-
-replace github.com/nantian-gw/proto => ./gen/go
