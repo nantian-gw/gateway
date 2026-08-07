@@ -67,7 +67,8 @@ func TestGatewayAPIConformance(t *testing.T) {
 			// BackendTLSPolicy: CI timing issue (resourceVersion conflict),
 			// not a functional problem.
 			"BackendTLSPolicy",
-			"TLSRouteHostnameIntersection",
+			// TLSRouteHostnameIntersection: reuses same hostname intersection logic as HTTP.
+			// "TLSRouteHostnameIntersection",
 			"TLSRouteMixedTerminationSameNamespace",
 			// Mesh tests require mesh infrastructure (sidecars, etc.) not deployed
 			// in the conformance Kind cluster. These are known to be unstable.
