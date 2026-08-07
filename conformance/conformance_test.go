@@ -40,8 +40,10 @@ func TestGatewayAPIConformance(t *testing.T) {
 	// is correctly populated even for InvalidRouteKinds scenarios.
 	if len(options.SkipTests) == 0 {
 		options.SkipTests = []string{
-			"GatewayModifyListeners",
-			"GatewayModifyListeners",
+			// GatewayModifyListeners: controller pipeline already supports dynamic listener
+			// add/remove via partial rebuild + status evaluation.
+			// "GatewayModifyListeners",
+			// "GatewayModifyListeners",
 			// GRPCRouteListenerHostnameMatching: reuses same hostname matching as HTTP.
 			// "GRPCRouteListenerHostnameMatching",
 			// HTTPRouteHTTPSListenerDetectMisdirectedRequests: test was passing on 2026-07-31,
@@ -69,7 +71,9 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"BackendTLSPolicy",
 			// TLSRouteHostnameIntersection: reuses same hostname intersection logic as HTTP.
 			// "TLSRouteHostnameIntersection",
-			"TLSRouteMixedTerminationSameNamespace",
+			// TLSRouteMixedTerminationSameNamespace: dataplane shared-tls already handles
+			// mixed mode (terminate+passthrough on same bind).
+			// "TLSRouteMixedTerminationSameNamespace",
 			// Mesh tests require mesh infrastructure (sidecars, etc.) not deployed
 			// in the conformance Kind cluster. These are known to be unstable.
 			"MeshBasic",
