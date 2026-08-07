@@ -44,13 +44,19 @@ func TestGatewayAPIConformance(t *testing.T) {
 			"GatewayModifyListeners",
 			"GRPCRouteListenerHostnameMatching",
 			"HTTPRouteHTTPSListenerDetectMisdirectedRequests",
+			// BackendTLSPolicyConflictResolution: CI timing issue (resourceVersion conflict),
+			// not a functional problem. Keep in skip list until retry logic is added.
 			"BackendTLSPolicyConflictResolution",
 			"HTTPRouteListenerHostnameMatching",
-			"HTTPRouteListenerPortMatching",
+			// HTTPRouteListenerPortMatching: fixed - dataplane supports port-based
+			// listener matching via visit_candidate_listeners and parse_authority_port.
+			// "HTTPRouteListenerPortMatching",
 			"TLSRouteInvalidNoMatchingListener",
 			"HTTPRouteHostnameIntersection",
 			// Upstream suite (v1.5.1/v1.6.1) updates these resources without
 			// retrying on resourceVersion conflicts, racing status writes.
+			// BackendTLSPolicy: CI timing issue (resourceVersion conflict),
+			// not a functional problem.
 			"BackendTLSPolicy",
 			"TLSRouteHostnameIntersection",
 			"TLSRouteMixedTerminationSameNamespace",
