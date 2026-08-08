@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -199,46 +200,69 @@ func (idx *ClusterIndex) addRoute(kind, ns, name string, parentRefs []gatewayv1.
 	}, obj)
 }
 
-func collectHTTPRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+// routeInfo holds the per-item data extracted from a route object for indexing.
+type routeInfo struct {
+	namespace    string
+	name         string
+	parentRefs   []gatewayv1.ParentReference
+	backendRefs  []gatewayv1.BackendRef
+	parentStatus []gatewayv1.RouteParentStatus
+	ruleCount    int
+	obj          client.Object
+}
+
+// collectRoutes is a generic helper that lists a route type, iterates its items,
+// and indexes each through the addRoute method. The extract callback converts
+// each list item (accessed via reflection from the client.ObjectList) into the
+// routeInfo struct needed by addRoute.
+func collectRoutes(
+	ctx context.Context, cl client.Client, idx *ClusterIndex, kind string,
+	managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger,
+	list client.ObjectList,
+	extract func(client.Object) routeInfo,
+) {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	var list gatewayv1.HTTPRouteList
-	if err := cl.List(ctx, &list); err != nil {
-		logger.Warn("chatbot rag: list httproutes", "error", err)
+	if err := cl.List(ctx, list); err != nil {
+		logger.Warn("chatbot rag: list "+kind, "error", err)
 		return
 	}
-	for i := range list.Items {
-		r := &list.Items[i]
-		var brs []gatewayv1.BackendRef
-		for _, rule := range r.Spec.Rules {
-			for _, hbr := range rule.BackendRefs {
-				brs = append(brs, hbr.BackendRef)
-			}
-		}
-		idx.addRoute(kindHTTPRoute, r.Namespace, r.Name, r.Spec.ParentRefs, brs, r.Status.Parents, len(r.Spec.Rules), managedGW, keptSvc, r.DeepCopy())
+	items := reflect.ValueOf(list).Elem().FieldByName("Items")
+	for i := 0; i < items.Len(); i++ {
+		ri := extract(items.Index(i).Addr().Interface().(client.Object))
+		idx.addRoute(kind, ri.namespace, ri.name, ri.parentRefs, ri.backendRefs, ri.parentStatus, ri.ruleCount, managedGW, keptSvc, ri.obj)
 	}
 }
 
-func collectGRPCRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	var list gatewayv1.GRPCRouteList
-	if err := cl.List(ctx, &list); err != nil {
-		logger.Warn("chatbot rag: list grpcroutes", "error", err)
-		return
-	}
-	for i := range list.Items {
-		r := &list.Items[i]
-		var brs []gatewayv1.BackendRef
-		for _, rule := range r.Spec.Rules {
-			for _, gbr := range rule.BackendRefs {
-				brs = append(brs, gbr.BackendRef)
+func collectHTTPRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+	collectRoutes(ctx, cl, idx, kindHTTPRoute, managedGW, keptSvc, logger, &gatewayv1.HTTPRouteList{},
+		func(obj client.Object) routeInfo {
+			r := obj.(*gatewayv1.HTTPRoute)
+			var brs []gatewayv1.BackendRef
+			for _, rule := range r.Spec.Rules {
+				for _, hbr := range rule.BackendRefs {
+					brs = append(brs, hbr.BackendRef)
+				}
 			}
-		}
-		idx.addRoute(kindGRPCRoute, r.Namespace, r.Name, r.Spec.ParentRefs, brs, r.Status.Parents, len(r.Spec.Rules), managedGW, keptSvc, r.DeepCopy())
-	}
+			return routeInfo{r.Namespace, r.Name, r.Spec.ParentRefs, brs, r.Status.Parents, len(r.Spec.Rules), r.DeepCopy()}
+		},
+	)
+}
+
+func collectGRPCRoutes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {
+	collectRoutes(ctx, cl, idx, kindGRPCRoute, managedGW, keptSvc, logger, &gatewayv1.GRPCRouteList{},
+		func(obj client.Object) routeInfo {
+			r := obj.(*gatewayv1.GRPCRoute)
+			var brs []gatewayv1.BackendRef
+			for _, rule := range r.Spec.Rules {
+				for _, gbr := range rule.BackendRefs {
+					brs = append(brs, gbr.BackendRef)
+				}
+			}
+			return routeInfo{r.Namespace, r.Name, r.Spec.ParentRefs, brs, r.Status.Parents, len(r.Spec.Rules), r.DeepCopy()}
+		},
+	)
 }
 
 func collectL4Routes(ctx context.Context, cl client.Client, idx *ClusterIndex, managedGW, keptSvc map[types.NamespacedName]bool, logger *slog.Logger) {

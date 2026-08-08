@@ -213,105 +213,94 @@ func parseRouteSortField(raw string) (routeSortField, error) {
 	}
 }
 
-func sortListeners(listeners []ir.Listener, field listenerSortField, order sortOrder) {
-	sort.Slice(listeners, func(i, j int) bool {
-		left := listeners[i]
-		right := listeners[j]
+func sortBy[T any](slice []T, order sortOrder, cmp func(*T, *T) []int) {
+	sort.Slice(slice, func(i, j int) bool {
+		return orderedLess(order, cmp(&slice[i], &slice[j])...)
+	})
+}
 
+func sortListeners(listeners []ir.Listener, field listenerSortField, order sortOrder) {
+	sortBy(listeners, order, func(left, right *ir.Listener) []int {
 		switch field {
 		case listenerSortByProtocol:
-			return orderedLess(
-				order,
-				strings.Compare(listenerProtocolValue(left), listenerProtocolValue(right)),
+			return []int{
+				strings.Compare(listenerProtocolValue(*left), listenerProtocolValue(*right)),
 				strings.Compare(left.Name, right.Name),
-			)
+			}
 		default:
-			return orderedLess(
-				order,
+			return []int{
 				strings.Compare(left.Name, right.Name),
-				strings.Compare(listenerProtocolValue(left), listenerProtocolValue(right)),
-			)
+				strings.Compare(listenerProtocolValue(*left), listenerProtocolValue(*right)),
+			}
 		}
 	})
 }
 
 func sortBackends(backends []ir.BackendCluster, field backendSortField, order sortOrder) {
-	sort.Slice(backends, func(i, j int) bool {
-		left := backends[i]
-		right := backends[j]
-
+	sortBy(backends, order, func(left, right *ir.BackendCluster) []int {
 		switch field {
 		case backendSortByName:
-			return orderedLess(
-				order,
+			return []int{
 				strings.Compare(left.Name, right.Name),
 				strings.Compare(left.Namespace, right.Namespace),
-				strings.Compare(backendProtocolValue(left), backendProtocolValue(right)),
-			)
+				strings.Compare(backendProtocolValue(*left), backendProtocolValue(*right)),
+			}
 		case backendSortByProtocol:
-			return orderedLess(
-				order,
-				strings.Compare(backendProtocolValue(left), backendProtocolValue(right)),
+			return []int{
+				strings.Compare(backendProtocolValue(*left), backendProtocolValue(*right)),
 				strings.Compare(left.Namespace, right.Namespace),
 				strings.Compare(left.Name, right.Name),
-			)
+			}
 		default:
-			return orderedLess(
-				order,
+			return []int{
 				strings.Compare(left.Namespace, right.Namespace),
 				strings.Compare(left.Name, right.Name),
-				strings.Compare(backendProtocolValue(left), backendProtocolValue(right)),
-			)
+				strings.Compare(backendProtocolValue(*left), backendProtocolValue(*right)),
+			}
 		}
 	})
 }
 
 func sortNodes(nodes []ir.NodeStatus, field nodeSortField, order sortOrder) {
-	sort.Slice(nodes, func(i, j int) bool {
-		left := nodes[i]
-		right := nodes[j]
-
+	sortBy(nodes, order, func(left, right *ir.NodeStatus) []int {
 		switch field {
 		case nodeSortByCluster:
-			return orderedLess(
-				order,
+			return []int{
 				strings.Compare(left.Cluster, right.Cluster),
 				strings.Compare(left.NodeID, right.NodeID),
-				strings.Compare(nodeVersionValue(left), nodeVersionValue(right)),
-			)
+				strings.Compare(nodeVersionValue(*left), nodeVersionValue(*right)),
+			}
 		case nodeSortByVersion:
-			return orderedLess(
-				order,
-				strings.Compare(nodeVersionValue(left), nodeVersionValue(right)),
+			return []int{
+				strings.Compare(nodeVersionValue(*left), nodeVersionValue(*right)),
 				strings.Compare(left.NodeID, right.NodeID),
 				strings.Compare(left.Cluster, right.Cluster),
-			)
+			}
 		default:
-			return orderedLess(
-				order,
+			return []int{
 				strings.Compare(left.NodeID, right.NodeID),
 				strings.Compare(left.Cluster, right.Cluster),
-				strings.Compare(nodeVersionValue(left), nodeVersionValue(right)),
-			)
+				strings.Compare(nodeVersionValue(*left), nodeVersionValue(*right)),
+			}
 		}
 	})
 }
 
 func sortHTTPRoutes(routes []ir.HTTPRoute, field routeSortField, order sortOrder) {
-	sort.Slice(routes, func(i, j int) bool {
-		return orderedLess(order, compareRouteIdentity(field, routes[i].Namespace, routes[i].Name, routes[j].Namespace, routes[j].Name)...)
+	sortBy(routes, order, func(left, right *ir.HTTPRoute) []int {
+		return compareRouteIdentity(field, left.Namespace, left.Name, right.Namespace, right.Name)
 	})
 }
 
 func sortGRPCRoutes(routes []ir.GRPCRoute, field routeSortField, order sortOrder) {
-	sort.Slice(routes, func(i, j int) bool {
-		return orderedLess(order, compareRouteIdentity(field, routes[i].Namespace, routes[i].Name, routes[j].Namespace, routes[j].Name)...)
+	sortBy(routes, order, func(left, right *ir.GRPCRoute) []int {
+		return compareRouteIdentity(field, left.Namespace, left.Name, right.Namespace, right.Name)
 	})
 }
 
 func sortStreamRoutes(routes []ir.StreamRoute, field routeSortField, order sortOrder) {
-	sort.Slice(routes, func(i, j int) bool {
-		return orderedLess(order, compareRouteIdentity(field, routes[i].Namespace, routes[i].Name, routes[j].Namespace, routes[j].Name)...)
+	sortBy(routes, order, func(left, right *ir.StreamRoute) []int {
+		return compareRouteIdentity(field, left.Namespace, left.Name, right.Namespace, right.Name)
 	})
 }
 
