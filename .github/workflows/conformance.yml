@@ -193,6 +193,10 @@ jobs:
           echo "=== Image digests ==="
           kubectl get pods -n nantian-gw -o json | jq -r '.items[] | .status.containerStatuses[] | "  \(.name): \(.imageID)"'
 
+      - name: Ensure conformance module is downloaded
+        run: go mod download sigs.k8s.io/gateway-api/conformance
+
+      - name: Run conformance tests
       - name: Run conformance tests
         id: conformance
         run: |
