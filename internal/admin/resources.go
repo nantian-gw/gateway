@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"log/slog"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -156,7 +157,7 @@ func paginateManagedResources(
 	maxListItems int,
 ) ([]ManagedResource, pageMetadata) {
 	paged, meta := paginateSliceWithMetadata(out, resourceListPagination(filter), maxListItems)
-	return cloneManagedResourceList(paged), meta
+	return slices.Clone(paged), meta
 }
 
 func (m *ResourceManager) Get(ctx context.Context, kind, namespace, name string) (ManagedResource, bool, error) {

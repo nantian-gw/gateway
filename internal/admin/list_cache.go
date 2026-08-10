@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -9,137 +10,89 @@ import (
 
 const defaultListCacheTTL = time.Second
 
+type cacheEntry[T any] struct {
+	expiresAt time.Time
+	items     []T
+}
+
 type listCache struct {
 	mu              sync.Mutex
 	ttl             time.Duration
 	now             func() time.Time
-	resourceLists   map[string]cachedManagedResources
-	serviceCatalogs map[string]cachedServiceCatalogEntries
-	strings         map[string]cachedStrings
-}
-
-type cachedManagedResources struct {
-	expiresAt time.Time
-	items     []ManagedResource
-}
-
-type cachedServiceCatalogEntries struct {
-	expiresAt time.Time
-	items     []ServiceCatalogEntry
-}
-
-type cachedStrings struct {
-	expiresAt time.Time
-	items     []string
+	resourceLists   map[string]cacheEntry[ManagedResource]
+	serviceCatalogs map[string]cacheEntry[ServiceCatalogEntry]
+	strings         map[string]cacheEntry[string]
 }
 
 func newListCache(ttl time.Duration) *listCache {
 	return &listCache{
 		ttl:             ttl,
 		now:             time.Now,
-		resourceLists:   make(map[string]cachedManagedResources),
-		serviceCatalogs: make(map[string]cachedServiceCatalogEntries),
-		strings:         make(map[string]cachedStrings),
+		resourceLists:   make(map[string]cacheEntry[ManagedResource]),
+		serviceCatalogs: make(map[string]cacheEntry[ServiceCatalogEntry]),
+		strings:         make(map[string]cacheEntry[string]),
+	}
+}
+
+func getCached[T any](c *listCache, store map[string]cacheEntry[T], key string) ([]T, bool) {
+	if c == nil || c.ttl <= 0 {
+		return nil, false
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	entry, ok := store[key]
+	if !ok {
+		return nil, false
+	}
+	if !c.now().Before(entry.expiresAt) {
+		delete(store, key)
+		return nil, false
+	}
+	return entry.items, true
+}
+
+func putCached[T any](c *listCache, store map[string]cacheEntry[T], key string, items []T) {
+	if c == nil || c.ttl <= 0 {
+		return
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	store[key] = cacheEntry[T]{
+		expiresAt: c.now().Add(c.ttl),
+		items:     slices.Clone(items),
 	}
 }
 
 func (c *listCache) getManagedResources(key string) ([]ManagedResource, bool) {
-	if c == nil || c.ttl <= 0 {
-		return nil, false
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	entry, ok := c.resourceLists[key]
-	if !ok {
-		return nil, false
-	}
-	if !c.now().Before(entry.expiresAt) {
-		delete(c.resourceLists, key)
-		return nil, false
-	}
-	return entry.items, true
+	return getCached(c, c.resourceLists, key)
 }
 
 func (c *listCache) putManagedResources(key string, items []ManagedResource) {
-	if c == nil || c.ttl <= 0 {
-		return
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.resourceLists[key] = cachedManagedResources{
-		expiresAt: c.now().Add(c.ttl),
-		items:     cloneManagedResourceList(items),
-	}
+	putCached(c, c.resourceLists, key, items)
 }
 
 func (c *listCache) getServiceCatalogEntries(key string) ([]ServiceCatalogEntry, bool) {
-	if c == nil || c.ttl <= 0 {
-		return nil, false
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	entry, ok := c.serviceCatalogs[key]
-	if !ok {
-		return nil, false
-	}
-	if !c.now().Before(entry.expiresAt) {
-		delete(c.serviceCatalogs, key)
-		return nil, false
-	}
-	return entry.items, true
+	return getCached(c, c.serviceCatalogs, key)
 }
 
 func (c *listCache) putServiceCatalogEntries(key string, items []ServiceCatalogEntry) {
-	if c == nil || c.ttl <= 0 {
-		return
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.serviceCatalogs[key] = cachedServiceCatalogEntries{
-		expiresAt: c.now().Add(c.ttl),
-		items:     cloneServiceCatalogEntries(items),
-	}
+	putCached(c, c.serviceCatalogs, key, items)
 }
 
 func (c *listCache) getStrings(key string) ([]string, bool) {
-	if c == nil || c.ttl <= 0 {
-		return nil, false
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	entry, ok := c.strings[key]
+	items, ok := getCached(c, c.strings, key)
 	if !ok {
 		return nil, false
 	}
-	if !c.now().Before(entry.expiresAt) {
-		delete(c.strings, key)
-		return nil, false
-	}
-	return append([]string(nil), entry.items...), true
+	return slices.Clone(items), true
 }
 
 func (c *listCache) putStrings(key string, items []string) {
-	if c == nil || c.ttl <= 0 {
-		return
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.strings[key] = cachedStrings{
-		expiresAt: c.now().Add(c.ttl),
-		items:     append([]string(nil), items...),
-	}
+	putCached(c, c.strings, key, items)
 }
 
 func (c *listCache) clear() {
@@ -150,9 +103,9 @@ func (c *listCache) clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.resourceLists = make(map[string]cachedManagedResources)
-	c.serviceCatalogs = make(map[string]cachedServiceCatalogEntries)
-	c.strings = make(map[string]cachedStrings)
+	c.resourceLists = make(map[string]cacheEntry[ManagedResource])
+	c.serviceCatalogs = make(map[string]cacheEntry[ServiceCatalogEntry])
+	c.strings = make(map[string]cacheEntry[string])
 }
 
 func resourceListCacheKey(filter ResourceListFilter, canonicalKind string) string {
@@ -180,12 +133,4 @@ func cacheKeyPort(port int, hasPort bool) int {
 		return 0
 	}
 	return port
-}
-
-func cloneManagedResourceList(items []ManagedResource) []ManagedResource {
-	return append([]ManagedResource(nil), items...)
-}
-
-func cloneServiceCatalogEntries(items []ServiceCatalogEntry) []ServiceCatalogEntry {
-	return append([]ServiceCatalogEntry(nil), items...)
 }

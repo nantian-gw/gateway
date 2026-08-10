@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -176,7 +177,7 @@ func paginateServiceCatalogEntries(
 	maxListItems int,
 ) ([]ServiceCatalogEntry, pageMetadata) {
 	paged, meta := paginateSliceWithMetadata(items, serviceCatalogPagination(filter), maxListItems)
-	return cloneServiceCatalogEntries(paged), meta
+	return slices.Clone(paged), meta
 }
 
 func buildServiceCatalogEntry(service corev1.Service, filter ServiceCatalogFilter) (ServiceCatalogEntry, bool) {

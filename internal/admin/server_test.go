@@ -305,6 +305,13 @@ func newTestServerWithRepository(t *testing.T, repo noderegistry.Repository, opt
 			{
 				Name:      "web",
 				Namespace: "default",
+				ParentRefs: []ir.ParentRef{{
+					Name:      "gw",
+					Namespace: "default",
+					Group:     "gateway.networking.k8s.io",
+					Kind:      "Gateway",
+					SectionName: "http",
+				}},
 				Hostnames: []string{"app.example.com"},
 				Rules: []ir.HTTPRule{
 					{
@@ -346,6 +353,11 @@ func newTestServerWithRepository(t *testing.T, repo noderegistry.Repository, opt
 			{
 				Name:      "passthrough",
 				Namespace: "default",
+				ParentRefs: []ir.ParentRef{{
+					Name:      "gw",
+					Namespace: "default",
+					SectionName: "tls",
+				}},
 				Kind:      "TLS",
 				Rules: []ir.StreamRule{
 					{

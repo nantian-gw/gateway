@@ -263,6 +263,10 @@ func adminRouteBindings() []routeBinding {
 			handler:  func(s *Server) http.HandlerFunc { return s.handleDataplaneSummary },
 		},
 		{
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/gateways", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
+			handler:  func(s *Server) http.HandlerFunc { return s.handleGateways },
+		},
+		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/chatbot/config", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleChatbotConfig },
 		},

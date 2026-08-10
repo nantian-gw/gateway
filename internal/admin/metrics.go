@@ -92,77 +92,57 @@ func normalizeAdminMethod(method string) string {
 	}
 }
 
+var routeClassification = map[string]string{
+	"/livez":                    "livez",
+	"/readyz":                    "readyz",
+	"/v1/summary":                "summary",
+	"/v1/snapshot-sync":          "snapshot_sync",
+	"/v1/snapshot":               "snapshot",
+	"/v1/listeners":              "listeners",
+	"/v1/routes":                 "routes",
+	"/v1/backends":               "backends",
+	"/v1/nodes":                  "nodes",
+	"/v1/infrastructure":         "infrastructure",
+	"/v1/service-catalog":        "service_catalog",
+	"/v1/resource-kinds":         "resource_kinds",
+	"/v1/resources":              "resources",
+	"/v1/topology":               "topology",
+	"/v1/namespaces":             "namespaces",
+	"/v1/dashboard/capabilities": "dashboard_capabilities",
+	"/v1/auth/verify":            "auth_verify",
+	"/v1/dataplanes":             "dataplanes",
+	"/v1/chatbot/config":         "chatbot_config",
+	"/v1/chatbot/chat":           "chatbot_chat",
+	"/v1/metrics/config":         "metrics_config",
+	"/v1/metrics/query":          "metrics_query",
+	"/v1/metrics/query_range":    "metrics_query_range",
+	"/v1/ai/overview":            "ai_overview",
+	"/v1/ai/services":            "ai_services",
+	"/v1/ai/token-usage":         "ai_token_usage",
+	"/v1/ai/traces":              "ai_traces",
+	"/v1/ai/cost":                "ai_cost",
+}
+
+var prefixRouteClassification = []struct {
+	prefix string
+	class  string
+}{
+	{"/v1/listeners/", "listener_detail"},
+	{"/v1/routes/",    "route_detail"},
+	{"/v1/backends/",  "backend_detail"},
+	{"/v1/nodes/",     "node_detail"},
+	{"/v1/dataplanes/", "dataplane_summary"},
+	{"/v1/resources/", "resource_detail"},
+}
+
 func classifyAdminRoute(path string) string {
-	switch {
-	case path == "/livez":
-		return "livez"
-	case path == "/readyz":
-		return "readyz"
-	case path == "/v1/summary":
-		return "summary"
-	case path == "/v1/snapshot-sync":
-		return "snapshot_sync"
-	case path == "/v1/snapshot":
-		return "snapshot"
-	case path == "/v1/listeners":
-		return "listeners"
-	case strings.HasPrefix(path, "/v1/listeners/"):
-		return "listener_detail"
-	case path == "/v1/routes":
-		return "routes"
-	case strings.HasPrefix(path, "/v1/routes/"):
-		return "route_detail"
-	case path == "/v1/backends":
-		return "backends"
-	case strings.HasPrefix(path, "/v1/backends/"):
-		return "backend_detail"
-	case path == "/v1/nodes":
-		return "nodes"
-	case strings.HasPrefix(path, "/v1/nodes/"):
-		return "node_detail"
-	case path == "/v1/infrastructure":
-		return "infrastructure"
-	case path == "/v1/service-catalog":
-		return "service_catalog"
-	case path == "/v1/resource-kinds":
-		return "resource_kinds"
-	case path == "/v1/resources":
-		return "resources"
-	case strings.HasPrefix(path, "/v1/resources/"):
-		return "resource_detail"
-	case path == "/v1/topology":
-		return "topology"
-	case path == "/v1/namespaces":
-		return "namespaces"
-	case path == "/v1/dashboard/capabilities":
-		return "dashboard_capabilities"
-	case path == "/v1/auth/verify":
-		return "auth_verify"
-	case path == "/v1/dataplanes":
-		return "dataplanes"
-	case strings.HasPrefix(path, "/v1/dataplanes/"):
-		return "dataplane_summary"
-	case path == "/v1/chatbot/config":
-		return "chatbot_config"
-	case path == "/v1/chatbot/chat":
-		return "chatbot_chat"
-	case path == "/v1/metrics/config":
-		return "metrics_config"
-	case path == "/v1/metrics/query":
-		return "metrics_query"
-	case path == "/v1/metrics/query_range":
-		return "metrics_query_range"
-	case path == "/v1/ai/overview":
-		return "ai_overview"
-	case path == "/v1/ai/services":
-		return "ai_services"
-	case path == "/v1/ai/token-usage":
-		return "ai_token_usage"
-	case path == "/v1/ai/traces":
-		return "ai_traces"
-	case path == "/v1/ai/cost":
-		return "ai_cost"
-	default:
-		return "unknown"
+	if class, ok := routeClassification[path]; ok {
+		return class
 	}
+	for _, entry := range prefixRouteClassification {
+		if strings.HasPrefix(path, entry.prefix) {
+			return entry.class
+		}
+	}
+	return "unknown"
 }
