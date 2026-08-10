@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -19,24 +22,19 @@ func TestDiscoveryResponseSenderSendsResponse(t *testing.T) {
 	defer stream.release()
 
 	resultCh, ok := sender.send(&controlv1.DiscoveryResponse{Version: "v-test"})
-	if !ok {
-		t.Fatal("expected sender to accept response")
-	}
+	require.True(t, ok, "expected sender to accept response")
 
 	select {
 	case err := <-resultCh:
-		if err != nil {
-			t.Fatalf("unexpected send error: %v", err)
-		}
+		require.NoError(t, err, "unexpected send error")
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for send result")
 	}
 
 	stream.waitForSendCount(t, time.Second)
 	responses := stream.snapshotSentResponses()
-	if len(responses) != 1 || responses[0].GetVersion() != "v-test" {
-		t.Fatalf("unexpected sent responses: %#v", responses)
-	}
+	require.Len(t, responses, 1)
+	assert.Equal(t, "v-test", responses[0].GetVersion())
 }
 
 func TestDiscoveryResponseSenderStopsAfterBlockedSendStreamCloses(t *testing.T) {
@@ -47,9 +45,7 @@ func TestDiscoveryResponseSenderStopsAfterBlockedSendStreamCloses(t *testing.T) 
 	sender := newDiscoveryResponseSender(stream)
 
 	resultCh, ok := sender.send(&controlv1.DiscoveryResponse{Version: "v-blocked"})
-	if !ok {
-		t.Fatal("expected sender to accept blocked response")
-	}
+	require.True(t, ok, "expected sender to accept blocked response")
 	stream.waitForSendStart(t)
 
 	sender.close()
@@ -57,9 +53,7 @@ func TestDiscoveryResponseSenderStopsAfterBlockedSendStreamCloses(t *testing.T) 
 
 	select {
 	case err := <-resultCh:
-		if status.Code(err) != codes.Canceled {
-			t.Fatalf("expected canceled send result after stream close, got %v", err)
-		}
+		assert.Equal(t, codes.Canceled, status.Code(err), "expected canceled send result after stream close")
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for blocked send to finish")
 	}

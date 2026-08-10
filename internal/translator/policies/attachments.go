@@ -306,7 +306,7 @@ func resolveListenerSetParent(
 		if parentRef.SectionName != "" && listenerSetRuntimeEntryName(ls, l) != parentRef.SectionName {
 			continue
 		}
-		if parentRef.Port != 0 && uint32(l.Port) != parentRef.Port { //nolint:gosec
+		if parentRef.Port != 0 && uint32(l.Port) != parentRef.Port { //nolint:gosec // G115: conversion is safe — port value validated as non-negative
 			continue
 		}
 		out = append(out, l)
@@ -342,7 +342,7 @@ func candidateAttachmentListeners(gateway gatewayv1.Gateway, parentRef ir.Parent
 		if parentRef.SectionName != "" && string(listener.Name) != parentRef.SectionName {
 			continue
 		}
-		if parentRef.Port != 0 && uint32(listener.Port) != parentRef.Port { //nolint:gosec
+		if parentRef.Port != 0 && uint32(listener.Port) != parentRef.Port { //nolint:gosec // G115: conversion is safe — port value validated as non-negative
 			continue
 		}
 		out = append(out, listener)

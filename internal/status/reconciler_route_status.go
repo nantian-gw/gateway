@@ -29,8 +29,10 @@ func (r *Reconciler) reconcileHTTPRouteStatus(
 		desired := current.DeepCopy()
 		desired.Status.Parents = mergeRouteParents(current.Status.Parents, desiredParents)
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceHTTPRoute).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceHTTPRoute).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
@@ -54,8 +56,10 @@ func (r *Reconciler) reconcileGRPCRouteStatus(
 		desired := current.DeepCopy()
 		desired.Status.Parents = mergeRouteParents(current.Status.Parents, desiredParents)
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceGRPCRoute).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceGRPCRoute).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
@@ -79,8 +83,10 @@ func (r *Reconciler) reconcileTCPRouteStatus(
 		desired := current.DeepCopy()
 		desired.Status.Parents = mergeRouteParents(current.Status.Parents, desiredParents)
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceTCPRoute).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceTCPRoute).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
@@ -104,8 +110,10 @@ func (r *Reconciler) reconcileUDPRouteStatus(
 		desired := current.DeepCopy()
 		desired.Status.Parents = mergeRouteParents(current.Status.Parents, desiredParents)
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceUDPRoute).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceUDPRoute).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
@@ -129,8 +137,10 @@ func (r *Reconciler) reconcileTLSRouteStatus(
 		desired := current.DeepCopy()
 		desired.Status.Parents = mergeRouteParents(current.Status.Parents, desiredParents)
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceTLSRoute).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceTLSRoute).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }

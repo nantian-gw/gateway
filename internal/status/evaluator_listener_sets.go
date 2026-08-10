@@ -247,7 +247,7 @@ func listenerSetEntryAttachedRoutes(
 		gatewayName:      gateway.Name,
 		listenerName:     listener.Name,
 	}
-	return int32(len(attachments[key])) //nolint:gosec
+	return int32(len(attachments[key])) //nolint:gosec // G115: conversion is safe — len is non-negative
 }
 
 func gatewayAllowsListenerSet(gw gatewayv1.Gateway, ls gatewayv1.ListenerSet, namespaces map[string]corev1.Namespace) bool {

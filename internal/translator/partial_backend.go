@@ -155,9 +155,9 @@ func refreshHTTPRouteBackendRefs(routes []ir.HTTPRoute, annotator backends.Backe
 	for i := range routes {
 		allowCrossNamespaceRefs := backends.RouteUsesOnlyServiceParents(routes[i].ParentRefs)
 		for j := range routes[i].Rules {
-			routes[i].Rules[j].BackendRefs = refreshBackendRefs( //nolint:gosec
-				routes[i].Rules[j].BackendRefs, //nolint:gosec
-				routes[i].Namespace,            //nolint:gosec
+			routes[i].Rules[j].BackendRefs = refreshBackendRefs(
+				routes[i].Rules[j].BackendRefs,
+				routes[i].Namespace,
 				backends.RouteKindHTTP,
 				allowCrossNamespaceRefs,
 				annotator,

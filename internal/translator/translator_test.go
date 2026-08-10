@@ -4,8 +4,10 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -44,9 +46,8 @@ func TestBuildIgnoresMissingExperimentalGatewayRouteCRDs(t *testing.T) {
 		Build()
 
 	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
-	if _, err := xlator.Build(context.Background(), missingExperimentalGatewayCRDClient{Client: baseClient}); err != nil {
-		t.Fatalf("Build returned error for missing experimental Gateway API CRDs: %v", err)
-	}
+	_, err := xlator.Build(context.Background(), missingExperimentalGatewayCRDClient{Client: baseClient})
+	require.NoError(t, err, "Build should not error for missing experimental Gateway API CRDs")
 }
 
 type missingExperimentalGatewayCRDClient struct {
@@ -254,49 +255,38 @@ func TestBuildSnapshot(t *testing.T) {
 
 	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	snapshot, err := xlator.Build(context.Background(), client)
-	if err != nil {
-		t.Fatalf("Build returned error: %v", err)
-	}
+	require.NoError(t, err, "Build should not error")
 
-	if len(snapshot.Listeners) != 1 {
-		t.Fatalf("expected 1 listener, got %d", len(snapshot.Listeners))
-	}
-	if len(snapshot.HTTPRoutes) != 1 {
-		t.Fatalf("expected 1 http route, got %d", len(snapshot.HTTPRoutes))
-	}
-	if len(snapshot.Backends) != 1 {
-		t.Fatalf("expected 1 backend, got %d", len(snapshot.Backends))
-	}
-	if got := snapshot.HTTPRoutes[0].Annotations["gateway.nantian.dev/access-log-mode"]; got != "json" {
-		t.Fatalf("expected route annotation to be preserved, got %q", got)
-	}
-	if got := snapshot.Listeners[0].AttachedRoutes; len(got) != 1 || got[0] != "default/route" {
-		t.Fatalf("unexpected attached routes: %#v", got)
-	}
-	if snapshot.Listeners[0].Status == nil || snapshot.Listeners[0].Status.Accepted == nil || snapshot.Listeners[0].Status.Accepted.Status != "True" {
-		t.Fatalf("expected listener status summary, got %#v", snapshot.Listeners[0].Status)
-	}
-	if snapshot.Listeners[0].Status.ResolvedRefs == nil || snapshot.Listeners[0].Status.ResolvedRefs.Status != "True" || snapshot.Listeners[0].Status.ResolvedRefs.ObservedGeneration != 1 {
-		t.Fatalf("expected listener resolved refs summary, got %#v", snapshot.Listeners[0].Status)
-	}
-	if snapshot.HTTPRoutes[0].Status == nil || len(snapshot.HTTPRoutes[0].Status.Parents) != 1 || snapshot.HTTPRoutes[0].Status.Parents[0].Accepted == nil || snapshot.HTTPRoutes[0].Status.Parents[0].Accepted.Status != "True" {
-		t.Fatalf("expected route status summary, got %#v", snapshot.HTTPRoutes[0].Status)
-	}
+	require.Len(t, snapshot.Listeners, 1)
+	require.Len(t, snapshot.HTTPRoutes, 1)
+	require.Len(t, snapshot.Backends, 1)
 
+	assert.Equal(t, "json", snapshot.HTTPRoutes[0].Annotations["gateway.nantian.dev/access-log-mode"], "route annotation should be preserved")
+	require.Len(t, snapshot.Listeners[0].AttachedRoutes, 1)
+	assert.Equal(t, "default/route", snapshot.Listeners[0].AttachedRoutes[0])
+
+	require.NotNil(t, snapshot.Listeners[0].Status)
+	require.NotNil(t, snapshot.Listeners[0].Status.Accepted)
+	assert.Equal(t, "True", snapshot.Listeners[0].Status.Accepted.Status, "listener accepted status")
+	require.NotNil(t, snapshot.Listeners[0].Status.ResolvedRefs)
+	assert.Equal(t, "True", snapshot.Listeners[0].Status.ResolvedRefs.Status, "listener resolved refs status")
+	assert.Equal(t, int64(1), snapshot.Listeners[0].Status.ResolvedRefs.ObservedGeneration)
+
+	require.NotNil(t, snapshot.HTTPRoutes[0].Status)
+	require.Len(t, snapshot.HTTPRoutes[0].Status.Parents, 1)
 	parent := snapshot.HTTPRoutes[0].Status.Parents[0]
-	if parent.ResolvedRefs == nil || parent.ResolvedRefs.Status != "True" || parent.ResolvedRefs.ObservedGeneration != 1 {
-		t.Fatalf("expected route resolved refs summary, got %#v", parent)
-	}
+	require.NotNil(t, parent.Accepted)
+	assert.Equal(t, "True", parent.Accepted.Status, "route accepted status")
+	require.NotNil(t, parent.ResolvedRefs)
+	assert.Equal(t, "True", parent.ResolvedRefs.Status, "route resolved refs status")
+	assert.Equal(t, int64(1), parent.ResolvedRefs.ObservedGeneration)
+
 	partial := findCondition(parent.Conditions, string(gatewayv1.RouteConditionPartiallyInvalid))
-	if partial == nil {
-		t.Fatalf("expected partially invalid condition in %#v", parent.Conditions)
-	}
-	if partial.Status != "True" || partial.Reason != string(gatewayv1.RouteReasonUnsupportedValue) || partial.ObservedGeneration != 1 {
-		t.Fatalf("unexpected partially invalid condition: %#v", partial)
-	}
-	if partial.Message != "Dropped Rule 1 because HTTPRoute rule 1 must not combine RequestRedirect and URLRewrite filters" {
-		t.Fatalf("unexpected partially invalid message: %q", partial.Message)
-	}
+	require.NotNil(t, partial, "expected partially invalid condition")
+	assert.Equal(t, "True", partial.Status)
+	assert.Equal(t, string(gatewayv1.RouteReasonUnsupportedValue), partial.Reason)
+	assert.Equal(t, int64(1), partial.ObservedGeneration)
+	assert.Equal(t, "Dropped Rule 1 because HTTPRoute rule 1 must not combine RequestRedirect and URLRewrite filters", partial.Message)
 }
 
 func TestBuildSnapshotSkipsInvalidGatewayListeners(t *testing.T) {
@@ -380,16 +370,10 @@ func TestBuildSnapshotSkipsInvalidGatewayListeners(t *testing.T) {
 		Build()
 
 	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
-	if err != nil {
-		t.Fatalf("Build returned error: %v", err)
-	}
+	require.NoError(t, err, "Build should not error")
 
-	if len(snapshot.Listeners) != 1 {
-		t.Fatalf("expected 1 materialized listener, got %#v", snapshot.Listeners)
-	}
-	if snapshot.Listeners[0].Name != "default/gw/http" {
-		t.Fatalf("unexpected listener name: %q", snapshot.Listeners[0].Name)
-	}
+	require.Len(t, snapshot.Listeners, 1, "expected 1 materialized listener")
+	assert.Equal(t, "default/gw/http", snapshot.Listeners[0].Name)
 }
 
 func TestBuildSnapshotDropsHTTPRuleWithUnsupportedExternalAuthProtocol(t *testing.T) {
@@ -469,19 +453,14 @@ func TestBuildSnapshotDropsHTTPRuleWithUnsupportedExternalAuthProtocol(t *testin
 		Build()
 
 	snapshot, err := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil))).Build(context.Background(), client)
-	if err != nil {
-		t.Fatalf("Build returned error: %v", err)
-	}
-	if len(snapshot.HTTPRoutes) != 1 {
-		t.Fatalf("expected 1 HTTPRoute, got %d", len(snapshot.HTTPRoutes))
-	}
-	if len(snapshot.HTTPRoutes[0].Rules) != 1 {
-		t.Fatalf("expected unsupported ExternalAuth protocol rule to be dropped, got %#v", snapshot.HTTPRoutes[0].Rules)
-	}
+	require.NoError(t, err, "Build should not error")
+
+	require.Len(t, snapshot.HTTPRoutes, 1)
+	require.Len(t, snapshot.HTTPRoutes[0].Rules, 1, "expected unsupported ExternalAuth protocol rule to be dropped")
+
 	backendRefs := snapshot.HTTPRoutes[0].Rules[0].BackendRefs
-	if len(backendRefs) != 1 || backendRefs[0].Name != "echo" {
-		t.Fatalf("unexpected backend refs after dropping invalid rule: %#v", backendRefs)
-	}
+	require.Len(t, backendRefs, 1)
+	assert.Equal(t, "echo", backendRefs[0].Name)
 }
 
 func TestTranslateHTTPRoutePreservesExtendedMatchesAndDefaultRule(t *testing.T) {
@@ -524,32 +503,26 @@ func TestTranslateHTTPRoutePreservesExtendedMatchesAndDefaultRule(t *testing.T) 
 	}
 
 	translated := routes.TranslateHTTPRoute(route)
-	if len(translated.Hostnames) != 0 {
-		t.Fatalf("expected empty hostnames to be preserved, got %#v", translated.Hostnames)
-	}
-	if len(translated.Rules) != 2 {
-		t.Fatalf("expected 2 rules, got %#v", translated.Rules)
-	}
-	if len(translated.Rules[0].Matches) != 1 {
-		t.Fatalf("expected 1 explicit match, got %#v", translated.Rules[0].Matches)
-	}
+	require.Len(t, translated.Hostnames, 0, "expected empty hostnames to be preserved")
+	require.Len(t, translated.Rules, 2)
+	require.Len(t, translated.Rules[0].Matches, 1)
 
 	match := translated.Rules[0].Matches[0]
-	if match.Path != "/checkout" || match.PathType != "Exact" {
-		t.Fatalf("unexpected path match: %#v", match)
-	}
-	if match.Method != "POST" {
-		t.Fatalf("unexpected method match: %#v", match)
-	}
-	if len(match.Headers) != 1 || match.Headers[0].Name != "x-tenant" || match.Headers[0].Value != "blue" || match.Headers[0].MatchType != "Exact" {
-		t.Fatalf("unexpected header matches: %#v", match.Headers)
-	}
-	if len(match.QueryParams) != 1 || match.QueryParams[0].Name != "debug" || match.QueryParams[0].Value != "false" || match.QueryParams[0].MatchType != "Exact" {
-		t.Fatalf("unexpected query matches: %#v", match.QueryParams)
-	}
-	if len(translated.Rules[1].Matches) != 0 {
-		t.Fatalf("expected default rule to keep empty matches, got %#v", translated.Rules[1].Matches)
-	}
+	assert.Equal(t, "/checkout", match.Path)
+	assert.Equal(t, "Exact", match.PathType)
+	assert.Equal(t, "POST", match.Method)
+
+	require.Len(t, match.Headers, 1)
+	assert.Equal(t, "x-tenant", match.Headers[0].Name)
+	assert.Equal(t, "blue", match.Headers[0].Value)
+	assert.Equal(t, "Exact", match.Headers[0].MatchType)
+
+	require.Len(t, match.QueryParams, 1)
+	assert.Equal(t, "debug", match.QueryParams[0].Name)
+	assert.Equal(t, "false", match.QueryParams[0].Value)
+	assert.Equal(t, "Exact", match.QueryParams[0].MatchType)
+
+	require.Len(t, translated.Rules[1].Matches, 0, "expected default rule to keep empty matches")
 }
 
 func TestFiltersFromHTTPHeaderModifiers(t *testing.T) {
@@ -576,27 +549,13 @@ func TestFiltersFromHTTPHeaderModifiers(t *testing.T) {
 		},
 	}, "default")
 
-	if len(filters) != 2 {
-		t.Fatalf("expected 2 filters, got %d", len(filters))
-	}
-	if filters[0].Type != "RequestHeaderModifier" {
-		t.Fatalf("unexpected request filter type: %s", filters[0].Type)
-	}
-	if !reflect.DeepEqual(filters[0].Config["set"], []any{map[string]any{"name": "x-user", "value": "alice"}}) {
-		t.Fatalf("unexpected request set config: %#v", filters[0].Config["set"])
-	}
-	if !reflect.DeepEqual(filters[0].Config["add"], []any{map[string]any{"name": "x-tag", "value": "blue"}}) {
-		t.Fatalf("unexpected request add config: %#v", filters[0].Config["add"])
-	}
-	if !reflect.DeepEqual(filters[0].Config["remove"], []any{"x-remove"}) {
-		t.Fatalf("unexpected request remove config: %#v", filters[0].Config["remove"])
-	}
-	if filters[1].Type != "ResponseHeaderModifier" {
-		t.Fatalf("unexpected response filter type: %s", filters[1].Type)
-	}
-	if !reflect.DeepEqual(filters[1].Config["set"], []any{map[string]any{"name": "x-response", "value": "ok"}}) {
-		t.Fatalf("unexpected response config: %#v", filters[1].Config["set"])
-	}
+	require.Len(t, filters, 2)
+	assert.Equal(t, "RequestHeaderModifier", filters[0].Type)
+	assert.Equal(t, []any{map[string]any{"name": "x-user", "value": "alice"}}, filters[0].Config["set"])
+	assert.Equal(t, []any{map[string]any{"name": "x-tag", "value": "blue"}}, filters[0].Config["add"])
+	assert.Equal(t, []any{"x-remove"}, filters[0].Config["remove"])
+	assert.Equal(t, "ResponseHeaderModifier", filters[1].Type)
+	assert.Equal(t, []any{map[string]any{"name": "x-response", "value": "ok"}}, filters[1].Config["set"])
 }
 
 func TestFiltersFromHTTPCORS(t *testing.T) {
@@ -623,30 +582,14 @@ func TestFiltersFromHTTPCORS(t *testing.T) {
 		0,
 	)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != "CORS" {
-		t.Fatalf("unexpected cors filter type: %s", filters[0].Type)
-	}
-	if !reflect.DeepEqual(filters[0].Config["allowOrigins"], []any{"https://app.example"}) {
-		t.Fatalf("unexpected cors allowOrigins config: %#v", filters[0].Config["allowOrigins"])
-	}
-	if !reflect.DeepEqual(filters[0].Config["allowMethods"], []any{"GET", "POST"}) {
-		t.Fatalf("unexpected cors allowMethods config: %#v", filters[0].Config["allowMethods"])
-	}
-	if !reflect.DeepEqual(filters[0].Config["allowHeaders"], []any{"authorization", "content-type"}) {
-		t.Fatalf("unexpected cors allowHeaders config: %#v", filters[0].Config["allowHeaders"])
-	}
-	if !reflect.DeepEqual(filters[0].Config["exposeHeaders"], []any{"x-trace-id"}) {
-		t.Fatalf("unexpected cors exposeHeaders config: %#v", filters[0].Config["exposeHeaders"])
-	}
-	if got := filters[0].Config["allowCredentials"]; got != true {
-		t.Fatalf("unexpected cors allowCredentials config: %#v", got)
-	}
-	if got := filters[0].Config["maxAge"]; got != 600 {
-		t.Fatalf("unexpected cors maxAge config: %#v", got)
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, "CORS", filters[0].Type)
+	assert.Equal(t, []any{"https://app.example"}, filters[0].Config["allowOrigins"])
+	assert.Equal(t, []any{"GET", "POST"}, filters[0].Config["allowMethods"])
+	assert.Equal(t, []any{"authorization", "content-type"}, filters[0].Config["allowHeaders"])
+	assert.Equal(t, []any{"x-trace-id"}, filters[0].Config["exposeHeaders"])
+	assert.Equal(t, true, filters[0].Config["allowCredentials"])
+	assert.Equal(t, 600, filters[0].Config["maxAge"])
 }
 
 func TestFiltersFromHTTPExternalAuthHTTP(t *testing.T) {
@@ -668,12 +611,8 @@ func TestFiltersFromHTTPExternalAuthHTTP(t *testing.T) {
 		},
 	}}, "default")
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != "ExternalAuth" {
-		t.Fatalf("unexpected filter type: %s", filters[0].Type)
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, "ExternalAuth", filters[0].Type)
 	want := map[string]any{
 		"protocol": "HTTP",
 		"backendRef": map[string]any{
@@ -688,9 +627,7 @@ func TestFiltersFromHTTPExternalAuthHTTP(t *testing.T) {
 		},
 		"forwardBodyMaxSize": 4096,
 	}
-	if !reflect.DeepEqual(filters[0].Config, want) {
-		t.Fatalf("unexpected ExternalAuth config:\n got %#v\nwant %#v", filters[0].Config, want)
-	}
+	assert.Equal(t, want, filters[0].Config)
 }
 
 func TestFiltersFromHTTPExternalAuthGRPC(t *testing.T) {
@@ -709,9 +646,7 @@ func TestFiltersFromHTTPExternalAuthGRPC(t *testing.T) {
 		},
 	}}, "default")
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
+	require.Len(t, filters, 1)
 	want := map[string]any{
 		"protocol": "GRPC",
 		"backendRef": map[string]any{
@@ -724,9 +659,7 @@ func TestFiltersFromHTTPExternalAuthGRPC(t *testing.T) {
 		},
 		"forwardBodyMaxSize": 8192,
 	}
-	if !reflect.DeepEqual(filters[0].Config, want) {
-		t.Fatalf("unexpected ExternalAuth GRPC config:\n got %#v\nwant %#v", filters[0].Config, want)
-	}
+	assert.Equal(t, want, filters[0].Config)
 }
 
 func TestFiltersFromGRPCHeaderModifiers(t *testing.T) {
@@ -747,15 +680,9 @@ func TestFiltersFromGRPCHeaderModifiers(t *testing.T) {
 		},
 	}, "default")
 
-	if len(filters) != 2 {
-		t.Fatalf("expected 2 filters, got %d", len(filters))
-	}
-	if !reflect.DeepEqual(filters[0].Config["add"], []any{map[string]any{"name": "x-grpc", "value": "yes"}}) {
-		t.Fatalf("unexpected grpc request config: %#v", filters[0].Config["add"])
-	}
-	if !reflect.DeepEqual(filters[1].Config["remove"], []any{"grpc-status-details-bin"}) {
-		t.Fatalf("unexpected grpc response config: %#v", filters[1].Config["remove"])
-	}
+	require.Len(t, filters, 2)
+	assert.Equal(t, []any{map[string]any{"name": "x-grpc", "value": "yes"}}, filters[0].Config["add"])
+	assert.Equal(t, []any{"grpc-status-details-bin"}, filters[1].Config["remove"])
 }
 
 func TestFiltersFromHTTPExtensionRefDirectResponse(t *testing.T) {
@@ -781,22 +708,13 @@ directResponse:
 		},
 	}}, "default", resolver, extfilter.TargetHTTP, nil, 0)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != extfilter.TypeExtensionRef {
-		t.Fatalf("unexpected filter type: %s", filters[0].Type)
-	}
-	if got := filters[0].Config["extensionType"]; got != extfilter.TypeDirectResponse {
-		t.Fatalf("unexpected extension type: %#v", got)
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, extfilter.TypeExtensionRef, filters[0].Type)
+	assert.Equal(t, extfilter.TypeDirectResponse, filters[0].Config["extensionType"])
+
 	directResponse, ok := filters[0].Config["directResponse"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected nested direct response config, got %#v", filters[0].Config["directResponse"])
-	}
-	if got := directResponse["statusCode"]; got != 503 {
-		t.Fatalf("unexpected status code: %#v", got)
-	}
+	require.True(t, ok, "expected nested direct response config")
+	assert.Equal(t, 503, directResponse["statusCode"])
 }
 
 func TestFiltersFromGRPCExtensionRefHeaderModifier(t *testing.T) {
@@ -822,17 +740,11 @@ headerModifier:
 		},
 	}}, "default", resolver, extfilter.TargetGRPC)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != "ResponseHeaderModifier" {
-		t.Fatalf("unexpected filter type: %s", filters[0].Type)
-	}
-	if !reflect.DeepEqual(filters[0].Config["set"], []any{
+	require.Len(t, filters, 1)
+	assert.Equal(t, "ResponseHeaderModifier", filters[0].Type)
+	assert.Equal(t, []any{
 		map[string]any{"name": "grpc-status-details-bin", "value": "encoded"},
-	}) {
-		t.Fatalf("unexpected response header config: %#v", filters[0].Config["set"])
-	}
+	}, filters[0].Config["set"])
 }
 
 func TestFiltersFromHTTPExtensionRefMissingConfigMap(t *testing.T) {
@@ -845,15 +757,9 @@ func TestFiltersFromHTTPExtensionRefMissingConfigMap(t *testing.T) {
 		},
 	}}, "default", extfilter.Resolver{}, extfilter.TargetHTTP, nil, 0)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != extfilter.TypeExtensionRef {
-		t.Fatalf("unexpected filter type: %s", filters[0].Type)
-	}
-	if got := filters[0].Config["resolved"]; got != false {
-		t.Fatalf("expected unresolved extension ref, got %#v", got)
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, extfilter.TypeExtensionRef, filters[0].Type)
+	assert.Equal(t, false, filters[0].Config["resolved"], "expected unresolved extension ref")
 }
 
 func TestFiltersFromHTTPExtensionRefRequestRedirect(t *testing.T) {
@@ -879,15 +785,9 @@ requestRedirect:
 		},
 	}}, "default", resolver, extfilter.TargetHTTP, nil, 0)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != string(gatewayv1.HTTPRouteFilterRequestRedirect) {
-		t.Fatalf("unexpected filter type: %s", filters[0].Type)
-	}
-	if got := filters[0].Config["statusCode"]; got != 302 {
-		t.Fatalf("unexpected status code: %#v", got)
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, string(gatewayv1.HTTPRouteFilterRequestRedirect), filters[0].Type)
+	assert.Equal(t, 302, filters[0].Config["statusCode"])
 }
 
 func TestFiltersFromHTTPExtensionRefCORS(t *testing.T) {
@@ -916,18 +816,10 @@ cors:
 		},
 	}}, "default", resolver, extfilter.TargetHTTP, nil, 0)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].Type != "CORS" {
-		t.Fatalf("unexpected filter type: %s", filters[0].Type)
-	}
-	if !reflect.DeepEqual(filters[0].Config["allowMethods"], []any{"GET", "POST"}) {
-		t.Fatalf("unexpected allowMethods config: %#v", filters[0].Config["allowMethods"])
-	}
-	if got := filters[0].Config["maxAge"]; got != 600 {
-		t.Fatalf("unexpected maxAge config: %#v", got)
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, "CORS", filters[0].Type)
+	assert.Equal(t, []any{"GET", "POST"}, filters[0].Config["allowMethods"])
+	assert.Equal(t, 600, filters[0].Config["maxAge"])
 }
 
 func TestFiltersFromHTTPAndGRPCRequestMirror(t *testing.T) {
@@ -964,29 +856,21 @@ func TestFiltersFromHTTPAndGRPCRequestMirror(t *testing.T) {
 		},
 	}, "default")
 
-	if got := httpFilters[0].Config["backendRef"]; !reflect.DeepEqual(got, map[string]any{
+	assert.Equal(t, map[string]any{
 		"namespace": "default",
 		"name":      "shadow-http",
 		"port":      8080,
-	}) {
-		t.Fatalf("unexpected http request mirror backend ref: %#v", got)
-	}
-	if got := httpFilters[0].Config["percent"]; got != 25 {
-		t.Fatalf("unexpected http request mirror percent: %#v", got)
-	}
-	if got := grpcFilters[0].Config["backendRef"]; !reflect.DeepEqual(got, map[string]any{
+	}, httpFilters[0].Config["backendRef"])
+	assert.Equal(t, 25, httpFilters[0].Config["percent"])
+	assert.Equal(t, map[string]any{
 		"namespace": "observability",
 		"name":      "shadow-grpc",
 		"port":      9090,
-	}) {
-		t.Fatalf("unexpected grpc request mirror backend ref: %#v", got)
-	}
-	if got := grpcFilters[0].Config["fraction"]; !reflect.DeepEqual(got, map[string]any{
+	}, grpcFilters[0].Config["backendRef"])
+	assert.Equal(t, map[string]any{
 		"numerator":   1,
 		"denominator": 1000,
-	}) {
-		t.Fatalf("unexpected grpc request mirror fraction: %#v", got)
-	}
+	}, grpcFilters[0].Config["fraction"])
 }
 
 func TestBackendRefsFromGRPCIncludesBackendFilters(t *testing.T) {
@@ -1010,20 +894,12 @@ func TestBackendRefsFromGRPCIncludesBackendFilters(t *testing.T) {
 	}
 
 	refs := routes.BackendRefsFromGRPC([]gatewayv1.GRPCBackendRef{ref}, "default")
-	if len(refs) != 1 {
-		t.Fatalf("expected 1 grpc backend ref, got %d", len(refs))
-	}
-	if len(refs[0].Filters) != 1 {
-		t.Fatalf("expected backend filters to be translated, got %#v", refs[0].Filters)
-	}
-	if refs[0].Filters[0].Type != "RequestHeaderModifier" {
-		t.Fatalf("unexpected grpc backend filter type: %s", refs[0].Filters[0].Type)
-	}
-	if !reflect.DeepEqual(refs[0].Filters[0].Config["set"], []any{
+	require.Len(t, refs, 1)
+	require.Len(t, refs[0].Filters, 1, "expected backend filters to be translated")
+	assert.Equal(t, "RequestHeaderModifier", refs[0].Filters[0].Type)
+	assert.Equal(t, []any{
 		map[string]any{"name": "x-backend", "value": "selected"},
-	}) {
-		t.Fatalf("unexpected grpc backend filter config: %#v", refs[0].Filters[0].Config)
-	}
+	}, refs[0].Filters[0].Config["set"])
 }
 
 func TestTranslateGRPCRouteAllowsHeaderOnlyMatches(t *testing.T) {
@@ -1050,23 +926,15 @@ func TestTranslateGRPCRouteAllowsHeaderOnlyMatches(t *testing.T) {
 	}
 
 	translated := routes.TranslateGRPCRoute(route)
-	if len(translated.Rules) != 1 || len(translated.Rules[0].Matches) != 1 {
-		t.Fatalf("unexpected translated gRPC matches: %#v", translated.Rules)
-	}
+	require.Len(t, translated.Rules, 1)
+	require.Len(t, translated.Rules[0].Matches, 1)
 
 	match := translated.Rules[0].Matches[0]
-	if match.Service != "" {
-		t.Fatalf("expected empty service for header-only match, got %q", match.Service)
-	}
-	if match.Method != "" {
-		t.Fatalf("expected empty method for header-only match, got %q", match.Method)
-	}
-	if len(match.Headers) != 1 {
-		t.Fatalf("expected 1 header match, got %#v", match.Headers)
-	}
-	if match.Headers[0].Name != "version" || match.Headers[0].Value != "one" {
-		t.Fatalf("unexpected header match: %#v", match.Headers[0])
-	}
+	assert.Equal(t, "", match.Service, "expected empty service for header-only match")
+	assert.Equal(t, "", match.Method, "expected empty method for header-only match")
+	require.Len(t, match.Headers, 1)
+	assert.Equal(t, "version", match.Headers[0].Name)
+	assert.Equal(t, "one", match.Headers[0].Value)
 }
 
 func must(err error, t *testing.T) {

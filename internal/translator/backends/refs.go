@@ -58,7 +58,7 @@ func NewBackendRefTranslator(
 		key := shared.BackendObjectKey(service.Namespace, service.Name)
 		ports := make(map[uint32]struct{}, len(service.Spec.Ports))
 		for _, port := range service.Spec.Ports {
-			ports[uint32(port.Port)] = struct{}{} //nolint:gosec
+			ports[uint32(port.Port)] = struct{}{} //nolint:gosec // G115: conversion is safe — port value validated as non-negative
 		}
 		servicePorts[key] = ports
 	}
@@ -68,7 +68,7 @@ func NewBackendRefTranslator(
 		key := shared.BackendObjectKey(serviceImport.Namespace, serviceImport.Name)
 		ports := make(map[uint32]struct{}, len(serviceImport.Spec.Ports))
 		for _, port := range serviceImport.Spec.Ports {
-			ports[uint32(port.Port)] = struct{}{} //nolint:gosec
+			ports[uint32(port.Port)] = struct{}{} //nolint:gosec // G115: conversion is safe — port value validated as non-negative
 		}
 		serviceImportPorts[key] = ports
 	}
@@ -174,7 +174,7 @@ func (t BackendRefTranslator) httpBackendRefs(
 				Namespace: shared.NamespaceOrDefault(ref.Namespace, routeNamespace),
 				Name:      string(ref.Name),
 				Port:      shared.PortValue(ref.Port),
-				Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec
+				Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec // G115: conversion is safe — weight value validated as non-negative
 				Filters: t.httpFilter(
 					ref.Filters,
 					routeNamespace,
@@ -205,7 +205,7 @@ func (t BackendRefTranslator) grpcBackendRefs(
 				Namespace: shared.NamespaceOrDefault(ref.Namespace, routeNamespace),
 				Name:      string(ref.Name),
 				Port:      shared.PortValue(ref.Port),
-				Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec
+				Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec // G115: conversion is safe — weight value validated as non-negative
 				Filters: t.grpcFilter(
 					ref.Filters,
 					routeNamespace,
@@ -236,7 +236,7 @@ func (t BackendRefTranslator) routeBackendRefs(
 				Namespace: shared.NamespaceOrDefault(ref.Namespace, routeNamespace),
 				Name:      string(ref.Name),
 				Port:      shared.PortValue(ref.Port),
-				Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec
+				Weight:    uint32(shared.WeightValue(ref.Weight)), //nolint:gosec // G115: conversion is safe — weight value validated as non-negative
 			},
 		))
 	}

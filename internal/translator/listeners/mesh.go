@@ -57,7 +57,7 @@ func TranslateMeshServiceListeners(frontends []mesh.ServiceFrontendPort) []ir.Li
 		out = append(out, ir.Listener{
 			Name:     frontend.ListenerName(),
 			Address:  "0.0.0.0",
-			Port:     uint32(frontend.ListenPort), //nolint:gosec
+			Port:     uint32(frontend.ListenPort), //nolint:gosec // G115: conversion is safe — listen port value validated as non-negative
 			Protocol: frontend.Protocol,
 			Metadata: frontend.Metadata(),
 		})

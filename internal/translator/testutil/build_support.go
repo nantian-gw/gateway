@@ -389,7 +389,7 @@ func ReadTestTLSAsset(t *testing.T, name string) []byte {
 
 	var lastErr error
 	for _, path := range candidates {
-		raw, err := os.ReadFile(path) //nolint:gosec
+		raw, err := os.ReadFile(path) //nolint:gosec // G304: test helper — path is controlled by test
 		if err == nil {
 			return raw
 		}

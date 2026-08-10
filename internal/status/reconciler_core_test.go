@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -78,44 +81,29 @@ func TestReconcileSetsGatewayAndHTTPRouteStatus(t *testing.T) {
 		Build()
 
 	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
-	if err := reconciler.Reconcile(context.Background()); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	require.NoError(t, reconciler.Reconcile(context.Background()), "Reconcile returned error")
 
 	var gatewayClass gatewayv1.GatewayClass
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass); err != nil {
-		t.Fatalf("Get GatewayClass returned error: %v", err)
-	}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{Name: "nantian-gw"}, &gatewayClass))
 	assertCondition(t, gatewayClass.Status.Conditions, string(gatewayv1.GatewayClassConditionStatusAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayClassReasonAccepted), 1)
 
 	var gateway gatewayv1.Gateway
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway); err != nil {
-		t.Fatalf("Get Gateway returned error: %v", err)
-	}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway))
 	assertCondition(t, gateway.Status.Conditions, string(gatewayv1.GatewayConditionAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayReasonAccepted), 1)
 	assertCondition(t, gateway.Status.Conditions, string(gatewayv1.GatewayConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.GatewayReasonProgrammed), 1)
-	if len(gateway.Status.Addresses) != 1 || gateway.Status.Addresses[0].Value != "127.0.0.1" {
-		t.Fatalf("unexpected gateway addresses: %#v", gateway.Status.Addresses)
-	}
-	if len(gateway.Status.Listeners) != 1 {
-		t.Fatalf("expected 1 listener status, got %d", len(gateway.Status.Listeners))
-	}
+	require.Len(t, gateway.Status.Addresses, 1)
+	assert.Equal(t, "127.0.0.1", gateway.Status.Addresses[0].Value)
+	require.Len(t, gateway.Status.Listeners, 1)
 	listener := gateway.Status.Listeners[0]
-	if listener.AttachedRoutes != 1 {
-		t.Fatalf("expected attachedRoutes=1, got %d", listener.AttachedRoutes)
-	}
+	assert.Equal(t, int32(1), listener.AttachedRoutes)
 	assertSupportedKinds(t, listener.SupportedKinds, "GRPCRoute", "HTTPRoute")
 	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 1)
 	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.ListenerReasonResolvedRefs), 1)
 	assertCondition(t, listener.Conditions, string(gatewayv1.ListenerConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.ListenerReasonProgrammed), 1)
 
 	var route gatewayv1.HTTPRoute
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route); err != nil {
-		t.Fatalf("Get HTTPRoute returned error: %v", err)
-	}
-	if len(route.Status.Parents) != 1 {
-		t.Fatalf("expected 1 parent status, got %d", len(route.Status.Parents))
-	}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route))
+	require.Len(t, route.Status.Parents, 1)
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionAccepted), metav1.ConditionTrue, string(gatewayv1.RouteReasonAccepted), 1)
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 1)
 }
@@ -252,25 +240,17 @@ func TestReconcileUsesReaderStateForObservedGeneration(t *testing.T) {
 		[]string{"127.0.0.1"},
 		discardLogger(),
 	)
-	if err := reconciler.Reconcile(context.Background()); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	require.NoError(t, reconciler.Reconcile(context.Background()), "Reconcile returned error")
 
 	var gateway gatewayv1.Gateway
-	if err := staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway); err != nil {
-		t.Fatalf("Get Gateway returned error: %v", err)
-	}
+	require.NoError(t, staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway))
 	assertCondition(t, gateway.Status.Conditions, string(gatewayv1.GatewayConditionAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayReasonAccepted), 2)
 	assertCondition(t, gateway.Status.Conditions, string(gatewayv1.GatewayConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.GatewayReasonProgrammed), 2)
 	assertCondition(t, gateway.Status.Listeners[0].Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 2)
 
 	var route gatewayv1.HTTPRoute
-	if err := staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route); err != nil {
-		t.Fatalf("Get HTTPRoute returned error: %v", err)
-	}
-	if len(route.Status.Parents) != 1 {
-		t.Fatalf("expected 1 parent status, got %d", len(route.Status.Parents))
-	}
+	require.NoError(t, staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route))
+	require.Len(t, route.Status.Parents, 1)
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionAccepted), metav1.ConditionTrue, string(gatewayv1.RouteReasonAccepted), 2)
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 2)
 }
@@ -361,14 +341,10 @@ func TestReconcileUsesReaderStateForListenerSetObservedGeneration(t *testing.T) 
 		[]string{"127.0.0.1"},
 		discardLogger(),
 	)
-	if err := reconciler.Reconcile(context.Background()); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	require.NoError(t, reconciler.Reconcile(context.Background()), "Reconcile returned error")
 
 	var listenerSet gatewayv1.ListenerSet
-	if err := staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "ls"}, &listenerSet); err != nil {
-		t.Fatalf("Get ListenerSet returned error: %v", err)
-	}
+	require.NoError(t, staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "ls"}, &listenerSet))
 	assertCondition(t, listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerSetReasonAccepted), 1)
 	assertCondition(t, listenerSet.Status.Conditions, string(gatewayv1.ListenerSetConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.ListenerSetReasonProgrammed), 1)
 	listener := listenerEntryStatusByName(t, listenerSet.Status.Listeners, "ls-listener")
@@ -449,33 +425,13 @@ func TestReconcileUsesReaderGatewayListenersWhenGenerationChanges(t *testing.T) 
 		[]string{"127.0.0.1"},
 		discardLogger(),
 	)
-	if err := reconciler.Reconcile(context.Background()); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	require.NoError(t, reconciler.Reconcile(context.Background()), "Reconcile returned error")
 
 	var gateway gatewayv1.Gateway
-	if err := staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway); err != nil {
-		t.Fatalf("Get Gateway returned error: %v", err)
-	}
-	if len(gateway.Status.Listeners) != 2 {
-		t.Fatalf("listener status count = %d, want 2", len(gateway.Status.Listeners))
-	}
-	assertCondition(
-		t,
-		gateway.Status.Listeners[0].Conditions,
-		string(gatewayv1.ListenerConditionAccepted),
-		metav1.ConditionTrue,
-		string(gatewayv1.ListenerReasonAccepted),
-		2,
-	)
-	assertCondition(
-		t,
-		gateway.Status.Listeners[1].Conditions,
-		string(gatewayv1.ListenerConditionAccepted),
-		metav1.ConditionTrue,
-		string(gatewayv1.ListenerReasonAccepted),
-		2,
-	)
+	require.NoError(t, staleClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway))
+	require.Len(t, gateway.Status.Listeners, 2)
+	assertCondition(t, gateway.Status.Listeners[0].Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 2)
+	assertCondition(t, gateway.Status.Listeners[1].Conditions, string(gatewayv1.ListenerConditionAccepted), metav1.ConditionTrue, string(gatewayv1.ListenerReasonAccepted), 2)
 }
 
 func TestReconcileAvoidsGatewayReaderGetsWhenGatewayGenerationIsCurrent(t *testing.T) {
@@ -534,12 +490,8 @@ func TestReconcileAvoidsGatewayReaderGetsWhenGatewayGenerationIsCurrent(t *testi
 		[]string{"127.0.0.1"},
 		discardLogger(),
 	)
-	if err := reconciler.Reconcile(context.Background()); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
-	if reader.gatewayGets != 0 {
-		t.Fatalf("gateway reader Get count = %d, want 0", reader.gatewayGets)
-	}
+	require.NoError(t, reconciler.Reconcile(context.Background()), "Reconcile returned error")
+	assert.Equal(t, 0, reader.gatewayGets, "gateway reader Get count should be 0")
 }
 
 func TestReconcileTreatsGatewaysAsManagedWhenGatewayClassIsAbsent(t *testing.T) {
@@ -597,24 +549,16 @@ func TestReconcileTreatsGatewaysAsManagedWhenGatewayClassIsAbsent(t *testing.T) 
 		Build()
 
 	reconciler := New(k8sClient, string(controllerName), "127.0.0.1", discardLogger())
-	if err := reconciler.Reconcile(context.Background()); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	require.NoError(t, reconciler.Reconcile(context.Background()), "Reconcile returned error")
 
 	var gateway gatewayv1.Gateway
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway); err != nil {
-		t.Fatalf("Get Gateway returned error: %v", err)
-	}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "gw"}, &gateway))
 	assertCondition(t, gateway.Status.Conditions, string(gatewayv1.GatewayConditionAccepted), metav1.ConditionTrue, string(gatewayv1.GatewayReasonAccepted), 1)
 	assertCondition(t, gateway.Status.Conditions, string(gatewayv1.GatewayConditionProgrammed), metav1.ConditionTrue, string(gatewayv1.GatewayReasonProgrammed), 1)
 
 	var route gatewayv1.HTTPRoute
-	if err := k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route); err != nil {
-		t.Fatalf("Get HTTPRoute returned error: %v", err)
-	}
-	if len(route.Status.Parents) != 1 {
-		t.Fatalf("expected 1 parent status, got %d", len(route.Status.Parents))
-	}
+	require.NoError(t, k8sClient.Get(context.Background(), client.ObjectKey{Namespace: "default", Name: "route"}, &route))
+	require.Len(t, route.Status.Parents, 1)
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionAccepted), metav1.ConditionTrue, string(gatewayv1.RouteReasonAccepted), 1)
 	assertCondition(t, route.Status.Parents[0].Conditions, string(gatewayv1.RouteConditionResolvedRefs), metav1.ConditionTrue, string(gatewayv1.RouteReasonResolvedRefs), 1)
 }

@@ -33,8 +33,10 @@ func (r *Reconciler) reconcileBackendTLSPolicyStatus(
 		)
 
 		if apiequality.Semantic.DeepEqual(current.Status, *desiredStatus) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceBackendTLSPolicy).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceBackendTLSPolicy).Inc()
 		return gatewayapi.UpdateBackendTLSPolicyV1Status(ctx, r.client, currentRaw, *desiredStatus)
 	})
 }
@@ -61,8 +63,10 @@ func (r *Reconciler) reconcileBackendLBPolicyStatus(
 		)
 
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceBackendLBPolicy).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceBackendLBPolicy).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }

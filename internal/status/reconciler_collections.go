@@ -2,7 +2,10 @@ package status
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,16 +22,18 @@ import (
 
 func (r *Reconciler) reconcileGatewayClasses(ctx context.Context, gatewayClasses []gatewayv1.GatewayClass) error {
 	resolver := newGatewayClassStatusSupportResolver(r)
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
 	for _, listed := range gatewayClasses {
 		if string(listed.Spec.ControllerName) != r.controllerName {
 			continue
 		}
-		if err := r.reconcileGatewayClassStatusWithSupportResolver(ctx, listed.Name, resolver); err != nil {
-			return err
-		}
+		listed := listed
+		g.Go(func() error {
+			return r.reconcileGatewayClassStatusWithSupportResolver(ctx, listed.Name, resolver)
+		})
 	}
-
-	return nil
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileGateways(
@@ -379,13 +384,19 @@ func (r *Reconciler) reconcileHTTPRoutes(
 	_ []gatewayv1.HTTPRoute,
 	evals map[types.NamespacedName][]routeParentEvaluation,
 ) error {
-	for key, desiredParents := range evals {
-		if err := r.reconcileHTTPRouteStatus(ctx, key, desiredParents); err != nil {
-			return err
-		}
-	}
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceHTTPRoute))
+	defer timer.ObserveDuration()
 
-	return nil
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for key, desiredParents := range evals {
+		key := key
+		desiredParents := desiredParents
+		g.Go(func() error {
+			return r.reconcileHTTPRouteStatus(ctx, key, desiredParents)
+		})
+	}
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileGRPCRoutes(
@@ -393,13 +404,19 @@ func (r *Reconciler) reconcileGRPCRoutes(
 	_ []gatewayv1.GRPCRoute,
 	evals map[types.NamespacedName][]routeParentEvaluation,
 ) error {
-	for key, desiredParents := range evals {
-		if err := r.reconcileGRPCRouteStatus(ctx, key, desiredParents); err != nil {
-			return err
-		}
-	}
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceGRPCRoute))
+	defer timer.ObserveDuration()
 
-	return nil
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for key, desiredParents := range evals {
+		key := key
+		desiredParents := desiredParents
+		g.Go(func() error {
+			return r.reconcileGRPCRouteStatus(ctx, key, desiredParents)
+		})
+	}
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileTCPRoutes(
@@ -407,13 +424,19 @@ func (r *Reconciler) reconcileTCPRoutes(
 	_ []gatewayv1alpha2.TCPRoute,
 	evals map[types.NamespacedName][]routeParentEvaluation,
 ) error {
-	for key, desiredParents := range evals {
-		if err := r.reconcileTCPRouteStatus(ctx, key, desiredParents); err != nil {
-			return err
-		}
-	}
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceTCPRoute))
+	defer timer.ObserveDuration()
 
-	return nil
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for key, desiredParents := range evals {
+		key := key
+		desiredParents := desiredParents
+		g.Go(func() error {
+			return r.reconcileTCPRouteStatus(ctx, key, desiredParents)
+		})
+	}
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileUDPRoutes(
@@ -421,13 +444,19 @@ func (r *Reconciler) reconcileUDPRoutes(
 	_ []gatewayv1alpha2.UDPRoute,
 	evals map[types.NamespacedName][]routeParentEvaluation,
 ) error {
-	for key, desiredParents := range evals {
-		if err := r.reconcileUDPRouteStatus(ctx, key, desiredParents); err != nil {
-			return err
-		}
-	}
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceUDPRoute))
+	defer timer.ObserveDuration()
 
-	return nil
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for key, desiredParents := range evals {
+		key := key
+		desiredParents := desiredParents
+		g.Go(func() error {
+			return r.reconcileUDPRouteStatus(ctx, key, desiredParents)
+		})
+	}
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileTLSRoutes(
@@ -435,13 +464,19 @@ func (r *Reconciler) reconcileTLSRoutes(
 	_ []gatewayv1alpha2.TLSRoute,
 	evals map[types.NamespacedName][]routeParentEvaluation,
 ) error {
-	for key, desiredParents := range evals {
-		if err := r.reconcileTLSRouteStatus(ctx, key, desiredParents); err != nil {
-			return err
-		}
-	}
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceTLSRoute))
+	defer timer.ObserveDuration()
 
-	return nil
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for key, desiredParents := range evals {
+		key := key
+		desiredParents := desiredParents
+		g.Go(func() error {
+			return r.reconcileTLSRouteStatus(ctx, key, desiredParents)
+		})
+	}
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileBackendTLSPolicies(
@@ -449,13 +484,21 @@ func (r *Reconciler) reconcileBackendTLSPolicies(
 	policies []gatewayv1alpha3.BackendTLSPolicy,
 	evals map[types.NamespacedName]backendTLSPolicyEvaluation,
 ) error {
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceBackendTLSPolicy))
+	defer timer.ObserveDuration()
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
-		if err := r.reconcileBackendTLSPolicyStatus(ctx, key, evals[key]); err != nil {
-			return err
-		}
+		listed := listed
+		g.Go(func() error {
+			return r.reconcileBackendTLSPolicyStatus(ctx, key, evals[client.ObjectKeyFromObject(&listed)])
+		})
 	}
-
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("parallel status update: %w", err)
+	}
 	return nil
 }
 
@@ -464,12 +507,20 @@ func (r *Reconciler) reconcileBackendLBPolicies(
 	policies []backend.BackendLBPolicy,
 	evals map[types.NamespacedName]backendLBPolicyEvaluation,
 ) error {
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceBackendLBPolicy))
+	defer timer.ObserveDuration()
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
-		if err := r.reconcileBackendLBPolicyStatus(ctx, key, evals[key]); err != nil {
-			return err
-		}
+		listed := listed
+		g.Go(func() error {
+			return r.reconcileBackendLBPolicyStatus(ctx, key, evals[client.ObjectKeyFromObject(&listed)])
+		})
 	}
-
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("parallel status update: %w", err)
+	}
 	return nil
 }

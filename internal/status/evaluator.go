@@ -78,7 +78,7 @@ func evaluateGateways(state *clusterState, attachments map[listenerKey]routeAtta
 				gateway,
 				gateway.Spec.Listeners,
 				listener,
-				int32(len(attachments[key])), //nolint:gosec
+				int32(len(attachments[key])), //nolint:gosec // G115: conversion is safe — len is non-negative
 			)
 			if eval.acceptedCondition.Status == metav1.ConditionTrue {
 				acceptedListeners++

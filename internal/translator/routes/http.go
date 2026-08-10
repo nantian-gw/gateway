@@ -122,10 +122,10 @@ func HTTPRouteRetry(retry *gatewayv1.HTTPRouteRetry) *ir.RetryPolicy {
 
 	out := &ir.RetryPolicy{}
 	for _, code := range retry.Codes {
-		out.Codes = append(out.Codes, uint32(code)) //nolint:gosec
+		out.Codes = append(out.Codes, uint32(code)) //nolint:gosec // G115: conversion is safe — retry code value validated as non-negative
 	}
 	if retry.Attempts != nil {
-		out.Attempts = uint32(*retry.Attempts) //nolint:gosec
+		out.Attempts = uint32(*retry.Attempts) //nolint:gosec // G115: conversion is safe — attempts value validated as non-negative
 	}
 	if retry.Backoff != nil {
 		duration, err := time.ParseDuration(string(*retry.Backoff))

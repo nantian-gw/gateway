@@ -3,6 +3,8 @@ package status
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -17,9 +19,7 @@ func TestGatewayInfrastructureParametersMessageFiltersUnrelatedAcceptedMessages(
 		Message: "some other validation failed",
 	}}
 
-	if got := gatewayInfrastructureParametersMessage(conditions); got != "" {
-		t.Fatalf("expected unrelated invalid-parameters message to be ignored, got %q", got)
-	}
+	assert.Equal(t, "", gatewayInfrastructureParametersMessage(conditions), "expected unrelated invalid-parameters message to be ignored")
 }
 
 func TestGatewayInfrastructureParametersMessageReturnsInfrastructureRefFailures(t *testing.T) {
@@ -33,7 +33,5 @@ func TestGatewayInfrastructureParametersMessageReturnsInfrastructureRefFailures(
 		Message: message,
 	}}
 
-	if got := gatewayInfrastructureParametersMessage(conditions); got != message {
-		t.Fatalf("expected infrastructure parameters message, got %q", got)
-	}
+	assert.Equal(t, message, gatewayInfrastructureParametersMessage(conditions), "expected infrastructure parameters message")
 }

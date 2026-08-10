@@ -13,8 +13,8 @@ import (
 
 func TestListenerProtocolForServicePortUsesAppProtocolHints(t *testing.T) {
 	appH2C := "kubernetes.io/h2c"
-	appWS := "kubernetes.io/ws"   //nolint:gosec
-	appWSS := "kubernetes.io/wss" //nolint:gosec
+	appWS := "kubernetes.io/ws"   //nolint:gosec // G101: test file — app protocol string, not a credential
+	appWSS := "kubernetes.io/wss" //nolint:gosec // G101: test file — app protocol string, not a credential
 	appGRPC := "grpc"
 
 	tests := []struct {

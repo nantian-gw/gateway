@@ -479,7 +479,7 @@ func readGatewayListenerTLSAsset(t *testing.T, name string) []byte {
 
 	for _, dir := range []string{"tls", "backendtls"} {
 		path := filepath.Join("..", "..", "test", "testdata", dir, name)
-		raw, err := os.ReadFile(path) //nolint:gosec
+		raw, err := os.ReadFile(path) //nolint:gosec // G304: test file — path is controlled by test
 		if err == nil {
 			return raw
 		}

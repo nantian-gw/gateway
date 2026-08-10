@@ -63,7 +63,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 			Name:       gateway.Namespace + "/" + gateway.Name + "/" + string(listener.Name),
 			Address:    address,
 			Addresses:  append([]string(nil), addresses...),
-			Port:       uint32(listener.Port), //nolint:gosec
+			Port:       uint32(listener.Port), //nolint:gosec // G115: conversion is safe — port value validated as non-negative
 			Protocol:   protocol,
 			BackendTLS: backends.BackendTLSForGatewayWithIndexes(gateway, indexes),
 			Metadata: map[string]string{

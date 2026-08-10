@@ -4,9 +4,11 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 
@@ -19,9 +21,7 @@ import (
 func TestCanonicalizeSupportedFeaturesTrimsSortsAndDeduplicates(t *testing.T) {
 	got := canonicalizeSupportedFeatures([]string{" route.labels.v1 ", "", "core.v1", "core.v1"})
 	want := []string{featureCoreV1, featureRouteLabelsV1}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("canonicalizeSupportedFeatures() = %#v, want %#v", got, want)
-	}
+	assert.Equal(t, want, got)
 }
 
 func TestEffectiveProjectionProfileUsesLegacyFallbackForEmptyAdvertisement(t *testing.T) {
@@ -32,18 +32,10 @@ func TestEffectiveProjectionProfileUsesLegacyFallbackForEmptyAdvertisement(t *te
 		featureBackendTokenPolicyV1,
 		featureBackendWasmPluginV1,
 	}
-	if len(got.advertised) != 0 {
-		t.Fatalf("advertised features = %#v, want empty", got.advertised)
-	}
-	if !reflect.DeepEqual(got.effective, wantEffective) {
-		t.Fatalf("effective features = %#v, want %#v", got.effective, wantEffective)
-	}
-	if got.compatibilityProfile != compatibilityProfileLegacyPreNegotiationV1 {
-		t.Fatalf("compatibility profile = %q, want %q", got.compatibilityProfile, compatibilityProfileLegacyPreNegotiationV1)
-	}
-	if got.projectionKey != compatibilityProfileLegacyPreNegotiationV1 {
-		t.Fatalf("projection key = %q, want %q", got.projectionKey, compatibilityProfileLegacyPreNegotiationV1)
-	}
+	require.Empty(t, got.advertised, "advertised features should be empty")
+	assert.Equal(t, wantEffective, got.effective)
+	assert.Equal(t, compatibilityProfileLegacyPreNegotiationV1, got.compatibilityProfile)
+	assert.Equal(t, compatibilityProfileLegacyPreNegotiationV1, got.projectionKey)
 }
 
 func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeatures(t *testing.T) {
@@ -54,9 +46,7 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	stream.initialRecv <- &controlv1.DiscoveryRequest{
@@ -73,11 +63,9 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 
 	waitForNodeConnection(t, nodes, "dp-1")
 	status := waitForNodeStatus(t, nodes, "dp-1", func(status ir.NodeStatus) bool {
-		return reflect.DeepEqual(status.SupportedFeatures, []string{featureCoreV1, featureRouteLabelsV1})
+		return assert.ObjectsAreEqual(status.SupportedFeatures, []string{featureCoreV1, featureRouteLabelsV1})
 	})
-	if !reflect.DeepEqual(status.SupportedFeatures, []string{featureCoreV1, featureRouteLabelsV1}) {
-		t.Fatalf("supported features after connect = %#v, want %#v", status.SupportedFeatures, []string{featureCoreV1, featureRouteLabelsV1})
-	}
+	assert.Equal(t, []string{featureCoreV1, featureRouteLabelsV1}, status.SupportedFeatures)
 
 	snapshot := &ir.Snapshot{GeneratedAt: time.Now().UTC()}
 	store.Publish(snapshot)
@@ -95,16 +83,12 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 	status = waitForNodeStatus(t, nodes, "dp-1", func(status ir.NodeStatus) bool {
 		return status.LastAckVersion == snapshot.ID
 	})
-	if !reflect.DeepEqual(status.SupportedFeatures, []string{featureCoreV1, featureRouteLabelsV1}) {
-		t.Fatalf("supported features after ack without supported_features = %#v, want %#v", status.SupportedFeatures, []string{featureCoreV1, featureRouteLabelsV1})
-	}
+	assert.Equal(t, []string{featureCoreV1, featureRouteLabelsV1}, status.SupportedFeatures, "supported features after ack without supported_features")
 
 	stream.release()
 	select {
 	case err := <-result:
-		if err != nil {
-			t.Fatalf("expected stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("StreamConfiguration did not return after stream release")
 	}

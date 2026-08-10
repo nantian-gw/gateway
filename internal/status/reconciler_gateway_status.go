@@ -62,8 +62,10 @@ func (r *Reconciler) reconcileGatewayClassStatusWithSupportResolver(
 		desired.Status.SupportedFeatures = supportedFeatures
 
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceGatewayClass).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceGatewayClass).Inc()
 		return r.client.Status().Patch(ctx, desired, client.MergeFrom(&current))
 	})
 }
@@ -118,8 +120,10 @@ func (r *Reconciler) reconcileGatewayStatusWithSeed(
 		desiredInfraMessage := eval.infraValidation.Error()
 		if apiequality.Semantic.DeepEqual(current.Status, desired.Status) {
 			updateGatewayConvergenceStageMetric(key, eval)
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceGateway).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceGateway).Inc()
 		if err := r.client.Status().Patch(ctx, desired, client.MergeFrom(&current)); err != nil {
 			if apierrors.IsNotFound(err) {
 				deleteGatewayConvergenceStageMetric(key)

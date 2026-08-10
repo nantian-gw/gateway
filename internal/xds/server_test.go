@@ -6,11 +6,13 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -29,11 +31,19 @@ import (
 )
 
 func TestToListenerProtocolMapsTLS(t *testing.T) {
-	if got := toListenerProtocol("TLS"); got != controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS {
-		t.Fatalf("expected TLS to map to LISTENER_PROTOCOL_TLS, got %v", got)
+	tests := []struct {
+		name  string
+		input string
+		want  controlv1.ListenerProtocol
+	}{
+		{"TLS maps to LISTENER_PROTOCOL_TLS", "TLS", controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS},
+		{"TLS_PASSTHROUGH maps to passthrough", "TLS_PASSTHROUGH", controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS_PASSTHROUGH},
 	}
-	if got := toListenerProtocol("TLS_PASSTHROUGH"); got != controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS_PASSTHROUGH {
-		t.Fatalf("expected TLS_PASSTHROUGH to map to passthrough, got %v", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := toListenerProtocol(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }
 
@@ -46,15 +56,9 @@ func TestToProtoRouteTimeouts(t *testing.T) {
 		BackendRequest: &backendRequest,
 	})
 
-	if timeouts == nil {
-		t.Fatal("expected route timeouts")
-	}
-	if timeouts.Request.AsDuration() != 12*time.Second {
-		t.Fatalf("unexpected request timeout: %v", timeouts.Request)
-	}
-	if timeouts.BackendRequest.AsDuration() != 3*time.Second {
-		t.Fatalf("unexpected backend request timeout: %v", timeouts.BackendRequest)
-	}
+	require.NotNil(t, timeouts, "expected route timeouts")
+	assert.Equal(t, 12*time.Second, timeouts.Request.AsDuration())
+	assert.Equal(t, 3*time.Second, timeouts.BackendRequest.AsDuration())
 }
 
 func TestToProtoSnapshotOmitsZeroBackendRequestTimeout(t *testing.T) {
@@ -68,15 +72,9 @@ func TestToProtoSnapshotOmitsZeroBackendRequestTimeout(t *testing.T) {
 	}
 
 	out := toProtoSnapshot(snapshot)
-	if len(out.Backends) != 1 {
-		t.Fatalf("expected 1 backend, got %d", len(out.Backends))
-	}
-	if out.Backends[0].ConnectTimeout == nil || out.Backends[0].ConnectTimeout.AsDuration() != 5*time.Second {
-		t.Fatalf("unexpected connect timeout: %v", out.Backends[0].ConnectTimeout)
-	}
-	if out.Backends[0].RequestTimeout != nil {
-		t.Fatalf("expected zero request timeout to be omitted, got %v", out.Backends[0].RequestTimeout)
-	}
+	require.Len(t, out.Backends, 1)
+	assert.Equal(t, 5*time.Second, out.Backends[0].ConnectTimeout.AsDuration())
+	assert.Nil(t, out.Backends[0].RequestTimeout, "expected zero request timeout to be omitted")
 }
 
 func TestToProtoBackendsPreservesFilters(t *testing.T) {
@@ -98,15 +96,9 @@ func TestToProtoBackendsPreservesFilters(t *testing.T) {
 		}},
 	}})
 
-	if len(backends) != 1 {
-		t.Fatalf("expected 1 backend ref, got %d", len(backends))
-	}
-	if len(backends[0].Filters) != 1 {
-		t.Fatalf("expected 1 backend filter, got %d", len(backends[0].Filters))
-	}
-	if got := backends[0].Filters[0].GetType(); got != "RequestHeaderModifier" {
-		t.Fatalf("unexpected backend filter type: %q", got)
-	}
+	require.Len(t, backends, 1)
+	require.Len(t, backends[0].Filters, 1)
+	assert.Equal(t, "RequestHeaderModifier", backends[0].Filters[0].GetType())
 }
 
 func TestToProtoFiltersPreservesNestedDirectResponseExtension(t *testing.T) {
@@ -123,22 +115,12 @@ func TestToProtoFiltersPreservesNestedDirectResponseExtension(t *testing.T) {
 		},
 	}})
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].GetType() != "ExtensionRef" {
-		t.Fatalf("unexpected filter type: %q", filters[0].GetType())
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, "ExtensionRef", filters[0].GetType())
 	directResponse := filters[0].GetConfig().GetFields()["directResponse"].GetStructValue()
-	if directResponse == nil {
-		t.Fatalf("expected nested directResponse config, got %#v", filters[0].GetConfig())
-	}
-	if got := directResponse.Fields["statusCode"].GetNumberValue(); got != 503 {
-		t.Fatalf("unexpected status code: %v", got)
-	}
-	if got := directResponse.Fields["body"].GetStringValue(); got != "maintenance" {
-		t.Fatalf("unexpected body: %q", got)
-	}
+	require.NotNil(t, directResponse, "expected nested directResponse config")
+	assert.Equal(t, float64(503), directResponse.Fields["statusCode"].GetNumberValue())
+	assert.Equal(t, "maintenance", directResponse.Fields["body"].GetStringValue())
 }
 
 func TestToProtoSnapshotPreservesWorkloadExtensions(t *testing.T) {
@@ -150,17 +132,10 @@ func TestToProtoSnapshotPreservesWorkloadExtensions(t *testing.T) {
 		}},
 	})
 
-	if snapshot.Extensions == nil {
-		t.Fatal("expected extensions to be populated")
-	}
-
+	require.NotNil(t, snapshot.Extensions, "expected extensions to be populated")
 	workloads, ok := snapshot.Extensions.Fields["workloads"]
-	if !ok {
-		t.Fatalf("expected workloads extension, got %#v", snapshot.Extensions.Fields)
-	}
-	if len(workloads.GetListValue().GetValues()) != 1 {
-		t.Fatalf("expected 1 workload, got %#v", workloads)
-	}
+	require.True(t, ok, "expected workloads extension")
+	require.Len(t, workloads.GetListValue().GetValues(), 1)
 }
 
 func TestToProtoFiltersLogsAndFallsBackOnStructError(t *testing.T) {
@@ -182,21 +157,11 @@ func TestToProtoFiltersLogsAndFallsBackOnStructError(t *testing.T) {
 		},
 	}}, logger)
 
-	if len(filters) != 1 {
-		t.Fatalf("expected 1 filter, got %d", len(filters))
-	}
-	if filters[0].GetType() != "ExtensionRef" {
-		t.Fatalf("unexpected filter type: %q", filters[0].GetType())
-	}
-	if filters[0].GetConfig() == nil {
-		t.Fatal("expected fallback empty struct, got nil")
-	}
-	if len(filters[0].GetConfig().GetFields()) != 0 {
-		t.Fatalf("expected empty fallback struct, got %#v", filters[0].GetConfig().GetFields())
-	}
-	if !strings.Contains(logs.String(), "failed to build filter config struct") {
-		t.Fatalf("expected warning log, got %q", logs.String())
-	}
+	require.Len(t, filters, 1)
+	assert.Equal(t, "ExtensionRef", filters[0].GetType())
+	require.NotNil(t, filters[0].GetConfig(), "expected fallback empty struct, got nil")
+	require.Empty(t, filters[0].GetConfig().GetFields(), "expected empty fallback struct")
+	assert.True(t, strings.Contains(logs.String(), "failed to build filter config struct"), "expected warning log")
 }
 
 func TestToProtoSnapshotLogsAndDropsExtensionsOnStructError(t *testing.T) {
@@ -219,12 +184,8 @@ func TestToProtoSnapshotLogsAndDropsExtensionsOnStructError(t *testing.T) {
 		}},
 	}, logger)
 
-	if snapshot.Extensions != nil {
-		t.Fatalf("expected nil extensions fallback, got %#v", snapshot.Extensions)
-	}
-	if !strings.Contains(logs.String(), "failed to build snapshot extensions struct") {
-		t.Fatalf("expected warning log, got %q", logs.String())
-	}
+	assert.Nil(t, snapshot.Extensions, "expected nil extensions fallback")
+	assert.True(t, strings.Contains(logs.String(), "failed to build snapshot extensions struct"), "expected warning log")
 }
 
 func TestToEmptyStructLogsAndFallsBackOnStructError(t *testing.T) {
@@ -240,15 +201,9 @@ func TestToEmptyStructLogsAndFallsBackOnStructError(t *testing.T) {
 	}()
 
 	payload := toEmptyStructWithLogger(logger)
-	if payload == nil {
-		t.Fatal("expected fallback empty struct")
-	}
-	if len(payload.GetFields()) != 0 {
-		t.Fatalf("expected empty fields, got %#v", payload.GetFields())
-	}
-	if !strings.Contains(logs.String(), "failed to build empty struct") {
-		t.Fatalf("expected warning log, got %q", logs.String())
-	}
+	require.NotNil(t, payload, "expected fallback empty struct")
+	require.Empty(t, payload.GetFields(), "expected empty fields")
+	assert.True(t, strings.Contains(logs.String(), "failed to build empty struct"), "expected warning log")
 }
 
 func TestToProtoSnapshotPreservesRouteAnnotations(t *testing.T) {
@@ -282,18 +237,12 @@ func TestToProtoSnapshotPreservesRouteAnnotations(t *testing.T) {
 		}},
 	})
 
-	if got := snapshot.HttpRoutes[0].Annotations["gateway.nantian.dev/access-log-mode"]; got != "json" {
-		t.Fatalf("expected http route annotation, got %q", got)
-	}
-	if got := snapshot.Listeners[0].Addresses; len(got) != 2 || got[0] != "192.0.2.10" || got[1] != "gw.example.com" {
-		t.Fatalf("expected listener addresses, got %#v", got)
-	}
-	if got := snapshot.GrpcRoutes[0].Annotations["gateway.nantian.dev/access-log-enabled"]; got != "false" {
-		t.Fatalf("expected grpc route annotation, got %q", got)
-	}
-	if got := snapshot.StreamRoutes[0].Annotations["gateway.nantian.dev/access-log-path"]; got != "/var/log/nantian-gw/tcp.log" {
-		t.Fatalf("expected stream route annotation, got %q", got)
-	}
+	assert.Equal(t, "json", snapshot.HttpRoutes[0].Annotations["gateway.nantian.dev/access-log-mode"])
+	require.Len(t, snapshot.Listeners[0].Addresses, 2)
+	assert.Equal(t, "192.0.2.10", snapshot.Listeners[0].Addresses[0])
+	assert.Equal(t, "gw.example.com", snapshot.Listeners[0].Addresses[1])
+	assert.Equal(t, "false", snapshot.GrpcRoutes[0].Annotations["gateway.nantian.dev/access-log-enabled"])
+	assert.Equal(t, "/var/log/nantian-gw/tcp.log", snapshot.StreamRoutes[0].Annotations["gateway.nantian.dev/access-log-path"])
 }
 
 func TestToProtoSessionPersistence(t *testing.T) {
@@ -310,24 +259,13 @@ func TestToProtoSessionPersistence(t *testing.T) {
 		},
 	})
 
-	if item == nil {
-		t.Fatal("expected session persistence proto")
-	}
-	if item.SessionName != "nantian-gw-http-session" {
-		t.Fatalf("unexpected session name: %s", item.SessionName)
-	}
-	if item.Type != controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_COOKIE {
-		t.Fatalf("unexpected session type: %v", item.Type)
-	}
-	if item.Cookie == nil || item.Cookie.LifetimeType != controlv1.CookieLifetimeType_COOKIE_LIFETIME_TYPE_PERMANENT {
-		t.Fatalf("unexpected cookie config: %#v", item.Cookie)
-	}
-	if item.AbsoluteTimeout.AsDuration() != 5*time.Minute {
-		t.Fatalf("unexpected absolute timeout: %v", item.AbsoluteTimeout)
-	}
-	if item.IdleTimeout.AsDuration() != 30*time.Second {
-		t.Fatalf("unexpected idle timeout: %v", item.IdleTimeout)
-	}
+	require.NotNil(t, item, "expected session persistence proto")
+	assert.Equal(t, "nantian-gw-http-session", item.SessionName)
+	assert.Equal(t, controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_COOKIE, item.Type)
+	require.NotNil(t, item.Cookie)
+	assert.Equal(t, controlv1.CookieLifetimeType_COOKIE_LIFETIME_TYPE_PERMANENT, item.Cookie.LifetimeType)
+	assert.Equal(t, 5*time.Minute, item.AbsoluteTimeout.AsDuration())
+	assert.Equal(t, 30*time.Second, item.IdleTimeout.AsDuration())
 }
 
 func TestToProtoLoadBalancing(t *testing.T) {
@@ -339,21 +277,11 @@ func TestToProtoLoadBalancing(t *testing.T) {
 		},
 	})
 
-	if item == nil {
-		t.Fatal("expected load balancing proto")
-	}
-	if item.Type != controlv1.LoadBalancingPolicyType_LOAD_BALANCING_POLICY_TYPE_CONSISTENT_HASH {
-		t.Fatalf("unexpected load balancing type: %v", item.Type)
-	}
-	if item.ConsistentHash == nil {
-		t.Fatal("expected consistent hash proto")
-	}
-	if item.ConsistentHash.KeyType != controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_HEADER {
-		t.Fatalf("unexpected consistent hash key type: %v", item.ConsistentHash.KeyType)
-	}
-	if item.ConsistentHash.HeaderName != "x-user-id" {
-		t.Fatalf("unexpected header name: %q", item.ConsistentHash.HeaderName)
-	}
+	require.NotNil(t, item, "expected load balancing proto")
+	assert.Equal(t, controlv1.LoadBalancingPolicyType_LOAD_BALANCING_POLICY_TYPE_CONSISTENT_HASH, item.Type)
+	require.NotNil(t, item.ConsistentHash, "expected consistent hash proto")
+	assert.Equal(t, controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_HEADER, item.ConsistentHash.KeyType)
+	assert.Equal(t, "x-user-id", item.ConsistentHash.HeaderName)
 }
 
 func TestToProtoSnapshotPreservesGrpcMatchType(t *testing.T) {
@@ -371,15 +299,10 @@ func TestToProtoSnapshotPreservesGrpcMatchType(t *testing.T) {
 		}},
 	})
 
-	if len(snapshot.GrpcRoutes) != 1 || len(snapshot.GrpcRoutes[0].Rules) != 1 {
-		t.Fatalf("unexpected grpc routes: %#v", snapshot.GrpcRoutes)
-	}
-	if len(snapshot.GrpcRoutes[0].Rules[0].Matches) != 1 {
-		t.Fatalf("unexpected grpc matches: %#v", snapshot.GrpcRoutes[0].Rules[0].Matches)
-	}
-	if got := snapshot.GrpcRoutes[0].Rules[0].Matches[0].MatchType; got != "RegularExpression" {
-		t.Fatalf("expected regex match type, got %q", got)
-	}
+	require.Len(t, snapshot.GrpcRoutes, 1)
+	require.Len(t, snapshot.GrpcRoutes[0].Rules, 1)
+	require.Len(t, snapshot.GrpcRoutes[0].Rules[0].Matches, 1)
+	assert.Equal(t, "RegularExpression", snapshot.GrpcRoutes[0].Rules[0].Matches[0].MatchType)
 }
 
 func TestStreamConfigurationDrainsOnServerShutdown(t *testing.T) {
@@ -390,9 +313,7 @@ func TestStreamConfigurationDrainsOnServerShutdown(t *testing.T) {
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 	server.signalShutdown()
 
 	stream := newFakeConfigStream()
@@ -403,20 +324,15 @@ func TestStreamConfigurationDrainsOnServerShutdown(t *testing.T) {
 
 	select {
 	case err := <-result:
-		if status.Code(err) != codes.Unavailable {
-			t.Fatalf("expected unavailable status on shutdown, got %v", err)
-		}
+		assert.Equal(t, codes.Unavailable, status.Code(err), "expected unavailable status on shutdown")
 	case <-time.After(time.Second):
 		t.Fatal("StreamConfiguration did not return after shutdown")
 	}
 
 	stream.release()
-	if _, ok := nodes.Get(context.Background(), "dp-1"); ok {
-		t.Fatal("expected blocked handshake stream to avoid recording node status after shutdown")
-	}
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("shutdown")); got != 1 {
-		t.Fatalf("shutdown stream termination count = %v, want 1", got)
-	}
+	_, ok := nodes.Get(context.Background(), "dp-1")
+	assert.False(t, ok, "expected blocked handshake stream to avoid recording node status after shutdown")
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("shutdown")))
 }
 
 func TestStreamConfigurationInterruptsBlockedInitialRecvOnShutdown(t *testing.T) {
@@ -427,9 +343,7 @@ func TestStreamConfigurationInterruptsBlockedInitialRecvOnShutdown(t *testing.T)
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	stream.blockInitialRecv()
@@ -442,17 +356,13 @@ func TestStreamConfigurationInterruptsBlockedInitialRecvOnShutdown(t *testing.T)
 
 	select {
 	case err := <-result:
-		if status.Code(err) != codes.Unavailable {
-			t.Fatalf("expected unavailable status on shutdown during initial recv, got %v", err)
-		}
+		assert.Equal(t, codes.Unavailable, status.Code(err), "expected unavailable status on shutdown during initial recv")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("StreamConfiguration did not return after shutdown while initial recv was blocked")
 	}
 
 	stream.release()
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("shutdown")); got != 1 {
-		t.Fatalf("shutdown stream termination count = %v, want 1", got)
-	}
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("shutdown")))
 }
 
 func TestStreamConfigurationInterruptsBlockedSendOnShutdown(t *testing.T) {
@@ -462,9 +372,7 @@ func TestStreamConfigurationInterruptsBlockedSendOnShutdown(t *testing.T) {
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, nil)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	stream.blockSend()
@@ -481,9 +389,7 @@ func TestStreamConfigurationInterruptsBlockedSendOnShutdown(t *testing.T) {
 
 	select {
 	case err := <-result:
-		if status.Code(err) != codes.Unavailable {
-			t.Fatalf("expected unavailable status on shutdown, got %v", err)
-		}
+		assert.Equal(t, codes.Unavailable, status.Code(err), "expected unavailable status on shutdown")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("StreamConfiguration did not return after shutdown while send was blocked")
 	}
@@ -492,21 +398,11 @@ func TestStreamConfigurationInterruptsBlockedSendOnShutdown(t *testing.T) {
 	stream.release()
 
 	nodeStatus, ok := nodes.Get(context.Background(), "dp-1")
-	if !ok {
-		t.Fatal("expected node status to be recorded")
-	}
-	if nodeStatus.Connected {
-		t.Fatalf("expected node to be disconnected after shutdown, got %#v", nodeStatus)
-	}
-	if nodeStatus.Ready {
-		t.Fatalf("expected shutdown disconnect to clear readiness, got %#v", nodeStatus)
-	}
-	if nodeStatus.DisconnectReason != "shutdown" {
-		t.Fatalf("expected shutdown disconnect reason, got %#v", nodeStatus)
-	}
-	if nodeStatus.Message != "xds stream drained for controlplane shutdown" {
-		t.Fatalf("expected shutdown disconnect message, got %#v", nodeStatus)
-	}
+	require.True(t, ok, "expected node status to be recorded")
+	assert.False(t, nodeStatus.Connected, "expected node to be disconnected after shutdown")
+	assert.False(t, nodeStatus.Ready, "expected shutdown disconnect to clear readiness")
+	assert.Equal(t, "shutdown", nodeStatus.DisconnectReason)
+	assert.Equal(t, "xds stream drained for controlplane shutdown", nodeStatus.Message)
 }
 
 func TestStreamConfigurationSupersedesExistingNodeStream(t *testing.T) {
@@ -517,9 +413,7 @@ func TestStreamConfigurationSupersedesExistingNodeStream(t *testing.T) {
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	oldStream := newFakeConfigStream()
 	oldResult := make(chan error, 1)
@@ -536,32 +430,22 @@ func TestStreamConfigurationSupersedesExistingNodeStream(t *testing.T) {
 
 	select {
 	case err := <-oldResult:
-		if status.Code(err) != codes.Unavailable {
-			t.Fatalf("expected unavailable status on superseded stream, got %v", err)
-		}
+		assert.Equal(t, codes.Unavailable, status.Code(err), "expected unavailable status on superseded stream")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("old stream did not return after replacement stream connected")
 	}
 
 	nodeStatus, ok := nodes.Get(context.Background(), "dp-1")
-	if !ok {
-		t.Fatal("expected node status to be recorded")
-	}
-	if !nodeStatus.Connected {
-		t.Fatalf("expected node to remain connected after stream replacement, got %#v", nodeStatus)
-	}
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("superseded")); got != 1 {
-		t.Fatalf("superseded stream termination count = %v, want 1", got)
-	}
+	require.True(t, ok, "expected node status to be recorded")
+	assert.True(t, nodeStatus.Connected, "expected node to remain connected after stream replacement")
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("superseded")))
 
 	oldStream.release()
 	newStream.release()
 
 	select {
 	case err := <-newResult:
-		if err != nil {
-			t.Fatalf("expected replacement stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected replacement stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("replacement stream did not return after release")
 	}
@@ -583,9 +467,7 @@ func TestStreamConfigurationInterruptsBlockedSendOnSupersededStream(t *testing.T
 		logger,
 		metrics,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	oldStream := newFakeConfigStream()
 	oldStream.blockSend()
@@ -606,27 +488,17 @@ func TestStreamConfigurationInterruptsBlockedSendOnSupersededStream(t *testing.T
 
 	select {
 	case err := <-oldResult:
-		if status.Code(err) != codes.Unavailable {
-			t.Fatalf("expected unavailable status on superseded blocked stream, got %v", err)
-		}
+		assert.Equal(t, codes.Unavailable, status.Code(err), "expected unavailable status on superseded blocked stream")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("blocked send stream did not return after replacement stream connected")
 	}
 
-	if got := testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal); got != 0 {
-		t.Fatalf("unexpected send timeout count for superseded stream: %v", got)
-	}
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("superseded")); got != 1 {
-		t.Fatalf("superseded stream termination count = %v, want 1", got)
-	}
+	assert.Equal(t, float64(0), testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal), "unexpected send timeout count for superseded stream")
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("superseded")), "superseded stream termination count")
 
 	nodeStatus, ok := nodes.Get(context.Background(), "dp-1")
-	if !ok {
-		t.Fatal("expected node status to be recorded")
-	}
-	if !nodeStatus.Connected {
-		t.Fatalf("expected node to remain connected after superseding blocked stream, got %#v", nodeStatus)
-	}
+	require.True(t, ok, "expected node status to be recorded")
+	assert.True(t, nodeStatus.Connected, "expected node to remain connected after superseding blocked stream")
 
 	oldStream.releaseSend()
 	oldStream.release()
@@ -634,9 +506,7 @@ func TestStreamConfigurationInterruptsBlockedSendOnSupersededStream(t *testing.T
 
 	select {
 	case err := <-newResult:
-		if err != nil {
-			t.Fatalf("expected replacement stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected replacement stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("replacement stream did not return after release")
 	}
@@ -657,9 +527,7 @@ func TestStreamConfigurationTimesOutBlockedSend(t *testing.T) {
 		logger,
 		nil,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	stream.blockSend()
@@ -674,9 +542,7 @@ func TestStreamConfigurationTimesOutBlockedSend(t *testing.T) {
 
 	select {
 	case err := <-result:
-		if status.Code(err) != codes.DeadlineExceeded {
-			t.Fatalf("expected deadline exceeded status on blocked send timeout, got %v", err)
-		}
+		assert.Equal(t, codes.DeadlineExceeded, status.Code(err), "expected deadline exceeded status on blocked send timeout")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("StreamConfiguration did not return after blocked send timed out")
 	}
@@ -685,21 +551,11 @@ func TestStreamConfigurationTimesOutBlockedSend(t *testing.T) {
 	stream.release()
 
 	nodeStatus, ok := nodes.Get(context.Background(), "dp-1")
-	if !ok {
-		t.Fatal("expected node status to be recorded")
-	}
-	if nodeStatus.Connected {
-		t.Fatalf("expected node to be disconnected after blocked send timeout, got %#v", nodeStatus)
-	}
-	if nodeStatus.Ready {
-		t.Fatalf("expected send timeout disconnect to clear readiness, got %#v", nodeStatus)
-	}
-	if nodeStatus.DisconnectReason != "send_timeout" {
-		t.Fatalf("expected send timeout disconnect reason, got %#v", nodeStatus)
-	}
-	if nodeStatus.Message != "timed out sending snapshot to dataplane" {
-		t.Fatalf("expected send timeout disconnect message, got %#v", nodeStatus)
-	}
+	require.True(t, ok, "expected node status to be recorded")
+	assert.False(t, nodeStatus.Connected, "expected node to be disconnected after blocked send timeout")
+	assert.False(t, nodeStatus.Ready, "expected send timeout disconnect to clear readiness")
+	assert.Equal(t, "send_timeout", nodeStatus.DisconnectReason)
+	assert.Equal(t, "timed out sending snapshot to dataplane", nodeStatus.Message)
 }
 
 func TestStreamConfigurationRecordsSnapshotSendDurationMetric(t *testing.T) {
@@ -718,9 +574,7 @@ func TestStreamConfigurationRecordsSnapshotSendDurationMetric(t *testing.T) {
 		logger,
 		metrics,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	stream.setSendDelay(15 * time.Millisecond)
@@ -733,19 +587,13 @@ func TestStreamConfigurationRecordsSnapshotSendDurationMetric(t *testing.T) {
 	store.Publish(&ir.Snapshot{ID: "v-metric", GeneratedAt: time.Now().UTC()})
 	waitForHistogramSampleCount(t, metrics.XDSSnapshotSendDurationSeconds, 1, time.Second)
 
-	if got := testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal); got != 0 {
-		t.Fatalf("unexpected send timeout count: %v", got)
-	}
-	if got := histogramSampleSum(t, metrics.XDSSnapshotSendDurationSeconds); got <= 0 {
-		t.Fatalf("expected positive send duration sum, got %v", got)
-	}
+	assert.Equal(t, float64(0), testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal), "unexpected send timeout count")
+	assert.True(t, histogramSampleSum(t, metrics.XDSSnapshotSendDurationSeconds) > 0, "expected positive send duration sum")
 
 	stream.release()
 	select {
 	case err := <-result:
-		if err != nil {
-			t.Fatalf("expected stream to exit cleanly, got %v", err)
-		}
+		require.NoError(t, err, "expected stream to exit cleanly")
 	case <-time.After(time.Second):
 		t.Fatal("StreamConfiguration did not return after stream release")
 	}
@@ -767,9 +615,7 @@ func TestStreamConfigurationRecordsSnapshotSendTimeoutMetric(t *testing.T) {
 		logger,
 		metrics,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	stream.blockSend()
@@ -784,22 +630,14 @@ func TestStreamConfigurationRecordsSnapshotSendTimeoutMetric(t *testing.T) {
 
 	select {
 	case err := <-result:
-		if status.Code(err) != codes.DeadlineExceeded {
-			t.Fatalf("expected deadline exceeded status on blocked send timeout, got %v", err)
-		}
+		assert.Equal(t, codes.DeadlineExceeded, status.Code(err), "expected deadline exceeded status on blocked send timeout")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("StreamConfiguration did not return after blocked send timed out")
 	}
 
-	if got := testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal); got != 1 {
-		t.Fatalf("snapshot send timeout count = %v, want 1", got)
-	}
-	if got := histogramSampleCount(t, metrics.XDSSnapshotSendDurationSeconds); got != 1 {
-		t.Fatalf("snapshot send duration sample count = %d, want 1", got)
-	}
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("send_timeout")); got != 1 {
-		t.Fatalf("send timeout stream termination count = %v, want 1", got)
-	}
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal), "snapshot send timeout count")
+	assert.Equal(t, uint64(1), histogramSampleCount(t, metrics.XDSSnapshotSendDurationSeconds), "snapshot send duration sample count")
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("send_timeout")), "send timeout stream termination count")
 
 	stream.releaseSend()
 	stream.release()
@@ -821,9 +659,7 @@ func TestStreamConfigurationTimesOutStaleSnapshotAck(t *testing.T) {
 		logger,
 		metrics,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	result := make(chan error, 1)
@@ -836,36 +672,20 @@ func TestStreamConfigurationTimesOutStaleSnapshotAck(t *testing.T) {
 
 	select {
 	case err := <-result:
-		if status.Code(err) != codes.DeadlineExceeded {
-			t.Fatalf("expected deadline exceeded status on stale snapshot ack timeout, got %v", err)
-		}
+		assert.Equal(t, codes.DeadlineExceeded, status.Code(err), "expected deadline exceeded status on stale snapshot ack timeout")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("StreamConfiguration did not return after stale snapshot ack timeout")
 	}
 
-	if got := testutil.ToFloat64(metrics.XDSSnapshotAckTimeoutsTotal); got != 1 {
-		t.Fatalf("snapshot ack timeout count = %v, want 1", got)
-	}
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("ack_timeout")); got != 1 {
-		t.Fatalf("ack timeout stream termination count = %v, want 1", got)
-	}
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSSnapshotAckTimeoutsTotal), "snapshot ack timeout count")
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("ack_timeout")), "ack timeout stream termination count")
 
 	nodeStatus, ok := nodes.Get(context.Background(), "dp-1")
-	if !ok {
-		t.Fatal("expected node status to be recorded")
-	}
-	if nodeStatus.Connected {
-		t.Fatalf("expected node to be disconnected after stale snapshot ack timeout, got %#v", nodeStatus)
-	}
-	if nodeStatus.Ready {
-		t.Fatalf("expected ack timeout disconnect to clear readiness, got %#v", nodeStatus)
-	}
-	if nodeStatus.DisconnectReason != "ack_timeout" {
-		t.Fatalf("expected ack timeout disconnect reason, got %#v", nodeStatus)
-	}
-	if nodeStatus.Message != "timed out waiting for dataplane snapshot ack" {
-		t.Fatalf("expected ack timeout disconnect message, got %#v", nodeStatus)
-	}
+	require.True(t, ok, "expected node status to be recorded")
+	assert.False(t, nodeStatus.Connected, "expected node to be disconnected after stale snapshot ack timeout")
+	assert.False(t, nodeStatus.Ready, "expected ack timeout disconnect to clear readiness")
+	assert.Equal(t, "ack_timeout", nodeStatus.DisconnectReason)
+	assert.Equal(t, "timed out waiting for dataplane snapshot ack", nodeStatus.Message)
 
 	stream.release()
 }
@@ -886,9 +706,7 @@ func TestStreamConfigurationMatchingAckPreventsStaleSnapshotTimeout(t *testing.T
 		logger,
 		metrics,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	result := make(chan error, 1)
@@ -914,38 +732,23 @@ func TestStreamConfigurationMatchingAckPreventsStaleSnapshotTimeout(t *testing.T
 	case <-time.After(140 * time.Millisecond):
 	}
 
-	if got := testutil.ToFloat64(metrics.XDSSnapshotAckTimeoutsTotal); got != 0 {
-		t.Fatalf("unexpected snapshot ack timeout count: %v", got)
-	}
+	assert.Equal(t, float64(0), testutil.ToFloat64(metrics.XDSSnapshotAckTimeoutsTotal), "unexpected snapshot ack timeout count")
 
 	stream.release()
 	select {
 	case err := <-result:
-		if err != nil {
-			t.Fatalf("expected stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("StreamConfiguration did not return after stream release")
 	}
-	if got := testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("client_disconnect")); got != 1 {
-		t.Fatalf("client disconnect stream termination count = %v, want 1", got)
-	}
+	assert.Equal(t, float64(1), testutil.ToFloat64(metrics.XDSStreamTerminationsTotal.WithLabelValues("client_disconnect")), "client disconnect stream termination count")
+
 	nodeStatus, ok := nodes.Get(context.Background(), "dp-1")
-	if !ok {
-		t.Fatal("expected node status after client disconnect")
-	}
-	if nodeStatus.Connected {
-		t.Fatalf("expected node to be disconnected after client disconnect, got %#v", nodeStatus)
-	}
-	if nodeStatus.Ready {
-		t.Fatalf("expected client disconnect to clear readiness, got %#v", nodeStatus)
-	}
-	if nodeStatus.DisconnectReason != "client_disconnect" {
-		t.Fatalf("expected client disconnect reason, got %#v", nodeStatus)
-	}
-	if nodeStatus.Message != "xds stream closed by dataplane" {
-		t.Fatalf("expected client disconnect message, got %#v", nodeStatus)
-	}
+	require.True(t, ok, "expected node status after client disconnect")
+	assert.False(t, nodeStatus.Connected, "expected node to be disconnected after client disconnect")
+	assert.False(t, nodeStatus.Ready, "expected client disconnect to clear readiness")
+	assert.Equal(t, "client_disconnect", nodeStatus.DisconnectReason)
+	assert.Equal(t, "xds stream closed by dataplane", nodeStatus.Message)
 }
 
 func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testing.T) {
@@ -967,9 +770,7 @@ func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testi
 		logger,
 		metrics,
 	)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	stream := newFakeConfigStream()
 	result := make(chan error, 1)
@@ -981,18 +782,10 @@ func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testi
 	stream.waitForSendCount(t, 200*time.Millisecond)
 
 	responses := stream.snapshotSentResponses()
-	if len(responses) != 1 {
-		t.Fatalf("expected 1 heartbeat response, got %d", len(responses))
-	}
-	if responses[0].GetVersion() != "" {
-		t.Fatalf("expected heartbeat version to be empty, got %q", responses[0].GetVersion())
-	}
-	if responses[0].GetNonce() != "" {
-		t.Fatalf("expected heartbeat nonce to be empty, got %q", responses[0].GetNonce())
-	}
-	if responses[0].GetSnapshot() != nil {
-		t.Fatalf("expected heartbeat snapshot to be nil, got %#v", responses[0].GetSnapshot())
-	}
+	require.Len(t, responses, 1, "expected 1 heartbeat response")
+	assert.Empty(t, responses[0].GetVersion(), "expected heartbeat version to be empty")
+	assert.Empty(t, responses[0].GetNonce(), "expected heartbeat nonce to be empty")
+	assert.Nil(t, responses[0].GetSnapshot(), "expected heartbeat snapshot to be nil")
 
 	select {
 	case err := <-result:
@@ -1000,22 +793,14 @@ func TestStreamConfigurationSendsIdleHeartbeatWithoutSnapshotAckTimeout(t *testi
 	case <-time.After(90 * time.Millisecond):
 	}
 
-	if got := testutil.ToFloat64(metrics.XDSSnapshotAckTimeoutsTotal); got != 0 {
-		t.Fatalf("unexpected snapshot ack timeout count: %v", got)
-	}
-	if got := histogramSampleCount(t, metrics.XDSSnapshotSendDurationSeconds); got != 0 {
-		t.Fatalf("idle heartbeat should not record snapshot send duration samples, got %d", got)
-	}
-	if got := testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal); got != 0 {
-		t.Fatalf("idle heartbeat should not record snapshot send timeouts, got %v", got)
-	}
+	assert.Equal(t, float64(0), testutil.ToFloat64(metrics.XDSSnapshotAckTimeoutsTotal), "unexpected snapshot ack timeout count")
+	assert.Equal(t, uint64(0), histogramSampleCount(t, metrics.XDSSnapshotSendDurationSeconds), "idle heartbeat should not record snapshot send duration samples")
+	assert.Equal(t, float64(0), testutil.ToFloat64(metrics.XDSSnapshotSendTimeoutsTotal), "idle heartbeat should not record snapshot send timeouts")
 
 	stream.release()
 	select {
 	case err := <-result:
-		if err != nil {
-			t.Fatalf("expected stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("StreamConfiguration did not return after stream release")
 	}
@@ -1029,9 +814,7 @@ func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfi
 	defer nodes.Close()
 
 	server, err := New(":18080", config.GRPCTLSConfig{}, config.GRPCRuntimeConfig{}, store, nodes, logger, metrics)
-	if err != nil {
-		t.Fatalf("New returned error: %v", err)
-	}
+	require.NoError(t, err, "New returned error")
 
 	fullStream := newFakeConfigStream()
 	fullStream.initialRecv <- &controlv1.DiscoveryRequest{
@@ -1073,76 +856,45 @@ func TestStreamConfigurationPublishesDifferentSnapshotVariantsPerCapabilityProfi
 
 	fullResponses := fullStream.snapshotSentResponses()
 	coreOnlyResponses := coreOnlyStream.snapshotSentResponses()
-	if len(fullResponses) != 1 || len(coreOnlyResponses) != 1 {
-		t.Fatalf("unexpected send counts: full=%d core-only=%d", len(fullResponses), len(coreOnlyResponses))
-	}
+	require.Len(t, fullResponses, 1)
+	require.Len(t, coreOnlyResponses, 1)
 
 	fullSnapshot := fullResponses[0].GetSnapshot()
 	coreOnlySnapshot := coreOnlyResponses[0].GetSnapshot()
 
-	if got, want := fullSnapshot.GetCompatibilityProfile(), compatibilityProfileFullV1; got != want {
-		t.Fatalf("full stream compatibility profile = %q, want %q", got, want)
-	}
+	assert.Equal(t, compatibilityProfileFullV1, fullSnapshot.GetCompatibilityProfile())
 	wantCoreOnlyProfile := buildCompatibilityProfile([]string{featureCoreV1})
-	if got := coreOnlySnapshot.GetCompatibilityProfile(); got != wantCoreOnlyProfile {
-		t.Fatalf("core-only stream compatibility profile = %q, want %q", got, wantCoreOnlyProfile)
-	}
+	assert.Equal(t, wantCoreOnlyProfile, coreOnlySnapshot.GetCompatibilityProfile())
 
-	if got := findProjectedHTTPRoute(t, fullSnapshot, "http-labeled").GetLabels()["env"]; got != "prod" {
-		t.Fatalf("full stream http labels = %#v, want env=prod", findProjectedHTTPRoute(t, fullSnapshot, "http-labeled").GetLabels())
-	}
-	if got := findProjectedHTTPRoute(t, coreOnlySnapshot, "http-labeled").GetLabels(); got != nil {
-		t.Fatalf("core-only stream http labels = %#v, want nil", got)
-	}
+	assert.Equal(t, "prod", findProjectedHTTPRoute(t, fullSnapshot, "http-labeled").GetLabels()["env"])
+	assert.Nil(t, findProjectedHTTPRoute(t, coreOnlySnapshot, "http-labeled").GetLabels(), "core-only stream http labels should be nil")
 
-	if len(fullSnapshot.GetBackends()) != 4 {
-		t.Fatalf("full stream backend count = %d, want 4", len(fullSnapshot.GetBackends()))
-	}
-	if len(coreOnlySnapshot.GetBackends()) != 1 {
-		t.Fatalf("core-only stream backend count = %d, want 1", len(coreOnlySnapshot.GetBackends()))
-	}
-	if findProjectedBackend(t, fullSnapshot, "ai-backend").GetAiService() == nil {
-		t.Fatal("expected full stream to preserve ai service backend")
-	}
-	if len(coreOnlySnapshot.GetListeners()) != 1 {
-		t.Fatalf("core-only stream listener count = %d, want 1", len(coreOnlySnapshot.GetListeners()))
-	}
-	if got := coreOnlySnapshot.GetListeners()[0].GetAttachedRoutes(); !reflect.DeepEqual(got, []string{"default/http-direct-response", "default/http-labeled"}) {
-		t.Fatalf("core-only attached routes = %#v, want %#v", got, []string{"default/http-direct-response", "default/http-labeled"})
-	}
-	if len(coreOnlySnapshot.GetGrpcRoutes()) != 0 {
-		t.Fatalf("core-only grpc routes = %#v, want none", coreOnlySnapshot.GetGrpcRoutes())
-	}
-	if len(coreOnlySnapshot.GetStreamRoutes()) != 0 {
-		t.Fatalf("core-only stream routes = %#v, want none", coreOnlySnapshot.GetStreamRoutes())
-	}
+	require.Len(t, fullSnapshot.GetBackends(), 4)
+	require.Len(t, coreOnlySnapshot.GetBackends(), 1)
+	require.NotNil(t, findProjectedBackend(t, fullSnapshot, "ai-backend").GetAiService(), "expected full stream to preserve ai service backend")
+	require.Len(t, coreOnlySnapshot.GetListeners(), 1)
+	assert.Equal(t, []string{"default/http-direct-response", "default/http-labeled"}, coreOnlySnapshot.GetListeners()[0].GetAttachedRoutes())
+
+	require.Len(t, coreOnlySnapshot.GetGrpcRoutes(), 0, "core-only grpc routes should be empty")
+	require.Len(t, coreOnlySnapshot.GetStreamRoutes(), 0, "core-only stream routes should be empty")
+
 	httpDirectResponse := findProjectedHTTPRoute(t, coreOnlySnapshot, "http-direct-response")
-	if len(httpDirectResponse.GetRules()) != 1 {
-		t.Fatalf("core-only direct-response route rules = %#v, want one rule", httpDirectResponse.GetRules())
-	}
-	if got := httpDirectResponse.GetRules()[0].GetBackendRefs(); len(got) != 0 {
-		t.Fatalf("core-only direct-response backends = %#v, want none", got)
-	}
-	if hasProjectedHTTPRoute(coreOnlySnapshot, "http-ai-only") {
-		t.Fatal("expected core-only stream to prune http-ai-only route")
-	}
+	require.Len(t, httpDirectResponse.GetRules(), 1)
+	require.Len(t, httpDirectResponse.GetRules()[0].GetBackendRefs(), 0, "core-only direct-response backends should be empty")
+	assert.False(t, hasProjectedHTTPRoute(coreOnlySnapshot, "http-ai-only"), "expected core-only stream to prune http-ai-only route")
 
 	fullStream.release()
 	coreOnlyStream.release()
 
 	select {
 	case err := <-fullResult:
-		if err != nil {
-			t.Fatalf("expected full stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected full stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("full stream did not return after release")
 	}
 	select {
 	case err := <-coreOnlyResult:
-		if err != nil {
-			t.Fatalf("expected core-only stream to exit cleanly after release, got %v", err)
-		}
+		require.NoError(t, err, "expected core-only stream to exit cleanly after release")
 	case <-time.After(time.Second):
 		t.Fatal("core-only stream did not return after release")
 	}

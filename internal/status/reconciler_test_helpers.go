@@ -442,7 +442,7 @@ func readStatusTLSAsset(t *testing.T, name string) string {
 	t.Helper()
 
 	path := filepath.Join("..", "..", "test", "testdata", "tls", name)
-	raw, err := os.ReadFile(path) //nolint:gosec
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: test file — path is controlled by test
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}

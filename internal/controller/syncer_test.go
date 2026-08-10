@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"go.opentelemetry.io/otel"
@@ -147,44 +150,22 @@ func TestReconcilePublishesSnapshotFromGatewayInputs(t *testing.T) {
 	)
 	syncer.SetSettleDelay(0)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "Reconcile returned error")
 
 	snapshot := store.Current()
-	if snapshot == nil {
-		t.Fatal("expected published snapshot")
-	}
-	if len(snapshot.Listeners) != 1 {
-		t.Fatalf("expected 1 listener, got %d", len(snapshot.Listeners))
-	}
-	if len(snapshot.HTTPRoutes) != 1 {
-		t.Fatalf("expected 1 http route, got %d", len(snapshot.HTTPRoutes))
-	}
-	if len(snapshot.Backends) != 1 {
-		t.Fatalf("expected 1 backend, got %d", len(snapshot.Backends))
-	}
-	if got := snapshotHistogramSampleCount(t, metrics.SnapshotBuildDurationSeconds); got != 1 {
-		t.Fatalf("snapshot build duration sample count = %d, want 1", got)
-	}
-	if got := snapshotHistogramVecSampleCount(t, metrics.SnapshotResourceCount, "listeners"); got != 1 {
-		t.Fatalf("snapshot resource count sample count for listeners = %d, want 1", got)
-	}
-	if got := snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "listeners"); got != 1 {
-		t.Fatalf("snapshot resource count sum for listeners = %v, want 1", got)
-	}
-	if got := snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "http_routes"); got != 1 {
-		t.Fatalf("snapshot resource count sum for http_routes = %v, want 1", got)
-	}
-	if got := snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "backends"); got != 1 {
-		t.Fatalf("snapshot resource count sum for backends = %v, want 1", got)
-	}
-	if got := snapshotHistogramSampleCount(t, metrics.SnapshotListenerAttachedRoutes); got != 1 {
-		t.Fatalf("snapshot listener attached routes sample count = %d, want 1", got)
-	}
-	if got := snapshotHistogramSampleSum(t, metrics.SnapshotListenerAttachedRoutes); got != 1 {
-		t.Fatalf("snapshot listener attached routes sample sum = %v, want 1", got)
-	}
+	require.NotNil(t, snapshot, "expected published snapshot")
+	require.Len(t, snapshot.Listeners, 1)
+	require.Len(t, snapshot.HTTPRoutes, 1)
+	require.Len(t, snapshot.Backends, 1)
+
+	assert.Equal(t, uint64(1), snapshotHistogramSampleCount(t, metrics.SnapshotBuildDurationSeconds), "snapshot build duration sample count")
+	assert.Equal(t, uint64(1), snapshotHistogramVecSampleCount(t, metrics.SnapshotResourceCount, "listeners"), "snapshot resource count sample count for listeners")
+	assert.Equal(t, float64(1), snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "listeners"), "snapshot resource count sum for listeners")
+	assert.Equal(t, float64(1), snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "http_routes"), "snapshot resource count sum for http_routes")
+	assert.Equal(t, float64(1), snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "backends"), "snapshot resource count sum for backends")
+	assert.Equal(t, uint64(1), snapshotHistogramSampleCount(t, metrics.SnapshotListenerAttachedRoutes), "snapshot listener attached routes sample count")
+	assert.Equal(t, float64(1), snapshotHistogramSampleSum(t, metrics.SnapshotListenerAttachedRoutes), "snapshot listener attached routes sample sum")
 }
 
 func TestReconcileAllowsNilMetrics(t *testing.T) {
@@ -206,12 +187,9 @@ func TestReconcileAllowsNilMetrics(t *testing.T) {
 		logger,
 	)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
-	if snapshot := store.Current(); snapshot == nil {
-		t.Fatal("expected snapshot to be published with nil metrics")
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "Reconcile returned error")
+	require.NotNil(t, store.Current(), "expected snapshot to be published with nil metrics")
 }
 
 func TestSyncerPublishSnapshotCreatesSpan(t *testing.T) {
@@ -252,17 +230,11 @@ func TestSyncerPublishSnapshotCreatesSpan(t *testing.T) {
 	_, _ = syncer.publishSnapshotWithScope(
 		context.Background(),
 		snapshotBuildScopeFull,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
+		nil, nil, nil, nil, nil,
 		snapshotRouteObjectKeys{},
 	)
 
-	if !slices.Contains(spanNames(exporter.GetSpans()), "controlplane.syncer.publish_snapshot") {
-		t.Fatalf("expected publish snapshot span")
-	}
+	require.True(t, slices.Contains(spanNames(exporter.GetSpans()), "controlplane.syncer.publish_snapshot"), "expected publish snapshot span")
 }
 
 func TestSyncerPublishSnapshotSpanRecordsBuildShape(t *testing.T) {
@@ -304,33 +276,15 @@ func TestSyncerPublishSnapshotSpanRecordsBuildShape(t *testing.T) {
 	)
 
 	span, ok := spanByName(exporter.GetSpans(), "controlplane.syncer.publish_snapshot")
-	if !ok {
-		t.Fatal("expected publish snapshot span")
-	}
-	if got := spanStringAttr(span, "snapshot.scope"); got != snapshotBuildScopeRoutes.String() {
-		t.Fatalf("snapshot scope = %q, want %q", got, snapshotBuildScopeRoutes.String())
-	}
-	if got := spanIntAttr(span, "snapshot.attachment_namespace_count"); got != 1 {
-		t.Fatalf("attachment namespace count = %d, want 1", got)
-	}
-	if got := spanIntAttr(span, "snapshot.backend_namespace_count"); got != 1 {
-		t.Fatalf("backend namespace count = %d, want 1", got)
-	}
-	if got := spanIntAttr(span, "snapshot.gateway_key_count"); got != 1 {
-		t.Fatalf("gateway key count = %d, want 1", got)
-	}
-	if got := spanIntAttr(span, "snapshot.service_key_count"); got != 1 {
-		t.Fatalf("service key count = %d, want 1", got)
-	}
-	if got := spanIntAttr(span, "snapshot.service_import_key_count"); got != 0 {
-		t.Fatalf("service import key count = %d, want 0", got)
-	}
-	if got := spanIntAttr(span, "snapshot.route_key_count"); got != 1 {
-		t.Fatalf("route key count = %d, want 1", got)
-	}
-	if got := spanBoolAttr(span, "snapshot.published"); !got {
-		t.Fatal("expected snapshot span to record publish=true")
-	}
+	require.True(t, ok, "expected publish snapshot span")
+	assert.Equal(t, snapshotBuildScopeRoutes.String(), spanStringAttr(span, "snapshot.scope"))
+	assert.Equal(t, int64(1), spanIntAttr(span, "snapshot.attachment_namespace_count"))
+	assert.Equal(t, int64(1), spanIntAttr(span, "snapshot.backend_namespace_count"))
+	assert.Equal(t, int64(1), spanIntAttr(span, "snapshot.gateway_key_count"))
+	assert.Equal(t, int64(1), spanIntAttr(span, "snapshot.service_key_count"))
+	assert.Equal(t, int64(0), spanIntAttr(span, "snapshot.service_import_key_count"))
+	assert.Equal(t, int64(1), spanIntAttr(span, "snapshot.route_key_count"))
+	assert.True(t, spanBoolAttr(span, "snapshot.published"), "expected snapshot span to record publish=true")
 }
 
 func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
@@ -441,10 +395,10 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 					Name:      "nantian-gw-shared-ep-nantian-dataplane-ipv4",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
-						resources.ManagedByLabel:     resources.ManagedByValue,
-						resources.ServiceRoleKey:     resources.EndpointSliceRoleSharedFrontend,
-						discoveryv1.LabelManagedBy:   resources.ManagedByValue,
-						discoveryv1.LabelServiceName: "nantian-dataplane",
+						resources.ManagedByLabel:               resources.ManagedByValue,
+						resources.ServiceRoleKey:               resources.EndpointSliceRoleSharedFrontend,
+						discoveryv1.LabelManagedBy:             resources.ManagedByValue,
+						discoveryv1.LabelServiceName:           "nantian-dataplane",
 					},
 				},
 				AddressType: discoveryv1.AddressTypeIPv4,
@@ -466,40 +420,32 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 	)
 	syncer.SetSettleDelay(0)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("initial Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "initial Reconcile returned error")
 	initialSnapshot := store.Current()
-	if initialSnapshot == nil {
-		t.Fatal("expected initial snapshot")
-	}
-	if len(initialSnapshot.Backends) != 1 {
-		t.Fatalf("expected managed frontend resources to be excluded from backends, got %d", len(initialSnapshot.Backends))
-	}
+	require.NotNil(t, initialSnapshot, "expected initial snapshot")
+	require.Len(t, initialSnapshot.Backends, 1, "expected managed frontend resources to be excluded from backends")
 	initialVersion := initialSnapshot.ID
 
 	var frontendSlice discoveryv1.EndpointSlice
-	if err := cl.Get(
+	err = cl.Get(
 		context.Background(),
 		client.ObjectKey{
 			Namespace: "nantian-gw",
 			Name:      "nantian-gw-shared-ep-nantian-dataplane-ipv4",
 		},
 		&frontendSlice,
-	); err != nil {
-		t.Fatalf("Get managed frontend endpoint slice returned error: %v", err)
-	}
+	)
+	require.NoError(t, err, "Get managed frontend endpoint slice returned error")
 	frontendSlice.Endpoints = []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.101"}}}
-	if err := cl.Update(context.Background(), &frontendSlice); err != nil {
-		t.Fatalf("Update managed frontend endpoint slice returned error: %v", err)
-	}
+	err = cl.Update(context.Background(), &frontendSlice)
+	require.NoError(t, err, "Update managed frontend endpoint slice returned error")
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("second Reconcile returned error: %v", err)
-	}
-	if current := store.Current(); current == nil || current.ID != initialVersion {
-		t.Fatalf("expected managed frontend resource changes to keep snapshot version %q, got %#v", initialVersion, current)
-	}
+	_, err = syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "second Reconcile returned error")
+	current := store.Current()
+	require.NotNil(t, current)
+	assert.Equal(t, initialVersion, current.ID, "expected managed frontend resource changes to keep snapshot version")
 }
 
 func TestReconcileInvalidatesCrossNamespaceBackendWhenReferenceGrantDeleted(t *testing.T) {
@@ -635,43 +581,32 @@ func TestReconcileInvalidatesCrossNamespaceBackendWhenReferenceGrantDeleted(t *t
 	)
 	syncer.SetSettleDelay(0)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("initial Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "initial Reconcile returned error")
 
 	snapshot := store.Current()
-	if snapshot == nil || len(snapshot.HTTPRoutes) != 1 {
-		t.Fatalf("expected snapshot with 1 http route, got %#v", snapshot)
-	}
+	require.NotNil(t, snapshot)
+	require.Len(t, snapshot.HTTPRoutes, 1)
 	metadata := snapshot.HTTPRoutes[0].Rules[0].BackendRefs[0].Metadata
-	if metadata["nantian.dev/backend-ref-valid"] != "" {
-		t.Fatalf("expected backend ref to start valid, got metadata %#v", metadata)
-	}
+	assert.Equal(t, "", metadata["nantian.dev/backend-ref-valid"], "expected backend ref to start valid")
 
-	if err := cl.Delete(
+	err = cl.Delete(
 		context.Background(),
 		&gatewayv1beta1.ReferenceGrant{
 			ObjectMeta: metav1.ObjectMeta{Name: "allow-web", Namespace: "backend"},
 		},
-	); err != nil {
-		t.Fatalf("delete reference grant: %v", err)
-	}
+	)
+	require.NoError(t, err, "delete reference grant")
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("reconcile after deleting reference grant returned error: %v", err)
-	}
+	_, err = syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "reconcile after deleting reference grant returned error")
 
 	snapshot = store.Current()
-	if snapshot == nil || len(snapshot.HTTPRoutes) != 1 {
-		t.Fatalf("expected snapshot with 1 http route after deleting grant, got %#v", snapshot)
-	}
+	require.NotNil(t, snapshot)
+	require.Len(t, snapshot.HTTPRoutes, 1)
 	metadata = snapshot.HTTPRoutes[0].Rules[0].BackendRefs[0].Metadata
-	if metadata["nantian.dev/backend-ref-valid"] != "false" {
-		t.Fatalf("expected backend ref to become invalid, got metadata %#v", metadata)
-	}
-	if metadata["nantian.dev/backend-ref-reason"] != string(gatewayv1.RouteReasonRefNotPermitted) {
-		t.Fatalf("expected ref-not-permitted reason, got metadata %#v", metadata)
-	}
+	assert.Equal(t, "false", metadata["nantian.dev/backend-ref-valid"], "expected backend ref to become invalid")
+	assert.Equal(t, string(gatewayv1.RouteReasonRefNotPermitted), metadata["nantian.dev/backend-ref-reason"])
 }
 
 func TestReconcileQueuesSettleRun(t *testing.T) {
@@ -705,9 +640,8 @@ func TestReconcileQueuesSettleRun(t *testing.T) {
 		}
 	}
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "Reconcile returned error")
 
 	select {
 	case <-settled:
@@ -784,26 +718,19 @@ func TestReconcileServiceParentGRPCRouteScopedRequestPublishesImmediatelyWithSet
 	syncer.SetSettleDelay(50 * time.Millisecond)
 	defer syncer.stopSettleRun()
 
-	if _, err := syncer.Reconcile(
+	_, err := syncer.Reconcile(
 		context.Background(),
 		snapshotGRPCRoutesReconcileRequestForKey(client.ObjectKey{
 			Namespace: "default",
 			Name:      "route",
 		}),
-	); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	)
+	require.NoError(t, err, "Reconcile returned error")
 
 	current := store.Current()
-	if current == nil {
-		t.Fatal("expected service-parent GRPCRoute request to publish immediately")
-	}
-	if len(current.GRPCRoutes) != 1 {
-		t.Fatalf("expected immediate publish to include grpc route, got %#v", current.GRPCRoutes)
-	}
-	if len(current.Listeners) != 1 {
-		t.Fatalf("expected immediate publish to include mesh listener, got %#v", current.Listeners)
-	}
+	require.NotNil(t, current, "expected service-parent GRPCRoute request to publish immediately")
+	require.Len(t, current.GRPCRoutes, 1, "expected immediate publish to include grpc route")
+	require.Len(t, current.Listeners, 1, "expected immediate publish to include mesh listener")
 
 	select {
 	case <-triggered:
@@ -816,9 +743,7 @@ func TestReconcileServiceParentGRPCRouteScopedRequestPublishesImmediatelyWithSet
 		ReconcilerRunnerScopeRouteStatus,
 		ReconcilerRunnerScopePolicyStatus,
 	}
-	if !sameRunnerScopes(observedScopes, wantScopes) {
-		t.Fatalf("leader run scopes = %v, want %v", observedScopes, wantScopes)
-	}
+	assert.True(t, sameRunnerScopes(observedScopes, wantScopes), "leader run scopes = %v, want %v", observedScopes, wantScopes)
 }
 
 func TestReconcileDeletedServiceParentGRPCRouteScopedRequestPublishesImmediatelyWithSettleDelay(t *testing.T) {
@@ -879,42 +804,33 @@ func TestReconcileDeletedServiceParentGRPCRouteScopedRequestPublishesImmediately
 		logger,
 	)
 	syncer.SetSettleDelay(0)
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("initial Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "initial Reconcile returned error")
 
 	current := store.Current()
-	if current == nil || len(current.GRPCRoutes) != 1 || len(current.Listeners) != 1 {
-		t.Fatalf("expected initial mesh snapshot, got %#v", current)
-	}
+	require.NotNil(t, current)
+	require.Len(t, current.GRPCRoutes, 1)
+	require.Len(t, current.Listeners, 1)
 
-	if err := cl.Delete(context.Background(), route); err != nil {
-		t.Fatalf("delete route: %v", err)
-	}
+	err = cl.Delete(context.Background(), route)
+	require.NoError(t, err, "delete route")
 
 	syncer.SetSettleDelay(50 * time.Millisecond)
 	defer syncer.stopSettleRun()
 
-	if _, err := syncer.Reconcile(
+	_, err = syncer.Reconcile(
 		context.Background(),
 		snapshotGRPCRoutesReconcileRequestForKey(client.ObjectKey{
 			Namespace: "default",
 			Name:      "route",
 		}),
-	); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	)
+	require.NoError(t, err, "Reconcile returned error")
 
 	current = store.Current()
-	if current == nil {
-		t.Fatal("expected deleted service-parent GRPCRoute request to publish immediately")
-	}
-	if len(current.GRPCRoutes) != 0 {
-		t.Fatalf("expected immediate publish to remove deleted grpc route, got %#v", current.GRPCRoutes)
-	}
-	if len(current.Listeners) != 0 {
-		t.Fatalf("expected immediate publish to remove deleted mesh listener, got %#v", current.Listeners)
-	}
+	require.NotNil(t, current, "expected deleted service-parent GRPCRoute request to publish immediately")
+	require.Len(t, current.GRPCRoutes, 0, "expected immediate publish to remove deleted grpc route")
+	require.Len(t, current.Listeners, 0, "expected immediate publish to remove deleted mesh listener")
 }
 
 func TestReconcileSettleRunUsesLifecycleContext(t *testing.T) {
@@ -954,15 +870,12 @@ func TestReconcileSettleRunUsesLifecycleContext(t *testing.T) {
 		}
 	}
 
-	if _, err := syncer.Reconcile(reconcileCtx, ctrl.Request{}); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(reconcileCtx, ctrl.Request{})
+	require.NoError(t, err, "Reconcile returned error")
 
 	select {
 	case got := <-values:
-		if got != "lifecycle" {
-			t.Fatalf("expected lifecycle context, got %#v", got)
-		}
+		assert.Equal(t, "lifecycle", got, "expected lifecycle context")
 	case <-time.After(200 * time.Millisecond):
 		t.Fatal("expected settle run to fire after reconcile")
 	}
@@ -990,9 +903,7 @@ func TestNewSyncerPublishesImmediatelyByDefault(t *testing.T) {
 		logger,
 	)
 
-	if syncer.settleDelay != 0 {
-		t.Fatalf("expected default settle delay to be disabled, got %v", syncer.settleDelay)
-	}
+	assert.Equal(t, time.Duration(0), syncer.settleDelay, "expected default settle delay to be disabled")
 }
 
 func TestReconcileImmediatePublishQueuesLeaderRun(t *testing.T) {
@@ -1024,9 +935,8 @@ func TestReconcileImmediatePublishQueuesLeaderRun(t *testing.T) {
 		},
 	)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "Reconcile returned error")
 
 	select {
 	case <-triggered:
@@ -1065,20 +975,14 @@ func TestReconcileQueuesLeaderRunAfterPublishingSnapshot(t *testing.T) {
 		},
 	)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "Reconcile returned error")
 
 	current := store.Current()
-	if current == nil || current.ID == "" {
-		t.Fatalf("expected current snapshot to be published, got %#v", current)
-	}
-	if observedVersion == "" {
-		t.Fatal("expected leader run to observe the published snapshot version")
-	}
-	if observedVersion != current.ID {
-		t.Fatalf("leader run observed snapshot %q, want %q", observedVersion, current.ID)
-	}
+	require.NotNil(t, current)
+	require.NotEmpty(t, current.ID, "expected current snapshot to be published")
+	require.NotEmpty(t, observedVersion, "expected leader run to observe the published snapshot version")
+	assert.Equal(t, current.ID, observedVersion)
 }
 
 func TestSyncerRunSkipsTickerBuildWhenNoRetryPending(t *testing.T) {
@@ -1104,9 +1008,8 @@ func TestSyncerRunSkipsTickerBuildWhenNoRetryPending(t *testing.T) {
 		t.Fatal("timed out waiting for syncer run loop to stop")
 	}
 
-	if got := retryClient.listCount(typeName(&gatewayv1.GatewayClassList{})); got != initialGatewayClassLists {
-		t.Fatalf("expected no extra full rebuilds while retry queue is empty, got gateway class lists %d -> %d", initialGatewayClassLists, got)
-	}
+	got := retryClient.listCount(typeName(&gatewayv1.GatewayClassList{}))
+	assert.Equal(t, initialGatewayClassLists, got, "expected no extra full rebuilds while retry queue is empty")
 }
 
 func TestSyncerRunRetriesStartupFailureFromPendingScope(t *testing.T) {
@@ -1132,68 +1035,51 @@ func TestSyncerRunRetriesStartupFailureFromPendingScope(t *testing.T) {
 		t.Fatal("timed out waiting for syncer run loop to stop")
 	}
 
-	if recoveredGatewayClassLists < 2 {
-		t.Fatalf("expected startup failure plus retry to rebuild gateway classes at least twice, got %d", recoveredGatewayClassLists)
-	}
-	if got := retryClient.listCount(typeName(&gatewayv1.GatewayClassList{})); got != recoveredGatewayClassLists {
-		t.Fatalf("expected ticker to stop rebuilding after retry recovery, got gateway class lists %d -> %d", recoveredGatewayClassLists, got)
-	}
+	require.GreaterOrEqual(t, recoveredGatewayClassLists, 2, "expected startup failure plus retry to rebuild gateway classes at least twice")
+	got := retryClient.listCount(typeName(&gatewayv1.GatewayClassList{}))
+	assert.Equal(t, recoveredGatewayClassLists, got, "expected ticker to stop rebuilding after retry recovery")
 }
 
 func TestSyncerReconcileFailureQueuesScopedRetryWithoutFullRebuild(t *testing.T) {
 	syncer, retryClient, store := newPeriodicRetryTestSyncer(t, time.Minute)
 
-	if _, err := syncer.Reconcile(context.Background(), ctrl.Request{}); err != nil {
-		t.Fatalf("initial Reconcile returned error: %v", err)
-	}
+	_, err := syncer.Reconcile(context.Background(), ctrl.Request{})
+	require.NoError(t, err, "initial Reconcile returned error")
 	initialSnapshot := store.Current()
-	if initialSnapshot == nil || initialSnapshot.ID == "" {
-		t.Fatalf("expected initial snapshot, got %#v", initialSnapshot)
-	}
+	require.NotNil(t, initialSnapshot)
+	require.NotEmpty(t, initialSnapshot.ID)
 
 	retryClient.failNextGet(typeName(&gatewayv1.HTTPRoute{}))
-	if _, err := syncer.Reconcile(
+	_, err = syncer.Reconcile(
 		context.Background(),
 		snapshotHTTPRoutesReconcileRequestForKey(client.ObjectKey{Namespace: "default", Name: "echo"}),
-	); err != nil {
-		t.Fatalf("route-scoped Reconcile returned error: %v", err)
-	}
+	)
+	require.NoError(t, err, "route-scoped Reconcile returned error")
 
 	scope, attachmentNamespaces, backendNamespaces, gatewayKeys, serviceKeys, serviceImportKeys, routeKeys := syncer.consumeRetryPendingBuild()
-	if scope != snapshotBuildScopeRoutes|snapshotBuildScopeMeshListeners {
-		t.Fatalf("expected route-scoped retry pending build, got scope %v", scope)
-	}
-	if len(routeKeys.http) != 1 || routeKeys.http[0] != (client.ObjectKey{Namespace: "default", Name: "echo"}) {
-		t.Fatalf("expected retry pending build to keep the scoped http route key, got %#v", routeKeys.http)
-	}
+	assert.Equal(t, snapshotBuildScopeRoutes|snapshotBuildScopeMeshListeners, scope, "expected route-scoped retry pending build")
+	require.Len(t, routeKeys.http, 1)
+	assert.Equal(t, client.ObjectKey{Namespace: "default", Name: "echo"}, routeKeys.http[0])
 	syncer.mergeRetryPendingBuild(scope, attachmentNamespaces, backendNamespaces, gatewayKeys, serviceKeys, serviceImportKeys, routeKeys)
 
 	initialHTTPRouteLists := retryClient.listCount(typeName(&gatewayv1.HTTPRouteList{}))
 	initialRouteGets := retryClient.getCount(typeName(&gatewayv1.HTTPRoute{}))
-	if ran := syncer.runRetryBuild(context.Background()); !ran {
-		t.Fatal("expected retry build to run")
-	}
+	require.True(t, syncer.runRetryBuild(context.Background()), "expected retry build to run")
 
-	if got := retryClient.listCount(typeName(&gatewayv1.HTTPRouteList{})); got != initialHTTPRouteLists {
-		t.Fatalf("expected scoped retry to avoid full route relist, got http route lists %d -> %d", initialHTTPRouteLists, got)
-	}
-	if got := retryClient.getCount(typeName(&gatewayv1.HTTPRoute{})); got <= initialRouteGets {
-		t.Fatalf("expected scoped retry to reload the http route, got http route gets %d -> %d", initialRouteGets, got)
-	}
-	if ran := syncer.runRetryBuild(context.Background()); ran {
-		t.Fatal("expected retry queue to be empty after successful scoped retry")
-	}
+	got := retryClient.listCount(typeName(&gatewayv1.HTTPRouteList{}))
+	assert.Equal(t, initialHTTPRouteLists, got, "expected scoped retry to avoid full route relist")
+	gotGets := retryClient.getCount(typeName(&gatewayv1.HTTPRoute{}))
+	require.Greater(t, gotGets, initialRouteGets, "expected scoped retry to reload the http route")
+	require.False(t, syncer.runRetryBuild(context.Background()), "expected retry queue to be empty after successful scoped retry")
+
 	currentSnapshot := store.Current()
-	if currentSnapshot == nil || currentSnapshot.ID != initialSnapshot.ID {
-		t.Fatalf("expected scoped retry with unchanged output to keep snapshot version %q, got %#v", initialSnapshot.ID, currentSnapshot)
-	}
+	require.NotNil(t, currentSnapshot)
+	assert.Equal(t, initialSnapshot.ID, currentSnapshot.ID, "expected scoped retry with unchanged output to keep snapshot version")
 }
 
 func mustAddToScheme(t *testing.T, scheme *runtime.Scheme, add func(*runtime.Scheme) error) {
 	t.Helper()
-	if err := add(scheme); err != nil {
-		t.Fatalf("add to scheme: %v", err)
-	}
+	require.NoError(t, add(scheme), "add to scheme")
 }
 
 func testMetrics() *observability.Metrics {

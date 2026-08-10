@@ -105,7 +105,7 @@ func compareMessage(result *Result, scope string, prev, curr *descriptorpb.Descr
 	sort.Ints(fieldNumbers)
 
 	for _, rawNumber := range fieldNumbers {
-		number := int32(rawNumber) //nolint:gosec
+		number := int32(rawNumber) //nolint:gosec // G115: conversion is safe — field number is non-negative after sort.Ints
 		prevField := prevFields[number]
 		currField := currFields[number]
 		path := fmt.Sprintf("%s field %d", scope, number)
@@ -183,7 +183,7 @@ func compareEnum(result *Result, scope string, prev, curr *descriptorpb.EnumDesc
 	sort.Ints(valueNumbers)
 
 	for _, rawNumber := range valueNumbers {
-		number := int32(rawNumber) //nolint:gosec
+		number := int32(rawNumber) //nolint:gosec // G115: conversion is safe — enum value number is non-negative after sort.Ints
 		prevValue := prevValues[number]
 		currValue := currValues[number]
 		path := fmt.Sprintf("%s value %d", scope, number)

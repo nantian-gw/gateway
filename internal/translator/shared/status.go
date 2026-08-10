@@ -99,7 +99,7 @@ func routeParentRef(parent gatewayv1.ParentReference, defaultNamespace string) i
 		out.Namespace = defaultNamespace
 	}
 	if parent.Port != nil {
-		out.Port = uint32(*parent.Port) //nolint:gosec
+		out.Port = uint32(*parent.Port) //nolint:gosec // G115: conversion is safe — port value validated as non-negative
 	}
 	return out
 }

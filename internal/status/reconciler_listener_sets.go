@@ -56,8 +56,10 @@ func (r *Reconciler) reconcileListenerSetStatus(
 		desired.Listeners = eval.listeners
 
 		if apiequality.Semantic.DeepEqual(current.Status, *desired) {
+			statusUpdatesSkippedTotal.WithLabelValues(statusUpdateResourceListenerSet).Inc()
 			return nil
 		}
+		statusUpdatesWrittenTotal.WithLabelValues(statusUpdateResourceListenerSet).Inc()
 		if err := gatewayapi.UpdateListenerSetV1Status(ctx, r.client, currentRaw, *desired); err != nil {
 			if apierrors.IsNotFound(err) {
 				return nil

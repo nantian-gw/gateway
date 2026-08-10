@@ -20,6 +20,7 @@ const (
 	statusUpdateResourceTLSRoute         = "tlsroute"
 	statusUpdateResourceBackendLBPolicy  = "backendlbpolicy"
 	statusUpdateResourceBackendTLSPolicy = "backendtlspolicy"
+	statusUpdateResourceListenerSet     = "listenerset"
 	statusUpdateResourceOther            = "other"
 
 	statusUpdateErrorConflict         = "conflict"
@@ -50,6 +51,28 @@ var (
 		},
 		[]string{"resource", "reason"},
 	)
+	statusUpdatesWrittenTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "nantian_gateway_controlplane_status_updates_written_total",
+			Help: "Total number of actual Patch calls for status updates.",
+		},
+		[]string{"resource"},
+	)
+	statusUpdatesSkippedTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "nantian_gateway_controlplane_status_updates_skipped_total",
+			Help: "Total number of status updates skipped via DeepEqual.",
+		},
+		[]string{"resource"},
+	)
+	statusBatchDurationSeconds = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "nantian_gateway_controlplane_status_batch_duration_seconds",
+			Help:    "Duration of status update batch write phase.",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"resource"},
+	)
 )
 
 func init() {
@@ -57,6 +80,9 @@ func init() {
 		statusUpdateConflictsTotal,
 		statusUpdateRetriesTotal,
 		statusUpdateErrorsTotal,
+		statusUpdatesWrittenTotal,
+		statusUpdatesSkippedTotal,
+		statusBatchDurationSeconds,
 	)
 }
 
@@ -98,7 +124,8 @@ func normalizeStatusUpdateResource(resource string) string {
 		statusUpdateResourceUDPRoute,
 		statusUpdateResourceTLSRoute,
 		statusUpdateResourceBackendLBPolicy,
-		statusUpdateResourceBackendTLSPolicy:
+		statusUpdateResourceBackendTLSPolicy,
+		statusUpdateResourceListenerSet:
 		return resource
 	default:
 		return statusUpdateResourceOther
