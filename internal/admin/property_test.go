@@ -32,7 +32,7 @@ func TestBuildSnapshotSyncStableAcrossNodePermutationsProperty(t *testing.T) {
 	cfg := &quick.Config{MaxCount: 64}
 	if err := quick.Check(func(seed uint64) bool {
 		nodes := append([]ir.NodeStatus(nil), summaryPropertyNodesFixture()...)
-		rng := rand.New(rand.NewSource(int64(seed))) //nolint:gosec
+		rng := rand.New(rand.NewSource(int64(seed))) //nolint:gosec // G404: test file — deterministic seed is intentional for property testing
 		rng.Shuffle(len(nodes), func(i, j int) { nodes[i], nodes[j] = nodes[j], nodes[i] })
 		got := buildSnapshotSync(summaryPropertySnapshotFixture(), nodes, readinessModeCurrentSnapshotAll, 15*time.Second, now)
 		return reflect.DeepEqual(expected, got)
@@ -126,7 +126,7 @@ func summaryPropertyNodesFixture() []ir.NodeStatus {
 func shuffledSummaryPropertyInputs(seed uint64) (*ir.Snapshot, []ir.NodeStatus) {
 	snapshot := summaryPropertySnapshotFixture().Clone()
 	nodes := append([]ir.NodeStatus(nil), summaryPropertyNodesFixture()...)
-	rng := rand.New(rand.NewSource(int64(seed))) //nolint:gosec
+	rng := rand.New(rand.NewSource(int64(seed))) //nolint:gosec // G404: test file — deterministic seed is intentional for property testing
 
 	rng.Shuffle(len(snapshot.Listeners), func(i, j int) {
 		snapshot.Listeners[i], snapshot.Listeners[j] = snapshot.Listeners[j], snapshot.Listeners[i]

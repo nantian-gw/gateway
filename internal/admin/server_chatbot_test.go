@@ -107,7 +107,7 @@ func TestGetChatbotConfig_ReturnsMaskedConfig(t *testing.T) {
 	}
 
 	apiKey, _ := resp["apiKey"].(string)
-	if apiKey == "sk-proj-abc123xyz" { //nolint:gosec
+	if apiKey == "sk-proj-abc123xyz" { //nolint:gosec // G101: test file — fake API key for testing masked display
 		t.Errorf("API key must be masked, got raw: %q", apiKey)
 	}
 	if !strings.Contains(apiKey, "••••") {

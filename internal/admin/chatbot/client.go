@@ -52,6 +52,20 @@ var defaultLLMTransport = &http.Transport{
 	IdleConnTimeout: defaultLLMIdleTimeout,
 }
 
+// devInsecureTransport returns an http.Transport that skips TLS certificate
+// verification. It MUST only be used when CHATBOT_INSECURE_TLS is explicitly
+// enabled for development environments. The InsecureSkipVerify field is
+// intentionally exposed here — gosec G402 will flag it, which is correct.
+// This function exists to isolate the security exception to a single,
+// auditable location.
+func devInsecureTransport() *http.Transport {
+	return &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true, // gosec G402: development-only, gated behind CHATBOT_INSECURE_TLS env var
+		},
+	}
+}
+
 // openAIStreamResponse represents a single SSE chunk returned by the server.
 type openAIStreamResponse struct {
 	Choices []openAIStreamChoice `json:"choices"`
@@ -72,6 +86,11 @@ func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64, logge
 
 	// CHATBOT_INSECURE_TLS is for development only. Production deployments
 	// must configure proper CA certificates instead.
+	//
+	// SECURITY: InsecureSkipVerify disables TLS certificate verification.
+	// This is intentionally scoped behind an env var so it cannot be enabled
+	// accidentally through config files. The env var name is deliberately
+	// verbose and alarming to discourage use in production.
 	insecureSkipVerify := os.Getenv("CHATBOT_INSECURE_TLS") == "true"
 	if insecureSkipVerify {
 		warnLogger := logger
@@ -83,11 +102,7 @@ func NewOpenAIAdapter(endpoint, apiKey, model string, temperature float64, logge
 
 	transport := defaultLLMTransport
 	if insecureSkipVerify {
-		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true, //nolint:gosec
-			},
-		}
+		transport = devInsecureTransport()
 	}
 
 	return &openAIAdapter{

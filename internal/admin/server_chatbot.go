@@ -20,7 +20,7 @@ import (
 
 const (
 	chatbotConfigNamespace = "nantian-gw"
-	chatbotConfigSecret    = "chatbot-config" //nolint:gosec
+	chatbotConfigSecret    = "chatbot-config" //nolint:gosec // G101: config map name, not a credential
 	maxChatHistoryMessages = 40
 )
 

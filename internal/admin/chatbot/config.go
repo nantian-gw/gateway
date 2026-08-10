@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultChatbotConfigNamespace = "nantian-gw"
-	defaultChatbotConfigSecret    = "chatbot-config" //nolint:gosec
+	defaultChatbotConfigSecret    = "chatbot-config" //nolint:gosec // G101: config map name, not a credential
 
 	defaultTemperature = 0.1
 	defaultModelOpenAI = "gpt-4o"
