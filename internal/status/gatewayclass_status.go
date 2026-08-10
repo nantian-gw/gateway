@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,6 +34,7 @@ var (
 
 type gatewayClassStatusSupportResolver struct {
 	reconciler *Reconciler
+	mu         sync.Mutex
 	loaded     bool
 	crds       []apiextensionsv1.CustomResourceDefinition
 	features   []gatewayv1.SupportedFeature
@@ -51,6 +53,7 @@ func (r *gatewayClassStatusSupportResolver) resolve(
 		return conditionSpec{}, nil, nil
 	}
 
+	r.mu.Lock()
 	if !r.loaded {
 		r.loaded = true
 		var crds apiextensionsv1.CustomResourceDefinitionList
@@ -63,11 +66,16 @@ func (r *gatewayClassStatusSupportResolver) resolve(
 			})
 		}
 	}
-	if r.err != nil {
-		return conditionSpec{}, nil, r.err
+	crds := r.crds
+	features := r.features
+	err := r.err
+	r.mu.Unlock()
+
+	if err != nil {
+		return conditionSpec{}, nil, err
 	}
 
-	return gatewayClassSupportedVersionCondition(generation, r.crds), append([]gatewayv1.SupportedFeature(nil), r.features...), nil
+	return gatewayClassSupportedVersionCondition(generation, crds), append([]gatewayv1.SupportedFeature(nil), features...), nil
 }
 
 func gatewayClassSupportedVersionCondition(
