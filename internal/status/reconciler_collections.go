@@ -28,7 +28,6 @@ func (r *Reconciler) reconcileGatewayClasses(ctx context.Context, gatewayClasses
 		if string(listed.Spec.ControllerName) != r.controllerName {
 			continue
 		}
-		listed := listed
 		g.Go(func() error {
 			return r.reconcileGatewayClassStatusWithSupportResolver(ctx, listed.Name, resolver)
 		})
@@ -390,8 +389,6 @@ func (r *Reconciler) reconcileHTTPRoutes(
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	for key, desiredParents := range evals {
-		key := key
-		desiredParents := desiredParents
 		g.Go(func() error {
 			return r.reconcileHTTPRouteStatus(ctx, key, desiredParents)
 		})
@@ -410,8 +407,6 @@ func (r *Reconciler) reconcileGRPCRoutes(
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	for key, desiredParents := range evals {
-		key := key
-		desiredParents := desiredParents
 		g.Go(func() error {
 			return r.reconcileGRPCRouteStatus(ctx, key, desiredParents)
 		})
@@ -430,8 +425,6 @@ func (r *Reconciler) reconcileTCPRoutes(
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	for key, desiredParents := range evals {
-		key := key
-		desiredParents := desiredParents
 		g.Go(func() error {
 			return r.reconcileTCPRouteStatus(ctx, key, desiredParents)
 		})
@@ -450,8 +443,6 @@ func (r *Reconciler) reconcileUDPRoutes(
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	for key, desiredParents := range evals {
-		key := key
-		desiredParents := desiredParents
 		g.Go(func() error {
 			return r.reconcileUDPRouteStatus(ctx, key, desiredParents)
 		})
@@ -470,8 +461,6 @@ func (r *Reconciler) reconcileTLSRoutes(
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	for key, desiredParents := range evals {
-		key := key
-		desiredParents := desiredParents
 		g.Go(func() error {
 			return r.reconcileTLSRouteStatus(ctx, key, desiredParents)
 		})
@@ -491,7 +480,6 @@ func (r *Reconciler) reconcileBackendTLSPolicies(
 	g.SetLimit(10)
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
-		listed := listed
 		g.Go(func() error {
 			return r.reconcileBackendTLSPolicyStatus(ctx, key, evals[client.ObjectKeyFromObject(&listed)])
 		})
@@ -514,7 +502,6 @@ func (r *Reconciler) reconcileBackendLBPolicies(
 	g.SetLimit(10)
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
-		listed := listed
 		g.Go(func() error {
 			return r.reconcileBackendLBPolicyStatus(ctx, key, evals[client.ObjectKeyFromObject(&listed)])
 		})
