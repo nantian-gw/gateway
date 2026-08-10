@@ -194,10 +194,17 @@
           "auth": "bearer-when-configured",
           "permission": "read:*",
           "contentType": "application/json"
-        },
-        {
+},
+{
           "method": "GET",
-          "path": "/v1/chatbot/config",
+        "path": "/v1/gateways",
+        "auth": "bearer-when-configured",
+        "permission": "read:*",
+        "contentType": "application/json"
+      },
+      {
+        "method": "GET",
+"path": "/v1/chatbot/config",
           "auth": "bearer-when-configured",
           "permission": "read:*",
           "contentType": "application/json"

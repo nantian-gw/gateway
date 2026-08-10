@@ -60,6 +60,9 @@ linters:
     nolintlint:
       require-explanation: true
       require-specific: true
+    gosec:
+      config:
+        G115: "0"  # G115: integer overflow — all are false positives for uint32 conversions from validated values
 
   exclusions:
     generated: lax

@@ -303,3 +303,18 @@ See "Package Naming Conventions" above for the summary table.
 ```bash
 go build ./...  # PASSES (no errors)
 ```
+
+---
+### TODO/FIXME/HACK 注释规范
+
+所有 TODO/FIXME/HACK 注释必须附带 ticket 引用：
+- `// TODO(nantian-gw/#123): ...` — 指向 issue tracker
+- `// FIXME(nantian-gw/#456): ...` — 指向 bug ticket
+- `// HACK(nantian-gw/#789): ...` — 指向 tech debt ticket
+
+禁止裸 TODO（无 ticket 引用的 TODO）。裸 TODO 会被 CI 标记为警告。
+
+定期的 TODO 审计（每 2 周）：
+1. 检查所有 TODO 的状态
+2. 关闭已解决的 TODO
+3. 将长期未解决的 TODO 升级为正式 issue
