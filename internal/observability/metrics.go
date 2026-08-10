@@ -57,6 +57,10 @@ type Metrics struct {
 	ReconcilerRunnerSettlePending         prometheus.Gauge
 	ReconcilerRunnerRetriesScheduledTotal prometheus.Counter
 	ReconcilerRunnerRetryPending          prometheus.Gauge
+	MemAllocBytes                         prometheus.GaugeFunc
+	MemHeapInuseBytes                     prometheus.GaugeFunc
+	MemStackInuseBytes                    prometheus.GaugeFunc
+	MemGCCPUFraction                      prometheus.GaugeFunc
 }
 
 func NewMetrics() *Metrics {
@@ -241,6 +245,39 @@ func NewMetrics() *Metrics {
 			Name: "nantian_gateway_controlplane_reconciler_runner_retry_pending",
 			Help: "1 if a failure-triggered retry is pending for the custom controlplane reconcile runner, 0 otherwise.",
 		}),
+	// Memory metrics with project-specific prefix
+	MemAllocBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "nantian_gw_controlplane_mem_alloc_bytes",
+		Help: "Current heap allocation in bytes (runtime.MemStats.Alloc).",
+	}, func() float64 {
+		var s runtime.MemStats
+		runtime.ReadMemStats(&s)
+		return float64(s.Alloc)
+	}),
+	MemHeapInuseBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "nantian_gw_controlplane_mem_heap_inuse_bytes",
+		Help: "Heap memory in use in bytes (runtime.MemStats.HeapInuse).",
+	}, func() float64 {
+		var s runtime.MemStats
+		runtime.ReadMemStats(&s)
+		return float64(s.HeapInuse)
+	}),
+	MemStackInuseBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "nantian_gw_controlplane_mem_stack_inuse_bytes",
+		Help: "Stack memory in use in bytes (runtime.MemStats.StackInuse).",
+	}, func() float64 {
+		var s runtime.MemStats
+		runtime.ReadMemStats(&s)
+		return float64(s.StackInuse)
+	}),
+	MemGCCPUFraction: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Name: "nantian_gw_controlplane_mem_gc_cpu_fraction",
+		Help: "GC CPU fraction since latest GC (runtime.MemStats.GCCPUFraction).",
+	}, func() float64 {
+		var s runtime.MemStats
+		runtime.ReadMemStats(&s)
+		return float64(s.GCCPUFraction)
+	}),
 	}
 
 	registry.MustRegister(
@@ -281,6 +318,10 @@ func NewMetrics() *Metrics {
 		m.ReconcilerRunnerSettlePending,
 		m.ReconcilerRunnerRetriesScheduledTotal,
 		m.ReconcilerRunnerRetryPending,
+		m.MemAllocBytes,
+		m.MemHeapInuseBytes,
+		m.MemStackInuseBytes,
+		m.MemGCCPUFraction,
 	)
 
 	version, revision := readBuildIdentity()
