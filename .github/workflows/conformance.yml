@@ -197,7 +197,7 @@ jobs:
         run: go mod download sigs.k8s.io/gateway-api/conformance
 
       - name: Run conformance tests
-      - name: Run conformance tests
+        id: conformance
         id: conformance
         run: |
           mkdir -p dist/conformance
