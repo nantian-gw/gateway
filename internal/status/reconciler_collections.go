@@ -23,7 +23,7 @@ import (
 func (r *Reconciler) reconcileGatewayClasses(ctx context.Context, gatewayClasses []gatewayv1.GatewayClass) error {
 	resolver := newGatewayClassStatusSupportResolver(r)
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for _, listed := range gatewayClasses {
 		if string(listed.Spec.ControllerName) != r.controllerName {
 			continue
@@ -387,7 +387,7 @@ func (r *Reconciler) reconcileHTTPRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileHTTPRouteStatus(ctx, key, desiredParents)
@@ -405,7 +405,7 @@ func (r *Reconciler) reconcileGRPCRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileGRPCRouteStatus(ctx, key, desiredParents)
@@ -423,7 +423,7 @@ func (r *Reconciler) reconcileTCPRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileTCPRouteStatus(ctx, key, desiredParents)
@@ -441,7 +441,7 @@ func (r *Reconciler) reconcileUDPRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileUDPRouteStatus(ctx, key, desiredParents)
@@ -459,7 +459,7 @@ func (r *Reconciler) reconcileTLSRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileTLSRouteStatus(ctx, key, desiredParents)
@@ -477,7 +477,7 @@ func (r *Reconciler) reconcileBackendTLSPolicies(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
 		g.Go(func() error {
@@ -499,7 +499,7 @@ func (r *Reconciler) reconcileBackendLBPolicies(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(10)
+	g.SetLimit(3)
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
 		g.Go(func() error {
