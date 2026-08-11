@@ -197,7 +197,6 @@ jobs:
 
       - name: Run conformance tests
         id: conformance
-        id: conformance
         run: |
           mkdir -p dist/conformance
           report_path="${GITHUB_WORKSPACE}/dist/conformance/report.yaml"
