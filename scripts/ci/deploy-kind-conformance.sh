@@ -74,4 +74,4 @@ for expected in \
 done
 
 kubectl apply -f "$rendered"
-kubectl wait --for=condition=ready pod --all -n nantian-gw --timeout="$TIMEOUT"
+kubectl wait --for=condition=ready pod -n nantian-gw -l 'app.kubernetes.io/component in (controlplane, dataplane)' --timeout="$TIMEOUT"
