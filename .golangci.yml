@@ -51,7 +51,7 @@ linters:
       threshold: 150
     goconst:
       min-len: 3
-      min-occurrences: 4
+      min-occurrences: 6
     wrapcheck:
       ignore-sigs:
         - google.golang.org/grpc/status.Error

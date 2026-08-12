@@ -28,11 +28,39 @@ type resourceKindSpec struct {
 
 const clusterScopeNamespaceMarker = "_cluster"
 
+// Common resource kind strings extracted to constants to satisfy goconst lint.
+const (
+	kindGateway           = "Gateway"
+	kindGatewayClass      = "GatewayClass"
+	kindHTTPRoute         = "HTTPRoute"
+	kindGRPCRoute         = "GRPCRoute"
+	kindTCPRoute          = "TCPRoute"
+	kindUDPRoute          = "UDPRoute"
+	kindTLSRoute          = "TLSRoute"
+	kindBackendLBPolicy   = "BackendLBPolicy"
+	kindBackendTLSPolicy  = "BackendTLSPolicy"
+	kindReferenceGrant    = "ReferenceGrant"
+	kindServiceImport     = "ServiceImport"
+	kindAIService         = "AIService"
+	kindTokenPolicy       = "TokenPolicy"
+	kindWasmPlugin        = "WasmPlugin"
+	apiVersionV1          = "gateway.networking.k8s.io/v1"
+	apiVersionV1Alpha2    = "gateway.networking.k8s.io/v1alpha2"
+	apiVersionV1Beta1     = "gateway.networking.k8s.io/v1beta1"
+	apiVersionNantianV1   = "gateway.nantian.dev/v1alpha1"
+	apiVersionMCSV1Alpha1 = "multicluster.x-k8s.io/v1alpha1"
+	categoryGateway       = "gateway"
+	categoryRoute         = "route"
+	categoryPolicy        = "policy"
+	categoryBackend       = "backend"
+	categoryAI            = "ai"
+	categoryWasm          = "wasm"
+)
 var supportedResourceKinds = []resourceKindSpec{
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "Gateway",
-			APIVersion:  "gateway.networking.k8s.io/v1",
+			Kind:        kindGateway,
+			APIVersion:  apiVersionV1,
 			Category:    "gateway",
 			Description: "Kubernetes Gateway API Gateway resource",
 			Namespaced:  true,
@@ -44,8 +72,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "GatewayClass",
-			APIVersion:  "gateway.networking.k8s.io/v1",
+			Kind:        kindGatewayClass,
+			APIVersion:  apiVersionV1,
 			Category:    "gateway",
 			Description: "Kubernetes Gateway API GatewayClass resource",
 			Namespaced:  false,
@@ -57,8 +85,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "HTTPRoute",
-			APIVersion:  "gateway.networking.k8s.io/v1",
+			Kind:        kindHTTPRoute,
+			APIVersion:  apiVersionV1,
 			Category:    "route",
 			Description: "Kubernetes Gateway API HTTPRoute resource",
 			Namespaced:  true,
@@ -70,8 +98,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "GRPCRoute",
-			APIVersion:  "gateway.networking.k8s.io/v1",
+			Kind:        kindGRPCRoute,
+			APIVersion:  apiVersionV1,
 			Category:    "route",
 			Description: "Kubernetes Gateway API GRPCRoute resource",
 			Namespaced:  true,
@@ -83,8 +111,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "TCPRoute",
-			APIVersion:  "gateway.networking.k8s.io/v1alpha2",
+			Kind:        kindTCPRoute,
+			APIVersion:  apiVersionV1Alpha2,
 			Category:    "route",
 			Description: "Kubernetes Gateway API TCPRoute resource",
 			Namespaced:  true,
@@ -96,8 +124,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "UDPRoute",
-			APIVersion:  "gateway.networking.k8s.io/v1alpha2",
+			Kind:        kindUDPRoute,
+			APIVersion:  apiVersionV1Alpha2,
 			Category:    "route",
 			Description: "Kubernetes Gateway API UDPRoute resource",
 			Namespaced:  true,
@@ -109,8 +137,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "TLSRoute",
-			APIVersion:  "gateway.networking.k8s.io/v1alpha2",
+			Kind:        kindTLSRoute,
+			APIVersion:  apiVersionV1Alpha2,
 			Category:    "route",
 			Description: "Kubernetes Gateway API TLSRoute resource",
 			Namespaced:  true,
@@ -122,8 +150,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "BackendLBPolicy",
-			APIVersion:  "gateway.networking.k8s.io/v1alpha2",
+			Kind:        kindBackendLBPolicy,
+			APIVersion:  apiVersionV1Alpha2,
 			Category:    "policy",
 			Description: "Kubernetes Gateway API BackendLBPolicy resource",
 			Namespaced:  true,
@@ -135,8 +163,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "BackendTLSPolicy",
-			APIVersion:  "gateway.networking.k8s.io/v1",
+			Kind:        kindBackendTLSPolicy,
+			APIVersion:  apiVersionV1,
 			Category:    "policy",
 			Description: "Kubernetes Gateway API BackendTLSPolicy resource",
 			Namespaced:  true,
@@ -148,8 +176,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "ReferenceGrant",
-			APIVersion:  "gateway.networking.k8s.io/v1beta1",
+			Kind:        kindReferenceGrant,
+			APIVersion:  apiVersionV1Beta1,
 			Category:    "policy",
 			Description: "Kubernetes Gateway API ReferenceGrant resource",
 			Namespaced:  true,
@@ -161,8 +189,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "ServiceImport",
-			APIVersion:  "multicluster.x-k8s.io/v1alpha1",
+			Kind:        kindServiceImport,
+			APIVersion:  apiVersionMCSV1Alpha1,
 			Category:    "backend",
 			Description: "MCS API ServiceImport resource used as a backend source",
 			Namespaced:  true,
@@ -174,8 +202,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "AIService",
-			APIVersion:  "gateway.nantian.dev/v1alpha1",
+			Kind:        kindAIService,
+			APIVersion:  apiVersionNantianV1,
 			Category:    "ai",
 			Description: "Nantian Gateway AI Service configuration",
 			Namespaced:  true,
@@ -187,8 +215,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "TokenPolicy",
-			APIVersion:  "gateway.nantian.dev/v1alpha1",
+			Kind:        kindTokenPolicy,
+			APIVersion:  apiVersionNantianV1,
 			Category:    "ai",
 			Description: "Nantian Gateway AI Token Policy configuration",
 			Namespaced:  true,
@@ -200,8 +228,8 @@ var supportedResourceKinds = []resourceKindSpec{
 	},
 	{
 		descriptor: ResourceKindDescriptor{
-			Kind:        "WasmPlugin",
-			APIVersion:  "gateway.nantian.dev/v1alpha1",
+			Kind:        kindWasmPlugin,
+			APIVersion:  apiVersionNantianV1,
 			Category:    "wasm",
 			Description: "Nantian Gateway Wasm Plugin configuration",
 			Namespaced:  true,
