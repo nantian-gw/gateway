@@ -12,6 +12,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 
@@ -98,6 +101,9 @@ type deltaStream struct {
 	versionSeq   uint64
 }
 
+// pushDelta computes the delta between prev and curr, then sends a
+// DeltaDiscoveryResponse per resource type. Added/changed resources are
+// serialized into the Resources field as google.protobuf.Any payloads.
 func (ds *deltaStream) pushDelta(ctx context.Context, prev, curr *ir.Snapshot) {
 	ds.mu.Lock()
 	ds.versionSeq++
@@ -110,13 +116,14 @@ func (ds *deltaStream) pushDelta(ctx context.Context, prev, curr *ir.Snapshot) {
 	typeResources := []struct {
 		typeURL string
 		rd      *ResourceDelta
+		get     func(*ir.Snapshot, []string) ([]*controlv1.Resource, error)
 	}{
-		{typeURLListener, &delta.Listeners},
-		{typeURLHTTPRoute, &delta.HTTPRoutes},
-		{typeURLGRPCRoute, &delta.GRPCRoutes},
-		{typeURLStreamRoute, &delta.StreamRoutes},
-		{typeURLBackend, &delta.Backends},
-		{typeURLSecret, &delta.Secrets},
+		{typeURLListener, &delta.Listeners, deltaListenerResources},
+		{typeURLHTTPRoute, &delta.HTTPRoutes, deltaHTTPRouteResources},
+		{typeURLGRPCRoute, &delta.GRPCRoutes, deltaGRPCRouteResources},
+		{typeURLStreamRoute, &delta.StreamRoutes, deltaStreamRouteResources},
+		{typeURLBackend, &delta.Backends, deltaBackendResources},
+		{typeURLSecret, &delta.Secrets, deltaSecretResources},
 	}
 
 	for _, tr := range typeResources {
@@ -132,6 +139,19 @@ func (ds *deltaStream) pushDelta(ctx context.Context, prev, curr *ir.Snapshot) {
 			TypeUrl:           tr.typeURL,
 			RemovedResources:  tr.rd.Removed,
 			NonIncremental:    tr.rd.HasNonIncremental(typeResourceCount(tr.typeURL, prev)),
+		}
+
+		// Serialize the added/changed resources into the payload.
+		// Without this, the data plane would be told resources changed but
+		// never receive their actual content, leaving it with an empty cache.
+		if len(tr.rd.AddedChanged) > 0 && curr != nil {
+			resources, err := tr.get(curr, tr.rd.AddedChanged)
+			if err != nil {
+				ds.logger.Error("delta resource serialize failed",
+					"type_url", tr.typeURL, "error", err)
+			} else if len(resources) > 0 {
+				resp.Resources = resources
+			}
 		}
 
 		if err := ds.stream.Send(resp); err != nil {
@@ -169,4 +189,282 @@ func (ds *deltaStream) handleAckNack(req *controlv1.DeltaDiscoveryRequest) {
 	for _, unsub := range req.GetResourceNamesUnsubscribe() {
 		delete(ds.subscribed, unsub)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Resource serialization helpers for delta responses
+// ---------------------------------------------------------------------------
+
+// resourceToDelta wraps a proto message in google.protobuf.Any and returns a
+// *controlv1.Resource suitable for inclusion in a DeltaDiscoveryResponse.
+func resourceToDelta(name, version string, msg proto.Message) *controlv1.Resource {
+	anyPayload, err := anypb.New(msg)
+	if err != nil {
+		return nil
+	}
+	return &controlv1.Resource{
+		Name:     name,
+		Version:  version,
+		Resource: anyPayload,
+	}
+}
+
+// deltaListenerResources serializes the listeners whose names appear in
+// addedChanged into delta Resource objects. Names are formatted as "name/port".
+func deltaListenerResources(snap *ir.Snapshot, addedChanged []string) ([]*controlv1.Resource, error) {
+	if len(addedChanged) == 0 || snap == nil {
+		return nil, nil
+	}
+	nameSet := make(map[string]bool, len(addedChanged))
+	for _, name := range addedChanged {
+		nameSet[name] = true
+	}
+	var resources []*controlv1.Resource
+	for _, item := range snap.Listeners {
+		key := fmt.Sprintf("%s/%d", item.Name, item.Port)
+		if !nameSet[key] {
+			continue
+		}
+		proto := &controlv1.Listener{
+			Name:           item.Name,
+			Address:        item.Address,
+			Addresses:      item.Addresses,
+			Port:           item.Port,
+			Protocol:       toListenerProtocol(item.Protocol),
+			Hostnames:      item.Hostnames,
+			AttachedRoutes: item.AttachedRoutes,
+			Tls:            toProtoTLS(item.TLS),
+			Metadata:       item.Metadata,
+			BackendTls:     toProtoBackendTLS(item.BackendTLS),
+		}
+		if r := resourceToDelta(key, ResourceVersion(item), proto); r != nil {
+			resources = append(resources, r)
+		}
+	}
+	return resources, nil
+}
+
+// deltaHTTPRouteResources serializes the HTTP routes whose names appear in
+// addedChanged into delta Resource objects. Names are formatted as "namespace/name".
+func deltaHTTPRouteResources(snap *ir.Snapshot, addedChanged []string) ([]*controlv1.Resource, error) {
+	if len(addedChanged) == 0 || snap == nil {
+		return nil, nil
+	}
+	nameSet := make(map[string]bool, len(addedChanged))
+	for _, name := range addedChanged {
+		nameSet[name] = true
+	}
+	var resources []*controlv1.Resource
+	for _, item := range snap.HTTPRoutes {
+		key := fmt.Sprintf("%s/%s", item.Namespace, item.Name)
+		if !nameSet[key] {
+			continue
+		}
+		proto := &controlv1.HttpRoute{
+			Name:        item.Name,
+			Namespace:   item.Namespace,
+			Hostnames:   item.Hostnames,
+			ParentRefs:  toProtoParents(item.ParentRefs),
+			Labels:      item.Labels,
+			Annotations: item.Annotations,
+			RoutePolicy: toProtoRoutePolicy(item.RoutePolicy),
+		}
+		for _, rule := range item.Rules {
+			protoRule := &controlv1.HttpRule{
+				Name:               rule.Name,
+				Filters:            toProtoFiltersWithLogger(rule.Filters, nil),
+				BackendRefs:        toProtoBackendsWithLogger(rule.BackendRefs, nil),
+				Timeouts:           toProtoRouteTimeouts(rule.Timeouts),
+				Retry:              toProtoRetryPolicy(rule.Retry),
+				SessionPersistence: toProtoSessionPersistence(rule.SessionPersistence),
+			}
+			for _, match := range rule.Matches {
+				protoRule.Matches = append(protoRule.Matches, &controlv1.HttpMatch{
+					Path:        match.Path,
+					PathType:    match.PathType,
+					Method:      match.Method,
+					Headers:     toProtoHeaders(match.Headers),
+					QueryParams: toProtoQueries(match.QueryParams),
+				})
+			}
+			proto.Rules = append(proto.Rules, protoRule)
+		}
+		if r := resourceToDelta(key, ResourceVersion(item), proto); r != nil {
+			resources = append(resources, r)
+		}
+	}
+	return resources, nil
+}
+
+// deltaGRPCRouteResources serializes the gRPC routes whose names appear in
+// addedChanged into delta Resource objects. Names are formatted as "namespace/name".
+func deltaGRPCRouteResources(snap *ir.Snapshot, addedChanged []string) ([]*controlv1.Resource, error) {
+	if len(addedChanged) == 0 || snap == nil {
+		return nil, nil
+	}
+	nameSet := make(map[string]bool, len(addedChanged))
+	for _, name := range addedChanged {
+		nameSet[name] = true
+	}
+	var resources []*controlv1.Resource
+	for _, item := range snap.GRPCRoutes {
+		key := fmt.Sprintf("%s/%s", item.Namespace, item.Name)
+		if !nameSet[key] {
+			continue
+		}
+		proto := &controlv1.GrpcRoute{
+			Name:        item.Name,
+			Namespace:   item.Namespace,
+			Hostnames:   item.Hostnames,
+			ParentRefs:  toProtoParents(item.ParentRefs),
+			Labels:      item.Labels,
+			Annotations: item.Annotations,
+			RoutePolicy: toProtoRoutePolicy(item.RoutePolicy),
+		}
+		for _, rule := range item.Rules {
+			protoRule := &controlv1.GrpcRule{
+				Name:               rule.Name,
+				Filters:            toProtoFiltersWithLogger(rule.Filters, nil),
+				BackendRefs:        toProtoBackendsWithLogger(rule.BackendRefs, nil),
+				SessionPersistence: toProtoSessionPersistence(rule.SessionPersistence),
+			}
+			for _, match := range rule.Matches {
+				protoRule.Matches = append(protoRule.Matches, &controlv1.GrpcMatch{
+					Service:   match.Service,
+					Method:    match.Method,
+					Headers:   toProtoHeaders(match.Headers),
+					MatchType: match.MatchType,
+				})
+			}
+			proto.Rules = append(proto.Rules, protoRule)
+		}
+		if r := resourceToDelta(key, ResourceVersion(item), proto); r != nil {
+			resources = append(resources, r)
+		}
+	}
+	return resources, nil
+}
+
+// deltaStreamRouteResources serializes the stream routes whose names appear in
+// addedChanged into delta Resource objects. Names are formatted as "namespace/name".
+func deltaStreamRouteResources(snap *ir.Snapshot, addedChanged []string) ([]*controlv1.Resource, error) {
+	if len(addedChanged) == 0 || snap == nil {
+		return nil, nil
+	}
+	nameSet := make(map[string]bool, len(addedChanged))
+	for _, name := range addedChanged {
+		nameSet[name] = true
+	}
+	var resources []*controlv1.Resource
+	for _, item := range snap.StreamRoutes {
+		key := fmt.Sprintf("%s/%s", item.Namespace, item.Name)
+		if !nameSet[key] {
+			continue
+		}
+		proto := &controlv1.StreamRoute{
+			Name:        item.Name,
+			Namespace:   item.Namespace,
+			Kind:        toRouteKind(item.Kind),
+			ParentRefs:  toProtoParents(item.ParentRefs),
+			Labels:      item.Labels,
+			Annotations: item.Annotations,
+		}
+		for _, rule := range item.Rules {
+			protoRule := &controlv1.StreamRule{
+				Name:        rule.Name,
+				BackendRefs: toProtoBackendsWithLogger(rule.BackendRefs, nil),
+			}
+			for _, match := range rule.Matches {
+				protoMatch := &controlv1.StreamMatch{
+					Port:        match.Port,
+					SniHostname: match.SNIHostname,
+				}
+				switch match.Mode {
+				case ir.TlsRouteModePassthrough:
+					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_MODE_PASSTHROUGH
+				case ir.TlsRouteModeTerminate:
+					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_MODE_TERMINATE
+				}
+				protoRule.Matches = append(protoRule.Matches, protoMatch)
+			}
+			proto.Rules = append(proto.Rules, protoRule)
+		}
+		if r := resourceToDelta(key, ResourceVersion(item), proto); r != nil {
+			resources = append(resources, r)
+		}
+	}
+	return resources, nil
+}
+
+// deltaBackendResources serializes the backends whose names appear in
+// addedChanged into delta Resource objects. Names are the backend's Name field.
+func deltaBackendResources(snap *ir.Snapshot, addedChanged []string) ([]*controlv1.Resource, error) {
+	if len(addedChanged) == 0 || snap == nil {
+		return nil, nil
+	}
+	nameSet := make(map[string]bool, len(addedChanged))
+	for _, name := range addedChanged {
+		nameSet[name] = true
+	}
+	var resources []*controlv1.Resource
+	for _, item := range snap.Backends {
+		if !nameSet[item.Name] {
+			continue
+		}
+		proto := &controlv1.BackendCluster{
+			Name:               item.Name,
+			Namespace:          item.Namespace,
+			Protocol:           item.Protocol,
+			ConnectTimeout:     durationpb.New(item.ConnectTimeout),
+			RequestTimeout:     nonZeroDurationOrNil(item.RequestTimeout),
+			TlsValidation:      toProtoBackendTLSValidation(item.BackendTLSValidation),
+			SessionPersistence: toProtoSessionPersistence(item.SessionPersistence),
+			LoadBalancing:      toProtoLoadBalancing(item.LoadBalancing),
+			CircuitBreaker:     toProtoCircuitBreaker(item.CircuitBreaker),
+			Metadata:           item.Metadata,
+		}
+		for _, endpoint := range item.Endpoints {
+			proto.Endpoints = append(proto.Endpoints, &controlv1.BackendEndpoint{
+				Address: endpoint.Address,
+				Port:    endpoint.Port,
+				Healthy: endpoint.Healthy,
+				Zone:    endpoint.Zone,
+			})
+		}
+		proto.AiService = toProtoAIService(item.AIService)
+		proto.TokenPolicy = toProtoTokenPolicy(item.TokenPolicy)
+		proto.WasmPlugin = toProtoWasmPlugin(item.WasmPlugin)
+		if r := resourceToDelta(item.Name, ResourceVersion(item), proto); r != nil {
+			resources = append(resources, r)
+		}
+	}
+	return resources, nil
+}
+
+// deltaSecretResources serializes the secrets whose names appear in
+// addedChanged into delta Resource objects. Names are the secret's Name field.
+func deltaSecretResources(snap *ir.Snapshot, addedChanged []string) ([]*controlv1.Resource, error) {
+	if len(addedChanged) == 0 || snap == nil {
+		return nil, nil
+	}
+	nameSet := make(map[string]bool, len(addedChanged))
+	for _, name := range addedChanged {
+		nameSet[name] = true
+	}
+	var resources []*controlv1.Resource
+	for _, item := range snap.Secrets {
+		if !nameSet[item.Name] {
+			continue
+		}
+		proto := &controlv1.SecretMaterial{
+			Namespace: item.Namespace,
+			Name:      item.Name,
+			CertPem:   item.CertPEM,
+			KeyPem:    item.KeyPEM,
+		}
+		if r := resourceToDelta(item.Name, ResourceVersion(item), proto); r != nil {
+			resources = append(resources, r)
+		}
+	}
+	return resources, nil
 }
