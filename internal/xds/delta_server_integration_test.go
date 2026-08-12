@@ -434,7 +434,11 @@ func TestDeltaServer_DynamicSubscription(t *testing.T) {
 		NodeId:                   "dp-delta-6",
 		ResourceNamesUnsubscribe: []string{typeURLListener},
 	})
-
+	// Give the goroutine time to process the unsubscribe before publishing
+	// the next snapshot. Without this, the snapshot channel may fire before
+	// the Recv loop handles the unsubscribe, causing the listener to remain
+	// subscribed (and thus included in the delta response).
+	time.Sleep(50 * time.Millisecond)
 	// 3. Publish a snapshot that changes BOTH listeners and backends.
 	snap3 := makeTestSnapshot(func(s *ir.Snapshot) {
 		s.ID = "snap-dynamic-mixed"
