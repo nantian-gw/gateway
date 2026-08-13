@@ -50,7 +50,7 @@ func TestGatewayAPIConformance(t *testing.T) {
 			// "HTTPRouteHTTPSListenerDetectMisdirectedRequests",
 		// ListenerSetAllowedRoutesSupportedKinds: timing issue - observedGeneration not updated
 		// before test assertion. Pre-existing, not related to code logic.
-		// "ListenerSetAllowedRoutesSupportedKinds",
+		"ListenerSetAllowedRoutesSupportedKinds",
 		// BackendTLSPolicyConflictResolution: CI timing issue (resourceVersion conflict),
 		// not a functional problem. Keep in skip list until retry logic is added.
 		// "BackendTLSPolicyConflictResolution",
