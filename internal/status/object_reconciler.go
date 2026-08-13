@@ -16,6 +16,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type routeStatusUpdater func(context.Context, client.ObjectKey, []routeParentEvaluation) error
@@ -488,7 +489,7 @@ func (r *Reconciler) loadGatewayTLSSecrets(
 			}
 
 			kind := stringOrEmpty(certificateRef.Kind)
-			if kind != "" && kind != "Secret" {
+			if kind != "" && kind != constants.KubeSecret {
 				continue
 			}
 
@@ -504,7 +505,7 @@ func (r *Reconciler) loadGatewayTLSSecrets(
 		clientCertificateRef := backendTLS.ClientCertificateRef
 		if group := stringOrEmpty(clientCertificateRef.Group); group == "" {
 			kind := stringOrEmpty(clientCertificateRef.Kind)
-			if kind == "" || kind == "Secret" {
+			if kind == "" || kind == constants.KubeSecret {
 				key := client.ObjectKey{
 					Namespace: namespaceOrDefault(clientCertificateRef.Namespace, gateway.Namespace),
 					Name:      string(clientCertificateRef.Name),
@@ -546,7 +547,7 @@ func (r *Reconciler) loadGatewayTLSConfigMaps(
 			}
 
 			kind := string(caRef.Kind)
-			if kind != "" && kind != "ConfigMap" {
+			if kind != "" && kind != constants.KubeConfigMap {
 				continue
 			}
 

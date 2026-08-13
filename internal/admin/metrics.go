@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/observability"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func wrapMetricsHandler(next http.Handler, metrics *observability.Metrics) http.Handler {
@@ -93,8 +94,8 @@ func normalizeAdminMethod(method string) string {
 }
 
 var routeClassification = map[string]string{
-	"/livez":                    "livez",
-	"/readyz":                    "readyz",
+	constants.PathLivez:                    "livez",
+	constants.PathReadyz:                    "readyz",
 	"/v1/summary":                "summary",
 	"/v1/snapshot-sync":          "snapshot_sync",
 	"/v1/snapshot":               "snapshot",

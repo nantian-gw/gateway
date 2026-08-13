@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +115,7 @@ func buildSummary(snapshot *ir.Snapshot, nodes []ir.NodeStatus, driftWarningThre
 		switch {
 		case l.Status == nil || l.Status.Programmed == nil:
 			summary.WarningListenerCount++
-		case l.Status.Programmed.Status == "True":
+		case l.Status.Programmed.Status == constants.StrTrueCapital:
 			summary.ReadyListenerCount++
 		case l.Status.Programmed.Status == "Unknown":
 			summary.WarningListenerCount++

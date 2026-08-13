@@ -17,6 +17,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/routes"
@@ -196,9 +197,9 @@ func (t *Translator) BuildRoutesForSnapshot(
 	next.GRPCRoutes = mergePartialGRPCRoutes(current.GRPCRoutes, objectKeyMap(grpcKeys), updatedGRPCRoutes)
 	next.StreamRoutes = mergePartialStreamRoutes(
 		current.StreamRoutes,
-		streamRouteReplacementKeyMap(tcpKeys, "TCP"),
-		streamRouteReplacementKeyMap(udpKeys, "UDP"),
-		streamRouteReplacementKeyMap(tlsKeys, "TLS"),
+		streamRouteReplacementKeyMap(tcpKeys, constants.ProtocolTCP),
+		streamRouteReplacementKeyMap(udpKeys, constants.ProtocolUDP),
+		streamRouteReplacementKeyMap(tlsKeys, constants.ProtocolTLS),
 		updatedStreamRoutes,
 	)
 	replacementBackendKeys := referencedBackendReplacementKeysForRouteChanges(
@@ -447,11 +448,11 @@ func streamRouteReplacementKeys(
 	tlsKeys map[string]struct{},
 ) map[string]struct{} {
 	switch kind {
-	case "TCP":
+	case constants.ProtocolTCP:
 		return tcpKeys
-	case "UDP":
+	case constants.ProtocolUDP:
 		return udpKeys
-	case "TLS":
+	case constants.ProtocolTLS:
 		return tlsKeys
 	default:
 		return nil
@@ -507,9 +508,9 @@ func partialRouteChangesAffectMesh(
 		}
 	}
 
-	tcpKeySet := streamRouteReplacementKeyMap(tcpKeys, "TCP")
-	udpKeySet := streamRouteReplacementKeyMap(udpKeys, "UDP")
-	tlsKeySet := streamRouteReplacementKeyMap(tlsKeys, "TLS")
+	tcpKeySet := streamRouteReplacementKeyMap(tcpKeys, constants.ProtocolTCP)
+	udpKeySet := streamRouteReplacementKeyMap(udpKeys, constants.ProtocolUDP)
+	tlsKeySet := streamRouteReplacementKeyMap(tlsKeys, constants.ProtocolTLS)
 	for _, route := range current.StreamRoutes {
 		replacementKeys := streamRouteReplacementKeys(route.Kind, tcpKeySet, udpKeySet, tlsKeySet)
 		if replacementKeys == nil {
@@ -632,7 +633,7 @@ func backendRefMarkedInvalid(ref ir.BackendRef) bool {
 	if len(ref.Metadata) == 0 {
 		return false
 	}
-	return ref.Metadata[backends.BackendRefMetaValid] == "false"
+	return ref.Metadata[backends.BackendRefMetaValid] == constants.StrFalse
 }
 
 func routeChangeNamespaces(groups ...[]client.ObjectKey) []string {

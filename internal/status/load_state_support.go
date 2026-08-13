@@ -18,6 +18,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type fullReconcileSupportRefs struct {
@@ -174,9 +175,9 @@ func collectRouteTrafficRefs(
 		}
 
 		switch targetKind {
-		case "Service":
+		case constants.KubeService:
 			addObjectKeyRef(services, targetNamespace, backend.Name)
-		case "ServiceImport":
+		case constants.KubeServiceImport:
 			addObjectKeyRef(serviceImports, targetNamespace, backend.Name)
 		}
 	}
@@ -190,9 +191,9 @@ func collectBackendLBPolicyTrafficRefs(
 	for _, policy := range policies {
 		for _, targetRef := range policy.Spec.TargetRefs {
 			switch {
-			case targetRef.Group == "" && targetRef.Kind == "Service":
+			case targetRef.Group == "" && targetRef.Kind == constants.KubeService:
 				addObjectKeyRef(services, policy.Namespace, string(targetRef.Name))
-			case targetRef.Group == mcsv1alpha1.GroupName && targetRef.Kind == "ServiceImport":
+			case targetRef.Group == mcsv1alpha1.GroupName && targetRef.Kind == constants.KubeServiceImport:
 				addObjectKeyRef(serviceImports, policy.Namespace, string(targetRef.Name))
 			}
 		}
@@ -207,9 +208,9 @@ func collectBackendTLSPolicyTrafficRefs(
 	for _, policy := range policies {
 		for _, targetRef := range policy.Spec.TargetRefs {
 			switch {
-			case targetRef.Group == "" && targetRef.Kind == "Service":
+			case targetRef.Group == "" && targetRef.Kind == constants.KubeService:
 				addObjectKeyRef(services, policy.Namespace, string(targetRef.Name))
-			case targetRef.Group == mcsv1alpha1.GroupName && targetRef.Kind == "ServiceImport":
+			case targetRef.Group == mcsv1alpha1.GroupName && targetRef.Kind == constants.KubeServiceImport:
 				addObjectKeyRef(serviceImports, policy.Namespace, string(targetRef.Name))
 			}
 		}
@@ -269,7 +270,7 @@ func collectGatewaySecretRefs(out map[string]client.ObjectKey, gateways []gatewa
 				}
 
 				kind := strings.TrimSpace(stringOrEmpty(certificateRef.Kind))
-				if kind != "" && kind != "Secret" {
+				if kind != "" && kind != constants.KubeSecret {
 					continue
 				}
 
@@ -285,7 +286,7 @@ func collectGatewaySecretRefs(out map[string]client.ObjectKey, gateways []gatewa
 			clientCertificateRef := backendTLS.ClientCertificateRef
 			if group := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Group)); group == "" {
 				kind := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Kind))
-				if kind == "" || kind == "Secret" {
+				if kind == "" || kind == constants.KubeSecret {
 					addObjectKeyRef(
 						out,
 						namespaceOrDefault(clientCertificateRef.Namespace, gateway.Namespace),
@@ -306,7 +307,7 @@ func collectGatewayConfigMapRefs(
 		if gateway.Spec.Infrastructure != nil && gateway.Spec.Infrastructure.ParametersRef != nil {
 			ref := gateway.Spec.Infrastructure.ParametersRef
 			if group := strings.TrimSpace(string(ref.Group)); group == "" &&
-				strings.EqualFold(strings.TrimSpace(string(ref.Kind)), "ConfigMap") {
+				strings.EqualFold(strings.TrimSpace(string(ref.Kind)), constants.KubeConfigMap) {
 				addObjectKeyRef(out, gateway.Namespace, ref.Name)
 			}
 		}
@@ -316,7 +317,7 @@ func collectGatewayConfigMapRefs(
 			namespace := strings.TrimSpace(stringOrEmpty(ref.Namespace))
 			if namespace != "" &&
 				strings.TrimSpace(string(ref.Group)) == "" &&
-				strings.EqualFold(strings.TrimSpace(string(ref.Kind)), "ConfigMap") {
+				strings.EqualFold(strings.TrimSpace(string(ref.Kind)), constants.KubeConfigMap) {
 				addObjectKeyRef(out, namespace, ref.Name)
 			}
 		}
@@ -332,7 +333,7 @@ func collectGatewayConfigMapRefs(
 				}
 
 				kind := strings.TrimSpace(string(caRef.Kind))
-				if kind != "" && kind != "ConfigMap" {
+				if kind != "" && kind != constants.KubeConfigMap {
 					continue
 				}
 
@@ -382,7 +383,7 @@ func collectBackendTLSPolicyConfigMapRefs(
 			}
 
 			kind := strings.TrimSpace(string(ref.Kind))
-			if kind != "" && kind != "ConfigMap" {
+			if kind != "" && kind != constants.KubeConfigMap {
 				continue
 			}
 

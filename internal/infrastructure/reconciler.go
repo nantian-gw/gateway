@@ -14,11 +14,12 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/noderegistry"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
 	defaultDataplaneNamespace = "nantian-gw"
-	defaultSharedServiceName  = "nantian-gw-dataplane"
+	defaultSharedServiceName  = constants.NameDataplane
 	defaultAdminPortName      = "admin"
 	defaultAdminPort          = 19080
 
@@ -33,7 +34,7 @@ const (
 )
 
 var defaultDataplaneSelector = map[string]string{
-	"app": "nantian-gw-dataplane",
+	constants.LabelApp: constants.NameDataplane,
 }
 
 type Options struct {

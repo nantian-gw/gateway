@@ -30,6 +30,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/constants"
 	gwtls "github.com/nantian-gw/gateway/internal/tls"
 	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
@@ -588,7 +589,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	)
 
 	for _, r := range snapshot.HTTPRoutes {
-		if len(r.ParentRefs) > 0 && r.ParentRefs[0].Kind == "Service" {
+		if len(r.ParentRefs) > 0 && r.ParentRefs[0].Kind == constants.KubeService {
 			var refs []string
 			for _, rule := range r.Rules {
 				for _, ref := range rule.BackendRefs {

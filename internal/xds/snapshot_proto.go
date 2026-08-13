@@ -13,6 +13,7 @@ import (
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 var newStructPB = structpb.NewStruct
@@ -417,7 +418,7 @@ func toProtoQueries(queries []ir.QueryMatch) []*controlv1.QueryMatch {
 
 func toListenerProtocol(protocol string) controlv1.ListenerProtocol {
 	switch protocol {
-	case "HTTP":
+	case constants.ProtocolHTTP:
 		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_HTTP
 	case "HTTPS":
 		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_HTTPS
@@ -425,7 +426,7 @@ func toListenerProtocol(protocol string) controlv1.ListenerProtocol {
 		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_GRPC
 	case "HTTP3":
 		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_HTTP3
-	case "TCP":
+	case constants.ProtocolTCP:
 		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_TCP
 	case "UDP":
 		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_UDP
@@ -440,11 +441,11 @@ func toListenerProtocol(protocol string) controlv1.ListenerProtocol {
 
 func toRouteKind(kind string) controlv1.RouteKind {
 	switch kind {
-	case "HTTP":
+	case constants.ProtocolHTTP:
 		return controlv1.RouteKind_ROUTE_KIND_HTTP
 	case "GRPC":
 		return controlv1.RouteKind_ROUTE_KIND_GRPC
-	case "TCP":
+	case constants.ProtocolTCP:
 		return controlv1.RouteKind_ROUTE_KIND_TCP
 	case "UDP":
 		return controlv1.RouteKind_ROUTE_KIND_UDP

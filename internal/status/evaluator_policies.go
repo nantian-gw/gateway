@@ -13,6 +13,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func serviceParentPortMatches(service corev1.Service, parentRef gatewayv1.ParentReference) bool {
@@ -370,13 +371,13 @@ func portOrZero(port *gatewayv1.PortNumber) uint16 {
 
 func backendKindForStatus(group, kind string) (string, bool) {
 	if group == "" {
-		if kind == "" || kind == "Service" {
-			return "Service", true
+		if kind == "" || kind == constants.KubeService {
+			return constants.KubeService, true
 		}
 		return "", false
 	}
-	if group == mcsv1alpha1.GroupName && kind == "ServiceImport" {
-		return "ServiceImport", true
+	if group == mcsv1alpha1.GroupName && kind == constants.KubeServiceImport {
+		return constants.KubeServiceImport, true
 	}
 	return "", false
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type routeListResponse struct {
@@ -93,7 +94,7 @@ func filterRoutes(snapshot *ir.Snapshot, query url.Values, maxListItems int) (ro
 	name := strings.TrimSpace(query.Get("name"))
 	hostname := strings.TrimSpace(query.Get("hostname"))
 
-	if kind == "" || kind == "HTTP" {
+	if kind == "" || kind == constants.ProtocolHTTP {
 		for _, route := range snapshot.HTTPRoutes {
 			if !httpRouteMatches(route, namespace, name, hostname) {
 				continue
@@ -109,7 +110,7 @@ func filterRoutes(snapshot *ir.Snapshot, query url.Values, maxListItems int) (ro
 			response.GRPC = append(response.GRPC, route)
 		}
 	}
-	if kind == "" || kind == "TCP" || kind == "UDP" || kind == "TLS" {
+	if kind == "" || kind == constants.ProtocolTCP || kind == "UDP" || kind == constants.ProtocolTLS {
 		for _, route := range snapshot.StreamRoutes {
 			if kind != "" && canonicalRouteKind(route.Kind) != kind {
 				continue
@@ -128,7 +129,7 @@ func filterRoutes(snapshot *ir.Snapshot, query url.Values, maxListItems int) (ro
 	if kind != "" {
 		paginationRequested := query.Get("limit") != "" || query.Get("offset") != ""
 		switch kind {
-		case "HTTP":
+		case constants.ProtocolHTTP:
 			if paginationRequested {
 				paged, meta := paginateSliceWithMetadata(response.HTTP, pagination, maxListItems)
 				response.HTTP = paged

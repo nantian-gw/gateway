@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type snapshotDetailIndexCache struct {
@@ -93,7 +94,7 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 			continue
 		}
 		index.routes[detailRouteKey{
-			kind:      "HTTP",
+			kind:      constants.ProtocolHTTP,
 			namespace: route.Namespace,
 			name:      route.Name,
 		}] = route

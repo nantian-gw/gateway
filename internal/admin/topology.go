@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type TopologyResponse struct {
@@ -178,11 +179,11 @@ func buildTopology(snapshot *ir.Snapshot, nodes []ir.NodeStatus) TopologyRespons
 func topologyRouteNode(kind, namespace, name string, rules int, hostnames []string) TopologyNode {
 	return TopologyNode{
 		ID:        routeNodeID(kind, namespace, name),
-		Type:      "route",
+		Type:      constants.StrRoute,
 		Label:     name,
 		Namespace: namespace,
 		Name:      name,
-		Status:    strings.ToLower(strings.TrimSuffix(strings.TrimSuffix(kind, "Route"), "route")),
+		Status:    strings.ToLower(strings.TrimSuffix(strings.TrimSuffix(kind, "Route"), constants.StrRoute)),
 		Detail:    fmt.Sprintf("%s · %d rules", kind, rules),
 		Metadata:  map[string]string{"kind": kind, "hostnames": strings.Join(hostnames, ", ")},
 	}
@@ -319,7 +320,7 @@ func ensureBackendTopologyNode(
 
 	response.Nodes = append(response.Nodes, TopologyNode{
 		ID:        nodeID,
-		Type:      "backend",
+		Type:      constants.StrBackend,
 		Label:     name + ":" + strconv.FormatUint(uint64(port), 10),
 		Namespace: namespace,
 		Name:      name,

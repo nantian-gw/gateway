@@ -16,6 +16,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
@@ -175,9 +176,9 @@ func collectRouteBackendPolicyRefsForRoute(
 		}
 
 		switch targetKind {
-		case "Service":
+		case constants.KubeService:
 			addObjectKeyRef(services, targetNamespace, backend.Name)
-		case "ServiceImport":
+		case constants.KubeServiceImport:
 			addObjectKeyRef(serviceImports, targetNamespace, backend.Name)
 		}
 	}
@@ -192,12 +193,12 @@ func backendTLSPolicyTouchesKeys(
 	for _, targetRef := range targetRefs {
 		key := namespacedName(namespace, string(targetRef.Name))
 		switch {
-		case string(targetRef.Group) == "" && string(targetRef.Kind) == "Service":
+		case string(targetRef.Group) == "" && string(targetRef.Kind) == constants.KubeService:
 			if _, ok := serviceKeys[key]; ok {
 				return true
 			}
 		case string(targetRef.Group) == mcsv1alpha1.GroupName &&
-			string(targetRef.Kind) == "ServiceImport":
+			string(targetRef.Kind) == constants.KubeServiceImport:
 			if _, ok := serviceImportKeys[key]; ok {
 				return true
 			}
@@ -215,12 +216,12 @@ func backendLBPolicyTouchesKeys(
 	for _, targetRef := range targetRefs {
 		key := namespacedName(namespace, string(targetRef.Name))
 		switch {
-		case string(targetRef.Group) == "" && string(targetRef.Kind) == "Service":
+		case string(targetRef.Group) == "" && string(targetRef.Kind) == constants.KubeService:
 			if _, ok := serviceKeys[key]; ok {
 				return true
 			}
 		case string(targetRef.Group) == mcsv1alpha1.GroupName &&
-			string(targetRef.Kind) == "ServiceImport":
+			string(targetRef.Kind) == constants.KubeServiceImport:
 			if _, ok := serviceImportKeys[key]; ok {
 				return true
 			}
@@ -245,12 +246,12 @@ func backendPolicyTargetRefIndexValuesByNamespace(
 	}
 
 	for _, key := range serviceKeys {
-		add(key.Namespace, backendPolicyTargetRefIndexValue("", "Service", key.Name))
+		add(key.Namespace, backendPolicyTargetRefIndexValue("", constants.KubeService, key.Name))
 	}
 	for _, key := range serviceImportKeys {
 		add(
 			key.Namespace,
-			backendPolicyTargetRefIndexValue(mcsv1alpha1.GroupName, "ServiceImport", key.Name),
+			backendPolicyTargetRefIndexValue(mcsv1alpha1.GroupName, constants.KubeServiceImport, key.Name),
 		)
 	}
 

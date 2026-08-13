@@ -15,6 +15,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	lsnr "github.com/nantian-gw/gateway/internal/translator/listeners"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
@@ -49,12 +50,12 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 
 	for _, listener := range listeners {
 		protocol := string(listener.Protocol)
-		if protocol == "TLS" && listener.TLS != nil && listener.TLS.Mode != nil {
+		if protocol == constants.ProtocolTLS && listener.TLS != nil && listener.TLS.Mode != nil {
 			mode := string(*listener.TLS.Mode)
 			if mode == "Passthrough" {
 				protocol = "TLS_PASSTHROUGH"
 			}
-			// For Terminate or unset, the protocol stays as "TLS" (which maps to
+			// For Terminate or unset, the protocol stays as constants.ProtocolTLS (which maps to
 			// LISTENER_PROTOCOL_TLS in the gRPC snapshot, supporting mixed mode).
 			// For HTTPS (terminated TLS), the protocol is "HTTPS".
 		}
@@ -68,7 +69,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 			BackendTLS: backends.BackendTLSForGatewayWithIndexes(gateway, indexes),
 			Metadata: map[string]string{
 				"gateway":   gateway.Name,
-				"namespace": gateway.Namespace,
+				constants.KubeNamespace: gateway.Namespace,
 			},
 			Status: shared.ListenerStatusSummary(gateway.Status.Listeners, listener.Name),
 		}

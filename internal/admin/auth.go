@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/nantian-gw/gateway/internal/observability"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 // contextKey is an unexported type used as a context key for admin request identity.
@@ -498,5 +499,5 @@ func bearerTokenFromHeader(value string) (string, bool) {
 }
 
 func isProbePath(path string) bool {
-	return path == "/livez" || path == "/readyz"
+	return path == constants.PathLivez || path == constants.PathReadyz
 }

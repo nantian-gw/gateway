@@ -6,6 +6,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
@@ -79,9 +80,9 @@ func referencedBackendObjectKeysFromSnapshot(current *ir.Snapshot) referencedBac
 		switch kind, ok := backends.BackendKindForRef(ref.Group, ref.Kind); {
 		case !ok:
 			return
-		case kind == "Service":
+		case kind == constants.KubeService:
 			serviceKeys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
-		case kind == "ServiceImport":
+		case kind == constants.KubeServiceImport:
 			serviceImportKeys[shared.BackendObjectKey(key.Namespace, key.Name)] = key
 		}
 	}

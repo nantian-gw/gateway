@@ -11,6 +11,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -210,7 +211,7 @@ func resolvedListenerCondition(generation int64) conditionSpec {
 		Type:               string(gatewayv1.ListenerConditionResolvedRefs),
 		Status:             metav1.ConditionTrue,
 		Reason:             string(gatewayv1.ListenerReasonResolvedRefs),
-		Message:            "Listener references are resolved",
+		Message:            constants.MsgListenerResolved,
 		ObservedGeneration: generation,
 	}
 }
@@ -258,9 +259,9 @@ func evaluateListenerTLSRefs(
 
 			kind := stringOrEmpty(certificateRef.Kind)
 			if kind == "" {
-				kind = "Secret"
+				kind = constants.KubeSecret
 			}
-			if kind != "Secret" {
+			if kind != constants.KubeSecret {
 				if firstReason == "" {
 					firstReason = string(gatewayv1.ListenerReasonInvalidCertificateRef)
 					firstMessage = "CertificateRef kind is not supported"
@@ -279,7 +280,7 @@ func evaluateListenerTLSRefs(
 				},
 				gatewayv1beta1.ReferenceGrantTo{
 					Group: gatewayv1beta1.Group(""),
-					Kind:  gatewayv1beta1.Kind("Secret"),
+					Kind:  gatewayv1beta1.Kind(constants.KubeSecret),
 					Name:  objectNamePtr(string(certificateRef.Name)),
 				},
 			) {
@@ -350,7 +351,7 @@ func evaluateListenerTLSRefs(
 
 	return listenerTLSRefEvaluation{
 		reason:  string(gatewayv1.ListenerReasonResolvedRefs),
-		message: "Listener references are resolved",
+		message: constants.MsgListenerResolved,
 		ok:      true,
 	}
 }
@@ -372,9 +373,9 @@ func evaluateGatewayBackendTLSRef(state *clusterState, gateway gatewayv1.Gateway
 
 	kind := stringOrEmpty(clientCertRef.Kind)
 	if kind == "" {
-		kind = "Secret"
+		kind = constants.KubeSecret
 	}
-	if kind != "Secret" {
+	if kind != constants.KubeSecret {
 		return listenerTLSRefEvaluation{
 			reason:  string(gatewayv1.ListenerReasonInvalidCertificateRef),
 			message: "BackendTLS clientCertificateRef kind is not supported",
@@ -392,7 +393,7 @@ func evaluateGatewayBackendTLSRef(state *clusterState, gateway gatewayv1.Gateway
 		},
 		gatewayv1beta1.ReferenceGrantTo{
 			Group: gatewayv1beta1.Group(""),
-			Kind:  gatewayv1beta1.Kind("Secret"),
+			Kind:  gatewayv1beta1.Kind(constants.KubeSecret),
 			Name:  objectNamePtr(string(clientCertRef.Name)),
 		},
 	) {
@@ -506,9 +507,9 @@ func evaluateFrontendValidationCARef(
 
 	kind := string(caRef.Kind)
 	if kind == "" {
-		kind = "ConfigMap"
+		kind = constants.KubeConfigMap
 	}
-	if kind != "ConfigMap" {
+	if kind != constants.KubeConfigMap {
 		return listenerReasonInvalidCACertificateKind, "FrontendValidation CA ref kind is not supported", false
 	}
 
@@ -523,7 +524,7 @@ func evaluateFrontendValidationCARef(
 		},
 		gatewayv1beta1.ReferenceGrantTo{
 			Group: gatewayv1beta1.Group(""),
-			Kind:  gatewayv1beta1.Kind("ConfigMap"),
+			Kind:  gatewayv1beta1.Kind(constants.KubeConfigMap),
 			Name:  objectNamePtr(string(caRef.Name)),
 		},
 	) {

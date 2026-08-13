@@ -19,6 +19,7 @@ import (
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -428,7 +429,7 @@ func collectBackendLBPolicies(ctx context.Context, cl client.Client, idx *Cluste
 	for i := range list.Items {
 		p := &list.Items[i]
 		status, abnormal := summarizeAncestors(p.Status.Ancestors)
-		algo := "default"
+		algo := constants.StrDefault
 		if p.Spec.LoadBalancing != nil && p.Spec.LoadBalancing.Type != nil {
 			algo = string(*p.Spec.LoadBalancing.Type)
 		}

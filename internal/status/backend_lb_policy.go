@@ -10,6 +10,7 @@ import (
 
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/loadbalancing"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -173,7 +174,7 @@ func backendLBPolicyTargets(
 		group := string(targetRef.Group)
 		kind := string(targetRef.Kind)
 		switch {
-		case group == "" && kind == "Service":
+		case group == "" && kind == constants.KubeService:
 			service, ok := state.serviceByKey[namespacedName(policy.Namespace, string(targetRef.Name))]
 			if !ok {
 				message := "BackendLBPolicy target Service was not found"
@@ -191,7 +192,7 @@ func backendLBPolicyTargets(
 					false
 			}
 			keys = append(keys, targetKeys...)
-		case group == mcsv1alpha1.GroupName && kind == "ServiceImport":
+		case group == mcsv1alpha1.GroupName && kind == constants.KubeServiceImport:
 			serviceImport, ok := state.serviceImportByKey[namespacedName(policy.Namespace, string(targetRef.Name))]
 			if !ok {
 				message := "BackendLBPolicy target ServiceImport was not found"

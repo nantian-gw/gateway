@@ -16,6 +16,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
@@ -287,9 +288,9 @@ func configMapObjectKeyFromRef(
 	}
 	targetKind := string(kind)
 	if targetKind == "" {
-		targetKind = "ConfigMap"
+		targetKind = constants.KubeConfigMap
 	}
-	if targetKind != "ConfigMap" {
+	if targetKind != constants.KubeConfigMap {
 		return client.ObjectKey{}, false
 	}
 	return client.ObjectKey{
@@ -328,9 +329,9 @@ func localConfigMapObjectKey(
 	}
 	targetKind := string(kind)
 	if targetKind == "" {
-		targetKind = "ConfigMap"
+		targetKind = constants.KubeConfigMap
 	}
-	if targetKind != "ConfigMap" {
+	if targetKind != constants.KubeConfigMap {
 		return client.ObjectKey{}, false
 	}
 	return client.ObjectKey{

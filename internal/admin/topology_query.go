@@ -3,6 +3,7 @@ package admin
 import (
 	"net/url"
 	"strings"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type topologyQueryFilter struct {
@@ -46,10 +47,10 @@ func parseTopologyNodeType(raw string) (string, error) {
 		return "plane", nil
 	case "listener":
 		return "listener", nil
-	case "route":
-		return "route", nil
-	case "backend":
-		return "backend", nil
+	case constants.StrRoute:
+		return constants.StrRoute, nil
+	case constants.StrBackend:
+		return constants.StrBackend, nil
 	case "endpointset":
 		return "endpoint-set", nil
 	default:
@@ -98,11 +99,11 @@ func filterTopology(response TopologyResponse, filter topologyQueryFilter) Topol
 		retainedSnapshot := topologyNodeValues(retainedNodes)
 		for _, node := range retainedSnapshot {
 			switch node.Type {
-			case "route":
+			case constants.StrRoute:
 				index.addIncidentEdgesByType(node.ID, retainedNodes, retainedEdges, "attach")
 			case "listener":
 				index.addIncidentEdgesByType(node.ID, retainedNodes, retainedEdges, "serve")
-			case "backend":
+			case constants.StrBackend:
 				index.addIncidentEdgesByType(node.ID, retainedNodes, retainedEdges, "resolve")
 			}
 		}
@@ -138,7 +139,7 @@ func DoesTopologyNodeMatch(node TopologyNode, filter topologyQueryFilter) bool {
 		return false
 	}
 	if filter.RouteKind != "" {
-		if node.Type != "route" {
+		if node.Type != constants.StrRoute {
 			return false
 		}
 		if topologyRouteKind(node) != topologyRouteKindLabel(filter.RouteKind) {
@@ -167,7 +168,7 @@ func topologyRouteKind(node TopologyNode) string {
 func topologyRouteKindLabel(kind string) string {
 	switch kind {
 	case kindHTTPRoute:
-		return "HTTPRoute"
+		return constants.KubeHTTPRoute
 	case kindGRPCRoute:
 		return "GRPCRoute"
 	case kindTCPRoute:

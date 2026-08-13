@@ -14,6 +14,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/translator"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type snapshotBuildScope uint16
@@ -356,7 +357,7 @@ func (s *Syncer) hasMeshRouteChanges(current *ir.Snapshot, routeKeys snapshotRou
 			if route.Namespace == key.Namespace && route.Name == key.Name {
 				found = true
 				for _, ref := range route.ParentRefs {
-					if ref.Group == "" && ref.Kind == "Service" {
+					if ref.Group == "" && ref.Kind == constants.KubeService {
 						return true
 					}
 				}

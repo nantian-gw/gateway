@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type meshServiceState struct {
@@ -58,7 +59,7 @@ func loadMeshServiceState(
 			if _, _, ok := splitServiceKey(key); ok {
 				state.shadowByOriginal[key] = service
 			}
-		case service.Annotations[mesh.ManagedServiceAnnotation] == "true" ||
+		case service.Annotations[mesh.ManagedServiceAnnotation] == constants.StrTrue ||
 			service.Labels[serviceRoleLabel] == serviceRoleMeshFrontend:
 			key := serviceKey(service.Namespace, service.Name)
 			state.servicesByKey[key] = service

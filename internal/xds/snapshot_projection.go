@@ -9,6 +9,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const backendRefValidityMetadataKey = "nantian.dev/backend-ref-valid"
@@ -217,7 +218,7 @@ func filterBackendRefs(routeNamespace string, refs []ir.BackendRef, survivingBac
 }
 
 func backendRefMarkedInvalid(ref ir.BackendRef) bool {
-	return ref.Metadata[backendRefValidityMetadataKey] == "false"
+	return ref.Metadata[backendRefValidityMetadataKey] == constants.StrFalse
 }
 
 func backendRequiresUnsupportedHardFeature(backend ir.BackendCluster, supported map[string]struct{}) bool {

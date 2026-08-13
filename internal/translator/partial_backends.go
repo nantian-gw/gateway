@@ -20,6 +20,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
@@ -293,7 +294,7 @@ func recordMeshShadowBackendKeyExpansion(
 	}
 
 	shadowName := strings.TrimSpace(service.Annotations[mesh.ShadowServiceAnnotation])
-	if service.Annotations[mesh.ManagedServiceAnnotation] == "true" && shadowName != "" {
+	if service.Annotations[mesh.ManagedServiceAnnotation] == constants.StrTrue && shadowName != "" {
 		addServiceKey(client.ObjectKey{
 			Namespace: service.Namespace,
 			Name:      shadowName,
@@ -579,12 +580,12 @@ func backendTLSPolicyTouchesKeys(
 	for _, targetRef := range targetRefs {
 		key := shared.BackendObjectKey(namespace, string(targetRef.Name))
 		switch {
-		case string(targetRef.Group) == "" && string(targetRef.Kind) == "Service":
+		case string(targetRef.Group) == "" && string(targetRef.Kind) == constants.KubeService:
 			if _, ok := serviceKeys[key]; ok {
 				return true
 			}
 		case string(targetRef.Group) == mcsv1alpha1.GroupName &&
-			string(targetRef.Kind) == "ServiceImport":
+			string(targetRef.Kind) == constants.KubeServiceImport:
 			if _, ok := serviceImportKeys[key]; ok {
 				return true
 			}
@@ -602,12 +603,12 @@ func backendLBPolicyTouchesKeys(
 	for _, targetRef := range targetRefs {
 		key := shared.BackendObjectKey(namespace, string(targetRef.Name))
 		switch {
-		case string(targetRef.Group) == "" && string(targetRef.Kind) == "Service":
+		case string(targetRef.Group) == "" && string(targetRef.Kind) == constants.KubeService:
 			if _, ok := serviceKeys[key]; ok {
 				return true
 			}
 		case string(targetRef.Group) == mcsv1alpha1.GroupName &&
-			string(targetRef.Kind) == "ServiceImport":
+			string(targetRef.Kind) == constants.KubeServiceImport:
 			if _, ok := serviceImportKeys[key]; ok {
 				return true
 			}

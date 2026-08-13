@@ -7,6 +7,7 @@ import (
 
 	rp "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type routePolicyScope string
@@ -145,7 +146,7 @@ func resolveRoutePolicyTargets(
 		name := string(targetRef.Name)
 
 		switch kind {
-		case "Gateway":
+		case constants.KubeGateway:
 			scope = routePolicyScopeGateway
 			gwKey := policy.Namespace + "/" + name
 			if routes, ok := gatewayToRoutes[gwKey]; ok {
@@ -156,7 +157,7 @@ func resolveRoutePolicyTargets(
 					}
 				}
 			}
-		case "HTTPRoute", "GRPCRoute":
+		case constants.KubeHTTPRoute, "GRPCRoute":
 			rk := policy.Namespace + "/" + name
 			if _, exists := seen[rk]; !exists {
 				seen[rk] = struct{}{}

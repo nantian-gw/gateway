@@ -12,11 +12,12 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type ServiceCatalogEntry struct {
 	Namespace string               `json:"namespace"`
-	Name      string               `json:"name"`
+	Name      string               `json:constants.StrName`
 	Ports     []ServiceCatalogPort `json:"ports,omitempty"`
 }
 
@@ -44,13 +45,13 @@ type serviceCatalogSortField string
 
 const (
 	serviceCatalogSortByNamespace serviceCatalogSortField = "namespace"
-	serviceCatalogSortByName      serviceCatalogSortField = "name"
+	serviceCatalogSortByName      serviceCatalogSortField = constants.StrName
 )
 
 func parseServiceCatalogFilter(query url.Values) (ServiceCatalogFilter, error) {
 	filter := ServiceCatalogFilter{
 		Namespace: strings.TrimSpace(query.Get("namespace")),
-		Name:      strings.TrimSpace(query.Get("name")),
+		Name:      strings.TrimSpace(query.Get(constants.StrName)),
 	}
 
 	protocol, err := parseServiceCatalogProtocolFilter(query.Get("protocol"))
@@ -265,7 +266,7 @@ func parseServiceCatalogSortField(raw string) (serviceCatalogSortField, error) {
 	switch normalizeSortField(raw) {
 	case "", "namespace":
 		return serviceCatalogSortByNamespace, nil
-	case "name":
+	case constants.StrName:
 		return serviceCatalogSortByName, nil
 	default:
 		return "", errInvalidQuery("invalid sort")

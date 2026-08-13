@@ -15,6 +15,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
@@ -291,7 +292,7 @@ func (r *Reconciler) loadRouteServices(
 
 	for _, backend := range route.backends {
 		targetKind, ok := backendKindForStatus(backend.Group, backend.Kind)
-		if !ok || targetKind != "Service" {
+		if !ok || targetKind != constants.KubeService {
 			continue
 		}
 
@@ -321,7 +322,7 @@ func (r *Reconciler) loadRouteServiceImports(
 	keys := make(map[string]client.ObjectKey)
 	for _, backend := range route.backends {
 		targetKind, ok := backendKindForStatus(backend.Group, backend.Kind)
-		if !ok || targetKind != "ServiceImport" {
+		if !ok || targetKind != constants.KubeServiceImport {
 			continue
 		}
 
@@ -419,9 +420,9 @@ func (r *Reconciler) reconcileAIServiceObject(ctx context.Context, key client.Ob
 	desired := obj.DeepCopy()
 	desired.Status.Conditions = []metav1.Condition{
 		{
-			Type:               "Accepted",
+			Type:               constants.StrAccepted,
 			Status:             metav1.ConditionTrue,
-			Reason:             "Accepted",
+			Reason:             constants.StrAccepted,
 			Message:            "AIService is accepted by nantian-gw",
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.Now(),
@@ -446,9 +447,9 @@ func (r *Reconciler) reconcileTokenPolicyObject(ctx context.Context, key client.
 	desired := obj.DeepCopy()
 	desired.Status.Conditions = []metav1.Condition{
 		{
-			Type:               "Accepted",
+			Type:               constants.StrAccepted,
 			Status:             metav1.ConditionTrue,
-			Reason:             "Accepted",
+			Reason:             constants.StrAccepted,
 			Message:            "TokenPolicy is accepted by nantian-gw",
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.Now(),
@@ -473,9 +474,9 @@ func (r *Reconciler) reconcileWasmPluginObject(ctx context.Context, key client.O
 	desired := obj.DeepCopy()
 	desired.Status.Conditions = []metav1.Condition{
 		{
-			Type:               "Accepted",
+			Type:               constants.StrAccepted,
 			Status:             metav1.ConditionTrue,
-			Reason:             "Accepted",
+			Reason:             constants.StrAccepted,
 			Message:            "WasmPlugin is accepted by nantian-gw",
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.Now(),
@@ -500,9 +501,9 @@ func (r *Reconciler) reconcileRoutePolicyObject(ctx context.Context, key client.
 	desired := obj.DeepCopy()
 	desired.Status.Conditions = []metav1.Condition{
 		{
-			Type:               "Accepted",
+			Type:               constants.StrAccepted,
 			Status:             metav1.ConditionTrue,
-			Reason:             "Accepted",
+			Reason:             constants.StrAccepted,
 			Message:            "RoutePolicy is accepted by nantian-gw",
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.Now(),

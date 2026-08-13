@@ -16,6 +16,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type servicePortKey struct {
@@ -105,7 +106,7 @@ func desiredGatewayService(
 	// Add Selector only when the Gateway is in the same namespace as dataplane pods;
 	// cross-namespace gateways rely on managed EndpointSlices.
 	if gateway.Namespace == defaultDataplaneNamespace {
-		desired.Spec.Selector = map[string]string{"app": "nantian-gw-dataplane"}
+		desired.Spec.Selector = map[string]string{constants.LabelApp: constants.NameDataplane}
 	}
 
 	if current.Name != "" {

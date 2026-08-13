@@ -8,6 +8,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type preparedRouteInput struct {
@@ -266,7 +267,7 @@ func (c *routeEvaluationContext) evaluateResolvedRefs(route preparedRouteInput) 
 		}
 
 		switch targetKind {
-		case "Service":
+		case constants.KubeService:
 			service, ok := c.state.serviceByKey[namespacedName(targetNamespace, backend.Name)]
 			if !ok || !servicePortExists(service, backend.Port) {
 				result.resolvedCondition.Status = metav1.ConditionFalse
@@ -274,7 +275,7 @@ func (c *routeEvaluationContext) evaluateResolvedRefs(route preparedRouteInput) 
 				result.resolvedCondition.Message = "BackendRef does not point to an existing Service"
 				return result
 			}
-		case "ServiceImport":
+		case constants.KubeServiceImport:
 			serviceImport, ok := c.state.serviceImportByKey[namespacedName(targetNamespace, backend.Name)]
 			if !ok || !serviceImportPortExists(serviceImport, backend.Port) {
 				result.resolvedCondition.Status = metav1.ConditionFalse

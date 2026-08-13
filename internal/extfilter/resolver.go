@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -182,7 +183,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   withRefMetadata(config, ref),
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	case "RequestHeaderModifier":
 		config, err := headerModifierConfig(doc.Type, doc.HeaderModifier)
@@ -195,7 +196,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   withRefMetadata(config, ref),
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	case "ResponseHeaderModifier":
 		config, err := headerModifierConfig(doc.Type, doc.HeaderModifier)
@@ -208,7 +209,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   withRefMetadata(config, ref),
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	case "RequestRedirect":
 		if target != TargetHTTP {
@@ -225,7 +226,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   withRefMetadata(config, ref),
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	case "URLRewrite":
 		if target != TargetHTTP {
@@ -242,7 +243,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   withRefMetadata(config, ref),
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	case "RequestMirror":
 		config, err := requestMirrorConfig(doc.RequestMirror, ref.Namespace)
@@ -255,7 +256,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   withRefMetadata(config, ref),
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	case TypeDirectResponse:
 		if target != TargetHTTP {
@@ -272,7 +273,7 @@ func (r Resolver) Resolve(ref Ref, target Target) Result {
 			Config:   config,
 			Resolved: true,
 			Reason:   string(gatewayv1.RouteReasonResolvedRefs),
-			Message:  "ExtensionRef was resolved",
+			Message:  constants.MsgExtensionResolved,
 		}
 	default:
 		base.Message = fmt.Sprintf("unsupported ExtensionRef filter type %q", doc.Type)

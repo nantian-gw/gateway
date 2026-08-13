@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -267,7 +268,7 @@ func Load(path string) (*Config, error) {
 		cfg.HealthProbeAddr = ":18083"
 	}
 	if cfg.SyncPeriod == "" {
-		cfg.SyncPeriod = "30s"
+		cfg.SyncPeriod = constants.DefaultTimeout
 	}
 	if cfg.SyncSettleDelay == "" {
 		cfg.SyncSettleDelay = "200ms"
@@ -309,10 +310,10 @@ func Load(path string) (*Config, error) {
 		cfg.AdminRuntime.ReadHeaderTimeout = "5s"
 	}
 	if cfg.AdminRuntime.ReadTimeout == "" {
-		cfg.AdminRuntime.ReadTimeout = "30s"
+		cfg.AdminRuntime.ReadTimeout = constants.DefaultTimeout
 	}
 	if cfg.AdminRuntime.WriteTimeout == "" {
-		cfg.AdminRuntime.WriteTimeout = "30s"
+		cfg.AdminRuntime.WriteTimeout = constants.DefaultTimeout
 	}
 	if cfg.AdminRuntime.IdleTimeout == "" {
 		cfg.AdminRuntime.IdleTimeout = "2m"
@@ -321,7 +322,7 @@ func Load(path string) (*Config, error) {
 		cfg.NodeDrift.WarningThreshold = "15s"
 	}
 	if cfg.GRPCRuntime.KeepaliveTime == "" {
-		cfg.GRPCRuntime.KeepaliveTime = "30s"
+		cfg.GRPCRuntime.KeepaliveTime = constants.DefaultTimeout
 	}
 	if cfg.GRPCRuntime.KeepaliveTimeout == "" {
 		cfg.GRPCRuntime.KeepaliveTimeout = "10s"
@@ -336,13 +337,13 @@ func Load(path string) (*Config, error) {
 		cfg.GRPCRuntime.MaxConnectionAge = "30m"
 	}
 	if cfg.GRPCRuntime.MaxConnectionAgeGrace == "" {
-		cfg.GRPCRuntime.MaxConnectionAgeGrace = "30s"
+		cfg.GRPCRuntime.MaxConnectionAgeGrace = constants.DefaultTimeout
 	}
 	if cfg.GRPCRuntime.SnapshotSendTimeout == "" {
 		cfg.GRPCRuntime.SnapshotSendTimeout = "5s"
 	}
 	if cfg.GRPCRuntime.SnapshotAckTimeout == "" {
-		cfg.GRPCRuntime.SnapshotAckTimeout = "30s"
+		cfg.GRPCRuntime.SnapshotAckTimeout = constants.DefaultTimeout
 	}
 	if cfg.GRPCRuntime.GracefulStopTimeout == "" {
 		cfg.GRPCRuntime.GracefulStopTimeout = "3s"
@@ -364,7 +365,7 @@ func Load(path string) (*Config, error) {
 		cfg.Controller.RateLimiterBaseDelay = "200ms"
 	}
 	if cfg.Controller.RateLimiterMaxDelay == "" {
-		cfg.Controller.RateLimiterMaxDelay = "30s"
+		cfg.Controller.RateLimiterMaxDelay = constants.DefaultTimeout
 	}
 	if cfg.Controller.RateLimiterQPS <= 0 {
 		cfg.Controller.RateLimiterQPS = 10

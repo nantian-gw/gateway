@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func parseOptionalBool(raw string) (*bool, error) {
@@ -80,7 +81,7 @@ const (
 type listenerSortField string
 
 const (
-	listenerSortByName     listenerSortField = "name"
+	listenerSortByName     listenerSortField = constants.StrName
 	listenerSortByProtocol listenerSortField = "protocol"
 )
 
@@ -88,7 +89,7 @@ type backendSortField string
 
 const (
 	backendSortByNamespace backendSortField = "namespace"
-	backendSortByName      backendSortField = "name"
+	backendSortByName      backendSortField = constants.StrName
 	backendSortByProtocol  backendSortField = "protocol"
 )
 
@@ -104,7 +105,7 @@ type routeSortField string
 
 const (
 	routeSortByNamespace routeSortField = "namespace"
-	routeSortByName      routeSortField = "name"
+	routeSortByName      routeSortField = constants.StrName
 )
 
 type listPagination struct {
@@ -167,7 +168,7 @@ func parseSortOrder(raw string) (sortOrder, error) {
 
 func parseListenerSortField(raw string) (listenerSortField, error) {
 	switch normalizeSortField(raw) {
-	case "", "name":
+	case "", constants.StrName:
 		return listenerSortByName, nil
 	case "protocol":
 		return listenerSortByProtocol, nil
@@ -180,7 +181,7 @@ func parseBackendSortField(raw string) (backendSortField, error) {
 	switch normalizeSortField(raw) {
 	case "", "namespace":
 		return backendSortByNamespace, nil
-	case "name":
+	case constants.StrName:
 		return backendSortByName, nil
 	case "protocol":
 		return backendSortByProtocol, nil
@@ -206,7 +207,7 @@ func parseRouteSortField(raw string) (routeSortField, error) {
 	switch normalizeSortField(raw) {
 	case "", "namespace":
 		return routeSortByNamespace, nil
-	case "name":
+	case constants.StrName:
 		return routeSortByName, nil
 	default:
 		return "", errInvalidQuery("invalid sort")

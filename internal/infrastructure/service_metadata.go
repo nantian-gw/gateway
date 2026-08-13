@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -55,7 +56,7 @@ func desiredGatewayServiceAnnotations(
 		annotations[derivedResourceGatewayClassParametersRefAnnotation] = gatewayClassParametersRef
 	}
 
-	annotations[derivedResourceOwnerKindAnnotation] = "Gateway"
+	annotations[derivedResourceOwnerKindAnnotation] = constants.KubeGateway
 	annotations[derivedResourceOwnerNamespaceAnnotation] = gateway.Namespace
 	annotations[derivedResourceOwnerNameAnnotation] = gateway.Name
 	annotations[derivedResourceOwnerGenerationAnnotation] = strconv.FormatInt(gateway.Generation, 10)
@@ -84,7 +85,7 @@ func desiredGatewayServiceConvergenceAnnotations(
 	}
 
 	annotations := make(map[string]string, annotationCapacity)
-	annotations[derivedResourceOwnerKindAnnotation] = "Gateway"
+	annotations[derivedResourceOwnerKindAnnotation] = constants.KubeGateway
 	annotations[derivedResourceOwnerNamespaceAnnotation] = gateway.Namespace
 	annotations[derivedResourceOwnerNameAnnotation] = gateway.Name
 	annotations[derivedResourceOwnerGenerationAnnotation] = strconv.FormatInt(gateway.Generation, 10)
@@ -114,7 +115,7 @@ func desiredGatewayServiceOwnerReferences(gateway gatewayv1.Gateway) []metav1.Ow
 	blockOwnerDeletion := true
 	return []metav1.OwnerReference{{
 		APIVersion:         gatewayv1.GroupVersion.String(),
-		Kind:               "Gateway",
+		Kind:               constants.KubeGateway,
 		Name:               gateway.Name,
 		UID:                gateway.UID,
 		Controller:         &controller,

@@ -12,6 +12,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/backendtls"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func evaluateBackendTLSPolicies(
@@ -200,11 +201,11 @@ func backendTLSPolicyValidationSupported(
 
 			kind := string(ref.Kind)
 			if kind == "" {
-				kind = "ConfigMap"
+				kind = constants.KubeConfigMap
 			}
 
 			switch kind {
-			case "ConfigMap":
+			case constants.KubeConfigMap:
 				configMap, ok := state.configMapByKey[namespacedName(policy.Namespace, string(ref.Name))]
 				caPEM := []byte(configMap.Data["ca.crt"])
 				if !ok || len(caPEM) == 0 {
@@ -231,7 +232,7 @@ func backendTLSPolicyValidationSupported(
 					}
 					continue
 				}
-			case "Secret":
+			case constants.KubeSecret:
 				secret, ok := state.secretByKey[namespacedName(policy.Namespace, string(ref.Name))]
 				caPEM := secret.Data["ca.crt"]
 				if len(caPEM) == 0 {
@@ -323,7 +324,7 @@ func backendTLSPolicyTargets(
 		group := string(targetRef.Group)
 		kind := string(targetRef.Kind)
 		switch {
-		case group == "" && kind == "Service":
+		case group == "" && kind == constants.KubeService:
 			service, ok := state.serviceByKey[namespacedName(policy.Namespace, string(targetRef.Name))]
 			if !ok {
 				if firstAcceptedMessage == "" {
@@ -350,7 +351,7 @@ func backendTLSPolicyTargets(
 			}
 			keys = append(keys, targetKeys...)
 			claimKeys = append(claimKeys, backendTLSPolicyClaimKey(policy.Namespace, targetRef))
-		case group == mcsv1alpha1.GroupName && kind == "ServiceImport":
+		case group == mcsv1alpha1.GroupName && kind == constants.KubeServiceImport:
 			serviceImport, ok := state.serviceImportByKey[namespacedName(policy.Namespace, string(targetRef.Name))]
 			if !ok {
 				if firstAcceptedMessage == "" {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func (r *Reconciler) loadRouteReferenceGrants(ctx context.Context, state *clusterState, route routeInput) error {
@@ -67,7 +68,7 @@ func referenceGrantTargetNamespacesForRoute(route routeInput, gateways []gateway
 		if !ok {
 			continue
 		}
-		if targetKind != "Service" && targetKind != "ServiceImport" {
+		if targetKind != constants.KubeService && targetKind != constants.KubeServiceImport {
 			continue
 		}
 
@@ -119,7 +120,7 @@ func referenceGrantTargetNamespacesForGateway(
 				}
 
 				kind := strings.TrimSpace(stringOrEmpty(certificateRef.Kind))
-				if kind != "" && kind != "Secret" {
+				if kind != "" && kind != constants.KubeSecret {
 					continue
 				}
 
@@ -140,7 +141,7 @@ func referenceGrantTargetNamespacesForGateway(
 			}
 
 			kind := strings.TrimSpace(string(caRef.Kind))
-			if kind != "" && kind != "ConfigMap" {
+			if kind != "" && kind != constants.KubeConfigMap {
 				continue
 			}
 
@@ -166,7 +167,7 @@ func referenceGrantTargetNamespacesForGateway(
 				}
 
 				kind := strings.TrimSpace(stringOrEmpty(certificateRef.Kind))
-				if kind != "" && kind != "Secret" {
+				if kind != "" && kind != constants.KubeSecret {
 					continue
 				}
 
@@ -182,7 +183,7 @@ func referenceGrantTargetNamespacesForGateway(
 		clientCertificateRef := backendTLS.ClientCertificateRef
 		if group := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Group)); group == "" {
 			kind := strings.TrimSpace(stringOrEmpty(clientCertificateRef.Kind))
-			if kind == "" || kind == "Secret" {
+			if kind == "" || kind == constants.KubeSecret {
 				targetNamespace := namespaceOrDefault(clientCertificateRef.Namespace, gateway.Namespace)
 				if targetNamespace != gateway.Namespace {
 					namespaces[targetNamespace] = struct{}{}

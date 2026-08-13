@@ -16,6 +16,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type infrastructureExpectation struct {
@@ -90,7 +91,7 @@ func (r *Reconciler) expectedInfrastructure(
 			expectedServices,
 			desired,
 			InfrastructureRoleGatewaySvc,
-			"Gateway",
+			constants.KubeGateway,
 			gateway.Namespace,
 			gateway.Name,
 		)
@@ -104,7 +105,7 @@ func (r *Reconciler) expectedInfrastructure(
 				expectedSlices,
 				endpointSlice,
 				InfrastructureRoleGatewaySlice,
-				"Gateway",
+				constants.KubeGateway,
 				gateway.Namespace,
 				gateway.Name,
 			)
@@ -551,7 +552,7 @@ func classifyObservedService(service corev1.Service) (InfrastructureResource, bo
 			Namespace:      service.Namespace,
 			Name:           service.Name,
 			Role:           InfrastructureRoleGatewaySvc,
-			OwnerKind:      "Gateway",
+			OwnerKind:      constants.KubeGateway,
 			OwnerNamespace: service.Labels[gatewayNamespaceLabel],
 			OwnerName:      service.Labels[gatewayNameLabel],
 		}, true
@@ -566,7 +567,7 @@ func classifyObservedService(service corev1.Service) (InfrastructureResource, bo
 			OwnerNamespace: service.Namespace,
 			OwnerName:      service.Name,
 		}, true
-	case service.Annotations[mesh.ManagedServiceAnnotation] == "true":
+	case service.Annotations[mesh.ManagedServiceAnnotation] == constants.StrTrue:
 		return InfrastructureResource{
 			Kind:           InfrastructureKindService,
 			Namespace:      service.Namespace,
@@ -604,7 +605,7 @@ func classifyObservedEndpointSlice(endpointSlice discoveryv1.EndpointSlice) (Inf
 			Namespace:      endpointSlice.Namespace,
 			Name:           endpointSlice.Name,
 			Role:           InfrastructureRoleGatewaySlice,
-			OwnerKind:      "Gateway",
+			OwnerKind:      constants.KubeGateway,
 			OwnerNamespace: endpointSlice.Labels[gatewayNamespaceLabel],
 			OwnerName:      endpointSlice.Labels[gatewayNameLabel],
 		}, true

@@ -12,6 +12,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
@@ -50,9 +51,9 @@ const (
 	apiVersionNantianV1   = "gateway.nantian.dev/v1alpha1"
 	apiVersionMCSV1Alpha1 = "multicluster.x-k8s.io/v1alpha1"
 	categoryGateway       = "gateway"
-	categoryRoute         = "route"
+	categoryRoute         = constants.StrRoute
 	categoryPolicy        = "policy"
-	categoryBackend       = "backend"
+	categoryBackend       = constants.StrBackend
 	categoryAI            = "ai"
 	categoryWasm          = "wasm"
 )
@@ -87,7 +88,7 @@ var supportedResourceKinds = []resourceKindSpec{
 		descriptor: ResourceKindDescriptor{
 			Kind:        kindHTTPRoute,
 			APIVersion:  apiVersionV1,
-			Category:    "route",
+			Category:    constants.StrRoute,
 			Description: "Kubernetes Gateway API HTTPRoute resource",
 			Namespaced:  true,
 		},
@@ -100,7 +101,7 @@ var supportedResourceKinds = []resourceKindSpec{
 		descriptor: ResourceKindDescriptor{
 			Kind:        kindGRPCRoute,
 			APIVersion:  apiVersionV1,
-			Category:    "route",
+			Category:    constants.StrRoute,
 			Description: "Kubernetes Gateway API GRPCRoute resource",
 			Namespaced:  true,
 		},
@@ -113,7 +114,7 @@ var supportedResourceKinds = []resourceKindSpec{
 		descriptor: ResourceKindDescriptor{
 			Kind:        kindTCPRoute,
 			APIVersion:  apiVersionV1Alpha2,
-			Category:    "route",
+			Category:    constants.StrRoute,
 			Description: "Kubernetes Gateway API TCPRoute resource",
 			Namespaced:  true,
 		},
@@ -126,7 +127,7 @@ var supportedResourceKinds = []resourceKindSpec{
 		descriptor: ResourceKindDescriptor{
 			Kind:        kindUDPRoute,
 			APIVersion:  apiVersionV1Alpha2,
-			Category:    "route",
+			Category:    constants.StrRoute,
 			Description: "Kubernetes Gateway API UDPRoute resource",
 			Namespaced:  true,
 		},
@@ -139,7 +140,7 @@ var supportedResourceKinds = []resourceKindSpec{
 		descriptor: ResourceKindDescriptor{
 			Kind:        kindTLSRoute,
 			APIVersion:  apiVersionV1Alpha2,
-			Category:    "route",
+			Category:    constants.StrRoute,
 			Description: "Kubernetes Gateway API TLSRoute resource",
 			Namespaced:  true,
 		},
@@ -191,7 +192,7 @@ var supportedResourceKinds = []resourceKindSpec{
 		descriptor: ResourceKindDescriptor{
 			Kind:        kindServiceImport,
 			APIVersion:  apiVersionMCSV1Alpha1,
-			Category:    "backend",
+			Category:    constants.StrBackend,
 			Description: "MCS API ServiceImport resource used as a backend source",
 			Namespaced:  true,
 		},

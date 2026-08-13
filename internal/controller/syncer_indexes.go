@@ -13,6 +13,7 @@ import (
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -408,9 +409,9 @@ func gatewayParentIndexValue(
 		kind = string(*parentRef.Kind)
 	}
 	if kind == "" {
-		kind = "Gateway"
+		kind = constants.KubeGateway
 	}
-	if kind != "Gateway" {
+	if kind != constants.KubeGateway {
 		return "", false
 	}
 
@@ -521,9 +522,9 @@ func configMapReferenceIndexValue(
 
 	targetKind := string(kind)
 	if targetKind == "" {
-		targetKind = "ConfigMap"
+		targetKind = constants.KubeConfigMap
 	}
-	if targetKind != "ConfigMap" {
+	if targetKind != constants.KubeConfigMap {
 		return "", false
 	}
 

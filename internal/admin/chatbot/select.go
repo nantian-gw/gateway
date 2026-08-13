@@ -3,6 +3,7 @@ package chatbot
 import (
 	"sort"
 	"strings"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 var kindKeywordsASCII = map[string]string{
 	"gateway":   kindGateway,
 	"httproute": kindHTTPRoute,
-	"http":      kindHTTPRoute,
+	constants.StrHTTP:      kindHTTPRoute,
 	"grpc":      kindGRPCRoute,
 	"grpcroute": kindGRPCRoute,
 	"tls":       kindTLSRoute,

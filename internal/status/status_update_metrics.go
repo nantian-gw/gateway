@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -35,35 +36,35 @@ var (
 			Name: "nantian_gateway_controlplane_status_update_conflicts_total",
 			Help: "Total number of controlplane status update conflicts partitioned by resource type.",
 		},
-		[]string{"resource"},
+		[]string{constants.KubeResource},
 	)
 	statusUpdateRetriesTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "nantian_gateway_controlplane_status_update_retries_total",
 			Help: "Total number of additional controlplane status update retry attempts entered after the initial attempt, partitioned by resource type.",
 		},
-		[]string{"resource"},
+		[]string{constants.KubeResource},
 	)
 	statusUpdateErrorsTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "nantian_gateway_controlplane_status_update_errors_total",
 			Help: "Total number of terminal controlplane status update errors partitioned by resource type and normalized error class.",
 		},
-		[]string{"resource", "reason"},
+		[]string{constants.KubeResource, "reason"},
 	)
 	statusUpdatesWrittenTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "nantian_gateway_controlplane_status_updates_written_total",
 			Help: "Total number of actual Patch calls for status updates.",
 		},
-		[]string{"resource"},
+		[]string{constants.KubeResource},
 	)
 	statusUpdatesSkippedTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "nantian_gateway_controlplane_status_updates_skipped_total",
 			Help: "Total number of status updates skipped via DeepEqual.",
 		},
-		[]string{"resource"},
+		[]string{constants.KubeResource},
 	)
 	statusBatchDurationSeconds = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -71,7 +72,7 @@ var (
 			Help:    "Duration of status update batch write phase.",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"resource"},
+		[]string{constants.KubeResource},
 	)
 )
 

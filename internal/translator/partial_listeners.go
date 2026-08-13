@@ -13,6 +13,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
@@ -594,9 +595,9 @@ func referencedGatewayGrantNamespaces(gateways []gatewayv1.Gateway) []string {
 					targetNamespace := shared.NamespaceOrDefault(ref.Namespace, gateway.Namespace)
 					targetKind := string(ref.Kind)
 					if targetKind == "" {
-						targetKind = "ConfigMap"
+						targetKind = constants.KubeConfigMap
 					}
-					if targetNamespace != gateway.Namespace && string(ref.Group) == "" && targetKind == "ConfigMap" {
+					if targetNamespace != gateway.Namespace && string(ref.Group) == "" && targetKind == constants.KubeConfigMap {
 						namespaces[targetNamespace] = struct{}{}
 					}
 				}

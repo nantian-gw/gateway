@@ -13,6 +13,7 @@ import (
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	"github.com/nantian-gw/gateway/internal/constants"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 )
 
@@ -193,7 +194,7 @@ func (s *Syncer) backendTLSPoliciesForConfigMapIndex(
 		decode,
 		fallback,
 		indexFallbackSemantics{
-			Owner:          "snapshot-syncer",
+			Owner:          constants.NameSnapshotSyncer,
 			Kind:           "BackendTLSPolicy",
 			Index:          backendTLSPolicyConfigMapRefIndex,
 			IndexValue:     indexValue,
@@ -291,12 +292,12 @@ func addBackendPolicyTargetRequest(
 	}
 
 	switch {
-	case group == "" && kind == "Service":
+	case group == "" && kind == constants.KubeService:
 		requests[snapshotBackendsReconcileRequestForService(client.ObjectKey{
 			Namespace: namespace,
 			Name:      name,
 		})] = struct{}{}
-	case group == mcsv1alpha1.GroupName && kind == "ServiceImport":
+	case group == mcsv1alpha1.GroupName && kind == constants.KubeServiceImport:
 		requests[snapshotBackendsReconcileRequestForServiceImport(client.ObjectKey{
 			Namespace: namespace,
 			Name:      name,

@@ -14,6 +14,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const defaultDataplaneNetworkPolicyName = "nantian-gw-dataplane"
@@ -170,7 +171,7 @@ func loadMeshFrontendNetworkPolicyPorts(
 	index := make(map[networkPolicyPortKey]struct{})
 	ordered := make([]networkPolicyPortKey, 0)
 	for _, service := range services.Items {
-		if service.Annotations[mesh.ManagedServiceAnnotation] != "true" {
+		if service.Annotations[mesh.ManagedServiceAnnotation] != constants.StrTrue {
 			continue
 		}
 

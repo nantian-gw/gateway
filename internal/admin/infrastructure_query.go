@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nantian-gw/gateway/internal/infrastructure"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type infrastructureSortField string
@@ -13,7 +14,7 @@ type infrastructureSortField string
 const (
 	infrastructureSortByState     infrastructureSortField = "state"
 	infrastructureSortByRole      infrastructureSortField = "role"
-	infrastructureSortByKind      infrastructureSortField = "kind"
+	infrastructureSortByKind      infrastructureSortField = constants.StrKind
 	infrastructureSortByNamespace infrastructureSortField = "namespace"
 	infrastructureSortByName      infrastructureSortField = "name"
 )
@@ -38,7 +39,7 @@ func parseInfrastructureQueryFilter(query url.Values) (infrastructureQueryFilter
 	if err != nil {
 		return infrastructureQueryFilter{}, err
 	}
-	kind, err := parseInfrastructureKindFilter(query.Get("kind"))
+	kind, err := parseInfrastructureKindFilter(query.Get(constants.StrKind))
 	if err != nil {
 		return infrastructureQueryFilter{}, err
 	}
@@ -143,7 +144,7 @@ func parseInfrastructureKindFilter(raw string) (string, error) {
 	switch normalizeSortField(raw) {
 	case "":
 		return "", nil
-	case "service":
+	case constants.StrService:
 		return infrastructure.InfrastructureKindService, nil
 	case "endpointslice":
 		return infrastructure.InfrastructureKindSlice, nil
@@ -158,7 +159,7 @@ func parseInfrastructureSortField(raw string) (infrastructureSortField, error) {
 		return infrastructureSortByState, nil
 	case "role":
 		return infrastructureSortByRole, nil
-	case "kind":
+	case constants.StrKind:
 		return infrastructureSortByKind, nil
 	case "namespace":
 		return infrastructureSortByNamespace, nil

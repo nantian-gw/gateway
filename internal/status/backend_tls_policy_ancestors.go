@@ -10,6 +10,7 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 func collectBackendTLSPolicyAncestors(
@@ -133,7 +134,7 @@ func backendPolicyKeysForInputs(
 		}
 
 		switch targetKind {
-		case "Service":
+		case constants.KubeService:
 			service, ok := state.serviceByKey[namespacedName(targetNamespace, backend.Name)]
 			if !ok {
 				continue
@@ -145,7 +146,7 @@ func backendPolicyKeysForInputs(
 				continue
 			}
 			keys = append(keys, backendTLSPolicyBackendKey(targetNamespace, backend.Name, int32(backend.Port)))
-		case "ServiceImport":
+		case constants.KubeServiceImport:
 			serviceImport, ok := state.serviceImportByKey[namespacedName(targetNamespace, backend.Name)]
 			if !ok {
 				continue
@@ -251,7 +252,7 @@ func fallbackPolicyAncestors(
 	}
 	return []gatewayv1.ParentReference{{
 		Group:     groupPtr(gatewayGroup),
-		Kind:      kindPtr("Service"),
+		Kind:      kindPtr(constants.KubeService),
 		Name:      "unknown",
 		Namespace: gatewayNamespacePtr(""),
 	}}

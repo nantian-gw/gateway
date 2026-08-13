@@ -4,6 +4,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
@@ -69,11 +70,11 @@ func affectedBackendRefRoutes(
 			continue
 		}
 		switch route.Kind {
-		case "TCP":
+		case constants.ProtocolTCP:
 			routeKeys.tcp = append(routeKeys.tcp, client.ObjectKey{Namespace: route.Namespace, Name: route.Name})
-		case "UDP":
+		case constants.ProtocolUDP:
 			routeKeys.udp = append(routeKeys.udp, client.ObjectKey{Namespace: route.Namespace, Name: route.Name})
-		case "TLS":
+		case constants.ProtocolTLS:
 			routeKeys.tls = append(routeKeys.tls, client.ObjectKey{Namespace: route.Namespace, Name: route.Name})
 		}
 		streamRoutes = append(streamRoutes, route)
@@ -138,11 +139,11 @@ func routeBackendRefsTouchAffectedBackends(
 		switch kind, ok := backends.BackendKindForRef(ref.Group, ref.Kind); {
 		case !ok:
 			continue
-		case kind == "Service":
+		case kind == constants.KubeService:
 			if _, exists := serviceKeySet[key]; exists {
 				return true
 			}
-		case kind == "ServiceImport":
+		case kind == constants.KubeServiceImport:
 			if _, exists := serviceImportKeySet[key]; exists {
 				return true
 			}
@@ -240,11 +241,11 @@ func refreshBackendRef(
 
 func routeKindForStreamIR(kind string) backends.RouteKind {
 	switch kind {
-	case "TCP":
+	case constants.ProtocolTCP:
 		return backends.RouteKindTCP
-	case "UDP":
+	case constants.ProtocolUDP:
 		return backends.RouteKindUDP
-	case "TLS":
+	case constants.ProtocolTLS:
 		return backends.RouteKindTLS
 	default:
 		return backends.RouteKindTCP

@@ -14,6 +14,7 @@ import (
 
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type frontendExposureMode int
@@ -425,7 +426,7 @@ func desiredMeshFrontendService(
 	if desired.Annotations == nil {
 		desired.Annotations = make(map[string]string)
 	}
-	desired.Annotations[mesh.ManagedServiceAnnotation] = "true"
+	desired.Annotations[mesh.ManagedServiceAnnotation] = constants.StrTrue
 	desired.Annotations[mesh.ShadowServiceAnnotation] = shadowName
 	desired.Spec.Selector = nil
 	desired.Spec.Ports = remapMeshFrontendPorts(source.Spec.Ports, frontends)
@@ -503,7 +504,7 @@ func serviceOrEmpty(service corev1.Service) *corev1.Service {
 }
 
 func sourceService(current corev1.Service, shadow corev1.Service) corev1.Service {
-	if current.Annotations[mesh.ManagedServiceAnnotation] == "true" && shadow.Name != "" {
+	if current.Annotations[mesh.ManagedServiceAnnotation] == constants.StrTrue && shadow.Name != "" {
 		return shadow
 	}
 	return current

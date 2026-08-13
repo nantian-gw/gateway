@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type listenerSetEvaluation struct {
@@ -152,7 +153,7 @@ func evaluateListenerSetEntry(
 	entryListener := listenerEntryToInternalListener(entry, ls)
 	policy := buildListenerPolicy(entryListener)
 
-	resolvedRefsCond := metav1.Condition{Type: string(gatewayv1.ListenerConditionResolvedRefs), Status: metav1.ConditionTrue, Reason: string(gatewayv1.ListenerReasonResolvedRefs), Message: "Listener references are resolved", ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()}
+	resolvedRefsCond := metav1.Condition{Type: string(gatewayv1.ListenerConditionResolvedRefs), Status: metav1.ConditionTrue, Reason: string(gatewayv1.ListenerReasonResolvedRefs), Message: constants.MsgListenerResolved, ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()}
 	acceptedCond := metav1.Condition{Type: string(gatewayv1.ListenerConditionAccepted), Status: metav1.ConditionTrue, Reason: string(gatewayv1.ListenerReasonAccepted), Message: "Listener is accepted", ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()}
 	programmedCond := metav1.Condition{Type: string(gatewayv1.ListenerConditionProgrammed), Status: metav1.ConditionTrue, Reason: string(gatewayv1.ListenerReasonProgrammed), Message: "Listener is programmed", ObservedGeneration: ls.Generation, LastTransitionTime: metav1.Now()}
 	var extraConditions []metav1.Condition
