@@ -48,29 +48,15 @@ func TestGatewayAPIConformance(t *testing.T) {
 			// HTTPRouteHTTPSListenerDetectMisdirectedRequests: test was passing on 2026-07-31,
 			// incorrectly skipped. Dataplane implementation is complete.
 			// "HTTPRouteHTTPSListenerDetectMisdirectedRequests",
-			// ListenerSetAllowedRoutesSupportedKinds: timing issue - observedGeneration not updated
-			// before test assertion. Pre-existing, not related to code logic.
-			"ListenerSetAllowedRoutesSupportedKinds",
-			// BackendTLSPolicyConflictResolution: CI timing issue (resourceVersion conflict),
-			// not a functional problem. Keep in skip list until retry logic is added.
-			"BackendTLSPolicyConflictResolution",
-			// HTTPRouteListenerHostnameMatching: dataplane supports listener hostname matching
-			// via listener_hostname_score and HostnameRouteIndex.
-			// "HTTPRouteListenerHostnameMatching",
-			// HTTPRouteListenerPortMatching: fixed - dataplane supports port-based
-			// listener matching via visit_candidate_listeners and parse_authority_port.
-			// "HTTPRouteListenerPortMatching",
-			// TLSRouteInvalidNoMatchingListener: status evaluation logic already handles
-			// all three cases correctly. Unskip to verify.
-			// "TLSRouteInvalidNoMatchingListener",
-			// HTTPRouteHostnameIntersection: dataplane dual filtering (listener + route hostname)
-			// implicitly enforces intersection. Control plane listenerMatchesHostnames is correct.
-			// "HTTPRouteHostnameIntersection",
-			// Upstream suite (v1.5.1/v1.6.1) updates these resources without
-			// retrying on resourceVersion conflicts, racing status writes.
-			// BackendTLSPolicy: CI timing issue (resourceVersion conflict),
-			// not a functional problem.
-			"BackendTLSPolicy",
+		// ListenerSetAllowedRoutesSupportedKinds: timing issue - observedGeneration not updated
+		// before test assertion. Pre-existing, not related to code logic.
+		// "ListenerSetAllowedRoutesSupportedKinds",
+		// BackendTLSPolicyConflictResolution: CI timing issue (resourceVersion conflict),
+		// not a functional problem. Keep in skip list until retry logic is added.
+		// "BackendTLSPolicyConflictResolution",
+		// BackendTLSPolicy: CI timing issue (resourceVersion conflict),
+		// not a functional problem.
+		// "BackendTLSPolicy",
 			// TLSRouteHostnameIntersection: reuses same hostname intersection logic as HTTP.
 			// "TLSRouteHostnameIntersection",
 			// TLSRouteMixedTerminationSameNamespace: dataplane shared-tls already handles
