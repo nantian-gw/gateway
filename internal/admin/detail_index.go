@@ -105,7 +105,7 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 			continue
 		}
 		index.routes[detailRouteKey{
-			kind:      "GRPC",
+			kind:      constants.ProtocolGRPC,
 			namespace: route.Namespace,
 			name:      route.Name,
 		}] = route

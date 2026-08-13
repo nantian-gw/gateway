@@ -167,15 +167,15 @@ func topologyRouteKind(node TopologyNode) string {
 
 func topologyRouteKindLabel(kind string) string {
 	switch kind {
-	case kindHTTPRoute:
+	case "HTTP":
 		return constants.KubeHTTPRoute
-	case kindGRPCRoute:
+	case "GRPC":
 		return "GRPCRoute"
-	case kindTCPRoute:
+	case "TCP":
 		return "TCPRoute"
-	case kindUDPRoute:
+	case "UDP":
 		return "UDPRoute"
-	case kindTLSRoute:
+	case "TLS":
 		return "TLSRoute"
 	default:
 		return ""

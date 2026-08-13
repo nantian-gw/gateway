@@ -185,7 +185,7 @@ func topologyRouteNode(kind, namespace, name string, rules int, hostnames []stri
 		Name:      name,
 		Status:    strings.ToLower(strings.TrimSuffix(strings.TrimSuffix(kind, "Route"), constants.StrRoute)),
 		Detail:    fmt.Sprintf("%s · %d rules", kind, rules),
-		Metadata:  map[string]string{"kind": kind, "hostnames": strings.Join(hostnames, ", ")},
+		Metadata:  map[string]string{constants.StrKind: kind, "hostnames": strings.Join(hostnames, ", ")},
 	}
 }
 
@@ -309,7 +309,7 @@ func ensureBackendTopologyNode(
 	cluster, ok := findTopologyBackend(backends, namespace, name, port)
 	detail := name + ":" + strconv.FormatUint(uint64(port), 10)
 	status := "unknown"
-	metadata := map[string]string{"service": name, "port": strconv.FormatUint(uint64(port), 10)}
+	metadata := map[string]string{constants.StrService: name, "port": strconv.FormatUint(uint64(port), 10)}
 	if ok {
 		detail = fmt.Sprintf("%s · %d/%d healthy", cluster.Protocol, healthyEndpoints(cluster), len(cluster.Endpoints))
 		status = topologyBackendStatus(cluster)
@@ -357,7 +357,7 @@ func ensureBackendTopologyNode(
 func findTopologyBackend(backends []ir.BackendCluster, namespace, service string, port uint32) (ir.BackendCluster, bool) {
 	exactName := service + ":" + strconv.FormatUint(uint64(port), 10)
 	for _, backend := range backends {
-		if backend.Namespace == namespace && (backend.Name == exactName || backend.Metadata["service"] == service) {
+		if backend.Namespace == namespace && (backend.Name == exactName || backend.Metadata[constants.StrService] == service) {
 			return backend, true
 		}
 	}

@@ -92,7 +92,7 @@ var supportedResourceKinds = []resourceKindSpec{
 			Description: "Kubernetes Gateway API HTTPRoute resource",
 			Namespaced:  true,
 		},
-		aliases:    []string{"httproute", "httproutes", "http"},
+		aliases:    []string{"httproute", "httproutes", constants.StrHTTP},
 		newObject:  func() client.Object { return &gatewayv1.HTTPRoute{} },
 		newList:    func() client.ObjectList { return &gatewayv1.HTTPRouteList{} },
 		namespaced: true,
