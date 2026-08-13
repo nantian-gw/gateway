@@ -166,15 +166,15 @@ func topologyRouteKind(node TopologyNode) string {
 
 func topologyRouteKindLabel(kind string) string {
 	switch kind {
-	case "HTTP":
+	case kindHTTPRoute:
 		return "HTTPRoute"
-	case "GRPC":
+	case kindGRPCRoute:
 		return "GRPCRoute"
-	case "TCP":
+	case kindTCPRoute:
 		return "TCPRoute"
-	case "UDP":
+	case kindUDPRoute:
 		return "UDPRoute"
-	case "TLS":
+	case kindTLSRoute:
 		return "TLSRoute"
 	default:
 		return ""

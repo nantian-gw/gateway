@@ -441,20 +441,20 @@ func parseCanonicalToken(raw string, normalizer func(string) string, field strin
 
 func canonicalProtocol(protocol string) string {
 	switch normalizeToken(protocol) {
-	case "HTTP":
-		return "HTTP"
+	case kindHTTPRoute:
+		return kindHTTPRoute
 	case "HTTPS":
 		return "HTTPS"
-	case "GRPC":
-		return "GRPC"
+	case kindGRPCRoute:
+		return kindGRPCRoute
 	case "HTTP3":
 		return "HTTP3"
-	case "TCP":
-		return "TCP"
-	case "UDP":
-		return "UDP"
-	case "TLSPASSTHROUGH", "TLS":
-		return "TLS"
+	case kindTCPRoute:
+		return kindTCPRoute
+	case kindUDPRoute:
+		return kindUDPRoute
+	case "TLSPASSTHROUGH", kindTLSRoute:
+		return kindTLSRoute
 	default:
 		return ""
 	}
@@ -462,16 +462,16 @@ func canonicalProtocol(protocol string) string {
 
 func canonicalBackendProtocol(protocol string) string {
 	switch normalizeToken(protocol) {
-	case "TCP":
-		return "TCP"
-	case "UDP":
-		return "UDP"
-	case "HTTP":
-		return "HTTP"
+	case kindTCPRoute:
+		return kindTCPRoute
+	case kindUDPRoute:
+		return kindUDPRoute
+	case kindHTTPRoute:
+		return kindHTTPRoute
 	case "HTTPS":
 		return "HTTPS"
-	case "GRPC":
-		return "GRPC"
+	case kindGRPCRoute:
+		return kindGRPCRoute
 	case "GRPCS":
 		return "GRPCS"
 	case "H2C":
@@ -483,16 +483,16 @@ func canonicalBackendProtocol(protocol string) string {
 
 func canonicalRouteKind(kind string) string {
 	switch normalizeToken(kind) {
-	case "HTTP":
-		return "HTTP"
-	case "GRPC":
-		return "GRPC"
-	case "TCP":
-		return "TCP"
-	case "UDP":
-		return "UDP"
-	case "TLS":
-		return "TLS"
+	case kindHTTPRoute:
+		return kindHTTPRoute
+	case kindGRPCRoute:
+		return kindGRPCRoute
+	case kindTCPRoute:
+		return kindTCPRoute
+	case kindUDPRoute:
+		return kindUDPRoute
+	case kindTLSRoute:
+		return kindTLSRoute
 	default:
 		return ""
 	}
