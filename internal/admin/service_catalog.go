@@ -17,7 +17,7 @@ import (
 
 type ServiceCatalogEntry struct {
 	Namespace string               `json:"namespace"`
-	Name      string               `json:constants.StrName`
+	Name      string               `json:"name"`
 	Ports     []ServiceCatalogPort `json:"ports,omitempty"`
 }
 
