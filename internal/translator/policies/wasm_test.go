@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
+	"github.com/nantian-gw/gateway/internal/translator/shared"
 )
 
 func TestTranslateWasmPlugin(t *testing.T) {
@@ -141,7 +142,7 @@ func TestTranslateWasmPlugins(t *testing.T) {
 		{ObjectMeta: metav1.ObjectMeta{Name: "p1", Namespace: "default"}},
 		{ObjectMeta: metav1.ObjectMeta{Name: "p2", Namespace: "default"}},
 	}
-	result := TranslateWasmPlugins(plugins, nil, nil)
+	result := TranslateWasmPlugins(plugins, nil, nil, nil, nil, nil)
 	if len(result) != 2 {
 		t.Errorf("expected 2, got %d", len(result))
 	}
@@ -300,5 +301,100 @@ func TestTranslateWasmPluginURLOverridesInline(t *testing.T) {
 	}
 	if !bytes.Equal(cfg.WasmBytes, wasmBytes) {
 		t.Errorf("expected url bytes %q, got %q", string(wasmBytes), string(cfg.WasmBytes))
+	}
+}
+
+func TestTranslateWasmPluginHookNameMapping(t *testing.T) {
+	p := wasmplugin.WasmPlugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "hooks", Namespace: "default"},
+		Spec: wasmplugin.WasmPluginSpec{
+			Hooks: []wasmplugin.WasmHook{
+				wasmplugin.HookOnRequest,
+				wasmplugin.HookOnResponse,
+				wasmplugin.HookOnStreamChunk,
+			},
+		},
+	}
+	cfg := TranslateWasmPlugin(p, nil, nil)
+	expected := []string{"on_request", "on_response", "on_stream_chunk"}
+	if len(cfg.Hooks) != len(expected) {
+		t.Fatalf("expected %d hooks, got %d", len(expected), len(cfg.Hooks))
+	}
+	for i := range expected {
+		if cfg.Hooks[i] != expected[i] {
+			t.Errorf("hook[%d] = %s, want %s", i, cfg.Hooks[i], expected[i])
+		}
+	}
+}
+
+func TestTranslateWasmPluginsTargetRefs(t *testing.T) {
+	services := map[string]struct{}{
+		shared.BackendObjectKey("default", "svc-a"): {},
+		shared.BackendObjectKey("default", "svc-b"): {},
+	}
+	httpRoutes := map[string][]string{
+		shared.BackendObjectKey("default", "route-1"): {
+			shared.BackendObjectKey("default", "svc-a"),
+		},
+		shared.BackendObjectKey("default", "my-route"): {
+			shared.BackendObjectKey("default", "svc-b"),
+		},
+	}
+
+	plugins := []wasmplugin.WasmPlugin{
+		// 1. Service targetRef (group empty)
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "svc-plugin", Namespace: "default"},
+			Spec: wasmplugin.WasmPluginSpec{
+				TargetRefs: []wasmplugin.WasmPluginTargetRef{{
+					Group: "", Kind: "Service", Name: "svc-a",
+				}},
+			},
+		},
+		// 2. HTTPRoute targetRef resolves to its backend services
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "route-plugin", Namespace: "default"},
+			Spec: wasmplugin.WasmPluginSpec{
+				TargetRefs: []wasmplugin.WasmPluginTargetRef{{
+					Group: "gateway.networking.k8s.io", Kind: "HTTPRoute", Name: "my-route",
+				}},
+			},
+		},
+		// 3. ServiceImport targetRef
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "import-plugin", Namespace: "default"},
+			Spec: wasmplugin.WasmPluginSpec{
+				TargetRefs: []wasmplugin.WasmPluginTargetRef{{
+					Group: "multicluster.x-k8s.io", Kind: "ServiceImport", Name: "svc-b",
+				}},
+			},
+		},
+		// 4. Service referencing a backend that does not exist
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "missing-plugin", Namespace: "default"},
+			Spec: wasmplugin.WasmPluginSpec{
+				TargetRefs: []wasmplugin.WasmPluginTargetRef{{
+					Group: "", Kind: "Service", Name: "not-exist",
+				}},
+			},
+		},
+	}
+
+	serviceImports := map[string]struct{}{
+		shared.BackendObjectKey("default", "svc"): {},
+	}
+
+	result := TranslateWasmPlugins(plugins, nil, services, serviceImports, httpRoutes, nil)
+	// svc-plugin targets svc-a
+	if _, ok := result[shared.BackendObjectKey("default", "svc-a")]; !ok {
+		t.Errorf("expected svc-a to receive plugin from svc-plugin targetRef")
+	}
+	// route-plugin resolves to svc-b
+	if _, ok := result[shared.BackendObjectKey("default", "svc-b")]; !ok {
+		t.Errorf("expected svc-b to receive plugin from route-plugin targetRef")
+	}
+	// missing plugin must not be attached anywhere
+	if _, ok := result[shared.BackendObjectKey("default", "not-exist")]; ok {
+		t.Errorf("unexpected plugin attached to non-existent service")
 	}
 }

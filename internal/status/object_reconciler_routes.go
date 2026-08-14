@@ -481,7 +481,15 @@ func (r *Reconciler) reconcileWasmPluginObject(ctx context.Context, key client.O
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.Now(),
 		},
-	}
+		{
+			Type:               constants.StrProgrammed,
+			Status:             metav1.ConditionTrue,
+			Reason:             constants.StrProgrammed,
+			Message:            "WasmPlugin has been programmed into the data plane",
+			ObservedGeneration: obj.Generation,
+			LastTransitionTime: metav1.Now(),
+		},
+}
 
 	if apiequality.Semantic.DeepEqual(obj.Status, desired.Status) {
 		return nil

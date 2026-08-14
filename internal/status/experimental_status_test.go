@@ -114,11 +114,13 @@ func TestReconcileWasmPluginObjectWritesAcceptedCondition(t *testing.T) {
 	if err := k8sClient.Get(context.Background(), key, &obj); err != nil {
 		t.Fatalf("Get WasmPlugin returned error: %v", err)
 	}
-	if len(obj.Status.Conditions) != 1 {
-		t.Fatalf("expected 1 condition, got %d", len(obj.Status.Conditions))
+	if len(obj.Status.Conditions) != 2 {
+		t.Fatalf("expected 2 conditions, got %d", len(obj.Status.Conditions))
 	}
 	assertCondition(t, obj.Status.Conditions, "Accepted", metav1.ConditionTrue, "Accepted", 1)
+	assertCondition(t, obj.Status.Conditions, "Programmed", metav1.ConditionTrue, "Programmed", 1)
 	assertConditionMessage(t, obj.Status.Conditions, "Accepted", "WasmPlugin is accepted by nantian-gw")
+	assertConditionMessage(t, obj.Status.Conditions, "Programmed", "WasmPlugin has been programmed into the data plane")
 }
 
 func TestReconcileRoutePolicyObjectWritesAcceptedCondition(t *testing.T) {

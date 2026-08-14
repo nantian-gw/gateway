@@ -24,6 +24,14 @@ const (
 	wasmConfigMapDefaultKeyLegacy = ""
 )
 
+// wasmHookNameMapping converts CRD camelCase hook names to data plane snake_case.
+// The CRD uses "onRequest"/"onResponse"/"onStreamChunk" but the wasm runtime's
+// exported function names are "on_request"/"on_response"/"on_stream_chunk".
+var wasmHookNameMapping = map[string]string{
+	"onRequest":     "on_request",
+	"onResponse":    "on_response",
+	"onStreamChunk": "on_stream_chunk",
+}
 func ReferencedConfigMapKeysForWasmPlugins(plugins []wasmplugin.WasmPlugin) []client.ObjectKey {
 	keys := make([]client.ObjectKey, 0, len(plugins))
 	for _, p := range plugins {
@@ -66,7 +74,17 @@ func TranslateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap,
 		},
 	}
 	for _, h := range p.Spec.Hooks {
-		cfg.Hooks = append(cfg.Hooks, string(h))
+		hookName := string(h)
+		if mapped, ok := wasmHookNameMapping[hookName]; ok {
+			hookName = mapped
+		} else {
+			logger.Warn("wasm plugin: unknown hook name",
+				"namespace", p.Namespace,
+				"name", p.Name,
+				"hook", hookName,
+			)
+		}
+		cfg.Hooks = append(cfg.Hooks, hookName)
 	}
 	if p.Spec.Wasm.Inline != "" {
 		decoded, err := base64.StdEncoding.DecodeString(p.Spec.Wasm.Inline)
@@ -103,14 +121,48 @@ func TranslateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap,
 	return cfg
 }
 
-func TranslateWasmPlugins(plugins []wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap, logger *slog.Logger) map[string]ir.WasmPluginConfig {
+func TranslateWasmPlugins(
+    plugins []wasmplugin.WasmPlugin,
+    configMaps []corev1.ConfigMap,
+    services map[string]struct{},
+    serviceImports map[string]struct{},
+    httpRoutes map[string][]string,
+    logger *slog.Logger,
+) map[string]ir.WasmPluginConfig {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	result := make(map[string]ir.WasmPluginConfig, len(plugins))
 	for _, p := range plugins {
-		key := shared.BackendObjectKey(p.Namespace, p.Name)
-		result[key] = TranslateWasmPlugin(p, configMaps, logger)
+		cfg := TranslateWasmPlugin(p, configMaps, logger)
+		// When no targetRefs are specified, fall back to name-based matching
+		// (the backend is selected by namespace/name key).
+		if len(p.Spec.TargetRefs) == 0 {
+			key := shared.BackendObjectKey(p.Namespace, p.Name)
+			result[key] = cfg
+			continue
+		}
+		for _, targetRef := range p.Spec.TargetRefs {
+			key := shared.BackendObjectKey(p.Namespace, string(targetRef.Name))
+			switch {
+			case targetRef.Group == "" && targetRef.Kind == "Service":
+				if _, ok := services[key]; ok {
+					result[key] = cfg
+				}
+			case targetRef.Group == "multicluster.x-k8s.io" && targetRef.Kind == "ServiceImport":
+				if _, ok := serviceImports[key]; ok {
+					result[key] = cfg
+				}
+			case targetRef.Group == "gateway.networking.k8s.io" && (targetRef.Kind == "HTTPRoute" || targetRef.Kind == "GRPCRoute"):
+				if backendKeys, ok := httpRoutes[key]; ok {
+					for _, bk := range backendKeys {
+						if _, exists := services[bk]; exists {
+							result[bk] = cfg
+						}
+					}
+				}
+			}
+		}
 	}
 	return result
 }
@@ -135,14 +187,32 @@ func downloadWasmURL(rawURL string) ([]byte, error) {
 	if ip != nil && (ip.IsPrivate() || ip.IsLinkLocalUnicast()) && !ip.IsLoopback() {
 		return nil, fmt.Errorf("URL points to restricted network address: %s", u.Host)
 	}
+
 	client := &http.Client{Timeout: wasmDownloadTimeout}
-	resp, err := client.Get(u.String())
-	if err != nil {
-		return nil, fmt.Errorf("download wasm plugin from %s: %w", rawURL, err)
+	// Retry transient download failures with exponential backoff.
+	const maxAttempts = 3
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		resp, err := client.Get(u.String())
+		if err == nil {
+			defer func() { _ = resp.Body.Close() }()
+			if resp.StatusCode != http.StatusOK {
+				lastErr = fmt.Errorf("http %d", resp.StatusCode)
+			} else {
+				bytes, readErr := io.ReadAll(io.LimitReader(resp.Body, 50<<20))
+				if readErr != nil {
+					lastErr = fmt.Errorf("read body: %w", readErr)
+				} else {
+					return bytes, nil
+				}
+			}
+		} else {
+			lastErr = fmt.Errorf("download wasm plugin from %s: %w", rawURL, err)
+		}
+		if attempt < maxAttempts {
+			backoff := time.Duration(1<<(attempt-1)) * time.Second
+			time.Sleep(backoff)
+		}
 	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("http %d", resp.StatusCode)
-	}
-	return io.ReadAll(io.LimitReader(resp.Body, 50<<20))
+	return nil, lastErr
 }

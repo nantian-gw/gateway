@@ -28,8 +28,9 @@ type WasmPluginSpec struct {
 type WasmSource struct {
 	URL       string            `json:"url,omitempty"`
 	ConfigMap *WasmConfigMapRef `json:"configMap,omitempty"`
-	Inline    string            `json:"inline,omitempty"`
-	SHA256    string            `json:"sha256,omitempty"`
+	// +kubebuilder:validation:MaxLength=52428800
+	Inline string `json:"inline,omitempty"`
+	SHA256 string `json:"sha256,omitempty"`
 }
 
 type WasmConfigMapRef struct {

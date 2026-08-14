@@ -39,6 +39,7 @@ spec:
                         type: string
                   inline:
                     type: string
+                    maxLength: 52428800
                   sha256:
                     type: string
               targetRefs:

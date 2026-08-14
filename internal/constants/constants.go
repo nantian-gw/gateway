@@ -31,6 +31,7 @@ const (
 	StrFalse        = "false"
 	StrExtensionRef = "ExtensionRef"
 	StrAccepted     = "Accepted"
+	StrProgrammed   = "Programmed"
 )
 
 // HTTP path constants
