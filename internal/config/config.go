@@ -349,7 +349,7 @@ func Load(path string) (*Config, error) {
 		cfg.GRPCRuntime.GracefulStopTimeout = "3s"
 	}
 	if cfg.GRPCRuntime.XDSProtocol == "" {
-		cfg.GRPCRuntime.XDSProtocol = "sotw"
+		cfg.GRPCRuntime.XDSProtocol = "delta"
 	}
 	if cfg.Pprof.Addr == "" {
 		cfg.Pprof.Addr = "127.0.0.1:6060"

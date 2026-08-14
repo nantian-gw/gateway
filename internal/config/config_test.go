@@ -92,7 +92,7 @@ func TestLoadAppliesProductionDefaults(t *testing.T) {
 	if cfg.GRPCRuntime.PermitWithoutStream {
 		t.Fatal("grpc keepalive without stream should be disabled by default")
 	}
-	if cfg.GRPCRuntime.XDSProtocol != "sotw" {
+	if cfg.GRPCRuntime.XDSProtocol != "delta" {
 		t.Fatalf("unexpected grpc xds protocol default: %s", cfg.GRPCRuntime.XDSProtocol)
 	}
 	if cfg.AdminReadiness.Mode != "snapshot" {
