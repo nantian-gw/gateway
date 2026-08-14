@@ -716,7 +716,6 @@ type WasmPluginConfig struct {
 	Hooks      []string          `json:"hooks,omitempty"`
 	ConfigJSON string            `json:"configJson,omitempty"`
 	Sandbox    WasmSandboxConfig `json:"sandbox,omitempty"`
-	SourceURL  string            `json:"sourceUrl,omitempty"`
 }
 
 type WasmSandboxConfig struct {
