@@ -98,6 +98,7 @@ func TranslateWasmPlugin(p wasmplugin.WasmPlugin, configMaps []corev1.ConfigMap,
 			cfg.WasmBytes = decoded
 		}
 	}
+	cfg.SourceURL = p.Spec.Wasm.URL
 	if p.Spec.Wasm.URL != "" {
 		wasmBytes, err := downloadWasmURL(p.Spec.Wasm.URL)
 		if err != nil {

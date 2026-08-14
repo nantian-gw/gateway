@@ -240,6 +240,7 @@ func toProtoWasmPlugin(item *ir.WasmPluginConfig) *controlv1.WasmPluginConfig {
 		Sha256:     item.SHA256,
 		Hooks:      item.Hooks,
 		ConfigJson: item.ConfigJSON,
+		SourceUrl:  item.SourceURL,
 		Sandbox: &controlv1.WasmSandboxConfig{
 			MaxMemoryBytes:     item.Sandbox.MaxMemoryBytes,
 			MaxExecutionTimeMs: item.Sandbox.MaxExecutionTimeMs,
