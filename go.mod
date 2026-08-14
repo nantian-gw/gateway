@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/json-iterator/go v1.1.12
-	github.com/nantian-gw/proto v0.0.0-20260728031953-1bab673cf290
+	github.com/nantian-gw/proto v0.0.0-20260814115408-25e8e3dc7a03
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
 	github.com/stretchr/testify v1.11.1

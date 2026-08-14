@@ -87,7 +87,7 @@ func (s *deltaStreamState) HasAcknowledged(typeURL, resourceName string) bool {
 }
 
 // OnACK updates the acknowledged version for all resources in a delta response.
-// This is called when the client sends a DISCOVERY_RESULT_STATUS_ACK with the
+// This is called when the client sends a DISCOVERY_ACK with the
 // nonce matching the response we sent.
 func (s *deltaStreamState) OnACK(typeURL string, resourceNames []string, versions map[string]string) {
 	if typeURL == "" {
@@ -205,7 +205,7 @@ func (s *deltaStreamState) handleDeltaRequest(req *controlv1.DeltaDiscoveryReque
 
 	// Handle ACK/NACK
 	switch req.GetResultStatus() {
-	case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK:
+	case controlv1.DiscoveryResultStatus_DISCOVERY_ACK:
 		// ACK: update acknowledged versions for the type URL
 		// The resource versions are tracked via the response we sent
 		// (with the matching nonce). Here we just acknowledge the type.
@@ -214,7 +214,7 @@ func (s *deltaStreamState) handleDeltaRequest(req *controlv1.DeltaDiscoveryReque
 			s.OnACK(req.GetTypeUrl(), nil, nil)
 		}
 
-	case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_NACK:
+	case controlv1.DiscoveryResultStatus_DISCOVERY_NACK:
 		if req.GetTypeUrl() != "" {
 			s.OnNACK(req.GetTypeUrl(), req.GetErrorDetail())
 		}

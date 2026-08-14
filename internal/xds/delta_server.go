@@ -174,7 +174,7 @@ func (ds *deltaStream) pushDelta(ctx context.Context, prev, curr *ir.Snapshot) {
 }
 
 func (ds *deltaStream) handleAckNack(req *controlv1.DeltaDiscoveryRequest) {
-	if req.GetResultStatus() == controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_NACK {
+	if req.GetResultStatus() == controlv1.DiscoveryResultStatus_DISCOVERY_NACK {
 		ds.logger.Warn("delta NACK",
 			"node_id", req.GetNodeId(),
 			"type_url", req.GetTypeUrl(),
@@ -381,9 +381,9 @@ func deltaStreamRouteResources(snap *ir.Snapshot, addedChanged []string) ([]*con
 				}
 				switch match.Mode {
 				case ir.TlsRouteModePassthrough:
-					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_MODE_PASSTHROUGH
+					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_PASSTHROUGH
 				case ir.TlsRouteModeTerminate:
-					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_MODE_TERMINATE
+					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_TERMINATE
 				}
 				protoRule.Matches = append(protoRule.Matches, protoMatch)
 			}

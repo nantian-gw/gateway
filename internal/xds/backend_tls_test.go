@@ -53,7 +53,7 @@ func TestToProtoBackendTLSValidation(t *testing.T) {
 	if len(item.SubjectAltNames) != 2 {
 		t.Fatalf("unexpected SAN count: %d", len(item.SubjectAltNames))
 	}
-	if item.SubjectAltNames[0].Type != controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SUBJECT_ALT_NAME_TYPE_HOSTNAME {
+	if item.SubjectAltNames[0].Type != controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SAN_HOSTNAME {
 		t.Fatalf("unexpected first SAN type: %v", item.SubjectAltNames[0].Type)
 	}
 }

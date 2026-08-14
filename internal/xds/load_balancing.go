@@ -27,23 +27,23 @@ func toProtoLoadBalancing(item *ir.LoadBalancingPolicy) *controlv1.LoadBalancing
 func toProtoLoadBalancingType(value string) controlv1.LoadBalancingPolicyType {
 	switch value {
 	case "RoundRobin":
-		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_POLICY_TYPE_ROUND_ROBIN
+		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_ROUND_ROBIN
 	case "ConsistentHash":
-		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_POLICY_TYPE_CONSISTENT_HASH
+		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_CONSISTENT_HASH
 	default:
-		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_POLICY_TYPE_UNSPECIFIED
+		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_UNSPECIFIED
 	}
 }
 
 func toProtoConsistentHashKeyType(value string) controlv1.ConsistentHashKeyType {
 	switch value {
 	case "SourceIP":
-		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_SOURCE_IP
+		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_SOURCE_IP
 	case "Header":
-		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_HEADER
+		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_HEADER
 	case "Hostname":
-		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_HOSTNAME
+		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_HOSTNAME
 	default:
-		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_UNSPECIFIED
+		return controlv1.ConsistentHashKeyType_CONSISTENT_HASH_UNSPECIFIED
 	}
 }

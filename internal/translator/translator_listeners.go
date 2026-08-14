@@ -56,7 +56,7 @@ func (t *Translator) translateGatewayListenersWithIndexes(
 				protocol = "TLS_PASSTHROUGH"
 			}
 			// For Terminate or unset, the protocol stays as constants.ProtocolTLS (which maps to
-			// LISTENER_PROTOCOL_TLS in the gRPC snapshot, supporting mixed mode).
+			// LISTENER_TLS in the gRPC snapshot, supporting mixed mode).
 			// For HTTPS (terminated TLS), the protocol is "HTTPS".
 		}
 

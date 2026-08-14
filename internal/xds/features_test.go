@@ -77,7 +77,7 @@ func TestStreamConfigurationPreservesAdvertisedFeaturesWhenAckOmitsSupportedFeat
 		Version:       snapshot.ID,
 		Nonce:         snapshot.ID,
 		Subscriptions: []string{"*"},
-		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK,
+		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_ACK,
 	})
 
 	status = waitForNodeStatus(t, nodes, "dp-1", func(status ir.NodeStatus) bool {

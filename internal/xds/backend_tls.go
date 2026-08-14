@@ -34,12 +34,12 @@ func toProtoBackendTLSValidation(item *ir.BackendTLSValidation) *controlv1.Backe
 func toProtoBackendTLSSANs(items []ir.BackendSubjectName) []*controlv1.BackendTlsSubjectAltName {
 	out := make([]*controlv1.BackendTlsSubjectAltName, 0, len(items))
 	for _, item := range items {
-		sanType := controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SUBJECT_ALT_NAME_TYPE_UNSPECIFIED
+		sanType := controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SAN_UNSPECIFIED
 		switch item.Type {
 		case "Hostname":
-			sanType = controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SUBJECT_ALT_NAME_TYPE_HOSTNAME
+			sanType = controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SAN_HOSTNAME
 		case "URI":
-			sanType = controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SUBJECT_ALT_NAME_TYPE_URI
+			sanType = controlv1.BackendTlsSubjectAltNameType_BACKEND_TLS_SAN_URI
 		}
 		out = append(out, &controlv1.BackendTlsSubjectAltName{
 			Type:  sanType,

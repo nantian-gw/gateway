@@ -35,21 +35,21 @@ func toProtoCookieConfig(item *ir.CookieConfig) *controlv1.CookieConfig {
 func toProtoSessionType(value string) controlv1.SessionPersistenceType {
 	switch value {
 	case "Header":
-		return controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_HEADER
+		return controlv1.SessionPersistenceType_SESSION_PERSISTENCE_HEADER
 	case "Cookie":
-		return controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_COOKIE
+		return controlv1.SessionPersistenceType_SESSION_PERSISTENCE_COOKIE
 	default:
-		return controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_UNSPECIFIED
+		return controlv1.SessionPersistenceType_SESSION_PERSISTENCE_UNSPECIFIED
 	}
 }
 
 func toProtoCookieLifetimeType(value string) controlv1.CookieLifetimeType {
 	switch value {
 	case "Permanent":
-		return controlv1.CookieLifetimeType_COOKIE_LIFETIME_TYPE_PERMANENT
+		return controlv1.CookieLifetimeType_COOKIE_LIFETIME_PERMANENT
 	case "Session":
-		return controlv1.CookieLifetimeType_COOKIE_LIFETIME_TYPE_SESSION
+		return controlv1.CookieLifetimeType_COOKIE_LIFETIME_SESSION
 	default:
-		return controlv1.CookieLifetimeType_COOKIE_LIFETIME_TYPE_UNSPECIFIED
+		return controlv1.CookieLifetimeType_COOKIE_LIFETIME_UNSPECIFIED
 	}
 }

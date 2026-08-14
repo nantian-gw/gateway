@@ -36,8 +36,8 @@ func TestToListenerProtocolMapsTLS(t *testing.T) {
 		input string
 		want  controlv1.ListenerProtocol
 	}{
-		{"TLS maps to LISTENER_PROTOCOL_TLS", "TLS", controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS},
-		{"TLS_PASSTHROUGH maps to passthrough", "TLS_PASSTHROUGH", controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS_PASSTHROUGH},
+		{"TLS maps to LISTENER_TLS", "TLS", controlv1.ListenerProtocol_LISTENER_TLS},
+		{"TLS_PASSTHROUGH maps to passthrough", "TLS_PASSTHROUGH", controlv1.ListenerProtocol_LISTENER_TLS_PASSTHROUGH},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -261,9 +261,9 @@ func TestToProtoSessionPersistence(t *testing.T) {
 
 	require.NotNil(t, item, "expected session persistence proto")
 	assert.Equal(t, "nantian-gw-http-session", item.SessionName)
-	assert.Equal(t, controlv1.SessionPersistenceType_SESSION_PERSISTENCE_TYPE_COOKIE, item.Type)
+	assert.Equal(t, controlv1.SessionPersistenceType_SESSION_PERSISTENCE_COOKIE, item.Type)
 	require.NotNil(t, item.Cookie)
-	assert.Equal(t, controlv1.CookieLifetimeType_COOKIE_LIFETIME_TYPE_PERMANENT, item.Cookie.LifetimeType)
+	assert.Equal(t, controlv1.CookieLifetimeType_COOKIE_LIFETIME_PERMANENT, item.Cookie.LifetimeType)
 	assert.Equal(t, 5*time.Minute, item.AbsoluteTimeout.AsDuration())
 	assert.Equal(t, 30*time.Second, item.IdleTimeout.AsDuration())
 }
@@ -278,9 +278,9 @@ func TestToProtoLoadBalancing(t *testing.T) {
 	})
 
 	require.NotNil(t, item, "expected load balancing proto")
-	assert.Equal(t, controlv1.LoadBalancingPolicyType_LOAD_BALANCING_POLICY_TYPE_CONSISTENT_HASH, item.Type)
+	assert.Equal(t, controlv1.LoadBalancingPolicyType_LOAD_BALANCING_CONSISTENT_HASH, item.Type)
 	require.NotNil(t, item.ConsistentHash, "expected consistent hash proto")
-	assert.Equal(t, controlv1.ConsistentHashKeyType_CONSISTENT_HASH_KEY_TYPE_HEADER, item.ConsistentHash.KeyType)
+	assert.Equal(t, controlv1.ConsistentHashKeyType_CONSISTENT_HASH_HEADER, item.ConsistentHash.KeyType)
 	assert.Equal(t, "x-user-id", item.ConsistentHash.HeaderName)
 }
 
@@ -723,7 +723,7 @@ func TestStreamConfigurationMatchingAckPreventsStaleSnapshotTimeout(t *testing.T
 		Version:       snapshot.ID,
 		Nonce:         snapshot.ID,
 		Subscriptions: []string{"*"},
-		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK,
+		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_ACK,
 	})
 
 	select {

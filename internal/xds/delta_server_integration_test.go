@@ -376,7 +376,7 @@ func TestDeltaServer_AckNonce(t *testing.T) {
 		Cluster:       "default",
 		ResponseNonce: initialResp.GetNonce(),
 		TypeUrl:       typeURLListener,
-		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK,
+		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_ACK,
 	})
 
 	before := len(stream.sentResponses())
@@ -539,7 +539,7 @@ func TestDeltaServer_NackHandling(t *testing.T) {
 		Cluster:       "default",
 		ResponseNonce: initialResp.GetNonce(),
 		TypeUrl:       typeURLListener,
-		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_NACK,
+		ResultStatus:  controlv1.DiscoveryResultStatus_DISCOVERY_NACK,
 		ErrorDetail:   "failed to apply listener config",
 	})
 

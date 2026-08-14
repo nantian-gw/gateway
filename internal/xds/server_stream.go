@@ -225,7 +225,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 				advertisedFeatures = canonicalizeSupportedFeatures(next.GetSupportedFeatures())
 			}
 			switch next.GetResultStatus() {
-			case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_ACK:
+			case controlv1.DiscoveryResultStatus_DISCOVERY_ACK:
 				s.nodes.ObserveAckWithFeatures(
 					stream.Context(),
 					nodeID,
@@ -237,7 +237,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 					now,
 				)
 				clearAckTimer(next.GetVersion())
-			case controlv1.DiscoveryResultStatus_DISCOVERY_RESULT_STATUS_NACK:
+			case controlv1.DiscoveryResultStatus_DISCOVERY_NACK:
 				s.nodes.ObserveNackWithFeatures(
 					stream.Context(),
 					nodeID,

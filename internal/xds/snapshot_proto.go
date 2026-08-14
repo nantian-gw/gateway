@@ -138,9 +138,9 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 				}
 				switch match.Mode {
 				case ir.TlsRouteModePassthrough:
-					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_MODE_PASSTHROUGH
+					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_PASSTHROUGH
 				case ir.TlsRouteModeTerminate:
-					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_MODE_TERMINATE
+					protoMatch.Mode = controlv1.TlsRouteMode_TLS_ROUTE_TERMINATE
 				}
 				protoRule.Matches = append(protoRule.Matches, protoMatch)
 			}
@@ -240,6 +240,7 @@ func toProtoWasmPlugin(item *ir.WasmPluginConfig) *controlv1.WasmPluginConfig {
 		Sha256:     item.SHA256,
 		Hooks:      item.Hooks,
 		ConfigJson: item.ConfigJSON,
+		SourceUrl:  item.SourceURL,
 		Sandbox: &controlv1.WasmSandboxConfig{
 			MaxMemoryBytes:     item.Sandbox.MaxMemoryBytes,
 			MaxExecutionTimeMs: item.Sandbox.MaxExecutionTimeMs,
@@ -419,23 +420,23 @@ func toProtoQueries(queries []ir.QueryMatch) []*controlv1.QueryMatch {
 func toListenerProtocol(protocol string) controlv1.ListenerProtocol {
 	switch protocol {
 	case constants.ProtocolHTTP:
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_HTTP
+		return controlv1.ListenerProtocol_LISTENER_HTTP
 	case "HTTPS":
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_HTTPS
+		return controlv1.ListenerProtocol_LISTENER_HTTPS
 	case "GRPC":
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_GRPC
+		return controlv1.ListenerProtocol_LISTENER_GRPC
 	case "HTTP3":
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_HTTP3
+		return controlv1.ListenerProtocol_LISTENER_HTTP3
 	case constants.ProtocolTCP:
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_TCP
+		return controlv1.ListenerProtocol_LISTENER_TCP
 	case "UDP":
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_UDP
+		return controlv1.ListenerProtocol_LISTENER_UDP
 	case "TLS_PASSTHROUGH":
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS_PASSTHROUGH
+		return controlv1.ListenerProtocol_LISTENER_TLS_PASSTHROUGH
 	case "TLS":
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_TLS
+		return controlv1.ListenerProtocol_LISTENER_TLS
 	default:
-		return controlv1.ListenerProtocol_LISTENER_PROTOCOL_UNSPECIFIED
+		return controlv1.ListenerProtocol_LISTENER_UNSPECIFIED
 	}
 }
 
