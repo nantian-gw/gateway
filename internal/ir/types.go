@@ -691,6 +691,8 @@ type AIServiceConfig struct {
 	Endpoint string        `json:"endpoint,omitempty"`
 	Auth     AIServiceAuth `json:"auth,omitempty"`
 	Timeout  time.Duration `json:"timeout,omitempty"`
+	RetryMaxRetries uint32        `json:"retryMaxRetries,omitempty"`
+	RetryBackoff    time.Duration `json:"retryBackoff,omitempty"`
 }
 
 type AIServiceAuth struct {

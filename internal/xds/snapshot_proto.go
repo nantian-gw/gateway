@@ -211,7 +211,9 @@ func toProtoAIService(item *ir.AIServiceConfig) *controlv1.AIServiceConfig {
 			Key:       item.Auth.Key,
 			Header:    item.Auth.Header,
 		},
-		Timeout: nonZeroDurationOrNil(item.Timeout),
+		Timeout:         nonZeroDurationOrNil(item.Timeout),
+		RetryMaxRetries: item.RetryMaxRetries,
+		RetryBackoff:    nonZeroDurationOrNil(item.RetryBackoff),
 	}
 }
 

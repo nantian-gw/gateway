@@ -29,6 +29,14 @@ func Translate(svc aiservice.AIService) ir.AIServiceConfig {
 			slog.Warn("ai service has invalid timeout, ignoring", "service", svc.Name, "namespace", svc.Namespace, "timeout", svc.Spec.Timeout)
 		}
 	}
+	cfg.RetryMaxRetries = svc.Spec.Retry.MaxRetries
+	if svc.Spec.Retry.Backoff != "" {
+		if d, err := time.ParseDuration(svc.Spec.Retry.Backoff); err == nil {
+			cfg.RetryBackoff = d
+		} else {
+			slog.Warn("ai service has invalid retry backoff, ignoring", "service", svc.Name, "namespace", svc.Namespace, "backoff", svc.Spec.Retry.Backoff)
+		}
+	}
 	return cfg
 }
 
