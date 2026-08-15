@@ -18,6 +18,7 @@ func Translate(svc aiservice.AIService) ir.AIServiceConfig {
 		Auth: ir.AIServiceAuth{
 			Type:      svc.Spec.Auth.Type,
 			SecretRef: svc.Namespace + "/" + svc.Spec.Auth.Secret,
+			Key:       svc.Spec.Auth.Key,
 			Header:    svc.Spec.Auth.Header,
 		},
 	}

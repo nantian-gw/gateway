@@ -204,9 +204,11 @@ func toProtoAIService(item *ir.AIServiceConfig) *controlv1.AIServiceConfig {
 		Provider: item.Provider,
 		Format:   item.Format,
 		Model:    item.Model,
+		Endpoint: item.Endpoint,
 		Auth: &controlv1.AIServiceAuthConfig{
 			Type:      item.Auth.Type,
 			SecretRef: item.Auth.SecretRef,
+			Key:       item.Auth.Key,
 			Header:    item.Auth.Header,
 		},
 		Timeout: nonZeroDurationOrNil(item.Timeout),

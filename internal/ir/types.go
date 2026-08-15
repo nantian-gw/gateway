@@ -696,6 +696,7 @@ type AIServiceConfig struct {
 type AIServiceAuth struct {
 	Type      string `json:"type,omitempty"`
 	SecretRef string `json:"secretRef,omitempty"`
+	Key       string `json:"key,omitempty"`
 	Header    string `json:"header,omitempty"`
 }
 
