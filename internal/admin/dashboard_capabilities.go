@@ -44,7 +44,7 @@ func ResolveDashboardCapabilities(cfg *config.Config) DashboardCapabilities {
 		Settings:        true,
 		AIOverview:      uiCaps.AIOverview && cfg.Features.EnableAiGateway,
 		AIServices:      uiCaps.AIServices && cfg.Features.EnableAiGateway,
-		AITokenPolicies: uiCaps.AITokenPolicies && cfg.Features.EnableExperimentalGateway,
+		AITokenPolicies: uiCaps.AITokenPolicies && cfg.Features.EnableAiGateway,
 		AICost:          uiCaps.AICost && cfg.Features.EnableAiGateway,
 		AITraces:        uiCaps.AITraces && cfg.Features.EnableAiGateway,
 		AIUsage:         uiCaps.AIUsage && cfg.Features.EnableAiGateway,

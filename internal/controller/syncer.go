@@ -45,6 +45,7 @@ type ComponentReconciler interface {
 
 type SyncerOptions struct {
 	EnableExperimentalGateway bool
+	EnableAiGateway           bool
 	MaxConcurrentReconciles   int
 	RateLimiterBaseDelay      time.Duration
 	RateLimiterMaxDelay       time.Duration
@@ -55,6 +56,7 @@ type SyncerOptions struct {
 func defaultSyncerOptions() SyncerOptions {
 	return SyncerOptions{
 		EnableExperimentalGateway: true,
+		EnableAiGateway:           false,
 		MaxConcurrentReconciles:   1,
 		RateLimiterBaseDelay:      200 * time.Millisecond,
 		RateLimiterMaxDelay:       30 * time.Second,

@@ -275,6 +275,7 @@ func run(configPath string) error {
 	)
 	syncer.SetOptions(controller.SyncerOptions{
 		EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway,
+		EnableAiGateway:        cfg.Features.EnableAiGateway,
 		MaxConcurrentReconciles:   cfg.Controller.MaxConcurrentReconciles,
 		RateLimiterBaseDelay:      cfg.RateLimiterBaseDelayDuration(),
 		RateLimiterMaxDelay:       cfg.RateLimiterMaxDelayDuration(),

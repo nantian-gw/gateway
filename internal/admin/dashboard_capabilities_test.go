@@ -29,7 +29,7 @@ func TestResolveDashboardCapabilitiesHonorsDashboardAndRuntimeFlags(t *testing.T
 		Settings:        true,
 		AIOverview:      true,
 		AIServices:      true,
-		AITokenPolicies: false,
+		AITokenPolicies:      true,
 		AICost:          true,
 		AITraces:        true,
 		AIUsage:         true,

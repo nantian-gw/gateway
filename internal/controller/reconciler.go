@@ -189,14 +189,14 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &aiservice.AIService{}) {
+	if s.options.EnableAiGateway && resourceSupported(mgr, &aiservice.AIService{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&aiservice.AIService{},
 			snapshotRequests,
 			snapshotMutationPredicate,
 		)
 	}
-	if resourceSupported(mgr, &tokenpolicy.TokenPolicy{}) {
+	if s.options.EnableAiGateway && resourceSupported(mgr, &tokenpolicy.TokenPolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&tokenpolicy.TokenPolicy{},
 			snapshotRequests,
