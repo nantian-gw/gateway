@@ -429,6 +429,28 @@ func TestSnapshotDigestComputesWhenIDMissing(t *testing.T) {
 	}
 }
 
+func TestSnapshotDigestDeterministicWithMapFields(t *testing.T) {
+	// Regression: jsoniter v1.1.12 marshals map[string]string with unreliable
+	// SortMapKeys, leaking Go's randomized map iteration order into the digest.
+	// The digest must be stable across repeated normalizations of identical content.
+	base := snapshotPropertyFixture()
+	base.Listeners[0].Metadata = map[string]string{"k1": "v1", "k2": "v2", "k3": "v3", "k4": "v4"}
+	base.Backends[0].Metadata = map[string]string{"zone": "a", "region": "b", "env": "c"}
+
+	first := ""
+	for i := 0; i < 200; i++ {
+		s := *base
+		if err := s.Normalize(); err != nil {
+			t.Fatalf("normalize iteration %d: %v", i, err)
+		}
+		if first == "" {
+			first = s.ID
+		} else if s.ID != first {
+			t.Fatalf("iteration %d produced digest %q, want stable digest %q (map key order leaked into digest)", i, s.ID, first)
+		}
+	}
+}
+
 func snapshotPropertyFixture() *Snapshot {
 	return &Snapshot{
 		GeneratedAt: time.Unix(1_700_000_000, 123_000_000).UTC(),
