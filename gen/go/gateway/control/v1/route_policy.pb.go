@@ -431,7 +431,8 @@ const file_gateway_control_v1_route_policy_proto_rawDesc = "" +
 	"\x0ekeepalive_time\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\rkeepaliveTime\x12F\n" +
 	"\x11keepalive_timeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x10keepaliveTimeout\x12?\n" +
 	"\x1cupstream_keepalive_pool_size\x18\x04 \x01(\rR\x19upstreamKeepalivePoolSize\x12Q\n" +
-	"\x17upstream_keepalive_idle\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\x15upstreamKeepaliveIdleB:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\x17upstream_keepalive_idle\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\x15upstreamKeepaliveIdleB\xce\x01\n" +
+	"\x16com.gateway.control.v1B\x10RoutePolicyProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_route_policy_proto_rawDescOnce sync.Once

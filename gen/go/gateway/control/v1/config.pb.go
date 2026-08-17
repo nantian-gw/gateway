@@ -3306,7 +3306,8 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\x1bCONSISTENT_HASH_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19CONSISTENT_HASH_SOURCE_IP\x10\x01\x12\x1a\n" +
 	"\x16CONSISTENT_HASH_HEADER\x10\x02\x12\x1c\n" +
-	"\x18CONSISTENT_HASH_HOSTNAME\x10\x03B:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\x18CONSISTENT_HASH_HOSTNAME\x10\x03B\xc9\x01\n" +
+	"\x16com.gateway.control.v1B\vConfigProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_config_proto_rawDescOnce sync.Once

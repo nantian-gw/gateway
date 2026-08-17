@@ -330,7 +330,8 @@ const file_gateway_control_v1_ai_proto_rawDesc = "" +
 	"\x13requests_per_minute\x18\x03 \x01(\x04R\x11requestsPerMinute\x12\x14\n" +
 	"\x05scope\x18\x04 \x01(\tR\x05scope\x12\x14\n" +
 	"\x05burst\x18\x05 \x01(\x01R\x05burst\x12\x19\n" +
-	"\bon_limit\x18\x06 \x01(\tR\aonLimitB:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\bon_limit\x18\x06 \x01(\tR\aonLimitB\xc5\x01\n" +
+	"\x16com.gateway.control.v1B\aAiProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_ai_proto_rawDescOnce sync.Once

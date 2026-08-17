@@ -234,7 +234,8 @@ const file_gateway_control_v1_wasm_proto_rawDesc = "" +
 	"\x10max_memory_bytes\x18\x01 \x01(\x04R\x0emaxMemoryBytes\x121\n" +
 	"\x15max_execution_time_ms\x18\x02 \x01(\x04R\x12maxExecutionTimeMs\x12#\n" +
 	"\rallow_network\x18\x03 \x01(\bR\fallowNetwork\x12*\n" +
-	"\x11allow_file_system\x18\x04 \x01(\bR\x0fallowFileSystemB:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\x11allow_file_system\x18\x04 \x01(\bR\x0fallowFileSystemB\xc7\x01\n" +
+	"\x16com.gateway.control.v1B\tWasmProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_wasm_proto_rawDescOnce sync.Once

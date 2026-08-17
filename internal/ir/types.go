@@ -1,11 +1,11 @@
 package ir
 
 import (
-"crypto/sha256"
-"encoding/hex"
-	jsoniter "github.com/json-iterator/go"
-"sort"
-"time"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"sort"
+	"time"
 )
 
 type Snapshot struct {
@@ -641,7 +641,7 @@ func (s Snapshot) Digest() (string, error) {
 func (s Snapshot) computeDigest() (string, error) {
 	copy := s.snapshotForDigest()
 
-	raw, err := jsoniter.Marshal(copy)
+	raw, err := json.Marshal(copy)
 	if err != nil {
 		return "", err
 	}
@@ -685,12 +685,12 @@ func (s Snapshot) snapshotForDigest() Snapshot {
 }
 
 type AIServiceConfig struct {
-	Provider string        `json:"provider"`
-	Format   string        `json:"format,omitempty"`
-	Model    string        `json:"model"`
-	Endpoint string        `json:"endpoint,omitempty"`
-	Auth     AIServiceAuth `json:"auth,omitempty"`
-	Timeout  time.Duration `json:"timeout,omitempty"`
+	Provider        string        `json:"provider"`
+	Format          string        `json:"format,omitempty"`
+	Model           string        `json:"model"`
+	Endpoint        string        `json:"endpoint,omitempty"`
+	Auth            AIServiceAuth `json:"auth,omitempty"`
+	Timeout         time.Duration `json:"timeout,omitempty"`
 	RetryMaxRetries uint32        `json:"retryMaxRetries,omitempty"`
 	RetryBackoff    time.Duration `json:"retryBackoff,omitempty"`
 }
