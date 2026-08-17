@@ -780,7 +780,8 @@ const file_gateway_control_v1_discovery_proto_rawDesc = "" +
 	"\x13StreamConfiguration\x12$.gateway.control.v1.DiscoveryRequest\x1a%.gateway.control.v1.DiscoveryResponse(\x010\x01\x12O\n" +
 	"\fReportStatus\x12 .gateway.control.v1.StatusReport\x1a\x1d.gateway.control.v1.StatusAck2\x8e\x01\n" +
 	"\x15DeltaDiscoveryService\x12u\n" +
-	"\x18DeltaStreamConfiguration\x12).gateway.control.v1.DeltaDiscoveryRequest\x1a*.gateway.control.v1.DeltaDiscoveryResponse(\x010\x01B:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\x18DeltaStreamConfiguration\x12).gateway.control.v1.DeltaDiscoveryRequest\x1a*.gateway.control.v1.DeltaDiscoveryResponse(\x010\x01B\xcc\x01\n" +
+	"\x16com.gateway.control.v1B\x0eDiscoveryProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_discovery_proto_rawDescOnce sync.Once
