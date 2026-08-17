@@ -54,7 +54,7 @@ func evaluateRoutes(state *clusterState) routeState {
 		recordAttachments(out.attachments, key, ps)
 	}
 
-	evaluateRouteConflicts(state, &out)
+	observeRouteHostnameOverlaps(state, &out)
 
 	return out
 }

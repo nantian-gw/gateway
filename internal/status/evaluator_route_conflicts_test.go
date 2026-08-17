@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 )
 
-func TestEvaluateRouteConflictsMarksLaterRouteConflicted(t *testing.T) {
+func TestObserveRouteHostnameOverlapsKeepsBothRoutesAccepted(t *testing.T) {
 	gateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 		Spec: gatewayv1.GatewaySpec{
@@ -63,42 +64,42 @@ func TestEvaluateRouteConflictsMarksLaterRouteConflicted(t *testing.T) {
 	}
 	state.index()
 
+	routeHostnameOverlapTotal.Reset()
+	defer routeHostnameOverlapTotal.Reset()
+
 	out := evaluateRoutes(state)
 
-	olderEvals := out.http[client.ObjectKeyFromObject(&older)]
-	if len(olderEvals) != 1 {
-		t.Fatalf("expected 1 evaluation for older route, got %d", len(olderEvals))
-	}
-	if olderEvals[0].acceptedCondition.Status != metav1.ConditionTrue {
-		t.Fatalf("older route accepted status = %s, want True", olderEvals[0].acceptedCondition.Status)
-	}
-	if len(olderEvals[0].extraConditions) != 0 {
-		t.Fatalf("older route should have no extra conditions, got %#v", olderEvals[0].extraConditions)
-	}
-
-	newerEvals := out.http[client.ObjectKeyFromObject(newer)]
-	if len(newerEvals) != 1 {
-		t.Fatalf("expected 1 evaluation for newer route, got %d", len(newerEvals))
-	}
-	conflict := findConditionByType(newerEvals[0].extraConditions, string(gatewayv1.RouteConditionAccepted))
-	if conflict == nil {
-		t.Fatalf("newer route should carry a conflicted Accepted condition, got extraConditions %#v", newerEvals[0].extraConditions)
-	}
-	if conflict.Status != metav1.ConditionFalse {
-		t.Fatalf("newer route conflict status = %s, want False", conflict.Status)
-	}
-	if conflict.Reason != routeReasonHostnameConflict {
-		t.Fatalf("newer route conflict reason = %s, want %s", conflict.Reason, routeReasonHostnameConflict)
+	for _, route := range []gatewayv1.HTTPRoute{older, *newer} {
+		evals := out.http[client.ObjectKeyFromObject(&route)]
+		if len(evals) != 1 {
+			t.Fatalf("expected 1 evaluation for route %s, got %d", route.Name, len(evals))
+		}
+		if evals[0].acceptedCondition.Status != metav1.ConditionTrue {
+			t.Fatalf("route %s accepted status = %s, want True", route.Name, evals[0].acceptedCondition.Status)
+		}
+		if len(evals[0].extraConditions) != 0 {
+			t.Fatalf("route %s should not be rejected; overlap is observability-only, got extraConditions %#v", route.Name, evals[0].extraConditions)
+		}
 	}
 
-	// The conflicted route must not count as attached to the listener.
+	// Both routes must remain attached to the listener: the Gateway API spec
+	// requires intersecting hostnames on the same listener to all be Accepted and
+	// counted in AttachedRoutes (conformance: HTTPRouteHostnameIntersection).
 	listener := listenerKey{gatewayNamespace: "default", gatewayName: "gw", listenerName: "http"}
-	if _, stillAttached := out.attachments[listener][client.ObjectKeyFromObject(newer)]; stillAttached {
-		t.Fatalf("conflicted route should be removed from listener attachments")
+	for _, route := range []gatewayv1.HTTPRoute{older, *newer} {
+		if _, stillAttached := out.attachments[listener][client.ObjectKeyFromObject(&route)]; !stillAttached {
+			t.Fatalf("route %s should remain attached to the listener", route.Name)
+		}
+	}
+
+	// The overlap is reported observably: the counter for the listener is bumped once
+	// for the single overlapping pair.
+	if got := testutil.ToFloat64(routeHostnameOverlapTotal.WithLabelValues("default/gw/http")); got != 1 {
+		t.Fatalf("route hostname overlap counter = %v, want 1", got)
 	}
 }
 
-func TestEvaluateRouteConflictsKeepsDistinctHostnames(t *testing.T) {
+func TestObserveRouteHostnameOverlapsKeepsDistinctHostnames(t *testing.T) {
 	gateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 		Spec: gatewayv1.GatewaySpec{
@@ -162,7 +163,7 @@ func TestEvaluateRouteConflictsKeepsDistinctHostnames(t *testing.T) {
 	}
 }
 
-func TestEvaluateRouteConflictsCatchAllConflictsWithSpecificHostname(t *testing.T) {
+func TestObserveRouteHostnameOverlapsCatchAllWithSpecificHostname(t *testing.T) {
 	gateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 		Spec: gatewayv1.GatewaySpec{
@@ -238,7 +239,7 @@ func TestEvaluateRouteConflictsCatchAllConflictsWithSpecificHostname(t *testing.
 	}
 }
 
-func TestEvaluateRouteConflictsIgnoresDistinctListeners(t *testing.T) {
+func TestObserveRouteHostnameOverlapsIgnoresDistinctListeners(t *testing.T) {
 	gateway := gatewayv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default", Generation: 1},
 		Spec: gatewayv1.GatewaySpec{
@@ -325,15 +326,6 @@ func TestEvaluateRouteConflictsIgnoresDistinctListeners(t *testing.T) {
 			t.Fatalf("route %s should have no extra conditions, got %#v", route.Name, evals[0].extraConditions)
 		}
 	}
-}
-
-func findConditionByType(conditions []conditionSpec, conditionType string) *conditionSpec {
-	for i := range conditions {
-		if conditions[i].Type == conditionType {
-			return &conditions[i]
-		}
-	}
-	return nil
 }
 
 func t0() time.Time {
