@@ -2,12 +2,13 @@ package routepolicy
 
 import (
 	"sort"
+	"time"
 
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	rp "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type routePolicyScope string
@@ -28,6 +29,7 @@ type translatedRoutePolicy struct {
 	routeKeys []string
 	config    *ir.RoutePolicyConfig
 	scope     routePolicyScope
+	createdAt time.Time
 }
 
 func BuildRoutePolicyIndexes(
@@ -37,7 +39,6 @@ func BuildRoutePolicyIndexes(
 ) map[string]*ir.RoutePolicyConfig {
 	gatewayToRoutes := buildGatewayRouteIndex(httpRoutes, gateways)
 	translations := make([]translatedRoutePolicy, 0, len(policies))
-	conflicts := make(map[string]map[routePolicyScope]bool)
 
 	for _, policy := range policies {
 		config := translateRoutePolicyDefault(policy.Spec.Default)
@@ -54,28 +55,14 @@ func BuildRoutePolicyIndexes(
 			routeKeys: routeKeys,
 			config:    config,
 			scope:     scope,
+			createdAt: policy.CreationTimestamp.Time,
 		})
-		translationIdx := len(translations) - 1
-
-		for i := 0; i < translationIdx; i++ {
-			prev := &translations[i]
-			if prev.scope != scope {
-				continue
-			}
-			for _, prevKey := range prev.routeKeys {
-				for _, newKey := range routeKeys {
-					if prevKey == newKey {
-						if conflicts[newKey] == nil {
-							conflicts[newKey] = make(map[routePolicyScope]bool)
-						}
-						conflicts[newKey][scope] = true
-					}
-				}
-			}
-		}
 	}
 
-	result := make(map[string]*ir.RoutePolicyConfig)
+	// Winner per (routeKey, scope): the policy with the earliest creation
+	// timestamp wins. Conflicting policies are no longer dropped as a group;
+	// instead the oldest policy is applied deterministically.
+	winners := make(map[string]map[routePolicyScope]translatedRoutePolicy)
 
 	for _, scope := range routePolicyScopeOrder {
 		for _, tp := range translations {
@@ -83,16 +70,33 @@ func BuildRoutePolicyIndexes(
 				continue
 			}
 			for _, routeKey := range tp.routeKeys {
-				if conflicts[routeKey] != nil && conflicts[routeKey][scope] {
-					continue
+				if winners[routeKey] == nil {
+					winners[routeKey] = make(map[routePolicyScope]translatedRoutePolicy)
 				}
+				current, exists := winners[routeKey][scope]
+				if !exists || tp.createdAt.Before(current.createdAt) {
+					winners[routeKey][scope] = tp
+				}
+			}
+		}
+	}
 
-				existing := result[routeKey]
-				if existing == nil || scope == routePolicyScopeNamespace {
-					result[routeKey] = tp.config
-				} else {
-					result[routeKey] = mergeRoutePolicyConfig(existing, tp.config)
-				}
+	// Apply winners in scope priority order, merging lower-priority (more
+	// specific) scopes over higher-priority (less specific) ones.
+	result := make(map[string]*ir.RoutePolicyConfig)
+
+	for _, scope := range routePolicyScopeOrder {
+		for routeKey, scopeWinners := range winners {
+			tp, ok := scopeWinners[scope]
+			if !ok {
+				continue
+			}
+
+			existing := result[routeKey]
+			if existing == nil || scope == routePolicyScopeNamespace {
+				result[routeKey] = tp.config
+			} else {
+				result[routeKey] = mergeRoutePolicyConfig(existing, tp.config)
 			}
 		}
 	}

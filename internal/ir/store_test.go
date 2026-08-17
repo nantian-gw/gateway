@@ -87,6 +87,60 @@ func TestSnapshotStoreReportsSlowSubscriberQueueReplacements(t *testing.T) {
 	}
 }
 
+func TestSnapshotStoreReportsPublishResults(t *testing.T) {
+	store := NewSnapshotStore(testSnapshotStoreLogger())
+	sub, unsubscribe := store.Subscribe()
+	defer unsubscribe()
+
+	var versions []string
+	var results []string
+	store.SetHooks(SnapshotStoreHooks{
+		OnPublish: func(version string, result string) {
+			versions = append(versions, version)
+			results = append(results, result)
+		},
+	})
+
+	first := snapshotWithListener("listener-publish")
+	if !store.Publish(first) {
+		t.Fatal("expected first snapshot to publish")
+	}
+	if store.Publish(first) {
+		t.Fatal("expected duplicate snapshot to be deduped")
+	}
+	<-sub
+
+	if len(results) != 2 || results[0] != PublishResultPublished || results[1] != PublishResultDedup {
+		t.Fatalf("publish results = %v, want [%s %s]", results, PublishResultPublished, PublishResultDedup)
+	}
+	if versions[0] != versions[1] {
+		t.Fatalf("expected same version for published and dedup, got %v", versions)
+	}
+}
+
+func TestPushLatestSnapshotReportsDroppedSnapshot(t *testing.T) {
+	ch := make(chan *Snapshot, snapshotSubscriberBufferSize)
+	first := snapshotWithListener("listener-first")
+	if err := first.Normalize(); err != nil {
+		t.Fatal(err)
+	}
+	ch <- first
+
+	second := snapshotWithListener("listener-second")
+	dropped, replaced := pushLatestSnapshot(ch, second)
+	if !replaced {
+		t.Fatal("expected replacement for full subscriber channel")
+	}
+	if dropped == nil || dropped.ID != first.ID {
+		t.Fatalf("expected dropped snapshot %q, got %+v", first.ID, dropped)
+	}
+
+	got := <-ch
+	if got.ID != second.ID {
+		t.Fatalf("expected latest snapshot %q, got %q", second.ID, got.ID)
+	}
+}
+
 func TestSnapshotStorePublishReleasesLockBeforeFanout(t *testing.T) {
 	store := NewSnapshotStore(testSnapshotStoreLogger())
 	sub, unsubscribe := store.Subscribe()

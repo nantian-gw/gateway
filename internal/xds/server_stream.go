@@ -236,6 +236,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 					advertisedFeatures,
 					now,
 				)
+				s.observeSnapshotDivergence(next.GetVersion())
 				clearAckTimer(next.GetVersion())
 			case controlv1.DiscoveryResultStatus_DISCOVERY_NACK:
 				s.nodes.ObserveNackWithFeatures(
@@ -249,6 +250,7 @@ func (s *Server) StreamConfiguration(stream controlv1.ConfigurationDiscoveryServ
 					advertisedFeatures,
 					now,
 				)
+				s.observeSnapshotDivergence(next.GetVersion())
 				clearAckTimer(next.GetVersion())
 			default:
 				s.nodes.ConnectWithFeatures(

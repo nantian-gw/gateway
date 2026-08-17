@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/noderegistry"
-	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const (
@@ -182,6 +182,10 @@ func adminRouteBindings() []routeBinding {
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleSnapshot },
+		},
+		{
+			contract: routeContract{Method: http.MethodGet, Path: "/v1/snapshot/health", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
+			handler:  func(s *Server) http.HandlerFunc { return s.handleSnapshotHealth },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/listeners", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},

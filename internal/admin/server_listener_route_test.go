@@ -393,3 +393,24 @@ func TestRoutesEmitPaginationHeadersForKindScopedPagination(t *testing.T) {
 		t.Fatalf("unexpected has-next-page header: %q", got)
 	}
 }
+
+func TestSnapshotHealthEndpointReportsCurrentSnapshotIdentity(t *testing.T) {
+	server := newTestServer(t)
+
+	current := server.store.Current()
+	if current == nil || current.ID == "" {
+		t.Fatalf("expected test server to have a current snapshot, got %+v", current)
+	}
+
+	var response SnapshotHealth
+	recorder := performRequest(t, server, http.MethodGet, "/v1/snapshot/health", &response)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+	if response.SnapshotID != current.ID {
+		t.Fatalf("snapshot health snapshotId = %q, want %q", response.SnapshotID, current.ID)
+	}
+	if !response.GeneratedAt.Equal(current.GeneratedAt) {
+		t.Fatalf("snapshot health generatedAt = %v, want %v", response.GeneratedAt, current.GeneratedAt)
+	}
+}

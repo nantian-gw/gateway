@@ -31,7 +31,10 @@ type Metrics struct {
 	AdminAPIRequestsTotal                 *prometheus.CounterVec
 	AdminAPIRequestDurationSeconds        *prometheus.HistogramVec
 	XDSActiveStreams                      prometheus.Gauge
-	XDSSnapshotFanoutCoalescedTotal       prometheus.Counter
+	SnapshotCoalescedTotal                prometheus.Counter
+	SnapshotPublishTotal                  *prometheus.CounterVec
+	SnapshotVersionSkippedTotal           prometheus.Counter
+	SnapshotDivergenceTotal               prometheus.Counter
 	XDSStreamTerminationsTotal            *prometheus.CounterVec
 	XDSStatusReportRejectionsTotal        *prometheus.CounterVec
 	XDSSnapshotSendDurationSeconds        prometheus.Histogram
@@ -127,9 +130,24 @@ func NewMetrics() *Metrics {
 			Name: "nantian_gateway_controlplane_xds_active_streams",
 			Help: "Current number of connected dataplane xDS streams.",
 		}),
-		XDSSnapshotFanoutCoalescedTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "nantian_gateway_controlplane_xds_snapshot_fanout_coalesced_total",
+		SnapshotCoalescedTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "nantian_gw_controlplane_snapshot_coalesced_total",
 			Help: "Total number of per-subscriber pending snapshots replaced by newer published snapshots because a dataplane xDS stream was not keeping up with publish fanout.",
+		}),
+		SnapshotPublishTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "nantian_gw_controlplane_snapshot_publish_total",
+				Help: "Total number of snapshot publish attempts partitioned by result (published or deduped as an already-current snapshot).",
+			},
+			[]string{"result"},
+		),
+		SnapshotVersionSkippedTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "nantian_gw_controlplane_snapshot_version_skipped_total",
+			Help: "Total number of times the snapshot proto cache skipped cached entries because a newer snapshot version was published.",
+		}),
+		SnapshotDivergenceTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "nantian_gw_controlplane_snapshot_divergence_total",
+			Help: "Total number of times a dataplane node reported a snapshot version different from the control plane's current snapshot (snapshot divergence across replicas or stale dataplane state).",
 		}),
 		XDSStreamTerminationsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -245,39 +263,39 @@ func NewMetrics() *Metrics {
 			Name: "nantian_gateway_controlplane_reconciler_runner_retry_pending",
 			Help: "1 if a failure-triggered retry is pending for the custom controlplane reconcile runner, 0 otherwise.",
 		}),
-	// Memory metrics with project-specific prefix
-	MemAllocBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name: "nantian_gw_controlplane_mem_alloc_bytes",
-		Help: "Current heap allocation in bytes (runtime.MemStats.Alloc).",
-	}, func() float64 {
-		var s runtime.MemStats
-		runtime.ReadMemStats(&s)
-		return float64(s.Alloc)
-	}),
-	MemHeapInuseBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name: "nantian_gw_controlplane_mem_heap_inuse_bytes",
-		Help: "Heap memory in use in bytes (runtime.MemStats.HeapInuse).",
-	}, func() float64 {
-		var s runtime.MemStats
-		runtime.ReadMemStats(&s)
-		return float64(s.HeapInuse)
-	}),
-	MemStackInuseBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name: "nantian_gw_controlplane_mem_stack_inuse_bytes",
-		Help: "Stack memory in use in bytes (runtime.MemStats.StackInuse).",
-	}, func() float64 {
-		var s runtime.MemStats
-		runtime.ReadMemStats(&s)
-		return float64(s.StackInuse)
-	}),
-	MemGCCPUFraction: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-		Name: "nantian_gw_controlplane_mem_gc_cpu_fraction",
-		Help: "GC CPU fraction since latest GC (runtime.MemStats.GCCPUFraction).",
-	}, func() float64 {
-		var s runtime.MemStats
-		runtime.ReadMemStats(&s)
-		return float64(s.GCCPUFraction)
-	}),
+		// Memory metrics with project-specific prefix
+		MemAllocBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Name: "nantian_gw_controlplane_mem_alloc_bytes",
+			Help: "Current heap allocation in bytes (runtime.MemStats.Alloc).",
+		}, func() float64 {
+			var s runtime.MemStats
+			runtime.ReadMemStats(&s)
+			return float64(s.Alloc)
+		}),
+		MemHeapInuseBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Name: "nantian_gw_controlplane_mem_heap_inuse_bytes",
+			Help: "Heap memory in use in bytes (runtime.MemStats.HeapInuse).",
+		}, func() float64 {
+			var s runtime.MemStats
+			runtime.ReadMemStats(&s)
+			return float64(s.HeapInuse)
+		}),
+		MemStackInuseBytes: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Name: "nantian_gw_controlplane_mem_stack_inuse_bytes",
+			Help: "Stack memory in use in bytes (runtime.MemStats.StackInuse).",
+		}, func() float64 {
+			var s runtime.MemStats
+			runtime.ReadMemStats(&s)
+			return float64(s.StackInuse)
+		}),
+		MemGCCPUFraction: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Name: "nantian_gw_controlplane_mem_gc_cpu_fraction",
+			Help: "GC CPU fraction since latest GC (runtime.MemStats.GCCPUFraction).",
+		}, func() float64 {
+			var s runtime.MemStats
+			runtime.ReadMemStats(&s)
+			return float64(s.GCCPUFraction)
+		}),
 	}
 
 	registry.MustRegister(
@@ -292,7 +310,10 @@ func NewMetrics() *Metrics {
 		m.SnapshotListenerAttachedRoutes,
 		m.AdminAPIRequestsTotal,
 		m.AdminAPIRequestDurationSeconds,
-		m.XDSSnapshotFanoutCoalescedTotal,
+		m.SnapshotCoalescedTotal,
+		m.SnapshotPublishTotal,
+		m.SnapshotVersionSkippedTotal,
+		m.SnapshotDivergenceTotal,
 		m.XDSStreamTerminationsTotal,
 		m.XDSStatusReportRejectionsTotal,
 		m.XDSSnapshotSendDurationSeconds,

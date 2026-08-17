@@ -75,6 +75,13 @@ func New(
 		return nil, err
 	}
 
+	protoCache := newSnapshotProtoCache(nil)
+	if metrics != nil {
+		protoCache.setVersionSkipHandler(func(version string) {
+			metrics.SnapshotVersionSkippedTotal.Inc()
+		})
+	}
+
 	return &Server{
 		addr:          addr,
 		store:         store,
@@ -82,7 +89,7 @@ func New(
 		logger:        logger,
 		metrics:       metrics,
 		runtime:       runtimeSettings,
-		protoCache:    newSnapshotProtoCache(nil),
+		protoCache:    protoCache,
 		serverOptions: serverOptions,
 		shutdownCh:    make(chan struct{}),
 		activeStreams: make(map[string]*streamRegistration, 64),

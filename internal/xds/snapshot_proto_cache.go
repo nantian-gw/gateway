@@ -29,6 +29,9 @@ type snapshotProtoCache struct {
 	// slow projection cannot serialize unrelated profiles or block cache hits.
 	group singleflight.Group
 	build snapshotProtoBuilder
+	// onVersionSkip is invoked whenever a published snapshot version supersedes
+	// a previously cached version, discarding the old version's cached entries.
+	onVersionSkip func(version string)
 }
 
 func newSnapshotProtoCache(build snapshotProtoBuilder) *snapshotProtoCache {
@@ -36,6 +39,12 @@ func newSnapshotProtoCache(build snapshotProtoBuilder) *snapshotProtoCache {
 		build = buildProjectedProtoSnapshot
 	}
 	return &snapshotProtoCache{build: build}
+}
+
+func (c *snapshotProtoCache) setVersionSkipHandler(handler func(version string)) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.onVersionSkip = handler
 }
 
 func (c *snapshotProtoCache) get(ctx context.Context, snapshot *ir.Snapshot, profile projectionProfile, logger *slog.Logger) *controlv1.ConfigSnapshot {
@@ -64,6 +73,9 @@ func (c *snapshotProtoCache) get(ctx context.Context, snapshot *ir.Snapshot, pro
 
 		c.mu.Lock()
 		if c.version != snapshot.ID || c.snapshots == nil {
+			if c.version != "" && c.version != snapshot.ID && c.onVersionSkip != nil {
+				c.onVersionSkip(c.version)
+			}
 			c.version = snapshot.ID
 			c.snapshots = make(map[string]*controlv1.ConfigSnapshot, 32)
 		}

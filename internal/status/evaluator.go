@@ -49,10 +49,12 @@ func evaluateRoutes(state *clusterState) routeState {
 
 	for _, route := range state.tlsRoutes {
 		key := client.ObjectKeyFromObject(&route)
-		evals := ctx.evaluateRoute(tlsRouteInput(route))
-		out.tls[key] = evals
-		recordAttachments(out.attachments, key, evals)
+		ps := ctx.evaluateRoute(tlsRouteInput(route))
+		out.tls[key] = ps
+		recordAttachments(out.attachments, key, ps)
 	}
+
+	evaluateRouteConflicts(state, &out)
 
 	return out
 }

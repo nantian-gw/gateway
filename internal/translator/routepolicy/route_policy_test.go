@@ -409,10 +409,12 @@ func TestBuildRoutePolicyIndexes_ThreeLevelInheritance(t *testing.T) {
 func TestBuildRoutePolicyIndexes_ConflictDetection_TwoNamespacePolicies(t *testing.T) {
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 10 * time.Second}
+	t1 := metav1.Now()
+	t2 := metav1.NewTime(t1.Add(time.Minute))
 
 	policies := []rp.RoutePolicy{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-1", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-1", Namespace: "default", CreationTimestamp: t1},
 			Spec: rp.RoutePolicySpec{
 				Default: &rp.RoutePolicyDefault{
 					Timeout: &rp.TimeoutConfig{Request: &reqDur1},
@@ -420,7 +422,7 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoNamespacePolicies(t *testi
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-2", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-2", Namespace: "default", CreationTimestamp: t2},
 			Spec: rp.RoutePolicySpec{
 				Default: &rp.RoutePolicyDefault{
 					Timeout: &rp.TimeoutConfig{Request: &reqDur2},
@@ -434,18 +436,25 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoNamespacePolicies(t *testi
 	}
 
 	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
-	if len(result) != 0 {
-		t.Fatalf("expected 0 route configs (conflict), got %d", len(result))
+	// Oldest policy wins deterministically instead of both being dropped.
+	cfg, ok := result["default/route1"]
+	if !ok {
+		t.Fatalf("expected oldest namespace policy to win, got %d configs", len(result))
+	}
+	if cfg.Timeout == nil || cfg.Timeout.Request != 5*time.Second {
+		t.Fatalf("expected oldest policy timeout 5s, got %#v", cfg.Timeout)
 	}
 }
 
 func TestBuildRoutePolicyIndexes_ConflictDetection_TwoRoutePoliciesForSameRoute(t *testing.T) {
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 10 * time.Second}
+	t1 := metav1.Now()
+	t2 := metav1.NewTime(t1.Add(time.Minute))
 
 	policies := []rp.RoutePolicy{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "route-policy-1", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "route-policy-1", Namespace: "default", CreationTimestamp: t1},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
@@ -456,7 +465,7 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoRoutePoliciesForSameRoute(
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "route-policy-2", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "route-policy-2", Namespace: "default", CreationTimestamp: t2},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
@@ -473,8 +482,13 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoRoutePoliciesForSameRoute(
 	}
 
 	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
-	if len(result) != 0 {
-		t.Fatalf("expected 0 route configs (conflict), got %d", len(result))
+	// Oldest route policy wins instead of both being dropped.
+	cfg, ok := result["default/route1"]
+	if !ok {
+		t.Fatalf("expected oldest route policy to win, got %d configs", len(result))
+	}
+	if cfg.Timeout == nil || cfg.Timeout.Request != 5*time.Second {
+		t.Fatalf("expected oldest policy timeout 5s, got %#v", cfg.Timeout)
 	}
 }
 
@@ -482,10 +496,12 @@ func TestBuildRoutePolicyIndexes_Conflict_NamespaceConflictDoesNotBlockNonConfli
 	nsDur1 := metav1.Duration{Duration: 5 * time.Second}
 	nsDur2 := metav1.Duration{Duration: 10 * time.Second}
 	routeDur := metav1.Duration{Duration: 20 * time.Second}
+	t1 := metav1.Now()
+	t2 := metav1.NewTime(t1.Add(time.Minute))
 
 	policies := []rp.RoutePolicy{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-1", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-1", Namespace: "default", CreationTimestamp: t1},
 			Spec: rp.RoutePolicySpec{
 				Default: &rp.RoutePolicyDefault{
 					Timeout: &rp.TimeoutConfig{Request: &nsDur1},
@@ -493,7 +509,7 @@ func TestBuildRoutePolicyIndexes_Conflict_NamespaceConflictDoesNotBlockNonConfli
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-2", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "ns-policy-2", Namespace: "default", CreationTimestamp: t2},
 			Spec: rp.RoutePolicySpec{
 				Default: &rp.RoutePolicyDefault{
 					Timeout: &rp.TimeoutConfig{Request: &nsDur2},
@@ -501,7 +517,7 @@ func TestBuildRoutePolicyIndexes_Conflict_NamespaceConflictDoesNotBlockNonConfli
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default", CreationTimestamp: t2},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
@@ -601,10 +617,12 @@ func TestMergeRoutePolicyConfig_Nils(t *testing.T) {
 func TestBuildRoutePolicyIndexes_RouteLevelConflict(t *testing.T) {
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 15 * time.Second}
+	t1 := metav1.Now()
+	t2 := metav1.NewTime(t1.Add(time.Minute))
 
 	policies := []rp.RoutePolicy{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "rp-1", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "rp-1", Namespace: "default", CreationTimestamp: t1},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
@@ -615,7 +633,7 @@ func TestBuildRoutePolicyIndexes_RouteLevelConflict(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "rp-2", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "rp-2", Namespace: "default", CreationTimestamp: t2},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "HTTPRoute", Name: "route1"},
@@ -630,18 +648,25 @@ func TestBuildRoutePolicyIndexes_RouteLevelConflict(t *testing.T) {
 		{Name: "route1", Namespace: "default"},
 	}
 	result := BuildRoutePolicyIndexes(policies, httpRoutes, nil)
-	if _, ok := result["default/route1"]; ok {
-		t.Fatal("route1 should NOT have a policy; conflict between rp-1 and rp-2")
+	// Oldest policy wins deterministically.
+	cfg, ok := result["default/route1"]
+	if !ok {
+		t.Fatal("expected oldest route policy (rp-1) to win")
+	}
+	if cfg.Timeout == nil || cfg.Timeout.Request != 5*time.Second {
+		t.Fatalf("expected rp-1 timeout 5s, got %#v", cfg.Timeout)
 	}
 }
 
 func TestBuildRoutePolicyIndexes_GatewayLevelConflict(t *testing.T) {
 	reqDur1 := metav1.Duration{Duration: 5 * time.Second}
 	reqDur2 := metav1.Duration{Duration: 15 * time.Second}
+	t1 := metav1.Now()
+	t2 := metav1.NewTime(t1.Add(time.Minute))
 
 	policies := []rp.RoutePolicy{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "gw-1", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "gw-1", Namespace: "default", CreationTimestamp: t1},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "Gateway", Name: "my-gw"},
@@ -652,7 +677,7 @@ func TestBuildRoutePolicyIndexes_GatewayLevelConflict(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "gw-2", Namespace: "default"},
+			ObjectMeta: metav1.ObjectMeta{Name: "gw-2", Namespace: "default", CreationTimestamp: t2},
 			Spec: rp.RoutePolicySpec{
 				TargetRefs: []gatewayv1.LocalPolicyTargetReference{
 					{Kind: "Gateway", Name: "my-gw"},
@@ -673,8 +698,13 @@ func TestBuildRoutePolicyIndexes_GatewayLevelConflict(t *testing.T) {
 		{ObjectMeta: metav1.ObjectMeta{Name: "my-gw", Namespace: "default"}},
 	}
 	result := BuildRoutePolicyIndexes(policies, httpRoutes, gateways)
-	if _, ok := result["default/route1"]; ok {
-		t.Fatal("route1 should NOT have a policy; conflict between gw-1 and gw-2")
+	// Oldest gateway policy wins deterministically.
+	cfg, ok := result["default/route1"]
+	if !ok {
+		t.Fatal("expected oldest gateway policy (gw-1) to win")
+	}
+	if cfg.Timeout == nil || cfg.Timeout.Request != 5*time.Second {
+		t.Fatalf("expected gw-1 timeout 5s, got %#v", cfg.Timeout)
 	}
 }
 

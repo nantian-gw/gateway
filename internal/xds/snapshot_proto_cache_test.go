@@ -127,6 +127,31 @@ func TestSnapshotProtoCacheBuildsOnceForConcurrentReaders(t *testing.T) {
 	}
 }
 
+func TestSnapshotProtoCacheReportsVersionSkip(t *testing.T) {
+	t.Parallel()
+
+	var skippedVersions []string
+	cache := newSnapshotProtoCache(func(_ context.Context, snapshot *ir.Snapshot, _ projectionProfile, _ *slog.Logger) *controlv1.ConfigSnapshot {
+		return &controlv1.ConfigSnapshot{
+			Id: snapshot.ID,
+		}
+	})
+	cache.setVersionSkipHandler(func(version string) {
+		skippedVersions = append(skippedVersions, version)
+	})
+
+	full := effectiveProjectionProfile([]string{featureCoreV1, featureRouteLabelsV1, featureBackendAIServiceV1, featureBackendTokenPolicyV1, featureBackendWasmPluginV1})
+	_ = cache.get(context.Background(), &ir.Snapshot{ID: "v1", GeneratedAt: time.Now().UTC()}, full, nil)
+	if len(skippedVersions) != 0 {
+		t.Fatalf("expected no version skip on first build, got %v", skippedVersions)
+	}
+
+	_ = cache.get(context.Background(), &ir.Snapshot{ID: "v2", GeneratedAt: time.Now().UTC()}, full, nil)
+	if len(skippedVersions) != 1 || skippedVersions[0] != "v1" {
+		t.Fatalf("expected version skip for v1 on v2 publish, got %v", skippedVersions)
+	}
+}
+
 func BenchmarkToProtoSnapshotFanout(b *testing.B) {
 	snapshot := benchmarkProtoSnapshot()
 

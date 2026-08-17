@@ -5,9 +5,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/constants"
+	"github.com/nantian-gw/gateway/internal/ir"
 )
+
+// SnapshotHealth is a lightweight response exposing the current snapshot identity for
+// cross-replica consistency comparison by operators.
+type SnapshotHealth struct {
+	SnapshotID  string    `json:"snapshotId"`
+	GeneratedAt time.Time `json:"generatedAt"`
+}
 
 func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
 	token := extractBearerToken(r)
@@ -70,6 +77,18 @@ func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleSnapshot(w http.ResponseWriter, _ *http.Request) {
 	s.respondJSON(w, s.store.Current())
+}
+
+func (s *Server) handleSnapshotHealth(w http.ResponseWriter, _ *http.Request) {
+	snapshot := s.store.Current()
+	if snapshot == nil {
+		s.respondJSON(w, SnapshotHealth{})
+		return
+	}
+	s.respondJSON(w, SnapshotHealth{
+		SnapshotID:  snapshot.ID,
+		GeneratedAt: snapshot.GeneratedAt,
+	})
 }
 
 func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {

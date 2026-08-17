@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -122,6 +123,36 @@ func TestHandlerExposesCustomMetricValuesAndPrometheusContentType(t *testing.T) 
 		"\nnantian_gateway_snapshot_builds_total 1",
 		"\nnantian_gateway_snapshot_last_build_success 1",
 		"\nnantian_gateway_controlplane_admin_requests_total{method=\"GET\",route=\"summary\",status_class=\"2xx\"} 2",
+	} {
+		if !strings.Contains(body, sample) {
+			t.Fatalf("expected metric sample %q in response body", sample)
+		}
+	}
+}
+
+func TestHandlerExposesSnapshotObservabilityMetrics(t *testing.T) {
+	metrics := NewMetrics()
+	metrics.SnapshotCoalescedTotal.Add(3)
+	metrics.SnapshotPublishTotal.WithLabelValues("published").Inc()
+	metrics.SnapshotPublishTotal.WithLabelValues("dedup").Inc()
+	metrics.SnapshotVersionSkippedTotal.Inc()
+	metrics.SnapshotDivergenceTotal.Inc()
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/metrics", http.NoBody)
+	Handler(metrics).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d, body=%q", http.StatusOK, recorder.Code, recorder.Body.String())
+	}
+
+	body := recorder.Body.String()
+	for _, sample := range []string{
+		"\nnantian_gw_controlplane_snapshot_coalesced_total 3",
+		"\nnantian_gw_controlplane_snapshot_publish_total{result=\"dedup\"} 1",
+		"\nnantian_gw_controlplane_snapshot_publish_total{result=\"published\"} 1",
+		"\nnantian_gw_controlplane_snapshot_version_skipped_total 1",
+		"\nnantian_gw_controlplane_snapshot_divergence_total 1",
 	} {
 		if !strings.Contains(body, sample) {
 			t.Fatalf("expected metric sample %q in response body", sample)

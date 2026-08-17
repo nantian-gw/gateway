@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nantian-gw/gateway/internal/observability"
 	"github.com/nantian-gw/gateway/internal/constants"
+	"github.com/nantian-gw/gateway/internal/observability"
 )
 
 func wrapMetricsHandler(next http.Handler, metrics *observability.Metrics) http.Handler {
@@ -94,11 +94,12 @@ func normalizeAdminMethod(method string) string {
 }
 
 var routeClassification = map[string]string{
-	constants.PathLivez:                    "livez",
-	constants.PathReadyz:                    "readyz",
+	constants.PathLivez:          "livez",
+	constants.PathReadyz:         "readyz",
 	"/v1/summary":                "summary",
 	"/v1/snapshot-sync":          "snapshot_sync",
 	"/v1/snapshot":               "snapshot",
+	"/v1/snapshot/health":        "snapshot_health",
 	"/v1/listeners":              "listeners",
 	"/v1/routes":                 "routes",
 	"/v1/backends":               "backends",
@@ -129,9 +130,9 @@ var prefixRouteClassification = []struct {
 	class  string
 }{
 	{"/v1/listeners/", "listener_detail"},
-	{"/v1/routes/",    "route_detail"},
-	{"/v1/backends/",  "backend_detail"},
-	{"/v1/nodes/",     "node_detail"},
+	{"/v1/routes/", "route_detail"},
+	{"/v1/backends/", "backend_detail"},
+	{"/v1/nodes/", "node_detail"},
 	{"/v1/dataplanes/", "dataplane_summary"},
 	{"/v1/resources/", "resource_detail"},
 }

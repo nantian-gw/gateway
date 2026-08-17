@@ -130,10 +130,16 @@ func run(configPath string) error {
 	store := ir.NewSnapshotStore(logger)
 	store.SetHooks(ir.SnapshotStoreHooks{
 		OnSubscriberQueueReplace: func(_ string, replaced int) {
-			if replaced <= 0 || metrics == nil || metrics.XDSSnapshotFanoutCoalescedTotal == nil {
+			if replaced <= 0 || metrics == nil || metrics.SnapshotCoalescedTotal == nil {
 				return
 			}
-			metrics.XDSSnapshotFanoutCoalescedTotal.Add(float64(replaced))
+			metrics.SnapshotCoalescedTotal.Add(float64(replaced))
+		},
+		OnPublish: func(_ string, result string) {
+			if metrics == nil || metrics.SnapshotPublishTotal == nil {
+				return
+			}
+			metrics.SnapshotPublishTotal.WithLabelValues(result).Inc()
 		},
 	})
 	nodeRepository := noderegistry.NewLeaseRepository(
@@ -275,7 +281,7 @@ func run(configPath string) error {
 	)
 	syncer.SetOptions(controller.SyncerOptions{
 		EnableExperimentalGateway: cfg.Features.EnableExperimentalGateway,
-		EnableAiGateway:        cfg.Features.EnableAiGateway,
+		EnableAiGateway:           cfg.Features.EnableAiGateway,
 		MaxConcurrentReconciles:   cfg.Controller.MaxConcurrentReconciles,
 		RateLimiterBaseDelay:      cfg.RateLimiterBaseDelayDuration(),
 		RateLimiterMaxDelay:       cfg.RateLimiterMaxDelayDuration(),

@@ -27,7 +27,14 @@ type SnapshotStoreHooks struct {
 	OnSubscriberQueueReplace func(version string, replaced int)
 	BeforeFanout             func(version string, subscribers int)
 	AfterFanout              func(version string, subscribers int)
+	OnPublish                func(version string, result string)
 }
+
+// PublishResult values reported through SnapshotStoreHooks.OnPublish.
+const (
+	PublishResultPublished = "published"
+	PublishResultDedup     = "dedup"
+)
 
 func NewSnapshotStore(logger *slog.Logger) *SnapshotStore {
 	return &SnapshotStore{
@@ -60,14 +67,17 @@ func (s *SnapshotStore) Publish(snapshot *Snapshot) bool {
 	}
 
 	s.mu.Lock()
+	hooks := s.hooks
 	if s.current != nil && s.current.ID == snapshot.ID {
 		s.mu.Unlock()
+		if hooks.OnPublish != nil {
+			hooks.OnPublish(snapshot.ID, PublishResultDedup)
+		}
 		return false
 	}
 
 	s.current = snapshot
 	subscribers := s.snapshotSubscribersLocked()
-	hooks := s.hooks
 	s.mu.Unlock()
 
 	if hooks.BeforeFanout != nil {
@@ -75,9 +85,13 @@ func (s *SnapshotStore) Publish(snapshot *Snapshot) bool {
 	}
 
 	replaced := 0
+	droppedIDs := make([]string, 0, len(subscribers))
 	for _, subscriber := range subscribers {
-		if wasReplaced, delivered := pushLatestSnapshotSafe(subscriber, snapshot); delivered && wasReplaced {
+		if dropped, wasReplaced, delivered := pushLatestSnapshotSafe(subscriber, snapshot); delivered && wasReplaced {
 			replaced++
+			if dropped != nil && dropped.ID != "" {
+				droppedIDs = append(droppedIDs, dropped.ID)
+			}
 		}
 	}
 
@@ -92,10 +106,16 @@ func (s *SnapshotStore) Publish(snapshot *Snapshot) bool {
 			snapshot.ID,
 			"slow_subscribers",
 			replaced,
+			"dropped_snapshots",
+			droppedIDs,
 		)
 		if hooks.OnSubscriberQueueReplace != nil {
 			hooks.OnSubscriberQueueReplace(snapshot.ID, replaced)
 		}
+	}
+
+	if hooks.OnPublish != nil {
+		hooks.OnPublish(snapshot.ID, PublishResultPublished)
 	}
 
 	s.logger.Info("published snapshot", "version", snapshot.ID)
@@ -141,38 +161,42 @@ func (s *SnapshotStore) snapshotSubscribersLocked() []*snapshotSubscriber {
 	return subscribers
 }
 
-func pushLatestSnapshotSafe(sub *snapshotSubscriber, snapshot *Snapshot) (replaced bool, delivered bool) {
+func pushLatestSnapshotSafe(sub *snapshotSubscriber, snapshot *Snapshot) (dropped *Snapshot, replaced bool, delivered bool) {
 	if sub == nil {
-		return false, false
+		return nil, false, false
 	}
 
 	sub.mu.Lock()
 	defer sub.mu.Unlock()
 
 	if sub.closed.Load() {
-		return false, false
+		return nil, false, false
 	}
 
-	replaced = pushLatestSnapshot(sub.ch, snapshot)
-	return replaced, true
+	dropped, replaced = pushLatestSnapshot(sub.ch, snapshot)
+	return dropped, replaced, true
 }
 
-func pushLatestSnapshot(ch chan *Snapshot, snapshot *Snapshot) bool {
+func pushLatestSnapshot(ch chan *Snapshot, snapshot *Snapshot) (dropped *Snapshot, replaced bool) {
 	select {
 	case ch <- snapshot:
-		return false
+		return nil, false
 	default:
 	}
 
+	var firstDropped *Snapshot
 	for {
 		select {
-		case <-ch:
+		case dropped := <-ch:
+			if firstDropped == nil {
+				firstDropped = dropped
+			}
 		default:
 			select {
 			case ch <- snapshot:
 			default:
 			}
-			return true
+			return firstDropped, true
 		}
 	}
 }

@@ -1,6 +1,9 @@
 package status
 
 import (
+	"fmt"
+	"sort"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -86,4 +89,120 @@ func recordAttachments(attachments map[listenerKey]routeAttachmentSet, routeKey 
 func isListenerSetParentRef(parentRef gatewayv1.ParentReference) bool {
 	return parentRef.Group != nil && string(*parentRef.Group) == gatewayv1.GroupName &&
 		parentRef.Kind != nil && string(*parentRef.Kind) == "ListenerSet"
+}
+
+// routeReasonHostnameConflict is the reason reported on the Accepted condition of a
+// route that loses a hostname conflict on a listener. gateway-api does not define a
+// route-level reason for this case (only ListenerReasonHostnameConflict), so a custom
+// reason string is used, as allowed by the spec comment on RouteReasonAccepted.
+const routeReasonHostnameConflict = "HostnameConflict"
+
+// routeHostnameInfo carries the hostname set and creation timestamp of a route, used
+// to resolve hostname conflicts deterministically (earliest creation wins).
+type routeHostnameInfo struct {
+	hostnames []gatewayv1.Hostname
+	createdAt metav1.Time
+}
+
+// evaluateRouteConflicts detects hostname overlaps between routes attached to the
+// same listener and marks the later-created route as conflicted (Accepted=False with
+// Reason=HostnameConflict) via the existing extraConditions mechanism, mirroring the
+// listener-level conflict pattern in evaluateListenerConflict.
+func evaluateRouteConflicts(state *clusterState, out *routeState) {
+	infoByKey := make(map[client.ObjectKey]routeHostnameInfo)
+	for _, route := range state.httpRoutes {
+		key := client.ObjectKeyFromObject(&route)
+		if len(route.Spec.Hostnames) == 0 {
+			continue
+		}
+		infoByKey[key] = routeHostnameInfo{hostnames: route.Spec.Hostnames, createdAt: route.CreationTimestamp}
+	}
+	for _, route := range state.grpcRoutes {
+		key := client.ObjectKeyFromObject(&route)
+		if len(route.Spec.Hostnames) == 0 {
+			continue
+		}
+		infoByKey[key] = routeHostnameInfo{hostnames: route.Spec.Hostnames, createdAt: route.CreationTimestamp}
+	}
+	for _, route := range state.tlsRoutes {
+		key := client.ObjectKeyFromObject(&route)
+		if len(route.Spec.Hostnames) == 0 {
+			continue
+		}
+		infoByKey[key] = routeHostnameInfo{hostnames: route.Spec.Hostnames, createdAt: route.CreationTimestamp}
+	}
+
+	for listener, attached := range out.attachments {
+		candidates := make([]client.ObjectKey, 0, len(attached))
+		for key := range attached {
+			if _, ok := infoByKey[key]; ok {
+				candidates = append(candidates, key)
+			}
+		}
+
+		sort.Slice(candidates, func(i, j int) bool {
+			left := infoByKey[candidates[i]].createdAt.Time
+			right := infoByKey[candidates[j]].createdAt.Time
+			if left.Equal(right) {
+				return candidates[i].String() < candidates[j].String()
+			}
+			return left.Before(right)
+		})
+
+		for i := 0; i < len(candidates); i++ {
+			for j := i + 1; j < len(candidates); j++ {
+				if routeHostnameSetsOverlap(infoByKey[candidates[i]].hostnames, infoByKey[candidates[j]].hostnames) {
+					markRouteHostnameConflict(out, candidates[j], listener, candidates[i])
+				}
+			}
+		}
+	}
+}
+
+// routeHostnameSetsOverlap reports whether two hostname sets overlap. Routes with an
+// empty hostname list are excluded from conflict detection (a catch-all route coexists
+// with specific-hostname routes; the specific one wins for its hostname).
+func routeHostnameSetsOverlap(a, b []gatewayv1.Hostname) bool {
+	for _, left := range a {
+		for _, right := range b {
+			if hostnamesIntersect(string(left), string(right)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// markRouteHostnameConflict appends an Accepted=False condition with
+// Reason=HostnameConflict to every parent evaluation of the losing route that
+// matched the conflicting listener. mergeRouteParents writes extraConditions after
+// acceptedCondition, so the appended condition overrides the earlier Accepted=True.
+func markRouteHostnameConflict(out *routeState, loserKey client.ObjectKey, listener listenerKey, winnerKey client.ObjectKey) {
+	message := fmt.Sprintf("Hostname conflict with route %s/%s on listener %s; the earlier route wins", winnerKey.Namespace, winnerKey.Name, listener.listenerName)
+
+	mark := func(evals []routeParentEvaluation) {
+		for i := range evals {
+			if evals[i].acceptedCondition.Status != metav1.ConditionTrue {
+				continue
+			}
+			for _, matched := range evals[i].matchedListeners {
+				if matched == listener {
+					evals[i].extraConditions = append(evals[i].extraConditions, conditionSpec{
+						Type:               string(gatewayv1.RouteConditionAccepted),
+						Status:             metav1.ConditionFalse,
+						Reason:             routeReasonHostnameConflict,
+						Message:            message,
+						ObservedGeneration: evals[i].acceptedCondition.ObservedGeneration,
+					})
+					break
+				}
+			}
+		}
+	}
+	mark(out.http[loserKey])
+	mark(out.grpc[loserKey])
+	mark(out.tls[loserKey])
+	if attached := out.attachments[listener]; attached != nil {
+		delete(attached, loserKey)
+	}
 }

@@ -23,6 +23,20 @@ func (s *Server) recordSnapshotAckTimeout() {
 	s.metrics.XDSSnapshotAckTimeoutsTotal.Inc()
 }
 
+func (s *Server) observeSnapshotDivergence(reportedVersion string) {
+	if s == nil || s.metrics == nil || s.metrics.SnapshotDivergenceTotal == nil {
+		return
+	}
+	if reportedVersion == "" || s.store == nil {
+		return
+	}
+	current := s.store.Current()
+	if current == nil || current.ID == "" || current.ID == reportedVersion {
+		return
+	}
+	s.metrics.SnapshotDivergenceTotal.Inc()
+}
+
 func (s *Server) recordStreamTermination(reason string) {
 	if s == nil || s.metrics == nil || s.metrics.XDSStreamTerminationsTotal == nil || reason == "" {
 		return
