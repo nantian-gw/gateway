@@ -160,7 +160,9 @@ func toProtoSnapshotWithLogger(snapshot *ir.Snapshot, logger *slog.Logger) *cont
 			TlsValidation:      toProtoBackendTLSValidation(item.BackendTLSValidation),
 			SessionPersistence: toProtoSessionPersistence(item.SessionPersistence),
 			LoadBalancing:      toProtoLoadBalancing(item.LoadBalancing),
-			CircuitBreaker:     toProtoCircuitBreaker(item.CircuitBreaker),
+		CircuitBreaker:     toProtoCircuitBreaker(item.CircuitBreaker),
+		HealthCheck:        toProtoHealthCheck(item.HealthCheck),
+		OutlierDetection:   toProtoOutlierDetection(item.OutlierDetection),
 			Metadata:           item.Metadata,
 		}
 
@@ -260,6 +262,52 @@ func toProtoCircuitBreaker(item *ir.CircuitBreakerConfig) *controlv1.CircuitBrea
 	}
 	return &controlv1.CircuitBreakerConfig{
 		MaxInflightRequests: uint32(item.MaxInflightRequests), //nolint:gosec // G115: conversion is safe — value validated as non-negative
+	}
+}
+
+func toProtoHealthCheck(item *ir.HealthCheckConfig) *controlv1.HealthCheckConfig {
+	if item == nil {
+		return nil
+	}
+	out := &controlv1.HealthCheckConfig{
+		Type:               item.Type,
+		Path:               item.Path,
+		ExpectedStatus:     item.ExpectedStatus,
+		HealthyThreshold:   item.HealthyThreshold,
+		UnhealthyThreshold: item.UnhealthyThreshold,
+	}
+	if item.Interval != nil {
+		out.Interval = durationpb.New(*item.Interval)
+	}
+	if item.Timeout != nil {
+		out.Timeout = durationpb.New(*item.Timeout)
+	}
+	return out
+}
+
+func toProtoOutlierDetection(item *ir.OutlierDetectionConfig) *controlv1.OutlierDetectionConfig {
+	if item == nil {
+		return nil
+	}
+	out := &controlv1.OutlierDetectionConfig{
+		Consecutive_5Xx: item.Consecutive5xx,
+		MaxEjectionPercent: item.MaxEjectionPercent,
+	}
+	if item.Interval != nil {
+		out.Interval = durationpb.New(*item.Interval)
+	}
+	if item.BaseEjectionTime != nil {
+		out.BaseEjectionTime = durationpb.New(*item.BaseEjectionTime)
+	}
+	return out
+}
+
+func toProtoSlowStart(item *ir.SlowStartConfig) *controlv1.SlowStartConfig {
+	if item == nil || item.Window == nil {
+		return nil
+	}
+	return &controlv1.SlowStartConfig{
+		Window: durationpb.New(*item.Window),
 	}
 }
 

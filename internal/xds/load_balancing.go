@@ -20,6 +20,9 @@ func toProtoLoadBalancing(item *ir.LoadBalancingPolicy) *controlv1.LoadBalancing
 			HeaderName: item.ConsistentHash.HeaderName,
 		}
 	}
+	if item.SlowStart != nil {
+		out.SlowStart = toProtoSlowStart(item.SlowStart)
+	}
 
 	return out
 }
@@ -30,6 +33,10 @@ func toProtoLoadBalancingType(value string) controlv1.LoadBalancingPolicyType {
 		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_ROUND_ROBIN
 	case "ConsistentHash":
 		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_CONSISTENT_HASH
+	case "LeastRequest":
+		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_LEAST_REQUEST
+	case "Random":
+		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_RANDOM
 	default:
 		return controlv1.LoadBalancingPolicyType_LOAD_BALANCING_UNSPECIFIED
 	}
