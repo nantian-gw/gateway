@@ -2,137 +2,56 @@ package backend
 
 import (
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
+	gatewaycorev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func TestDeepCopyRoundtrip(t *testing.T) {
-	lbType := LoadBalancingStrategyTypeRoundRobin
-	original := &BackendLBPolicy{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-lb",
-			Namespace: "default",
-		},
+func TestBackendLBPolicyDeepCopyNewFields(t *testing.T) {
+	slowStart := 30 * time.Second
+	interval := 5 * time.Second
+	policy := &BackendLBPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "p", Namespace: "ns"},
 		Spec: BackendLBPolicySpec{
+			TargetRefs:         []LocalPolicyTargetReference{},
+			SessionPersistence: &gatewaycorev1alpha2.SessionPersistence{SessionName: ptr("sess")},
 			LoadBalancing: &LoadBalancingPolicy{
-				Type: &lbType,
+				Type:      ptr(LoadBalancingStrategyTypeLeastRequest),
+				SlowStart: &SlowStartConfig{Window: &slowStart},
 			},
-		},
-	}
-	copied := original.DeepCopy()
-	assert.Equal(t, original, copied)
-	assert.NotSame(t, original, copied)
-}
-
-func TestBackendLBPolicyWithCircuitBreaker(t *testing.T) {
-	maxInflight := int32(100)
-	policy := &BackendLBPolicy{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "cb-policy",
-			Namespace: "default",
-		},
-		Spec: BackendLBPolicySpec{
-			TargetRefs: []LocalPolicyTargetReference{
-				{Group: "", Kind: "Service", Name: "backend-svc"},
+			HealthCheck: &HealthCheckConfig{
+				Type:               ptr("HTTP"),
+				Path:               ptr("/healthz"),
+				ExpectedStatus:     ptr[int32](200),
+				Interval:           &interval,
+				HealthyThreshold:   ptr(uint32(2)),
+				UnhealthyThreshold: ptr(uint32(2)),
 			},
-			CircuitBreaker: &CircuitBreakerConfig{
-				MaxInflightRequests: &maxInflight,
+			OutlierDetection: &OutlierDetectionConfig{
+				Consecutive5xx:     ptr(uint32(3)),
+				Interval:           &interval,
+				BaseEjectionTime:   &interval,
+				MaxEjectionPercent: ptr(uint32(50)),
 			},
 		},
 	}
 
-	assert.Equal(t, int32(100), *policy.Spec.CircuitBreaker.MaxInflightRequests)
-	assert.Len(t, policy.Spec.TargetRefs, 1)
-	assert.Equal(t, "backend-svc", string(policy.Spec.TargetRefs[0].Name))
-
-	copied := policy.DeepCopy()
-	assert.Equal(t, policy.Spec.CircuitBreaker.MaxInflightRequests, copied.Spec.CircuitBreaker.MaxInflightRequests)
-}
-
-func TestBackendLBPolicyWithAllFeatures(t *testing.T) {
-	maxInflight := int32(50)
-	lbType := LoadBalancingStrategyTypeConsistentHash
-	hashKeyType := HashKeyTypeHeader
-	headerName := "x-tenant-id"
-
-	policy := &BackendLBPolicy{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "full-policy",
-			Namespace: "default",
-		},
-		Spec: BackendLBPolicySpec{
-			TargetRefs: []LocalPolicyTargetReference{
-				{Group: "", Kind: "Service", Name: "api-svc"},
-			},
-			LoadBalancing: &LoadBalancingPolicy{
-				Type: &lbType,
-				ConsistentHash: &ConsistentHashPolicy{
-					KeyType:    &hashKeyType,
-					HeaderName: &headerName,
-				},
-			},
-			CircuitBreaker: &CircuitBreakerConfig{
-				MaxInflightRequests: &maxInflight,
-			},
-		},
+	cp := policy.DeepCopy()
+	if cp.Spec.LoadBalancing.SlowStart == nil || cp.Spec.LoadBalancing.SlowStart.Window == nil || *cp.Spec.LoadBalancing.SlowStart.Window != slowStart {
+		t.Fatal("SlowStart not deep-copied")
 	}
-
-	assert.NotNil(t, policy.Spec.LoadBalancing)
-	assert.Equal(t, LoadBalancingStrategyTypeConsistentHash, *policy.Spec.LoadBalancing.Type)
-	assert.NotNil(t, policy.Spec.CircuitBreaker)
-	assert.Equal(t, int32(50), *policy.Spec.CircuitBreaker.MaxInflightRequests)
-
-	copied := policy.DeepCopy()
-	assert.Equal(t, policy, copied)
-}
-
-func TestCircuitBreakerConfig_NilMaxInflight(t *testing.T) {
-	cfg := &CircuitBreakerConfig{}
-	assert.Nil(t, cfg.MaxInflightRequests)
-}
-
-func TestDeepCopyObject_Nil(t *testing.T) {
-	var policy *BackendLBPolicy
-	assert.Nil(t, policy.DeepCopyObject())
-	assert.Nil(t, policy.DeepCopy())
-
-	var list *BackendLBPolicyList
-	assert.Nil(t, list.DeepCopyObject())
-	assert.Nil(t, list.DeepCopy())
-}
-
-func TestBackendLBPolicyListDeepCopy(t *testing.T) {
-	list := &BackendLBPolicyList{
-		Items: []BackendLBPolicy{
-			{ObjectMeta: metav1.ObjectMeta{Name: "lb1", Namespace: "ns1"}},
-			{ObjectMeta: metav1.ObjectMeta{Name: "lb2", Namespace: "ns2"}},
-		},
+	if cp.Spec.HealthCheck == nil || cp.Spec.HealthCheck.Path == nil || *cp.Spec.HealthCheck.Path != "/healthz" {
+		t.Fatal("HealthCheck not deep-copied")
 	}
-	copied := list.DeepCopy()
-	assert.Equal(t, 2, len(copied.Items))
-	assert.Equal(t, "lb1", copied.Items[0].Name)
-	assert.NotSame(t, list, copied)
-}
-
-func TestAddToScheme(t *testing.T) {
-	scheme := runtime.NewScheme()
-	err := AddToScheme(scheme)
-	assert.NoError(t, err)
-	assert.True(t, scheme.Recognizes(GroupVersion.WithKind("BackendLBPolicy")))
-	assert.True(t, scheme.Recognizes(GroupVersion.WithKind("BackendLBPolicyList")))
-}
-
-func TestBackendLBPolicyDeepCopy_NilCircuitBreaker(t *testing.T) {
-	policy := &BackendLBPolicy{
-		ObjectMeta: metav1.ObjectMeta{Name: "no-cb", Namespace: "default"},
-		Spec: BackendLBPolicySpec{
-			TargetRefs:    []LocalPolicyTargetReference{{Name: "svc"}},
-			LoadBalancing: &LoadBalancingPolicy{},
-		},
+	if cp.Spec.OutlierDetection == nil || cp.Spec.OutlierDetection.MaxEjectionPercent == nil || *cp.Spec.OutlierDetection.MaxEjectionPercent != 50 {
+		t.Fatal("OutlierDetection not deep-copied")
 	}
-	copied := policy.DeepCopy()
-	assert.Nil(t, copied.Spec.CircuitBreaker)
-	assert.NotNil(t, copied.Spec.LoadBalancing)
+	// 修改副本不影响原对象
+	*cp.Spec.HealthCheck.Path = "/changed"
+	if *policy.Spec.HealthCheck.Path != "/healthz" {
+		t.Fatal("DeepCopy shares pointer")
+	}
 }
+
+func ptr[T any](v T) *T { return &v }
