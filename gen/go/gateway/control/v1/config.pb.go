@@ -825,9 +825,11 @@ type Listener struct {
 	// Overridden by per-route or per-backend TLS config when present.
 	BackendTls *BackendTlsConfig `protobuf:"bytes,9,opt,name=backend_tls,json=backendTls,proto3" json:"backend_tls,omitempty"`
 	// Additional addresses to bind (for dual-stack or multi-interface setups).
-	Addresses     []string `protobuf:"bytes,10,rep,name=addresses,proto3" json:"addresses,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Addresses []string `protobuf:"bytes,10,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	// Security policy attached to this listener.
+	SecurityPolicy *SecurityPolicyConfig `protobuf:"bytes,11,opt,name=security_policy,json=securityPolicy,proto3" json:"security_policy,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Listener) Reset() {
@@ -926,6 +928,13 @@ func (x *Listener) GetBackendTls() *BackendTlsConfig {
 func (x *Listener) GetAddresses() []string {
 	if x != nil {
 		return x.Addresses
+	}
+	return nil
+}
+
+func (x *Listener) GetSecurityPolicy() *SecurityPolicyConfig {
+	if x != nil {
+		return x.SecurityPolicy
 	}
 	return nil
 }
@@ -1301,9 +1310,11 @@ type HttpRoute struct {
 	Annotations map[string]string `protobuf:"bytes,7,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Per-route policy overrides for timeout, body size, proxy buffering,
 	// and connection keepalive settings.
-	RoutePolicy   *RoutePolicy `protobuf:"bytes,8,opt,name=route_policy,json=routePolicy,proto3" json:"route_policy,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RoutePolicy *RoutePolicy `protobuf:"bytes,8,opt,name=route_policy,json=routePolicy,proto3" json:"route_policy,omitempty"`
+	// Security policy attached to this route.
+	SecurityPolicy *SecurityPolicyConfig `protobuf:"bytes,9,opt,name=security_policy,json=securityPolicy,proto3" json:"security_policy,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *HttpRoute) Reset() {
@@ -1388,6 +1399,13 @@ func (x *HttpRoute) GetAnnotations() map[string]string {
 func (x *HttpRoute) GetRoutePolicy() *RoutePolicy {
 	if x != nil {
 		return x.RoutePolicy
+	}
+	return nil
+}
+
+func (x *HttpRoute) GetSecurityPolicy() *SecurityPolicyConfig {
+	if x != nil {
+		return x.SecurityPolicy
 	}
 	return nil
 }
@@ -1957,9 +1975,11 @@ type GrpcRoute struct {
 	Annotations map[string]string `protobuf:"bytes,7,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Per-route policy overrides for timeout, body size, proxy buffering,
 	// and connection keepalive settings.
-	RoutePolicy   *RoutePolicy `protobuf:"bytes,8,opt,name=route_policy,json=routePolicy,proto3" json:"route_policy,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RoutePolicy *RoutePolicy `protobuf:"bytes,8,opt,name=route_policy,json=routePolicy,proto3" json:"route_policy,omitempty"`
+	// Security policy attached to this route.
+	SecurityPolicy *SecurityPolicyConfig `protobuf:"bytes,9,opt,name=security_policy,json=securityPolicy,proto3" json:"security_policy,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *GrpcRoute) Reset() {
@@ -2044,6 +2064,13 @@ func (x *GrpcRoute) GetAnnotations() map[string]string {
 func (x *GrpcRoute) GetRoutePolicy() *RoutePolicy {
 	if x != nil {
 		return x.RoutePolicy
+	}
+	return nil
+}
+
+func (x *GrpcRoute) GetSecurityPolicy() *SecurityPolicyConfig {
+	if x != nil {
+		return x.SecurityPolicy
 	}
 	return nil
 }
@@ -2668,6 +2695,8 @@ type BackendCluster struct {
 	WasmPlugin *WasmPluginConfig `protobuf:"bytes,13,opt,name=wasm_plugin,json=wasmPlugin,proto3" json:"wasm_plugin,omitempty"`
 	// Per-backend circuit breaker configuration.
 	CircuitBreaker *CircuitBreakerConfig `protobuf:"bytes,14,opt,name=circuit_breaker,json=circuitBreaker,proto3" json:"circuit_breaker,omitempty"`
+	// Security policy attached to this backend cluster.
+	SecurityPolicy *SecurityPolicyConfig `protobuf:"bytes,17,opt,name=security_policy,json=securityPolicy,proto3" json:"security_policy,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2796,6 +2825,13 @@ func (x *BackendCluster) GetWasmPlugin() *WasmPluginConfig {
 func (x *BackendCluster) GetCircuitBreaker() *CircuitBreakerConfig {
 	if x != nil {
 		return x.CircuitBreaker
+	}
+	return nil
+}
+
+func (x *BackendCluster) GetSecurityPolicy() *SecurityPolicyConfig {
+	if x != nil {
+		return x.SecurityPolicy
 	}
 	return nil
 }
@@ -3117,9 +3153,13 @@ type SecretMaterial struct {
 	// PEM-encoded certificate data.
 	CertPem string `protobuf:"bytes,3,opt,name=cert_pem,json=certPem,proto3" json:"cert_pem,omitempty"`
 	// PEM-encoded private key data.
-	KeyPem        string `protobuf:"bytes,4,opt,name=key_pem,json=keyPem,proto3" json:"key_pem,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	KeyPem string `protobuf:"bytes,4,opt,name=key_pem,json=keyPem,proto3" json:"key_pem,omitempty"`
+	// BasicAuth htpasswd content (bcrypt hash lines).
+	Htpasswd string `protobuf:"bytes,5,opt,name=htpasswd,proto3" json:"htpasswd,omitempty"`
+	// OIDC client secret.
+	OidcClientSecret string `protobuf:"bytes,6,opt,name=oidc_client_secret,json=oidcClientSecret,proto3" json:"oidc_client_secret,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *SecretMaterial) Reset() {
@@ -3176,6 +3216,20 @@ func (x *SecretMaterial) GetCertPem() string {
 func (x *SecretMaterial) GetKeyPem() string {
 	if x != nil {
 		return x.KeyPem
+	}
+	return ""
+}
+
+func (x *SecretMaterial) GetHtpasswd() string {
+	if x != nil {
+		return x.Htpasswd
+	}
+	return ""
+}
+
+func (x *SecretMaterial) GetOidcClientSecret() string {
+	if x != nil {
+		return x.OidcClientSecret
 	}
 	return ""
 }
@@ -4104,7 +4158,7 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\x11required_features\x18\n" +
 	" \x03(\tR\x10requiredFeatures\x123\n" +
 	"\x15compatibility_profile\x18\v \x01(\tR\x14compatibilityProfile\x12 \n" +
-	"\vtraceparent\x18\x14 \x01(\tR\vtraceparentJ\x04\b\f\x10\x14\"\xf0\x03\n" +
+	"\vtraceparent\x18\x14 \x01(\tR\vtraceparentJ\x04\b\f\x10\x14\"\xc3\x04\n" +
 	"\bListener\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x12\n" +
@@ -4117,7 +4171,8 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\vbackend_tls\x18\t \x01(\v2$.gateway.control.v1.BackendTlsConfigR\n" +
 	"backendTls\x12\x1c\n" +
 	"\taddresses\x18\n" +
-	" \x03(\tR\taddresses\x1a;\n" +
+	" \x03(\tR\taddresses\x12Q\n" +
+	"\x0fsecurity_policy\x18\v \x01(\v2(.gateway.control.v1.SecurityPolicyConfigR\x0esecurityPolicy\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa0\x02\n" +
@@ -4148,7 +4203,7 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"maxVersion\"v\n" +
 	"\x18BackendTlsSubjectAltName\x12D\n" +
 	"\x04type\x18\x01 \x01(\x0e20.gateway.control.v1.BackendTlsSubjectAltNameTypeR\x04type\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"\xa3\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xf6\x04\n" +
 	"\tHttpRoute\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1c\n" +
@@ -4158,7 +4213,8 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\x05rules\x18\x05 \x03(\v2\x1c.gateway.control.v1.HttpRuleR\x05rules\x12A\n" +
 	"\x06labels\x18\x06 \x03(\v2).gateway.control.v1.HttpRoute.LabelsEntryR\x06labels\x12P\n" +
 	"\vannotations\x18\a \x03(\v2..gateway.control.v1.HttpRoute.AnnotationsEntryR\vannotations\x12B\n" +
-	"\froute_policy\x18\b \x01(\v2\x1f.gateway.control.v1.RoutePolicyR\vroutePolicy\x1a9\n" +
+	"\froute_policy\x18\b \x01(\v2\x1f.gateway.control.v1.RoutePolicyR\vroutePolicy\x12Q\n" +
+	"\x0fsecurity_policy\x18\t \x01(\v2(.gateway.control.v1.SecurityPolicyConfigR\x0esecurityPolicy\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -4200,7 +4256,7 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"headerName\"\xa9\x01\n" +
 	"\x13LoadBalancingPolicy\x12?\n" +
 	"\x04type\x18\x01 \x01(\x0e2+.gateway.control.v1.LoadBalancingPolicyTypeR\x04type\x12Q\n" +
-	"\x0fconsistent_hash\x18\x02 \x01(\v2(.gateway.control.v1.ConsistentHashPolicyR\x0econsistentHash\"\xa3\x04\n" +
+	"\x0fconsistent_hash\x18\x02 \x01(\v2(.gateway.control.v1.ConsistentHashPolicyR\x0econsistentHash\"\xf6\x04\n" +
 	"\tGrpcRoute\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1c\n" +
@@ -4210,7 +4266,8 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\x05rules\x18\x05 \x03(\v2\x1c.gateway.control.v1.GrpcRuleR\x05rules\x12A\n" +
 	"\x06labels\x18\x06 \x03(\v2).gateway.control.v1.GrpcRoute.LabelsEntryR\x06labels\x12P\n" +
 	"\vannotations\x18\a \x03(\v2..gateway.control.v1.GrpcRoute.AnnotationsEntryR\vannotations\x12B\n" +
-	"\froute_policy\x18\b \x01(\v2\x1f.gateway.control.v1.RoutePolicyR\vroutePolicy\x1a9\n" +
+	"\froute_policy\x18\b \x01(\v2\x1f.gateway.control.v1.RoutePolicyR\vroutePolicy\x12Q\n" +
+	"\x0fsecurity_policy\x18\t \x01(\v2(.gateway.control.v1.SecurityPolicyConfigR\x0esecurityPolicy\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -4272,7 +4329,7 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\afilters\x18\b \x03(\v2\x1a.gateway.control.v1.FilterR\afilters\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd6\a\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa9\b\n" +
 	"\x0eBackendCluster\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1a\n" +
@@ -4290,7 +4347,8 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\ftoken_policy\x18\f \x01(\v2%.gateway.control.v1.TokenPolicyConfigR\vtokenPolicy\x12E\n" +
 	"\vwasm_plugin\x18\r \x01(\v2$.gateway.control.v1.WasmPluginConfigR\n" +
 	"wasmPlugin\x12Q\n" +
-	"\x0fcircuit_breaker\x18\x0e \x01(\v2(.gateway.control.v1.CircuitBreakerConfigR\x0ecircuitBreaker\x1a;\n" +
+	"\x0fcircuit_breaker\x18\x0e \x01(\v2(.gateway.control.v1.CircuitBreakerConfigR\x0ecircuitBreaker\x12Q\n" +
+	"\x0fsecurity_policy\x18\x11 \x01(\v2(.gateway.control.v1.SecurityPolicyConfigR\x0esecurityPolicy\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"J\n" +
@@ -4314,12 +4372,14 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"match_type\x18\x03 \x01(\tR\tmatchType\"M\n" +
 	"\x06Filter\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12/\n" +
-	"\x06config\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x06config\"v\n" +
+	"\x06config\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x06config\"\xc0\x01\n" +
 	"\x0eSecretMaterial\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
 	"\bcert_pem\x18\x03 \x01(\tR\acertPem\x12\x17\n" +
-	"\akey_pem\x18\x04 \x01(\tR\x06keyPem\"\xc8\x02\n" +
+	"\akey_pem\x18\x04 \x01(\tR\x06keyPem\x12\x1a\n" +
+	"\bhtpasswd\x18\x05 \x01(\tR\bhtpasswd\x12,\n" +
+	"\x12oidc_client_secret\x18\x06 \x01(\tR\x10oidcClientSecret\"\xc8\x02\n" +
 	"\x14SecurityPolicyConfig\x12=\n" +
 	"\x05authn\x18\x01 \x01(\v2'.gateway.control.v1.SecurityAuthNConfigR\x05authn\x12=\n" +
 	"\x05authz\x18\x02 \x01(\v2'.gateway.control.v1.SecurityAuthZConfigR\x05authz\x12:\n" +
@@ -4557,87 +4617,91 @@ var file_gateway_control_v1_config_proto_depIdxs = []int32{
 	13, // 9: gateway.control.v1.Listener.tls:type_name -> gateway.control.v1.TlsConfig
 	55, // 10: gateway.control.v1.Listener.metadata:type_name -> gateway.control.v1.Listener.MetadataEntry
 	15, // 11: gateway.control.v1.Listener.backend_tls:type_name -> gateway.control.v1.BackendTlsConfig
-	14, // 12: gateway.control.v1.TlsConfig.frontend_validation:type_name -> gateway.control.v1.FrontendValidation
-	17, // 13: gateway.control.v1.BackendTlsValidation.subject_alt_names:type_name -> gateway.control.v1.BackendTlsSubjectAltName
-	3,  // 14: gateway.control.v1.BackendTlsSubjectAltName.type:type_name -> gateway.control.v1.BackendTlsSubjectAltNameType
-	33, // 15: gateway.control.v1.HttpRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
-	19, // 16: gateway.control.v1.HttpRoute.rules:type_name -> gateway.control.v1.HttpRule
-	56, // 17: gateway.control.v1.HttpRoute.labels:type_name -> gateway.control.v1.HttpRoute.LabelsEntry
-	57, // 18: gateway.control.v1.HttpRoute.annotations:type_name -> gateway.control.v1.HttpRoute.AnnotationsEntry
-	67, // 19: gateway.control.v1.HttpRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
-	20, // 20: gateway.control.v1.HttpRule.matches:type_name -> gateway.control.v1.HttpMatch
-	40, // 21: gateway.control.v1.HttpRule.filters:type_name -> gateway.control.v1.Filter
-	34, // 22: gateway.control.v1.HttpRule.backend_refs:type_name -> gateway.control.v1.BackendRef
-	21, // 23: gateway.control.v1.HttpRule.timeouts:type_name -> gateway.control.v1.HttpRouteTimeouts
-	22, // 24: gateway.control.v1.HttpRule.retry:type_name -> gateway.control.v1.HttpRouteRetry
-	24, // 25: gateway.control.v1.HttpRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
-	38, // 26: gateway.control.v1.HttpMatch.headers:type_name -> gateway.control.v1.HeaderMatch
-	39, // 27: gateway.control.v1.HttpMatch.query_params:type_name -> gateway.control.v1.QueryMatch
-	68, // 28: gateway.control.v1.HttpRouteTimeouts.request:type_name -> google.protobuf.Duration
-	68, // 29: gateway.control.v1.HttpRouteTimeouts.backend_request:type_name -> google.protobuf.Duration
-	68, // 30: gateway.control.v1.HttpRouteRetry.backoff:type_name -> google.protobuf.Duration
-	5,  // 31: gateway.control.v1.CookieConfig.lifetime_type:type_name -> gateway.control.v1.CookieLifetimeType
-	68, // 32: gateway.control.v1.SessionPersistence.absolute_timeout:type_name -> google.protobuf.Duration
-	68, // 33: gateway.control.v1.SessionPersistence.idle_timeout:type_name -> google.protobuf.Duration
-	4,  // 34: gateway.control.v1.SessionPersistence.type:type_name -> gateway.control.v1.SessionPersistenceType
-	23, // 35: gateway.control.v1.SessionPersistence.cookie:type_name -> gateway.control.v1.CookieConfig
-	7,  // 36: gateway.control.v1.ConsistentHashPolicy.key_type:type_name -> gateway.control.v1.ConsistentHashKeyType
-	6,  // 37: gateway.control.v1.LoadBalancingPolicy.type:type_name -> gateway.control.v1.LoadBalancingPolicyType
-	25, // 38: gateway.control.v1.LoadBalancingPolicy.consistent_hash:type_name -> gateway.control.v1.ConsistentHashPolicy
-	33, // 39: gateway.control.v1.GrpcRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
-	28, // 40: gateway.control.v1.GrpcRoute.rules:type_name -> gateway.control.v1.GrpcRule
-	58, // 41: gateway.control.v1.GrpcRoute.labels:type_name -> gateway.control.v1.GrpcRoute.LabelsEntry
-	59, // 42: gateway.control.v1.GrpcRoute.annotations:type_name -> gateway.control.v1.GrpcRoute.AnnotationsEntry
-	67, // 43: gateway.control.v1.GrpcRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
-	29, // 44: gateway.control.v1.GrpcRule.matches:type_name -> gateway.control.v1.GrpcMatch
-	40, // 45: gateway.control.v1.GrpcRule.filters:type_name -> gateway.control.v1.Filter
-	34, // 46: gateway.control.v1.GrpcRule.backend_refs:type_name -> gateway.control.v1.BackendRef
-	24, // 47: gateway.control.v1.GrpcRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
-	38, // 48: gateway.control.v1.GrpcMatch.headers:type_name -> gateway.control.v1.HeaderMatch
-	2,  // 49: gateway.control.v1.StreamRoute.kind:type_name -> gateway.control.v1.RouteKind
-	33, // 50: gateway.control.v1.StreamRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
-	31, // 51: gateway.control.v1.StreamRoute.rules:type_name -> gateway.control.v1.StreamRule
-	60, // 52: gateway.control.v1.StreamRoute.labels:type_name -> gateway.control.v1.StreamRoute.LabelsEntry
-	61, // 53: gateway.control.v1.StreamRoute.annotations:type_name -> gateway.control.v1.StreamRoute.AnnotationsEntry
-	32, // 54: gateway.control.v1.StreamRule.matches:type_name -> gateway.control.v1.StreamMatch
-	34, // 55: gateway.control.v1.StreamRule.backend_refs:type_name -> gateway.control.v1.BackendRef
-	1,  // 56: gateway.control.v1.StreamMatch.mode:type_name -> gateway.control.v1.TlsRouteMode
-	62, // 57: gateway.control.v1.BackendRef.metadata:type_name -> gateway.control.v1.BackendRef.MetadataEntry
-	40, // 58: gateway.control.v1.BackendRef.filters:type_name -> gateway.control.v1.Filter
-	37, // 59: gateway.control.v1.BackendCluster.endpoints:type_name -> gateway.control.v1.BackendEndpoint
-	68, // 60: gateway.control.v1.BackendCluster.connect_timeout:type_name -> google.protobuf.Duration
-	68, // 61: gateway.control.v1.BackendCluster.request_timeout:type_name -> google.protobuf.Duration
-	63, // 62: gateway.control.v1.BackendCluster.metadata:type_name -> gateway.control.v1.BackendCluster.MetadataEntry
-	16, // 63: gateway.control.v1.BackendCluster.tls_validation:type_name -> gateway.control.v1.BackendTlsValidation
-	24, // 64: gateway.control.v1.BackendCluster.session_persistence:type_name -> gateway.control.v1.SessionPersistence
-	26, // 65: gateway.control.v1.BackendCluster.load_balancing:type_name -> gateway.control.v1.LoadBalancingPolicy
-	69, // 66: gateway.control.v1.BackendCluster.ai_service:type_name -> gateway.control.v1.AIServiceConfig
-	70, // 67: gateway.control.v1.BackendCluster.token_policy:type_name -> gateway.control.v1.TokenPolicyConfig
-	71, // 68: gateway.control.v1.BackendCluster.wasm_plugin:type_name -> gateway.control.v1.WasmPluginConfig
-	36, // 69: gateway.control.v1.BackendCluster.circuit_breaker:type_name -> gateway.control.v1.CircuitBreakerConfig
-	66, // 70: gateway.control.v1.Filter.config:type_name -> google.protobuf.Struct
-	43, // 71: gateway.control.v1.SecurityPolicyConfig.authn:type_name -> gateway.control.v1.SecurityAuthNConfig
-	44, // 72: gateway.control.v1.SecurityPolicyConfig.authz:type_name -> gateway.control.v1.SecurityAuthZConfig
-	45, // 73: gateway.control.v1.SecurityPolicyConfig.cors:type_name -> gateway.control.v1.SecurityCORSConfig
-	46, // 74: gateway.control.v1.SecurityPolicyConfig.rate_limit:type_name -> gateway.control.v1.RateLimitRule
-	47, // 75: gateway.control.v1.SecurityPolicyConfig.ip:type_name -> gateway.control.v1.SecurityIPConfig
-	48, // 76: gateway.control.v1.SecurityAuthNConfig.jwt:type_name -> gateway.control.v1.JwtAuthConfig
-	50, // 77: gateway.control.v1.SecurityAuthNConfig.oidc:type_name -> gateway.control.v1.OIDCConfig
-	51, // 78: gateway.control.v1.SecurityAuthNConfig.basic_auth:type_name -> gateway.control.v1.BasicAuthConfig
-	52, // 79: gateway.control.v1.SecurityAuthZConfig.external:type_name -> gateway.control.v1.ExternalAuthConfig
-	8,  // 80: gateway.control.v1.RateLimitRule.scope:type_name -> gateway.control.v1.RateLimitScope
-	9,  // 81: gateway.control.v1.RateLimitRule.on_limit:type_name -> gateway.control.v1.RateLimitAction
-	49, // 82: gateway.control.v1.JwtAuthConfig.issuers:type_name -> gateway.control.v1.JwtIssuer
-	64, // 83: gateway.control.v1.JwtIssuer.claims_to_headers:type_name -> gateway.control.v1.JwtIssuer.ClaimsToHeadersEntry
-	10, // 84: gateway.control.v1.ExternalAuthConfig.protocol:type_name -> gateway.control.v1.ExternalAuthTransport
-	34, // 85: gateway.control.v1.ExternalAuthConfig.backend_ref:type_name -> gateway.control.v1.BackendRef
-	53, // 86: gateway.control.v1.ExternalAuthConfig.http:type_name -> gateway.control.v1.ExternalAuthHTTP
-	54, // 87: gateway.control.v1.ExternalAuthConfig.grpc:type_name -> gateway.control.v1.ExternalAuthGRPC
-	88, // [88:88] is the sub-list for method output_type
-	88, // [88:88] is the sub-list for method input_type
-	88, // [88:88] is the sub-list for extension type_name
-	88, // [88:88] is the sub-list for extension extendee
-	0,  // [0:88] is the sub-list for field type_name
+	42, // 12: gateway.control.v1.Listener.security_policy:type_name -> gateway.control.v1.SecurityPolicyConfig
+	14, // 13: gateway.control.v1.TlsConfig.frontend_validation:type_name -> gateway.control.v1.FrontendValidation
+	17, // 14: gateway.control.v1.BackendTlsValidation.subject_alt_names:type_name -> gateway.control.v1.BackendTlsSubjectAltName
+	3,  // 15: gateway.control.v1.BackendTlsSubjectAltName.type:type_name -> gateway.control.v1.BackendTlsSubjectAltNameType
+	33, // 16: gateway.control.v1.HttpRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
+	19, // 17: gateway.control.v1.HttpRoute.rules:type_name -> gateway.control.v1.HttpRule
+	56, // 18: gateway.control.v1.HttpRoute.labels:type_name -> gateway.control.v1.HttpRoute.LabelsEntry
+	57, // 19: gateway.control.v1.HttpRoute.annotations:type_name -> gateway.control.v1.HttpRoute.AnnotationsEntry
+	67, // 20: gateway.control.v1.HttpRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
+	42, // 21: gateway.control.v1.HttpRoute.security_policy:type_name -> gateway.control.v1.SecurityPolicyConfig
+	20, // 22: gateway.control.v1.HttpRule.matches:type_name -> gateway.control.v1.HttpMatch
+	40, // 23: gateway.control.v1.HttpRule.filters:type_name -> gateway.control.v1.Filter
+	34, // 24: gateway.control.v1.HttpRule.backend_refs:type_name -> gateway.control.v1.BackendRef
+	21, // 25: gateway.control.v1.HttpRule.timeouts:type_name -> gateway.control.v1.HttpRouteTimeouts
+	22, // 26: gateway.control.v1.HttpRule.retry:type_name -> gateway.control.v1.HttpRouteRetry
+	24, // 27: gateway.control.v1.HttpRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
+	38, // 28: gateway.control.v1.HttpMatch.headers:type_name -> gateway.control.v1.HeaderMatch
+	39, // 29: gateway.control.v1.HttpMatch.query_params:type_name -> gateway.control.v1.QueryMatch
+	68, // 30: gateway.control.v1.HttpRouteTimeouts.request:type_name -> google.protobuf.Duration
+	68, // 31: gateway.control.v1.HttpRouteTimeouts.backend_request:type_name -> google.protobuf.Duration
+	68, // 32: gateway.control.v1.HttpRouteRetry.backoff:type_name -> google.protobuf.Duration
+	5,  // 33: gateway.control.v1.CookieConfig.lifetime_type:type_name -> gateway.control.v1.CookieLifetimeType
+	68, // 34: gateway.control.v1.SessionPersistence.absolute_timeout:type_name -> google.protobuf.Duration
+	68, // 35: gateway.control.v1.SessionPersistence.idle_timeout:type_name -> google.protobuf.Duration
+	4,  // 36: gateway.control.v1.SessionPersistence.type:type_name -> gateway.control.v1.SessionPersistenceType
+	23, // 37: gateway.control.v1.SessionPersistence.cookie:type_name -> gateway.control.v1.CookieConfig
+	7,  // 38: gateway.control.v1.ConsistentHashPolicy.key_type:type_name -> gateway.control.v1.ConsistentHashKeyType
+	6,  // 39: gateway.control.v1.LoadBalancingPolicy.type:type_name -> gateway.control.v1.LoadBalancingPolicyType
+	25, // 40: gateway.control.v1.LoadBalancingPolicy.consistent_hash:type_name -> gateway.control.v1.ConsistentHashPolicy
+	33, // 41: gateway.control.v1.GrpcRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
+	28, // 42: gateway.control.v1.GrpcRoute.rules:type_name -> gateway.control.v1.GrpcRule
+	58, // 43: gateway.control.v1.GrpcRoute.labels:type_name -> gateway.control.v1.GrpcRoute.LabelsEntry
+	59, // 44: gateway.control.v1.GrpcRoute.annotations:type_name -> gateway.control.v1.GrpcRoute.AnnotationsEntry
+	67, // 45: gateway.control.v1.GrpcRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
+	42, // 46: gateway.control.v1.GrpcRoute.security_policy:type_name -> gateway.control.v1.SecurityPolicyConfig
+	29, // 47: gateway.control.v1.GrpcRule.matches:type_name -> gateway.control.v1.GrpcMatch
+	40, // 48: gateway.control.v1.GrpcRule.filters:type_name -> gateway.control.v1.Filter
+	34, // 49: gateway.control.v1.GrpcRule.backend_refs:type_name -> gateway.control.v1.BackendRef
+	24, // 50: gateway.control.v1.GrpcRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
+	38, // 51: gateway.control.v1.GrpcMatch.headers:type_name -> gateway.control.v1.HeaderMatch
+	2,  // 52: gateway.control.v1.StreamRoute.kind:type_name -> gateway.control.v1.RouteKind
+	33, // 53: gateway.control.v1.StreamRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
+	31, // 54: gateway.control.v1.StreamRoute.rules:type_name -> gateway.control.v1.StreamRule
+	60, // 55: gateway.control.v1.StreamRoute.labels:type_name -> gateway.control.v1.StreamRoute.LabelsEntry
+	61, // 56: gateway.control.v1.StreamRoute.annotations:type_name -> gateway.control.v1.StreamRoute.AnnotationsEntry
+	32, // 57: gateway.control.v1.StreamRule.matches:type_name -> gateway.control.v1.StreamMatch
+	34, // 58: gateway.control.v1.StreamRule.backend_refs:type_name -> gateway.control.v1.BackendRef
+	1,  // 59: gateway.control.v1.StreamMatch.mode:type_name -> gateway.control.v1.TlsRouteMode
+	62, // 60: gateway.control.v1.BackendRef.metadata:type_name -> gateway.control.v1.BackendRef.MetadataEntry
+	40, // 61: gateway.control.v1.BackendRef.filters:type_name -> gateway.control.v1.Filter
+	37, // 62: gateway.control.v1.BackendCluster.endpoints:type_name -> gateway.control.v1.BackendEndpoint
+	68, // 63: gateway.control.v1.BackendCluster.connect_timeout:type_name -> google.protobuf.Duration
+	68, // 64: gateway.control.v1.BackendCluster.request_timeout:type_name -> google.protobuf.Duration
+	63, // 65: gateway.control.v1.BackendCluster.metadata:type_name -> gateway.control.v1.BackendCluster.MetadataEntry
+	16, // 66: gateway.control.v1.BackendCluster.tls_validation:type_name -> gateway.control.v1.BackendTlsValidation
+	24, // 67: gateway.control.v1.BackendCluster.session_persistence:type_name -> gateway.control.v1.SessionPersistence
+	26, // 68: gateway.control.v1.BackendCluster.load_balancing:type_name -> gateway.control.v1.LoadBalancingPolicy
+	69, // 69: gateway.control.v1.BackendCluster.ai_service:type_name -> gateway.control.v1.AIServiceConfig
+	70, // 70: gateway.control.v1.BackendCluster.token_policy:type_name -> gateway.control.v1.TokenPolicyConfig
+	71, // 71: gateway.control.v1.BackendCluster.wasm_plugin:type_name -> gateway.control.v1.WasmPluginConfig
+	36, // 72: gateway.control.v1.BackendCluster.circuit_breaker:type_name -> gateway.control.v1.CircuitBreakerConfig
+	42, // 73: gateway.control.v1.BackendCluster.security_policy:type_name -> gateway.control.v1.SecurityPolicyConfig
+	66, // 74: gateway.control.v1.Filter.config:type_name -> google.protobuf.Struct
+	43, // 75: gateway.control.v1.SecurityPolicyConfig.authn:type_name -> gateway.control.v1.SecurityAuthNConfig
+	44, // 76: gateway.control.v1.SecurityPolicyConfig.authz:type_name -> gateway.control.v1.SecurityAuthZConfig
+	45, // 77: gateway.control.v1.SecurityPolicyConfig.cors:type_name -> gateway.control.v1.SecurityCORSConfig
+	46, // 78: gateway.control.v1.SecurityPolicyConfig.rate_limit:type_name -> gateway.control.v1.RateLimitRule
+	47, // 79: gateway.control.v1.SecurityPolicyConfig.ip:type_name -> gateway.control.v1.SecurityIPConfig
+	48, // 80: gateway.control.v1.SecurityAuthNConfig.jwt:type_name -> gateway.control.v1.JwtAuthConfig
+	50, // 81: gateway.control.v1.SecurityAuthNConfig.oidc:type_name -> gateway.control.v1.OIDCConfig
+	51, // 82: gateway.control.v1.SecurityAuthNConfig.basic_auth:type_name -> gateway.control.v1.BasicAuthConfig
+	52, // 83: gateway.control.v1.SecurityAuthZConfig.external:type_name -> gateway.control.v1.ExternalAuthConfig
+	8,  // 84: gateway.control.v1.RateLimitRule.scope:type_name -> gateway.control.v1.RateLimitScope
+	9,  // 85: gateway.control.v1.RateLimitRule.on_limit:type_name -> gateway.control.v1.RateLimitAction
+	49, // 86: gateway.control.v1.JwtAuthConfig.issuers:type_name -> gateway.control.v1.JwtIssuer
+	64, // 87: gateway.control.v1.JwtIssuer.claims_to_headers:type_name -> gateway.control.v1.JwtIssuer.ClaimsToHeadersEntry
+	10, // 88: gateway.control.v1.ExternalAuthConfig.protocol:type_name -> gateway.control.v1.ExternalAuthTransport
+	34, // 89: gateway.control.v1.ExternalAuthConfig.backend_ref:type_name -> gateway.control.v1.BackendRef
+	53, // 90: gateway.control.v1.ExternalAuthConfig.http:type_name -> gateway.control.v1.ExternalAuthHTTP
+	54, // 91: gateway.control.v1.ExternalAuthConfig.grpc:type_name -> gateway.control.v1.ExternalAuthGRPC
+	92, // [92:92] is the sub-list for method output_type
+	92, // [92:92] is the sub-list for method input_type
+	92, // [92:92] is the sub-list for extension type_name
+	92, // [92:92] is the sub-list for extension extendee
+	0,  // [0:92] is the sub-list for field type_name
 }
 
 func init() { file_gateway_control_v1_config_proto_init() }
