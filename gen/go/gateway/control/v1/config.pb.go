@@ -495,6 +495,159 @@ func (ConsistentHashKeyType) EnumDescriptor() ([]byte, []int) {
 	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{7}
 }
 
+type RateLimitScope int32
+
+const (
+	RateLimitScope_RATE_LIMIT_SCOPE_UNSPECIFIED RateLimitScope = 0
+	RateLimitScope_RATE_LIMIT_SCOPE_GLOBAL      RateLimitScope = 1
+	RateLimitScope_RATE_LIMIT_SCOPE_LISTENER    RateLimitScope = 2
+	RateLimitScope_RATE_LIMIT_SCOPE_ROUTE       RateLimitScope = 3
+	RateLimitScope_RATE_LIMIT_SCOPE_BACKEND     RateLimitScope = 4
+)
+
+// Enum value maps for RateLimitScope.
+var (
+	RateLimitScope_name = map[int32]string{
+		0: "RATE_LIMIT_SCOPE_UNSPECIFIED",
+		1: "RATE_LIMIT_SCOPE_GLOBAL",
+		2: "RATE_LIMIT_SCOPE_LISTENER",
+		3: "RATE_LIMIT_SCOPE_ROUTE",
+		4: "RATE_LIMIT_SCOPE_BACKEND",
+	}
+	RateLimitScope_value = map[string]int32{
+		"RATE_LIMIT_SCOPE_UNSPECIFIED": 0,
+		"RATE_LIMIT_SCOPE_GLOBAL":      1,
+		"RATE_LIMIT_SCOPE_LISTENER":    2,
+		"RATE_LIMIT_SCOPE_ROUTE":       3,
+		"RATE_LIMIT_SCOPE_BACKEND":     4,
+	}
+)
+
+func (x RateLimitScope) Enum() *RateLimitScope {
+	p := new(RateLimitScope)
+	*p = x
+	return p
+}
+
+func (x RateLimitScope) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RateLimitScope) Descriptor() protoreflect.EnumDescriptor {
+	return file_gateway_control_v1_config_proto_enumTypes[8].Descriptor()
+}
+
+func (RateLimitScope) Type() protoreflect.EnumType {
+	return &file_gateway_control_v1_config_proto_enumTypes[8]
+}
+
+func (x RateLimitScope) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RateLimitScope.Descriptor instead.
+func (RateLimitScope) EnumDescriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{8}
+}
+
+type RateLimitAction int32
+
+const (
+	RateLimitAction_RATE_LIMIT_ACTION_UNSPECIFIED RateLimitAction = 0
+	RateLimitAction_RATE_LIMIT_ACTION_REJECT      RateLimitAction = 1
+	RateLimitAction_RATE_LIMIT_ACTION_QUEUE       RateLimitAction = 2
+)
+
+// Enum value maps for RateLimitAction.
+var (
+	RateLimitAction_name = map[int32]string{
+		0: "RATE_LIMIT_ACTION_UNSPECIFIED",
+		1: "RATE_LIMIT_ACTION_REJECT",
+		2: "RATE_LIMIT_ACTION_QUEUE",
+	}
+	RateLimitAction_value = map[string]int32{
+		"RATE_LIMIT_ACTION_UNSPECIFIED": 0,
+		"RATE_LIMIT_ACTION_REJECT":      1,
+		"RATE_LIMIT_ACTION_QUEUE":       2,
+	}
+)
+
+func (x RateLimitAction) Enum() *RateLimitAction {
+	p := new(RateLimitAction)
+	*p = x
+	return p
+}
+
+func (x RateLimitAction) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RateLimitAction) Descriptor() protoreflect.EnumDescriptor {
+	return file_gateway_control_v1_config_proto_enumTypes[9].Descriptor()
+}
+
+func (RateLimitAction) Type() protoreflect.EnumType {
+	return &file_gateway_control_v1_config_proto_enumTypes[9]
+}
+
+func (x RateLimitAction) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RateLimitAction.Descriptor instead.
+func (RateLimitAction) EnumDescriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{9}
+}
+
+type ExternalAuthTransport int32
+
+const (
+	ExternalAuthTransport_EXTERNAL_AUTH_TRANSPORT_UNSPECIFIED ExternalAuthTransport = 0
+	ExternalAuthTransport_EXTERNAL_AUTH_TRANSPORT_HTTP        ExternalAuthTransport = 1
+	ExternalAuthTransport_EXTERNAL_AUTH_TRANSPORT_GRPC        ExternalAuthTransport = 2
+)
+
+// Enum value maps for ExternalAuthTransport.
+var (
+	ExternalAuthTransport_name = map[int32]string{
+		0: "EXTERNAL_AUTH_TRANSPORT_UNSPECIFIED",
+		1: "EXTERNAL_AUTH_TRANSPORT_HTTP",
+		2: "EXTERNAL_AUTH_TRANSPORT_GRPC",
+	}
+	ExternalAuthTransport_value = map[string]int32{
+		"EXTERNAL_AUTH_TRANSPORT_UNSPECIFIED": 0,
+		"EXTERNAL_AUTH_TRANSPORT_HTTP":        1,
+		"EXTERNAL_AUTH_TRANSPORT_GRPC":        2,
+	}
+)
+
+func (x ExternalAuthTransport) Enum() *ExternalAuthTransport {
+	p := new(ExternalAuthTransport)
+	*p = x
+	return p
+}
+
+func (x ExternalAuthTransport) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ExternalAuthTransport) Descriptor() protoreflect.EnumDescriptor {
+	return file_gateway_control_v1_config_proto_enumTypes[10].Descriptor()
+}
+
+func (ExternalAuthTransport) Type() protoreflect.EnumType {
+	return &file_gateway_control_v1_config_proto_enumTypes[10]
+}
+
+func (x ExternalAuthTransport) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ExternalAuthTransport.Descriptor instead.
+func (ExternalAuthTransport) EnumDescriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{10}
+}
+
 // ConfigSnapshot is a point-in-time, self-consistent configuration bundle
 // pushed from the control plane to the data plane. Every field is replaced
 // wholesale on each push (full-state snapshot, not delta).
@@ -3027,6 +3180,908 @@ func (x *SecretMaterial) GetKeyPem() string {
 	return ""
 }
 
+// SecurityPolicyConfig is the unified security policy attached to
+// Listener / HTTPRoute / GRPCRoute / BackendCluster level.
+type SecurityPolicyConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Authn         *SecurityAuthNConfig   `protobuf:"bytes,1,opt,name=authn,proto3" json:"authn,omitempty"`
+	Authz         *SecurityAuthZConfig   `protobuf:"bytes,2,opt,name=authz,proto3" json:"authz,omitempty"`
+	Cors          *SecurityCORSConfig    `protobuf:"bytes,3,opt,name=cors,proto3" json:"cors,omitempty"`
+	RateLimit     []*RateLimitRule       `protobuf:"bytes,4,rep,name=rate_limit,json=rateLimit,proto3" json:"rate_limit,omitempty"`
+	Ip            *SecurityIPConfig      `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecurityPolicyConfig) Reset() {
+	*x = SecurityPolicyConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityPolicyConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityPolicyConfig) ProtoMessage() {}
+
+func (x *SecurityPolicyConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityPolicyConfig.ProtoReflect.Descriptor instead.
+func (*SecurityPolicyConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *SecurityPolicyConfig) GetAuthn() *SecurityAuthNConfig {
+	if x != nil {
+		return x.Authn
+	}
+	return nil
+}
+
+func (x *SecurityPolicyConfig) GetAuthz() *SecurityAuthZConfig {
+	if x != nil {
+		return x.Authz
+	}
+	return nil
+}
+
+func (x *SecurityPolicyConfig) GetCors() *SecurityCORSConfig {
+	if x != nil {
+		return x.Cors
+	}
+	return nil
+}
+
+func (x *SecurityPolicyConfig) GetRateLimit() []*RateLimitRule {
+	if x != nil {
+		return x.RateLimit
+	}
+	return nil
+}
+
+func (x *SecurityPolicyConfig) GetIp() *SecurityIPConfig {
+	if x != nil {
+		return x.Ip
+	}
+	return nil
+}
+
+type SecurityAuthNConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jwt           *JwtAuthConfig         `protobuf:"bytes,1,opt,name=jwt,proto3" json:"jwt,omitempty"`
+	Oidc          *OIDCConfig            `protobuf:"bytes,2,opt,name=oidc,proto3" json:"oidc,omitempty"`
+	BasicAuth     *BasicAuthConfig       `protobuf:"bytes,3,opt,name=basic_auth,json=basicAuth,proto3" json:"basic_auth,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecurityAuthNConfig) Reset() {
+	*x = SecurityAuthNConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityAuthNConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityAuthNConfig) ProtoMessage() {}
+
+func (x *SecurityAuthNConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityAuthNConfig.ProtoReflect.Descriptor instead.
+func (*SecurityAuthNConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *SecurityAuthNConfig) GetJwt() *JwtAuthConfig {
+	if x != nil {
+		return x.Jwt
+	}
+	return nil
+}
+
+func (x *SecurityAuthNConfig) GetOidc() *OIDCConfig {
+	if x != nil {
+		return x.Oidc
+	}
+	return nil
+}
+
+func (x *SecurityAuthNConfig) GetBasicAuth() *BasicAuthConfig {
+	if x != nil {
+		return x.BasicAuth
+	}
+	return nil
+}
+
+type SecurityAuthZConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	External      *ExternalAuthConfig    `protobuf:"bytes,1,opt,name=external,proto3" json:"external,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecurityAuthZConfig) Reset() {
+	*x = SecurityAuthZConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityAuthZConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityAuthZConfig) ProtoMessage() {}
+
+func (x *SecurityAuthZConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityAuthZConfig.ProtoReflect.Descriptor instead.
+func (*SecurityAuthZConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *SecurityAuthZConfig) GetExternal() *ExternalAuthConfig {
+	if x != nil {
+		return x.External
+	}
+	return nil
+}
+
+type SecurityCORSConfig struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AllowOrigins     []string               `protobuf:"bytes,1,rep,name=allow_origins,json=allowOrigins,proto3" json:"allow_origins,omitempty"`
+	AllowMethods     []string               `protobuf:"bytes,2,rep,name=allow_methods,json=allowMethods,proto3" json:"allow_methods,omitempty"`
+	AllowHeaders     []string               `protobuf:"bytes,3,rep,name=allow_headers,json=allowHeaders,proto3" json:"allow_headers,omitempty"`
+	ExposeHeaders    []string               `protobuf:"bytes,4,rep,name=expose_headers,json=exposeHeaders,proto3" json:"expose_headers,omitempty"`
+	AllowCredentials bool                   `protobuf:"varint,5,opt,name=allow_credentials,json=allowCredentials,proto3" json:"allow_credentials,omitempty"`
+	MaxAge           int32                  `protobuf:"varint,6,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *SecurityCORSConfig) Reset() {
+	*x = SecurityCORSConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityCORSConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityCORSConfig) ProtoMessage() {}
+
+func (x *SecurityCORSConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityCORSConfig.ProtoReflect.Descriptor instead.
+func (*SecurityCORSConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *SecurityCORSConfig) GetAllowOrigins() []string {
+	if x != nil {
+		return x.AllowOrigins
+	}
+	return nil
+}
+
+func (x *SecurityCORSConfig) GetAllowMethods() []string {
+	if x != nil {
+		return x.AllowMethods
+	}
+	return nil
+}
+
+func (x *SecurityCORSConfig) GetAllowHeaders() []string {
+	if x != nil {
+		return x.AllowHeaders
+	}
+	return nil
+}
+
+func (x *SecurityCORSConfig) GetExposeHeaders() []string {
+	if x != nil {
+		return x.ExposeHeaders
+	}
+	return nil
+}
+
+func (x *SecurityCORSConfig) GetAllowCredentials() bool {
+	if x != nil {
+		return x.AllowCredentials
+	}
+	return false
+}
+
+func (x *SecurityCORSConfig) GetMaxAge() int32 {
+	if x != nil {
+		return x.MaxAge
+	}
+	return 0
+}
+
+type RateLimitRule struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Scope             RateLimitScope         `protobuf:"varint,1,opt,name=scope,proto3,enum=gateway.control.v1.RateLimitScope" json:"scope,omitempty"`
+	RequestsPerSecond uint32                 `protobuf:"varint,2,opt,name=requests_per_second,json=requestsPerSecond,proto3" json:"requests_per_second,omitempty"`
+	Burst             uint32                 `protobuf:"varint,3,opt,name=burst,proto3" json:"burst,omitempty"`
+	KeyType           string                 `protobuf:"bytes,4,opt,name=key_type,json=keyType,proto3" json:"key_type,omitempty"`
+	OnLimit           RateLimitAction        `protobuf:"varint,5,opt,name=on_limit,json=onLimit,proto3,enum=gateway.control.v1.RateLimitAction" json:"on_limit,omitempty"`
+	KeyHeaderName     string                 `protobuf:"bytes,6,opt,name=key_header_name,json=keyHeaderName,proto3" json:"key_header_name,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *RateLimitRule) Reset() {
+	*x = RateLimitRule{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RateLimitRule) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RateLimitRule) ProtoMessage() {}
+
+func (x *RateLimitRule) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RateLimitRule.ProtoReflect.Descriptor instead.
+func (*RateLimitRule) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *RateLimitRule) GetScope() RateLimitScope {
+	if x != nil {
+		return x.Scope
+	}
+	return RateLimitScope_RATE_LIMIT_SCOPE_UNSPECIFIED
+}
+
+func (x *RateLimitRule) GetRequestsPerSecond() uint32 {
+	if x != nil {
+		return x.RequestsPerSecond
+	}
+	return 0
+}
+
+func (x *RateLimitRule) GetBurst() uint32 {
+	if x != nil {
+		return x.Burst
+	}
+	return 0
+}
+
+func (x *RateLimitRule) GetKeyType() string {
+	if x != nil {
+		return x.KeyType
+	}
+	return ""
+}
+
+func (x *RateLimitRule) GetOnLimit() RateLimitAction {
+	if x != nil {
+		return x.OnLimit
+	}
+	return RateLimitAction_RATE_LIMIT_ACTION_UNSPECIFIED
+}
+
+func (x *RateLimitRule) GetKeyHeaderName() string {
+	if x != nil {
+		return x.KeyHeaderName
+	}
+	return ""
+}
+
+type SecurityIPConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AllowCidrs    []string               `protobuf:"bytes,1,rep,name=allow_cidrs,json=allowCidrs,proto3" json:"allow_cidrs,omitempty"`
+	DenyCidrs     []string               `protobuf:"bytes,2,rep,name=deny_cidrs,json=denyCidrs,proto3" json:"deny_cidrs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecurityIPConfig) Reset() {
+	*x = SecurityIPConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityIPConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityIPConfig) ProtoMessage() {}
+
+func (x *SecurityIPConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityIPConfig.ProtoReflect.Descriptor instead.
+func (*SecurityIPConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *SecurityIPConfig) GetAllowCidrs() []string {
+	if x != nil {
+		return x.AllowCidrs
+	}
+	return nil
+}
+
+func (x *SecurityIPConfig) GetDenyCidrs() []string {
+	if x != nil {
+		return x.DenyCidrs
+	}
+	return nil
+}
+
+type JwtAuthConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Issuers       []*JwtIssuer           `protobuf:"bytes,1,rep,name=issuers,proto3" json:"issuers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JwtAuthConfig) Reset() {
+	*x = JwtAuthConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JwtAuthConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JwtAuthConfig) ProtoMessage() {}
+
+func (x *JwtAuthConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JwtAuthConfig.ProtoReflect.Descriptor instead.
+func (*JwtAuthConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *JwtAuthConfig) GetIssuers() []*JwtIssuer {
+	if x != nil {
+		return x.Issuers
+	}
+	return nil
+}
+
+type JwtIssuer struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Issuer          string                 `protobuf:"bytes,1,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	JwksUrl         string                 `protobuf:"bytes,2,opt,name=jwks_url,json=jwksUrl,proto3" json:"jwks_url,omitempty"`
+	Audience        string                 `protobuf:"bytes,3,opt,name=audience,proto3" json:"audience,omitempty"`
+	HeaderName      string                 `protobuf:"bytes,4,opt,name=header_name,json=headerName,proto3" json:"header_name,omitempty"`
+	TokenPrefix     string                 `protobuf:"bytes,5,opt,name=token_prefix,json=tokenPrefix,proto3" json:"token_prefix,omitempty"`
+	ClaimsToHeaders map[string]string      `protobuf:"bytes,6,rep,name=claims_to_headers,json=claimsToHeaders,proto3" json:"claims_to_headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	CacheTtlSecs    int32                  `protobuf:"varint,7,opt,name=cache_ttl_secs,json=cacheTtlSecs,proto3" json:"cache_ttl_secs,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *JwtIssuer) Reset() {
+	*x = JwtIssuer{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JwtIssuer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JwtIssuer) ProtoMessage() {}
+
+func (x *JwtIssuer) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JwtIssuer.ProtoReflect.Descriptor instead.
+func (*JwtIssuer) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *JwtIssuer) GetIssuer() string {
+	if x != nil {
+		return x.Issuer
+	}
+	return ""
+}
+
+func (x *JwtIssuer) GetJwksUrl() string {
+	if x != nil {
+		return x.JwksUrl
+	}
+	return ""
+}
+
+func (x *JwtIssuer) GetAudience() string {
+	if x != nil {
+		return x.Audience
+	}
+	return ""
+}
+
+func (x *JwtIssuer) GetHeaderName() string {
+	if x != nil {
+		return x.HeaderName
+	}
+	return ""
+}
+
+func (x *JwtIssuer) GetTokenPrefix() string {
+	if x != nil {
+		return x.TokenPrefix
+	}
+	return ""
+}
+
+func (x *JwtIssuer) GetClaimsToHeaders() map[string]string {
+	if x != nil {
+		return x.ClaimsToHeaders
+	}
+	return nil
+}
+
+func (x *JwtIssuer) GetCacheTtlSecs() int32 {
+	if x != nil {
+		return x.CacheTtlSecs
+	}
+	return 0
+}
+
+type OIDCConfig struct {
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	ProviderAuthorizationUrl string                 `protobuf:"bytes,1,opt,name=provider_authorization_url,json=providerAuthorizationUrl,proto3" json:"provider_authorization_url,omitempty"`
+	ProviderTokenUrl         string                 `protobuf:"bytes,2,opt,name=provider_token_url,json=providerTokenUrl,proto3" json:"provider_token_url,omitempty"`
+	ProviderJwksUrl          string                 `protobuf:"bytes,3,opt,name=provider_jwks_url,json=providerJwksUrl,proto3" json:"provider_jwks_url,omitempty"`
+	ProviderUserinfoUrl      string                 `protobuf:"bytes,4,opt,name=provider_userinfo_url,json=providerUserinfoUrl,proto3" json:"provider_userinfo_url,omitempty"`
+	ClientId                 string                 `protobuf:"bytes,5,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecretRef          string                 `protobuf:"bytes,6,opt,name=client_secret_ref,json=clientSecretRef,proto3" json:"client_secret_ref,omitempty"`
+	CallbackPath             string                 `protobuf:"bytes,7,opt,name=callback_path,json=callbackPath,proto3" json:"callback_path,omitempty"`
+	Scopes                   []string               `protobuf:"bytes,8,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	RedirectUrl              string                 `protobuf:"bytes,9,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url,omitempty"`
+	SessionSigningKeyRef     string                 `protobuf:"bytes,10,opt,name=session_signing_key_ref,json=sessionSigningKeyRef,proto3" json:"session_signing_key_ref,omitempty"`
+	SessionCookieName        string                 `protobuf:"bytes,11,opt,name=session_cookie_name,json=sessionCookieName,proto3" json:"session_cookie_name,omitempty"`
+	SessionTtlSecs           int32                  `protobuf:"varint,12,opt,name=session_ttl_secs,json=sessionTtlSecs,proto3" json:"session_ttl_secs,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *OIDCConfig) Reset() {
+	*x = OIDCConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OIDCConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OIDCConfig) ProtoMessage() {}
+
+func (x *OIDCConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OIDCConfig.ProtoReflect.Descriptor instead.
+func (*OIDCConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *OIDCConfig) GetProviderAuthorizationUrl() string {
+	if x != nil {
+		return x.ProviderAuthorizationUrl
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetProviderTokenUrl() string {
+	if x != nil {
+		return x.ProviderTokenUrl
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetProviderJwksUrl() string {
+	if x != nil {
+		return x.ProviderJwksUrl
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetProviderUserinfoUrl() string {
+	if x != nil {
+		return x.ProviderUserinfoUrl
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetClientSecretRef() string {
+	if x != nil {
+		return x.ClientSecretRef
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetCallbackPath() string {
+	if x != nil {
+		return x.CallbackPath
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetScopes() []string {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+func (x *OIDCConfig) GetRedirectUrl() string {
+	if x != nil {
+		return x.RedirectUrl
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetSessionSigningKeyRef() string {
+	if x != nil {
+		return x.SessionSigningKeyRef
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetSessionCookieName() string {
+	if x != nil {
+		return x.SessionCookieName
+	}
+	return ""
+}
+
+func (x *OIDCConfig) GetSessionTtlSecs() int32 {
+	if x != nil {
+		return x.SessionTtlSecs
+	}
+	return 0
+}
+
+type BasicAuthConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	HtpasswdRef   string                 `protobuf:"bytes,1,opt,name=htpasswd_ref,json=htpasswdRef,proto3" json:"htpasswd_ref,omitempty"`
+	Bcrypt        bool                   `protobuf:"varint,2,opt,name=bcrypt,proto3" json:"bcrypt,omitempty"`
+	Realm         string                 `protobuf:"bytes,3,opt,name=realm,proto3" json:"realm,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BasicAuthConfig) Reset() {
+	*x = BasicAuthConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BasicAuthConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BasicAuthConfig) ProtoMessage() {}
+
+func (x *BasicAuthConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BasicAuthConfig.ProtoReflect.Descriptor instead.
+func (*BasicAuthConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *BasicAuthConfig) GetHtpasswdRef() string {
+	if x != nil {
+		return x.HtpasswdRef
+	}
+	return ""
+}
+
+func (x *BasicAuthConfig) GetBcrypt() bool {
+	if x != nil {
+		return x.Bcrypt
+	}
+	return false
+}
+
+func (x *BasicAuthConfig) GetRealm() string {
+	if x != nil {
+		return x.Realm
+	}
+	return ""
+}
+
+type ExternalAuthConfig struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Protocol           ExternalAuthTransport  `protobuf:"varint,1,opt,name=protocol,proto3,enum=gateway.control.v1.ExternalAuthTransport" json:"protocol,omitempty"`
+	BackendRef         *BackendRef            `protobuf:"bytes,2,opt,name=backend_ref,json=backendRef,proto3" json:"backend_ref,omitempty"`
+	Http               *ExternalAuthHTTP      `protobuf:"bytes,3,opt,name=http,proto3" json:"http,omitempty"`
+	Grpc               *ExternalAuthGRPC      `protobuf:"bytes,4,opt,name=grpc,proto3" json:"grpc,omitempty"`
+	ForwardBodyMaxSize int32                  `protobuf:"varint,5,opt,name=forward_body_max_size,json=forwardBodyMaxSize,proto3" json:"forward_body_max_size,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ExternalAuthConfig) Reset() {
+	*x = ExternalAuthConfig{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExternalAuthConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExternalAuthConfig) ProtoMessage() {}
+
+func (x *ExternalAuthConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExternalAuthConfig.ProtoReflect.Descriptor instead.
+func (*ExternalAuthConfig) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *ExternalAuthConfig) GetProtocol() ExternalAuthTransport {
+	if x != nil {
+		return x.Protocol
+	}
+	return ExternalAuthTransport_EXTERNAL_AUTH_TRANSPORT_UNSPECIFIED
+}
+
+func (x *ExternalAuthConfig) GetBackendRef() *BackendRef {
+	if x != nil {
+		return x.BackendRef
+	}
+	return nil
+}
+
+func (x *ExternalAuthConfig) GetHttp() *ExternalAuthHTTP {
+	if x != nil {
+		return x.Http
+	}
+	return nil
+}
+
+func (x *ExternalAuthConfig) GetGrpc() *ExternalAuthGRPC {
+	if x != nil {
+		return x.Grpc
+	}
+	return nil
+}
+
+func (x *ExternalAuthConfig) GetForwardBodyMaxSize() int32 {
+	if x != nil {
+		return x.ForwardBodyMaxSize
+	}
+	return 0
+}
+
+type ExternalAuthHTTP struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PathPrefix    string                 `protobuf:"bytes,1,opt,name=path_prefix,json=pathPrefix,proto3" json:"path_prefix,omitempty"`
+	HeadersToAdd  []string               `protobuf:"bytes,2,rep,name=headers_to_add,json=headersToAdd,proto3" json:"headers_to_add,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExternalAuthHTTP) Reset() {
+	*x = ExternalAuthHTTP{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExternalAuthHTTP) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExternalAuthHTTP) ProtoMessage() {}
+
+func (x *ExternalAuthHTTP) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExternalAuthHTTP.ProtoReflect.Descriptor instead.
+func (*ExternalAuthHTTP) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *ExternalAuthHTTP) GetPathPrefix() string {
+	if x != nil {
+		return x.PathPrefix
+	}
+	return ""
+}
+
+func (x *ExternalAuthHTTP) GetHeadersToAdd() []string {
+	if x != nil {
+		return x.HeadersToAdd
+	}
+	return nil
+}
+
+type ExternalAuthGRPC struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GrpcService   string                 `protobuf:"bytes,1,opt,name=grpc_service,json=grpcService,proto3" json:"grpc_service,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExternalAuthGRPC) Reset() {
+	*x = ExternalAuthGRPC{}
+	mi := &file_gateway_control_v1_config_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExternalAuthGRPC) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExternalAuthGRPC) ProtoMessage() {}
+
+func (x *ExternalAuthGRPC) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_control_v1_config_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExternalAuthGRPC.ProtoReflect.Descriptor instead.
+func (*ExternalAuthGRPC) Descriptor() ([]byte, []int) {
+	return file_gateway_control_v1_config_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *ExternalAuthGRPC) GetGrpcService() string {
+	if x != nil {
+		return x.GrpcService
+	}
+	return ""
+}
+
 var File_gateway_control_v1_config_proto protoreflect.FileDescriptor
 
 const file_gateway_control_v1_config_proto_rawDesc = "" +
@@ -3264,7 +4319,86 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
 	"\bcert_pem\x18\x03 \x01(\tR\acertPem\x12\x17\n" +
-	"\akey_pem\x18\x04 \x01(\tR\x06keyPem*\xce\x01\n" +
+	"\akey_pem\x18\x04 \x01(\tR\x06keyPem\"\xc8\x02\n" +
+	"\x14SecurityPolicyConfig\x12=\n" +
+	"\x05authn\x18\x01 \x01(\v2'.gateway.control.v1.SecurityAuthNConfigR\x05authn\x12=\n" +
+	"\x05authz\x18\x02 \x01(\v2'.gateway.control.v1.SecurityAuthZConfigR\x05authz\x12:\n" +
+	"\x04cors\x18\x03 \x01(\v2&.gateway.control.v1.SecurityCORSConfigR\x04cors\x12@\n" +
+	"\n" +
+	"rate_limit\x18\x04 \x03(\v2!.gateway.control.v1.RateLimitRuleR\trateLimit\x124\n" +
+	"\x02ip\x18\x05 \x01(\v2$.gateway.control.v1.SecurityIPConfigR\x02ip\"\xc2\x01\n" +
+	"\x13SecurityAuthNConfig\x123\n" +
+	"\x03jwt\x18\x01 \x01(\v2!.gateway.control.v1.JwtAuthConfigR\x03jwt\x122\n" +
+	"\x04oidc\x18\x02 \x01(\v2\x1e.gateway.control.v1.OIDCConfigR\x04oidc\x12B\n" +
+	"\n" +
+	"basic_auth\x18\x03 \x01(\v2#.gateway.control.v1.BasicAuthConfigR\tbasicAuth\"Y\n" +
+	"\x13SecurityAuthZConfig\x12B\n" +
+	"\bexternal\x18\x01 \x01(\v2&.gateway.control.v1.ExternalAuthConfigR\bexternal\"\xf0\x01\n" +
+	"\x12SecurityCORSConfig\x12#\n" +
+	"\rallow_origins\x18\x01 \x03(\tR\fallowOrigins\x12#\n" +
+	"\rallow_methods\x18\x02 \x03(\tR\fallowMethods\x12#\n" +
+	"\rallow_headers\x18\x03 \x03(\tR\fallowHeaders\x12%\n" +
+	"\x0eexpose_headers\x18\x04 \x03(\tR\rexposeHeaders\x12+\n" +
+	"\x11allow_credentials\x18\x05 \x01(\bR\x10allowCredentials\x12\x17\n" +
+	"\amax_age\x18\x06 \x01(\x05R\x06maxAge\"\x92\x02\n" +
+	"\rRateLimitRule\x128\n" +
+	"\x05scope\x18\x01 \x01(\x0e2\".gateway.control.v1.RateLimitScopeR\x05scope\x12.\n" +
+	"\x13requests_per_second\x18\x02 \x01(\rR\x11requestsPerSecond\x12\x14\n" +
+	"\x05burst\x18\x03 \x01(\rR\x05burst\x12\x19\n" +
+	"\bkey_type\x18\x04 \x01(\tR\akeyType\x12>\n" +
+	"\bon_limit\x18\x05 \x01(\x0e2#.gateway.control.v1.RateLimitActionR\aonLimit\x12&\n" +
+	"\x0fkey_header_name\x18\x06 \x01(\tR\rkeyHeaderName\"R\n" +
+	"\x10SecurityIPConfig\x12\x1f\n" +
+	"\vallow_cidrs\x18\x01 \x03(\tR\n" +
+	"allowCidrs\x12\x1d\n" +
+	"\n" +
+	"deny_cidrs\x18\x02 \x03(\tR\tdenyCidrs\"H\n" +
+	"\rJwtAuthConfig\x127\n" +
+	"\aissuers\x18\x01 \x03(\v2\x1d.gateway.control.v1.JwtIssuerR\aissuers\"\xe8\x02\n" +
+	"\tJwtIssuer\x12\x16\n" +
+	"\x06issuer\x18\x01 \x01(\tR\x06issuer\x12\x19\n" +
+	"\bjwks_url\x18\x02 \x01(\tR\ajwksUrl\x12\x1a\n" +
+	"\baudience\x18\x03 \x01(\tR\baudience\x12\x1f\n" +
+	"\vheader_name\x18\x04 \x01(\tR\n" +
+	"headerName\x12!\n" +
+	"\ftoken_prefix\x18\x05 \x01(\tR\vtokenPrefix\x12^\n" +
+	"\x11claims_to_headers\x18\x06 \x03(\v22.gateway.control.v1.JwtIssuer.ClaimsToHeadersEntryR\x0fclaimsToHeaders\x12$\n" +
+	"\x0ecache_ttl_secs\x18\a \x01(\x05R\fcacheTtlSecs\x1aB\n" +
+	"\x14ClaimsToHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x92\x04\n" +
+	"\n" +
+	"OIDCConfig\x12<\n" +
+	"\x1aprovider_authorization_url\x18\x01 \x01(\tR\x18providerAuthorizationUrl\x12,\n" +
+	"\x12provider_token_url\x18\x02 \x01(\tR\x10providerTokenUrl\x12*\n" +
+	"\x11provider_jwks_url\x18\x03 \x01(\tR\x0fproviderJwksUrl\x122\n" +
+	"\x15provider_userinfo_url\x18\x04 \x01(\tR\x13providerUserinfoUrl\x12\x1b\n" +
+	"\tclient_id\x18\x05 \x01(\tR\bclientId\x12*\n" +
+	"\x11client_secret_ref\x18\x06 \x01(\tR\x0fclientSecretRef\x12#\n" +
+	"\rcallback_path\x18\a \x01(\tR\fcallbackPath\x12\x16\n" +
+	"\x06scopes\x18\b \x03(\tR\x06scopes\x12!\n" +
+	"\fredirect_url\x18\t \x01(\tR\vredirectUrl\x125\n" +
+	"\x17session_signing_key_ref\x18\n" +
+	" \x01(\tR\x14sessionSigningKeyRef\x12.\n" +
+	"\x13session_cookie_name\x18\v \x01(\tR\x11sessionCookieName\x12(\n" +
+	"\x10session_ttl_secs\x18\f \x01(\x05R\x0esessionTtlSecs\"b\n" +
+	"\x0fBasicAuthConfig\x12!\n" +
+	"\fhtpasswd_ref\x18\x01 \x01(\tR\vhtpasswdRef\x12\x16\n" +
+	"\x06bcrypt\x18\x02 \x01(\bR\x06bcrypt\x12\x14\n" +
+	"\x05realm\x18\x03 \x01(\tR\x05realm\"\xc3\x02\n" +
+	"\x12ExternalAuthConfig\x12E\n" +
+	"\bprotocol\x18\x01 \x01(\x0e2).gateway.control.v1.ExternalAuthTransportR\bprotocol\x12?\n" +
+	"\vbackend_ref\x18\x02 \x01(\v2\x1e.gateway.control.v1.BackendRefR\n" +
+	"backendRef\x128\n" +
+	"\x04http\x18\x03 \x01(\v2$.gateway.control.v1.ExternalAuthHTTPR\x04http\x128\n" +
+	"\x04grpc\x18\x04 \x01(\v2$.gateway.control.v1.ExternalAuthGRPCR\x04grpc\x121\n" +
+	"\x15forward_body_max_size\x18\x05 \x01(\x05R\x12forwardBodyMaxSize\"Y\n" +
+	"\x10ExternalAuthHTTP\x12\x1f\n" +
+	"\vpath_prefix\x18\x01 \x01(\tR\n" +
+	"pathPrefix\x12$\n" +
+	"\x0eheaders_to_add\x18\x02 \x03(\tR\fheadersToAdd\"5\n" +
+	"\x10ExternalAuthGRPC\x12!\n" +
+	"\fgrpc_service\x18\x01 \x01(\tR\vgrpcService*\xce\x01\n" +
 	"\x10ListenerProtocol\x12\x18\n" +
 	"\x14LISTENER_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rLISTENER_HTTP\x10\x01\x12\x12\n" +
@@ -3306,8 +4440,21 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\x1bCONSISTENT_HASH_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19CONSISTENT_HASH_SOURCE_IP\x10\x01\x12\x1a\n" +
 	"\x16CONSISTENT_HASH_HEADER\x10\x02\x12\x1c\n" +
-	"\x18CONSISTENT_HASH_HOSTNAME\x10\x03B\xc9\x01\n" +
-	"\x16com.gateway.control.v1B\vConfigProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
+	"\x18CONSISTENT_HASH_HOSTNAME\x10\x03*\xa8\x01\n" +
+	"\x0eRateLimitScope\x12 \n" +
+	"\x1cRATE_LIMIT_SCOPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17RATE_LIMIT_SCOPE_GLOBAL\x10\x01\x12\x1d\n" +
+	"\x19RATE_LIMIT_SCOPE_LISTENER\x10\x02\x12\x1a\n" +
+	"\x16RATE_LIMIT_SCOPE_ROUTE\x10\x03\x12\x1c\n" +
+	"\x18RATE_LIMIT_SCOPE_BACKEND\x10\x04*o\n" +
+	"\x0fRateLimitAction\x12!\n" +
+	"\x1dRATE_LIMIT_ACTION_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18RATE_LIMIT_ACTION_REJECT\x10\x01\x12\x1b\n" +
+	"\x17RATE_LIMIT_ACTION_QUEUE\x10\x02*\x84\x01\n" +
+	"\x15ExternalAuthTransport\x12'\n" +
+	"#EXTERNAL_AUTH_TRANSPORT_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cEXTERNAL_AUTH_TRANSPORT_HTTP\x10\x01\x12 \n" +
+	"\x1cEXTERNAL_AUTH_TRANSPORT_GRPC\x10\x02B:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
 
 var (
 	file_gateway_control_v1_config_proto_rawDescOnce sync.Once
@@ -3321,8 +4468,8 @@ func file_gateway_control_v1_config_proto_rawDescGZIP() []byte {
 	return file_gateway_control_v1_config_proto_rawDescData
 }
 
-var file_gateway_control_v1_config_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
-var file_gateway_control_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_gateway_control_v1_config_proto_enumTypes = make([]protoimpl.EnumInfo, 11)
+var file_gateway_control_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 54)
 var file_gateway_control_v1_config_proto_goTypes = []any{
 	(ListenerProtocol)(0),             // 0: gateway.control.v1.ListenerProtocol
 	(TlsRouteMode)(0),                 // 1: gateway.control.v1.TlsRouteMode
@@ -3332,131 +4479,165 @@ var file_gateway_control_v1_config_proto_goTypes = []any{
 	(CookieLifetimeType)(0),           // 5: gateway.control.v1.CookieLifetimeType
 	(LoadBalancingPolicyType)(0),      // 6: gateway.control.v1.LoadBalancingPolicyType
 	(ConsistentHashKeyType)(0),        // 7: gateway.control.v1.ConsistentHashKeyType
-	(*ConfigSnapshot)(nil),            // 8: gateway.control.v1.ConfigSnapshot
-	(*Listener)(nil),                  // 9: gateway.control.v1.Listener
-	(*TlsConfig)(nil),                 // 10: gateway.control.v1.TlsConfig
-	(*FrontendValidation)(nil),        // 11: gateway.control.v1.FrontendValidation
-	(*BackendTlsConfig)(nil),          // 12: gateway.control.v1.BackendTlsConfig
-	(*BackendTlsValidation)(nil),      // 13: gateway.control.v1.BackendTlsValidation
-	(*BackendTlsSubjectAltName)(nil),  // 14: gateway.control.v1.BackendTlsSubjectAltName
-	(*HttpRoute)(nil),                 // 15: gateway.control.v1.HttpRoute
-	(*HttpRule)(nil),                  // 16: gateway.control.v1.HttpRule
-	(*HttpMatch)(nil),                 // 17: gateway.control.v1.HttpMatch
-	(*HttpRouteTimeouts)(nil),         // 18: gateway.control.v1.HttpRouteTimeouts
-	(*HttpRouteRetry)(nil),            // 19: gateway.control.v1.HttpRouteRetry
-	(*CookieConfig)(nil),              // 20: gateway.control.v1.CookieConfig
-	(*SessionPersistence)(nil),        // 21: gateway.control.v1.SessionPersistence
-	(*ConsistentHashPolicy)(nil),      // 22: gateway.control.v1.ConsistentHashPolicy
-	(*LoadBalancingPolicy)(nil),       // 23: gateway.control.v1.LoadBalancingPolicy
-	(*GrpcRoute)(nil),                 // 24: gateway.control.v1.GrpcRoute
-	(*GrpcRule)(nil),                  // 25: gateway.control.v1.GrpcRule
-	(*GrpcMatch)(nil),                 // 26: gateway.control.v1.GrpcMatch
-	(*StreamRoute)(nil),               // 27: gateway.control.v1.StreamRoute
-	(*StreamRule)(nil),                // 28: gateway.control.v1.StreamRule
-	(*StreamMatch)(nil),               // 29: gateway.control.v1.StreamMatch
-	(*ParentRef)(nil),                 // 30: gateway.control.v1.ParentRef
-	(*BackendRef)(nil),                // 31: gateway.control.v1.BackendRef
-	(*BackendCluster)(nil),            // 32: gateway.control.v1.BackendCluster
-	(*CircuitBreakerConfig)(nil),      // 33: gateway.control.v1.CircuitBreakerConfig
-	(*BackendEndpoint)(nil),           // 34: gateway.control.v1.BackendEndpoint
-	(*HeaderMatch)(nil),               // 35: gateway.control.v1.HeaderMatch
-	(*QueryMatch)(nil),                // 36: gateway.control.v1.QueryMatch
-	(*Filter)(nil),                    // 37: gateway.control.v1.Filter
-	(*SecretMaterial)(nil),            // 38: gateway.control.v1.SecretMaterial
-	nil,                               // 39: gateway.control.v1.Listener.MetadataEntry
-	nil,                               // 40: gateway.control.v1.HttpRoute.LabelsEntry
-	nil,                               // 41: gateway.control.v1.HttpRoute.AnnotationsEntry
-	nil,                               // 42: gateway.control.v1.GrpcRoute.LabelsEntry
-	nil,                               // 43: gateway.control.v1.GrpcRoute.AnnotationsEntry
-	nil,                               // 44: gateway.control.v1.StreamRoute.LabelsEntry
-	nil,                               // 45: gateway.control.v1.StreamRoute.AnnotationsEntry
-	nil,                               // 46: gateway.control.v1.BackendRef.MetadataEntry
-	nil,                               // 47: gateway.control.v1.BackendCluster.MetadataEntry
-	(*timestamppb.Timestamp)(nil),     // 48: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),           // 49: google.protobuf.Struct
-	(*RoutePolicy)(nil),               // 50: gateway.control.v1.RoutePolicy
-	(*durationpb.Duration)(nil),       // 51: google.protobuf.Duration
-	(*AIServiceConfig)(nil),           // 52: gateway.control.v1.AIServiceConfig
-	(*TokenPolicyConfig)(nil),         // 53: gateway.control.v1.TokenPolicyConfig
-	(*WasmPluginConfig)(nil),          // 54: gateway.control.v1.WasmPluginConfig
+	(RateLimitScope)(0),               // 8: gateway.control.v1.RateLimitScope
+	(RateLimitAction)(0),              // 9: gateway.control.v1.RateLimitAction
+	(ExternalAuthTransport)(0),        // 10: gateway.control.v1.ExternalAuthTransport
+	(*ConfigSnapshot)(nil),            // 11: gateway.control.v1.ConfigSnapshot
+	(*Listener)(nil),                  // 12: gateway.control.v1.Listener
+	(*TlsConfig)(nil),                 // 13: gateway.control.v1.TlsConfig
+	(*FrontendValidation)(nil),        // 14: gateway.control.v1.FrontendValidation
+	(*BackendTlsConfig)(nil),          // 15: gateway.control.v1.BackendTlsConfig
+	(*BackendTlsValidation)(nil),      // 16: gateway.control.v1.BackendTlsValidation
+	(*BackendTlsSubjectAltName)(nil),  // 17: gateway.control.v1.BackendTlsSubjectAltName
+	(*HttpRoute)(nil),                 // 18: gateway.control.v1.HttpRoute
+	(*HttpRule)(nil),                  // 19: gateway.control.v1.HttpRule
+	(*HttpMatch)(nil),                 // 20: gateway.control.v1.HttpMatch
+	(*HttpRouteTimeouts)(nil),         // 21: gateway.control.v1.HttpRouteTimeouts
+	(*HttpRouteRetry)(nil),            // 22: gateway.control.v1.HttpRouteRetry
+	(*CookieConfig)(nil),              // 23: gateway.control.v1.CookieConfig
+	(*SessionPersistence)(nil),        // 24: gateway.control.v1.SessionPersistence
+	(*ConsistentHashPolicy)(nil),      // 25: gateway.control.v1.ConsistentHashPolicy
+	(*LoadBalancingPolicy)(nil),       // 26: gateway.control.v1.LoadBalancingPolicy
+	(*GrpcRoute)(nil),                 // 27: gateway.control.v1.GrpcRoute
+	(*GrpcRule)(nil),                  // 28: gateway.control.v1.GrpcRule
+	(*GrpcMatch)(nil),                 // 29: gateway.control.v1.GrpcMatch
+	(*StreamRoute)(nil),               // 30: gateway.control.v1.StreamRoute
+	(*StreamRule)(nil),                // 31: gateway.control.v1.StreamRule
+	(*StreamMatch)(nil),               // 32: gateway.control.v1.StreamMatch
+	(*ParentRef)(nil),                 // 33: gateway.control.v1.ParentRef
+	(*BackendRef)(nil),                // 34: gateway.control.v1.BackendRef
+	(*BackendCluster)(nil),            // 35: gateway.control.v1.BackendCluster
+	(*CircuitBreakerConfig)(nil),      // 36: gateway.control.v1.CircuitBreakerConfig
+	(*BackendEndpoint)(nil),           // 37: gateway.control.v1.BackendEndpoint
+	(*HeaderMatch)(nil),               // 38: gateway.control.v1.HeaderMatch
+	(*QueryMatch)(nil),                // 39: gateway.control.v1.QueryMatch
+	(*Filter)(nil),                    // 40: gateway.control.v1.Filter
+	(*SecretMaterial)(nil),            // 41: gateway.control.v1.SecretMaterial
+	(*SecurityPolicyConfig)(nil),      // 42: gateway.control.v1.SecurityPolicyConfig
+	(*SecurityAuthNConfig)(nil),       // 43: gateway.control.v1.SecurityAuthNConfig
+	(*SecurityAuthZConfig)(nil),       // 44: gateway.control.v1.SecurityAuthZConfig
+	(*SecurityCORSConfig)(nil),        // 45: gateway.control.v1.SecurityCORSConfig
+	(*RateLimitRule)(nil),             // 46: gateway.control.v1.RateLimitRule
+	(*SecurityIPConfig)(nil),          // 47: gateway.control.v1.SecurityIPConfig
+	(*JwtAuthConfig)(nil),             // 48: gateway.control.v1.JwtAuthConfig
+	(*JwtIssuer)(nil),                 // 49: gateway.control.v1.JwtIssuer
+	(*OIDCConfig)(nil),                // 50: gateway.control.v1.OIDCConfig
+	(*BasicAuthConfig)(nil),           // 51: gateway.control.v1.BasicAuthConfig
+	(*ExternalAuthConfig)(nil),        // 52: gateway.control.v1.ExternalAuthConfig
+	(*ExternalAuthHTTP)(nil),          // 53: gateway.control.v1.ExternalAuthHTTP
+	(*ExternalAuthGRPC)(nil),          // 54: gateway.control.v1.ExternalAuthGRPC
+	nil,                               // 55: gateway.control.v1.Listener.MetadataEntry
+	nil,                               // 56: gateway.control.v1.HttpRoute.LabelsEntry
+	nil,                               // 57: gateway.control.v1.HttpRoute.AnnotationsEntry
+	nil,                               // 58: gateway.control.v1.GrpcRoute.LabelsEntry
+	nil,                               // 59: gateway.control.v1.GrpcRoute.AnnotationsEntry
+	nil,                               // 60: gateway.control.v1.StreamRoute.LabelsEntry
+	nil,                               // 61: gateway.control.v1.StreamRoute.AnnotationsEntry
+	nil,                               // 62: gateway.control.v1.BackendRef.MetadataEntry
+	nil,                               // 63: gateway.control.v1.BackendCluster.MetadataEntry
+	nil,                               // 64: gateway.control.v1.JwtIssuer.ClaimsToHeadersEntry
+	(*timestamppb.Timestamp)(nil),     // 65: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),           // 66: google.protobuf.Struct
+	(*RoutePolicy)(nil),               // 67: gateway.control.v1.RoutePolicy
+	(*durationpb.Duration)(nil),       // 68: google.protobuf.Duration
+	(*AIServiceConfig)(nil),           // 69: gateway.control.v1.AIServiceConfig
+	(*TokenPolicyConfig)(nil),         // 70: gateway.control.v1.TokenPolicyConfig
+	(*WasmPluginConfig)(nil),          // 71: gateway.control.v1.WasmPluginConfig
 }
 var file_gateway_control_v1_config_proto_depIdxs = []int32{
-	48, // 0: gateway.control.v1.ConfigSnapshot.generated_at:type_name -> google.protobuf.Timestamp
-	9,  // 1: gateway.control.v1.ConfigSnapshot.listeners:type_name -> gateway.control.v1.Listener
-	15, // 2: gateway.control.v1.ConfigSnapshot.http_routes:type_name -> gateway.control.v1.HttpRoute
-	24, // 3: gateway.control.v1.ConfigSnapshot.grpc_routes:type_name -> gateway.control.v1.GrpcRoute
-	27, // 4: gateway.control.v1.ConfigSnapshot.stream_routes:type_name -> gateway.control.v1.StreamRoute
-	32, // 5: gateway.control.v1.ConfigSnapshot.backends:type_name -> gateway.control.v1.BackendCluster
-	38, // 6: gateway.control.v1.ConfigSnapshot.secrets:type_name -> gateway.control.v1.SecretMaterial
-	49, // 7: gateway.control.v1.ConfigSnapshot.extensions:type_name -> google.protobuf.Struct
+	65, // 0: gateway.control.v1.ConfigSnapshot.generated_at:type_name -> google.protobuf.Timestamp
+	12, // 1: gateway.control.v1.ConfigSnapshot.listeners:type_name -> gateway.control.v1.Listener
+	18, // 2: gateway.control.v1.ConfigSnapshot.http_routes:type_name -> gateway.control.v1.HttpRoute
+	27, // 3: gateway.control.v1.ConfigSnapshot.grpc_routes:type_name -> gateway.control.v1.GrpcRoute
+	30, // 4: gateway.control.v1.ConfigSnapshot.stream_routes:type_name -> gateway.control.v1.StreamRoute
+	35, // 5: gateway.control.v1.ConfigSnapshot.backends:type_name -> gateway.control.v1.BackendCluster
+	41, // 6: gateway.control.v1.ConfigSnapshot.secrets:type_name -> gateway.control.v1.SecretMaterial
+	66, // 7: gateway.control.v1.ConfigSnapshot.extensions:type_name -> google.protobuf.Struct
 	0,  // 8: gateway.control.v1.Listener.protocol:type_name -> gateway.control.v1.ListenerProtocol
-	10, // 9: gateway.control.v1.Listener.tls:type_name -> gateway.control.v1.TlsConfig
-	39, // 10: gateway.control.v1.Listener.metadata:type_name -> gateway.control.v1.Listener.MetadataEntry
-	12, // 11: gateway.control.v1.Listener.backend_tls:type_name -> gateway.control.v1.BackendTlsConfig
-	11, // 12: gateway.control.v1.TlsConfig.frontend_validation:type_name -> gateway.control.v1.FrontendValidation
-	14, // 13: gateway.control.v1.BackendTlsValidation.subject_alt_names:type_name -> gateway.control.v1.BackendTlsSubjectAltName
+	13, // 9: gateway.control.v1.Listener.tls:type_name -> gateway.control.v1.TlsConfig
+	55, // 10: gateway.control.v1.Listener.metadata:type_name -> gateway.control.v1.Listener.MetadataEntry
+	15, // 11: gateway.control.v1.Listener.backend_tls:type_name -> gateway.control.v1.BackendTlsConfig
+	14, // 12: gateway.control.v1.TlsConfig.frontend_validation:type_name -> gateway.control.v1.FrontendValidation
+	17, // 13: gateway.control.v1.BackendTlsValidation.subject_alt_names:type_name -> gateway.control.v1.BackendTlsSubjectAltName
 	3,  // 14: gateway.control.v1.BackendTlsSubjectAltName.type:type_name -> gateway.control.v1.BackendTlsSubjectAltNameType
-	30, // 15: gateway.control.v1.HttpRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
-	16, // 16: gateway.control.v1.HttpRoute.rules:type_name -> gateway.control.v1.HttpRule
-	40, // 17: gateway.control.v1.HttpRoute.labels:type_name -> gateway.control.v1.HttpRoute.LabelsEntry
-	41, // 18: gateway.control.v1.HttpRoute.annotations:type_name -> gateway.control.v1.HttpRoute.AnnotationsEntry
-	50, // 19: gateway.control.v1.HttpRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
-	17, // 20: gateway.control.v1.HttpRule.matches:type_name -> gateway.control.v1.HttpMatch
-	37, // 21: gateway.control.v1.HttpRule.filters:type_name -> gateway.control.v1.Filter
-	31, // 22: gateway.control.v1.HttpRule.backend_refs:type_name -> gateway.control.v1.BackendRef
-	18, // 23: gateway.control.v1.HttpRule.timeouts:type_name -> gateway.control.v1.HttpRouteTimeouts
-	19, // 24: gateway.control.v1.HttpRule.retry:type_name -> gateway.control.v1.HttpRouteRetry
-	21, // 25: gateway.control.v1.HttpRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
-	35, // 26: gateway.control.v1.HttpMatch.headers:type_name -> gateway.control.v1.HeaderMatch
-	36, // 27: gateway.control.v1.HttpMatch.query_params:type_name -> gateway.control.v1.QueryMatch
-	51, // 28: gateway.control.v1.HttpRouteTimeouts.request:type_name -> google.protobuf.Duration
-	51, // 29: gateway.control.v1.HttpRouteTimeouts.backend_request:type_name -> google.protobuf.Duration
-	51, // 30: gateway.control.v1.HttpRouteRetry.backoff:type_name -> google.protobuf.Duration
+	33, // 15: gateway.control.v1.HttpRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
+	19, // 16: gateway.control.v1.HttpRoute.rules:type_name -> gateway.control.v1.HttpRule
+	56, // 17: gateway.control.v1.HttpRoute.labels:type_name -> gateway.control.v1.HttpRoute.LabelsEntry
+	57, // 18: gateway.control.v1.HttpRoute.annotations:type_name -> gateway.control.v1.HttpRoute.AnnotationsEntry
+	67, // 19: gateway.control.v1.HttpRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
+	20, // 20: gateway.control.v1.HttpRule.matches:type_name -> gateway.control.v1.HttpMatch
+	40, // 21: gateway.control.v1.HttpRule.filters:type_name -> gateway.control.v1.Filter
+	34, // 22: gateway.control.v1.HttpRule.backend_refs:type_name -> gateway.control.v1.BackendRef
+	21, // 23: gateway.control.v1.HttpRule.timeouts:type_name -> gateway.control.v1.HttpRouteTimeouts
+	22, // 24: gateway.control.v1.HttpRule.retry:type_name -> gateway.control.v1.HttpRouteRetry
+	24, // 25: gateway.control.v1.HttpRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
+	38, // 26: gateway.control.v1.HttpMatch.headers:type_name -> gateway.control.v1.HeaderMatch
+	39, // 27: gateway.control.v1.HttpMatch.query_params:type_name -> gateway.control.v1.QueryMatch
+	68, // 28: gateway.control.v1.HttpRouteTimeouts.request:type_name -> google.protobuf.Duration
+	68, // 29: gateway.control.v1.HttpRouteTimeouts.backend_request:type_name -> google.protobuf.Duration
+	68, // 30: gateway.control.v1.HttpRouteRetry.backoff:type_name -> google.protobuf.Duration
 	5,  // 31: gateway.control.v1.CookieConfig.lifetime_type:type_name -> gateway.control.v1.CookieLifetimeType
-	51, // 32: gateway.control.v1.SessionPersistence.absolute_timeout:type_name -> google.protobuf.Duration
-	51, // 33: gateway.control.v1.SessionPersistence.idle_timeout:type_name -> google.protobuf.Duration
+	68, // 32: gateway.control.v1.SessionPersistence.absolute_timeout:type_name -> google.protobuf.Duration
+	68, // 33: gateway.control.v1.SessionPersistence.idle_timeout:type_name -> google.protobuf.Duration
 	4,  // 34: gateway.control.v1.SessionPersistence.type:type_name -> gateway.control.v1.SessionPersistenceType
-	20, // 35: gateway.control.v1.SessionPersistence.cookie:type_name -> gateway.control.v1.CookieConfig
+	23, // 35: gateway.control.v1.SessionPersistence.cookie:type_name -> gateway.control.v1.CookieConfig
 	7,  // 36: gateway.control.v1.ConsistentHashPolicy.key_type:type_name -> gateway.control.v1.ConsistentHashKeyType
 	6,  // 37: gateway.control.v1.LoadBalancingPolicy.type:type_name -> gateway.control.v1.LoadBalancingPolicyType
-	22, // 38: gateway.control.v1.LoadBalancingPolicy.consistent_hash:type_name -> gateway.control.v1.ConsistentHashPolicy
-	30, // 39: gateway.control.v1.GrpcRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
-	25, // 40: gateway.control.v1.GrpcRoute.rules:type_name -> gateway.control.v1.GrpcRule
-	42, // 41: gateway.control.v1.GrpcRoute.labels:type_name -> gateway.control.v1.GrpcRoute.LabelsEntry
-	43, // 42: gateway.control.v1.GrpcRoute.annotations:type_name -> gateway.control.v1.GrpcRoute.AnnotationsEntry
-	50, // 43: gateway.control.v1.GrpcRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
-	26, // 44: gateway.control.v1.GrpcRule.matches:type_name -> gateway.control.v1.GrpcMatch
-	37, // 45: gateway.control.v1.GrpcRule.filters:type_name -> gateway.control.v1.Filter
-	31, // 46: gateway.control.v1.GrpcRule.backend_refs:type_name -> gateway.control.v1.BackendRef
-	21, // 47: gateway.control.v1.GrpcRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
-	35, // 48: gateway.control.v1.GrpcMatch.headers:type_name -> gateway.control.v1.HeaderMatch
+	25, // 38: gateway.control.v1.LoadBalancingPolicy.consistent_hash:type_name -> gateway.control.v1.ConsistentHashPolicy
+	33, // 39: gateway.control.v1.GrpcRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
+	28, // 40: gateway.control.v1.GrpcRoute.rules:type_name -> gateway.control.v1.GrpcRule
+	58, // 41: gateway.control.v1.GrpcRoute.labels:type_name -> gateway.control.v1.GrpcRoute.LabelsEntry
+	59, // 42: gateway.control.v1.GrpcRoute.annotations:type_name -> gateway.control.v1.GrpcRoute.AnnotationsEntry
+	67, // 43: gateway.control.v1.GrpcRoute.route_policy:type_name -> gateway.control.v1.RoutePolicy
+	29, // 44: gateway.control.v1.GrpcRule.matches:type_name -> gateway.control.v1.GrpcMatch
+	40, // 45: gateway.control.v1.GrpcRule.filters:type_name -> gateway.control.v1.Filter
+	34, // 46: gateway.control.v1.GrpcRule.backend_refs:type_name -> gateway.control.v1.BackendRef
+	24, // 47: gateway.control.v1.GrpcRule.session_persistence:type_name -> gateway.control.v1.SessionPersistence
+	38, // 48: gateway.control.v1.GrpcMatch.headers:type_name -> gateway.control.v1.HeaderMatch
 	2,  // 49: gateway.control.v1.StreamRoute.kind:type_name -> gateway.control.v1.RouteKind
-	30, // 50: gateway.control.v1.StreamRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
-	28, // 51: gateway.control.v1.StreamRoute.rules:type_name -> gateway.control.v1.StreamRule
-	44, // 52: gateway.control.v1.StreamRoute.labels:type_name -> gateway.control.v1.StreamRoute.LabelsEntry
-	45, // 53: gateway.control.v1.StreamRoute.annotations:type_name -> gateway.control.v1.StreamRoute.AnnotationsEntry
-	29, // 54: gateway.control.v1.StreamRule.matches:type_name -> gateway.control.v1.StreamMatch
-	31, // 55: gateway.control.v1.StreamRule.backend_refs:type_name -> gateway.control.v1.BackendRef
+	33, // 50: gateway.control.v1.StreamRoute.parent_refs:type_name -> gateway.control.v1.ParentRef
+	31, // 51: gateway.control.v1.StreamRoute.rules:type_name -> gateway.control.v1.StreamRule
+	60, // 52: gateway.control.v1.StreamRoute.labels:type_name -> gateway.control.v1.StreamRoute.LabelsEntry
+	61, // 53: gateway.control.v1.StreamRoute.annotations:type_name -> gateway.control.v1.StreamRoute.AnnotationsEntry
+	32, // 54: gateway.control.v1.StreamRule.matches:type_name -> gateway.control.v1.StreamMatch
+	34, // 55: gateway.control.v1.StreamRule.backend_refs:type_name -> gateway.control.v1.BackendRef
 	1,  // 56: gateway.control.v1.StreamMatch.mode:type_name -> gateway.control.v1.TlsRouteMode
-	46, // 57: gateway.control.v1.BackendRef.metadata:type_name -> gateway.control.v1.BackendRef.MetadataEntry
-	37, // 58: gateway.control.v1.BackendRef.filters:type_name -> gateway.control.v1.Filter
-	34, // 59: gateway.control.v1.BackendCluster.endpoints:type_name -> gateway.control.v1.BackendEndpoint
-	51, // 60: gateway.control.v1.BackendCluster.connect_timeout:type_name -> google.protobuf.Duration
-	51, // 61: gateway.control.v1.BackendCluster.request_timeout:type_name -> google.protobuf.Duration
-	47, // 62: gateway.control.v1.BackendCluster.metadata:type_name -> gateway.control.v1.BackendCluster.MetadataEntry
-	13, // 63: gateway.control.v1.BackendCluster.tls_validation:type_name -> gateway.control.v1.BackendTlsValidation
-	21, // 64: gateway.control.v1.BackendCluster.session_persistence:type_name -> gateway.control.v1.SessionPersistence
-	23, // 65: gateway.control.v1.BackendCluster.load_balancing:type_name -> gateway.control.v1.LoadBalancingPolicy
-	52, // 66: gateway.control.v1.BackendCluster.ai_service:type_name -> gateway.control.v1.AIServiceConfig
-	53, // 67: gateway.control.v1.BackendCluster.token_policy:type_name -> gateway.control.v1.TokenPolicyConfig
-	54, // 68: gateway.control.v1.BackendCluster.wasm_plugin:type_name -> gateway.control.v1.WasmPluginConfig
-	33, // 69: gateway.control.v1.BackendCluster.circuit_breaker:type_name -> gateway.control.v1.CircuitBreakerConfig
-	49, // 70: gateway.control.v1.Filter.config:type_name -> google.protobuf.Struct
-	71, // [71:71] is the sub-list for method output_type
-	71, // [71:71] is the sub-list for method input_type
-	71, // [71:71] is the sub-list for extension type_name
-	71, // [71:71] is the sub-list for extension extendee
-	0,  // [0:71] is the sub-list for field type_name
+	62, // 57: gateway.control.v1.BackendRef.metadata:type_name -> gateway.control.v1.BackendRef.MetadataEntry
+	40, // 58: gateway.control.v1.BackendRef.filters:type_name -> gateway.control.v1.Filter
+	37, // 59: gateway.control.v1.BackendCluster.endpoints:type_name -> gateway.control.v1.BackendEndpoint
+	68, // 60: gateway.control.v1.BackendCluster.connect_timeout:type_name -> google.protobuf.Duration
+	68, // 61: gateway.control.v1.BackendCluster.request_timeout:type_name -> google.protobuf.Duration
+	63, // 62: gateway.control.v1.BackendCluster.metadata:type_name -> gateway.control.v1.BackendCluster.MetadataEntry
+	16, // 63: gateway.control.v1.BackendCluster.tls_validation:type_name -> gateway.control.v1.BackendTlsValidation
+	24, // 64: gateway.control.v1.BackendCluster.session_persistence:type_name -> gateway.control.v1.SessionPersistence
+	26, // 65: gateway.control.v1.BackendCluster.load_balancing:type_name -> gateway.control.v1.LoadBalancingPolicy
+	69, // 66: gateway.control.v1.BackendCluster.ai_service:type_name -> gateway.control.v1.AIServiceConfig
+	70, // 67: gateway.control.v1.BackendCluster.token_policy:type_name -> gateway.control.v1.TokenPolicyConfig
+	71, // 68: gateway.control.v1.BackendCluster.wasm_plugin:type_name -> gateway.control.v1.WasmPluginConfig
+	36, // 69: gateway.control.v1.BackendCluster.circuit_breaker:type_name -> gateway.control.v1.CircuitBreakerConfig
+	66, // 70: gateway.control.v1.Filter.config:type_name -> google.protobuf.Struct
+	43, // 71: gateway.control.v1.SecurityPolicyConfig.authn:type_name -> gateway.control.v1.SecurityAuthNConfig
+	44, // 72: gateway.control.v1.SecurityPolicyConfig.authz:type_name -> gateway.control.v1.SecurityAuthZConfig
+	45, // 73: gateway.control.v1.SecurityPolicyConfig.cors:type_name -> gateway.control.v1.SecurityCORSConfig
+	46, // 74: gateway.control.v1.SecurityPolicyConfig.rate_limit:type_name -> gateway.control.v1.RateLimitRule
+	47, // 75: gateway.control.v1.SecurityPolicyConfig.ip:type_name -> gateway.control.v1.SecurityIPConfig
+	48, // 76: gateway.control.v1.SecurityAuthNConfig.jwt:type_name -> gateway.control.v1.JwtAuthConfig
+	50, // 77: gateway.control.v1.SecurityAuthNConfig.oidc:type_name -> gateway.control.v1.OIDCConfig
+	51, // 78: gateway.control.v1.SecurityAuthNConfig.basic_auth:type_name -> gateway.control.v1.BasicAuthConfig
+	52, // 79: gateway.control.v1.SecurityAuthZConfig.external:type_name -> gateway.control.v1.ExternalAuthConfig
+	8,  // 80: gateway.control.v1.RateLimitRule.scope:type_name -> gateway.control.v1.RateLimitScope
+	9,  // 81: gateway.control.v1.RateLimitRule.on_limit:type_name -> gateway.control.v1.RateLimitAction
+	49, // 82: gateway.control.v1.JwtAuthConfig.issuers:type_name -> gateway.control.v1.JwtIssuer
+	64, // 83: gateway.control.v1.JwtIssuer.claims_to_headers:type_name -> gateway.control.v1.JwtIssuer.ClaimsToHeadersEntry
+	10, // 84: gateway.control.v1.ExternalAuthConfig.protocol:type_name -> gateway.control.v1.ExternalAuthTransport
+	34, // 85: gateway.control.v1.ExternalAuthConfig.backend_ref:type_name -> gateway.control.v1.BackendRef
+	53, // 86: gateway.control.v1.ExternalAuthConfig.http:type_name -> gateway.control.v1.ExternalAuthHTTP
+	54, // 87: gateway.control.v1.ExternalAuthConfig.grpc:type_name -> gateway.control.v1.ExternalAuthGRPC
+	88, // [88:88] is the sub-list for method output_type
+	88, // [88:88] is the sub-list for method input_type
+	88, // [88:88] is the sub-list for extension type_name
+	88, // [88:88] is the sub-list for extension extendee
+	0,  // [0:88] is the sub-list for field type_name
 }
 
 func init() { file_gateway_control_v1_config_proto_init() }
@@ -3472,8 +4653,8 @@ func file_gateway_control_v1_config_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gateway_control_v1_config_proto_rawDesc), len(file_gateway_control_v1_config_proto_rawDesc)),
-			NumEnums:      8,
-			NumMessages:   40,
+			NumEnums:      11,
+			NumMessages:   54,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
