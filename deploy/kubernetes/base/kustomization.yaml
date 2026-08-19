@@ -12,6 +12,7 @@ resources:
   - aiservice-crd.yaml
   - tokenpolicy-crd.yaml
   - wasmplugin-crd.yaml
+  - securitypolicy-crd.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

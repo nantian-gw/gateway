@@ -1,0 +1,235 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: securitypolicies.gateway.nantian.dev
+spec:
+  group: gateway.nantian.dev
+  names:
+    plural: securitypolicies
+    singular: securitypolicy
+    kind: SecurityPolicy
+    listKind: SecurityPolicyList
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    subresources:
+      status: {}
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required: [targetRefs]
+            properties:
+              targetRefs:
+                type: array
+                items:
+                  type: object
+                  required: [group, kind, name]
+                  properties:
+                    group:
+                      type: string
+                      maxLength: 253
+                    kind:
+                      type: string
+                      maxLength: 63
+                    name:
+                      type: string
+                      maxLength: 253
+                    namespace:
+                      type: string
+                      maxLength: 63
+                  x-kubernetes-preserve-unknown-fields: true
+              authn:
+                type: object
+                properties:
+                  jwt:
+                    type: object
+                    properties:
+                      issuers:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            issuer:
+                              type: string
+                            jwksUrl:
+                              type: string
+                            audience:
+                              type: string
+                            headerName:
+                              type: string
+                            tokenPrefix:
+                              type: string
+                            claimsToHeaders:
+                              type: object
+                              additionalProperties:
+                                type: string
+                            cacheTtlSecs:
+                              type: integer
+                              format: int32
+                  oidc:
+                    type: object
+                    properties:
+                      providerAuthorizationUrl:
+                        type: string
+                      providerTokenUrl:
+                        type: string
+                      providerJwksUrl:
+                        type: string
+                      providerUserinfoUrl:
+                        type: string
+                      clientId:
+                        type: string
+                      clientSecretRef:
+                        type: string
+                      callbackPath:
+                        type: string
+                      scopes:
+                        type: array
+                        items:
+                          type: string
+                      redirectUrl:
+                        type: string
+                      sessionSigningKeyRef:
+                        type: string
+                      sessionCookieName:
+                        type: string
+                      sessionTtlSecs:
+                        type: integer
+                        format: int32
+                  basicAuth:
+                    type: object
+                    properties:
+                      htpasswdRef:
+                        type: string
+                      bcrypt:
+                        type: boolean
+                      realm:
+                        type: string
+              authz:
+                type: object
+                properties:
+                  external:
+                    type: object
+                    properties:
+                      protocol:
+                        type: string
+                      backendRef:
+                        type: object
+                        properties:
+                          namespace:
+                            type: string
+                          name:
+                            type: string
+                          port:
+                            type: integer
+                            format: int32
+                      http:
+                        type: object
+                        properties:
+                          pathPrefix:
+                            type: string
+                          headersToAdd:
+                            type: array
+                            items:
+                              type: string
+                      grpc:
+                        type: object
+                        properties:
+                          grpcService:
+                            type: string
+                      forwardBodyMaxSize:
+                        type: integer
+                        format: int32
+              cors:
+                type: object
+                properties:
+                  allowOrigins:
+                    type: array
+                    items:
+                      type: string
+                  allowMethods:
+                    type: array
+                    items:
+                      type: string
+                  allowHeaders:
+                    type: array
+                    items:
+                      type: string
+                  exposeHeaders:
+                    type: array
+                    items:
+                      type: string
+                  allowCredentials:
+                    type: boolean
+                  maxAge:
+                    type: integer
+                    format: int32
+              rateLimit:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    scope:
+                      type: string
+                    requestsPerSecond:
+                      type: integer
+                      format: int32
+                    burst:
+                      type: integer
+                      format: int32
+                    keyType:
+                      type: string
+                    onLimit:
+                      type: string
+                    keyHeaderName:
+                      type: string
+              ip:
+                type: object
+                properties:
+                  allowCIDRs:
+                    type: array
+                    items:
+                      type: string
+                  denyCIDRs:
+                    type: array
+                    items:
+                      type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                x-kubernetes-list-type: map
+                x-kubernetes-list-map-keys:
+                  - type
+                items:
+                  type: object
+                  required: [type, status, lastTransitionTime, reason, message]
+                  properties:
+                    type:
+                      type: string
+                      maxLength: 316
+                      pattern: "^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$"
+                    status:
+                      type: string
+                      enum: ["True", "False", "Unknown"]
+                    observedGeneration:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 1024
+                      pattern: "^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$"
+                    message:
+                      type: string
+                      maxLength: 32768
