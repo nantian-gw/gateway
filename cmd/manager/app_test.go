@@ -11,7 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/nantian-gw/gateway/internal/config"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	"github.com/nantian-gw/gateway/internal/observability"
 )
 
@@ -179,5 +181,41 @@ func TestBuildSchemeFeatureFlagsGated(t *testing.T) {
 	_, _, err = scheme.ObjectKinds(&backend.BackendLBPolicy{})
 	if err != nil {
 		t.Fatalf("BackendLBPolicy should be registered: %v", err)
+	}
+
+	_, _, err = scheme.ObjectKinds(&aiservice.AIService{})
+	if err == nil {
+		t.Fatal("AIService should not be registered when enableAiGateway is false")
+	}
+	_, _, err = scheme.ObjectKinds(&tokenpolicy.TokenPolicy{})
+	if err == nil {
+		t.Fatal("TokenPolicy should not be registered when enableAiGateway is false")
+	}
+}
+
+func TestBuildSchemeAiGatewayRegistersAIResourcesWithoutExperimentalGateway(t *testing.T) {
+	cfg := &config.Config{
+		Features: config.FeaturesConfig{
+			EnableExperimentalGateway: false,
+			EnableAiGateway:           true,
+		},
+	}
+	scheme, err := buildScheme(cfg)
+	if err != nil {
+		t.Fatalf("buildScheme returned error: %v", err)
+	}
+
+	_, _, err = scheme.ObjectKinds(&backend.BackendLBPolicy{})
+	if err == nil {
+		t.Fatal("BackendLBPolicy should not be registered when enableExperimentalGateway is false")
+	}
+
+	_, _, err = scheme.ObjectKinds(&aiservice.AIService{})
+	if err != nil {
+		t.Fatalf("AIService should be registered when enableAiGateway is true: %v", err)
+	}
+	_, _, err = scheme.ObjectKinds(&tokenpolicy.TokenPolicy{})
+	if err != nil {
+		t.Fatalf("TokenPolicy should be registered when enableAiGateway is true: %v", err)
 	}
 }

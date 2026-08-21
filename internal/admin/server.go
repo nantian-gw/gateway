@@ -59,6 +59,7 @@ type routeContract struct {
 type routeBinding struct {
 	contract routeContract
 	handler  func(*Server) http.HandlerFunc
+	enabled  func(DashboardCapabilities) bool
 }
 
 type Server struct {
@@ -135,6 +136,9 @@ func NewServer(
 
 func (s *Server) registerRoutes(mux *http.ServeMux) {
 	for _, binding := range adminRouteBindings() {
+		if binding.enabled != nil && !binding.enabled(s.dashboardCapabilities) {
+			continue
+		}
 		contract := binding.contract
 		handler := binding.handler(s)
 		mux.HandleFunc(contract.Method+" "+contract.Path, func(w http.ResponseWriter, r *http.Request) {
@@ -303,22 +307,27 @@ func adminRouteBindings() []routeBinding {
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/overview", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAIOverview },
+			enabled:  func(c DashboardCapabilities) bool { return c.AIOverview },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/services", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAIServices },
+			enabled:  func(c DashboardCapabilities) bool { return c.AIServices },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/token-usage", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAITokenUsage },
+			enabled:  func(c DashboardCapabilities) bool { return c.AIUsage },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/traces", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAITraces },
+			enabled:  func(c DashboardCapabilities) bool { return c.AITraces },
 		},
 		{
 			contract: routeContract{Method: http.MethodGet, Path: "/v1/ai/cost", Auth: "bearer-when-configured", Permission: PermissionRead, ContentType: "application/json"},
 			handler:  func(s *Server) http.HandlerFunc { return s.handleAICost },
+			enabled:  func(c DashboardCapabilities) bool { return c.AICost },
 		},
 	}
 }

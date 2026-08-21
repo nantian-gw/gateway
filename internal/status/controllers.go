@@ -108,11 +108,11 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 	if opts.EnableAiGateway {
 		controllers = append(controllers,
 			&aiserviceController{reconciler: reconciler},
+			&tokenPolicyController{reconciler: reconciler},
 		)
 	}
 	if opts.EnableExperimentalGateway {
 		controllers = append(controllers,
-			&tokenPolicyController{reconciler: reconciler},
 			&wasmPluginController{reconciler: reconciler},
 			&routePolicyController{reconciler: reconciler},
 		)

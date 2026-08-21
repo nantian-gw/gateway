@@ -49,6 +49,32 @@ func TestStatusControllerSetupsExperimentalModeIncludesExperimentalControllers(t
 	}
 }
 
+func TestStatusControllerSetupsAiGatewayIncludesAIControllersWithoutExperimental(t *testing.T) {
+	t.Parallel()
+
+	controllers := statusControllerSetups(nil, Options{
+		EnableExperimentalGateway: false,
+		EnableAiGateway:           true,
+	})
+	seen := map[string]bool{}
+	for _, controller := range controllers {
+		switch controller.(type) {
+		case *aiserviceController:
+			seen["aiservice"] = true
+		case *tokenPolicyController:
+			seen["tokenpolicy"] = true
+		case *backendLBPolicyController, *wasmPluginController, *routePolicyController:
+			t.Fatalf("AI-only mode included experimental controller %T", controller)
+		}
+	}
+
+	for _, name := range []string{"aiservice", "tokenpolicy"} {
+		if !seen[name] {
+			t.Fatalf("AI-only mode did not include %s status controller", name)
+		}
+	}
+}
+
 func TestResourceSupportedReturnsFalseWhenRESTMappingMissing(t *testing.T) {
 	t.Parallel()
 

@@ -50,17 +50,19 @@ func buildScheme(cfg *config.Config) (*runtime.Scheme, error) {
 				{name: "gateway.experimental/v1alpha2", fn: backend.Install},
 				{name: "routepolicy/v1alpha1", fn: routepolicy.AddToScheme},
 				{name: "wasmplugin/v1alpha1", fn: wasmplugin.AddToScheme},
-				{name: "tokenpolicy/v1alpha1", fn: tokenpolicy.AddToScheme},
 			}...,
 		)
 	}
 
 	if cfg.Features.EnableAiGateway {
 		registrations = append(registrations,
-			struct {
+			[]struct {
 				name string
 				fn   func(*runtime.Scheme) error
-			}{name: "aiservice/v1alpha1", fn: aiservice.AddToScheme},
+			}{
+				{name: "aiservice/v1alpha1", fn: aiservice.AddToScheme},
+				{name: "tokenpolicy/v1alpha1", fn: tokenpolicy.AddToScheme},
+			}...,
 		)
 	}
 

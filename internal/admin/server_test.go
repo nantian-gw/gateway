@@ -85,6 +85,29 @@ func TestDashboardCapabilitiesEndpointReturnsConfiguredPageGroups(t *testing.T) 
 	}
 }
 
+func TestAIGatewayRoutesFollowDashboardCapabilities(t *testing.T) {
+	t.Parallel()
+
+	disabled := newTestServerWithOptions(t, Options{})
+	recorder := performRequest(t, disabled, http.MethodGet, "/v1/ai/overview", nil)
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("expected disabled AI route to return 404, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+
+	enabled := newTestServerWithOptions(t, Options{
+		DashboardCapabilities: DashboardCapabilities{AIOverview: true},
+	})
+	recorder = performRequest(t, enabled, http.MethodGet, "/v1/ai/overview", nil)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected enabled AI route to return 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+
+	recorder = performRequest(t, enabled, http.MethodGet, "/v1/ai/services", nil)
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("expected non-enabled AI services route to return 404, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func newTestServer(t *testing.T) *Server {
 	return newTestServerWithRepository(t, nil, Options{})
 }
@@ -306,10 +329,10 @@ func newTestServerWithRepository(t *testing.T, repo noderegistry.Repository, opt
 				Name:      "web",
 				Namespace: "default",
 				ParentRefs: []ir.ParentRef{{
-					Name:      "gw",
-					Namespace: "default",
-					Group:     "gateway.networking.k8s.io",
-					Kind:      "Gateway",
+					Name:        "gw",
+					Namespace:   "default",
+					Group:       "gateway.networking.k8s.io",
+					Kind:        "Gateway",
 					SectionName: "http",
 				}},
 				Hostnames: []string{"app.example.com"},
@@ -354,11 +377,11 @@ func newTestServerWithRepository(t *testing.T, repo noderegistry.Repository, opt
 				Name:      "passthrough",
 				Namespace: "default",
 				ParentRefs: []ir.ParentRef{{
-					Name:      "gw",
-					Namespace: "default",
+					Name:        "gw",
+					Namespace:   "default",
 					SectionName: "tls",
 				}},
-				Kind:      "TLS",
+				Kind: "TLS",
 				Rules: []ir.StreamRule{
 					{
 						Matches: []ir.StreamMatch{{SNIHostname: "secure.example.com"}},
