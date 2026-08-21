@@ -31,6 +31,7 @@ type Listener struct {
 	TLS            *TLSConfig        `json:"tls,omitempty"`
 	BackendTLS     *BackendTLSConfig `json:"backendTls,omitempty"`
 	Metadata       map[string]string `json:"metadata,omitempty"`
+	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 	Status         *ListenerStatus   `json:"status,omitempty"`
 }
 
@@ -78,6 +79,7 @@ type HTTPRoute struct {
 	Annotations map[string]string  `json:"annotations,omitempty"`
 	Status      *RouteStatus       `json:"status,omitempty"`
 	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
+	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 }
 
 type HTTPRule struct {
@@ -109,6 +111,7 @@ type GRPCRoute struct {
 	Annotations map[string]string  `json:"annotations,omitempty"`
 	Status      *RouteStatus       `json:"status,omitempty"`
 	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
+	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 }
 
 type GRPCRule struct {
@@ -137,6 +140,7 @@ type StreamRoute struct {
 	Annotations map[string]string  `json:"annotations,omitempty"`
 	Status      *RouteStatus       `json:"status,omitempty"`
 	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
+	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 }
 
 type ConditionStatus struct {
@@ -786,4 +790,99 @@ type RouteConnectionConfig struct {
 	KeepaliveTimeout          time.Duration `json:"keepaliveTimeout,omitempty"`
 	UpstreamKeepalivePoolSize uint32        `json:"upstreamKeepalivePoolSize,omitempty"`
 	UpstreamKeepaliveIdle     time.Duration `json:"upstreamKeepaliveIdle,omitempty"`
+}
+
+// SecurityPolicyConfig holds the effective security policy for a listener, route, or backend.
+type SecurityPolicyConfig struct {
+	AuthN     *SecurityAuthNConfig `json:"authn,omitempty"`
+	AuthZ     *SecurityAuthZConfig `json:"authz,omitempty"`
+	CORS      *SecurityCORSConfig  `json:"cors,omitempty"`
+	RateLimit []RateLimitRule      `json:"rateLimit,omitempty"`
+	IP        *SecurityIPConfig    `json:"ip,omitempty"`
+}
+
+type SecurityAuthNConfig struct {
+	JWT       *JwtAuthConfig   `json:"jwt,omitempty"`
+	OIDC      *OIDCConfig      `json:"oidc,omitempty"`
+	BasicAuth *BasicAuthConfig `json:"basicAuth,omitempty"`
+}
+
+type SecurityAuthZConfig struct {
+	External *ExternalAuthConfig `json:"external,omitempty"`
+}
+
+type JwtAuthConfig struct {
+	Issuer        string            `json:"issuer,omitempty"`
+	JwksURL       string            `json:"jwksUrl,omitempty"`
+	Audience      string            `json:"audience,omitempty"`
+	HeaderName    string            `json:"headerName,omitempty"`
+	TokenPrefix   string            `json:"tokenPrefix,omitempty"`
+	ClaimsToHeader []ClaimToHeader  `json:"claimsToHeaders,omitempty"`
+	CacheTTLSecs  int32             `json:"cacheTtlSecs,omitempty"`
+}
+
+type ClaimToHeader struct {
+	Claim  string `json:"claim,omitempty"`
+	Header string `json:"header,omitempty"`
+}
+
+type OIDCConfig struct {
+	ProviderAuthorizationURL string   `json:"providerAuthorizationUrl,omitempty"`
+	ProviderTokenURL         string   `json:"providerTokenUrl,omitempty"`
+	ProviderJwksURL          string   `json:"providerJwksUrl,omitempty"`
+	ProviderUserinfoURL      string   `json:"providerUserinfoUrl,omitempty"`
+	ClientID                 string   `json:"clientId,omitempty"`
+	ClientSecretRef          string   `json:"clientSecretRef,omitempty"`
+	CallbackPath             string   `json:"callbackPath,omitempty"`
+	Scopes                   []string `json:"scopes,omitempty"`
+	RedirectURL              string   `json:"redirectUrl,omitempty"`
+	SessionSigningKeyRef     string   `json:"sessionSigningKeyRef,omitempty"`
+	SessionCookieName        string   `json:"sessionCookieName,omitempty"`
+	SessionTTLSecs           int32    `json:"sessionTtlSecs,omitempty"`
+}
+
+type BasicAuthConfig struct {
+	HtpasswdRef string `json:"htpasswdRef,omitempty"`
+	Bcrypt      bool   `json:"bcrypt,omitempty"`
+	Realm       string `json:"realm,omitempty"`
+}
+
+type ExternalAuthConfig struct {
+	Protocol           string             `json:"protocol,omitempty"`
+	BackendRef         *BackendRef        `json:"backendRef,omitempty"`
+	HTTP               *ExternalHTTPAuth  `json:"http,omitempty"`
+	GRPC               *ExternalGRPCAuth  `json:"grpc,omitempty"`
+	ForwardBodyMaxSize int32              `json:"forwardBodyMaxSize,omitempty"`
+}
+
+type ExternalHTTPAuth struct {
+	PathPrefix   string   `json:"pathPrefix,omitempty"`
+	HeadersToAdd []string `json:"headersToAdd,omitempty"`
+}
+
+type ExternalGRPCAuth struct {
+	GRPCService string `json:"grpcService,omitempty"`
+}
+
+type SecurityCORSConfig struct {
+	AllowOrigins     []string `json:"allowOrigins,omitempty"`
+	AllowMethods     []string `json:"allowMethods,omitempty"`
+	AllowHeaders     []string `json:"allowHeaders,omitempty"`
+	ExposeHeaders    []string `json:"exposeHeaders,omitempty"`
+	AllowCredentials bool     `json:"allowCredentials,omitempty"`
+	MaxAge           int32    `json:"maxAge,omitempty"`
+}
+
+type RateLimitRule struct {
+	Scope             string `json:"scope,omitempty"`
+	RequestsPerSecond uint32 `json:"requestsPerSecond,omitempty"`
+	Burst             uint32 `json:"burst,omitempty"`
+	KeyType           string `json:"keyType,omitempty"`
+	KeyHeaderName     string `json:"keyHeaderName,omitempty"`
+	OnLimit           string `json:"onLimit,omitempty"`
+}
+
+type SecurityIPConfig struct {
+	AllowCIDRs []string `json:"allowCIDRs,omitempty"`
+	DenyCIDRs  []string `json:"denyCIDRs,omitempty"`
 }

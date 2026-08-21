@@ -13,6 +13,7 @@ resources:
   - tokenpolicy-crd.yaml
   - wasmplugin-crd.yaml
   - backendlbpolicy-crd.yaml
+  - securitypolicy-crd.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
