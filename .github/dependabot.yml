@@ -15,7 +15,7 @@ updates:
 
   # Go control plane modules.
   - package-ecosystem: "gomod"
-    directory: "/controlplane"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "tuesday"
@@ -24,18 +24,6 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: "deps(go)"
-
-  # Rust data plane workspace crates.
-  - package-ecosystem: "cargo"
-    directory: "/dataplane"
-    schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "09:00"
-      timezone: "UTC"
-    open-pull-requests-limit: 3
-    commit-message:
-      prefix: "deps(rust)"
 
 # Docker is intentionally not enabled here.
 # The current Dockerfiles use ARG-based image references in FROM and multi-stage
