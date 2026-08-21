@@ -754,3 +754,17 @@ func shuffleSecretMaterialsForProperty(rng *rand.Rand, items []SecretMaterial) {
 func shuffleWorkloadsForProperty(rng *rand.Rand, items []Workload) {
 	rng.Shuffle(len(items), func(i, j int) { items[i], items[j] = items[j], items[i] })
 }
+
+func TestBackendClusterHealthCheckFields(t *testing.T) {
+	hc := &HealthCheckConfig{Type: "HTTP", Path: "/healthz", HealthyThreshold: 2}
+	bc := BackendCluster{Name: "svc", HealthCheck: hc, OutlierDetection: &OutlierDetectionConfig{Consecutive5xx: 5}}
+	lb := LoadBalancingPolicy{Type: "LeastRequest", SlowStart: &SlowStartConfig{Window: ptrDur(30)}}
+	if bc.HealthCheck.Type != "HTTP" || bc.OutlierDetection.Consecutive5xx != 5 {
+		t.Fatal("new fields missing")
+	}
+	if lb.SlowStart.Window == nil || *lb.SlowStart.Window != 30 {
+		t.Fatal("SlowStart missing")
+	}
+}
+
+func ptrDur(d time.Duration) *time.Duration { return &d }

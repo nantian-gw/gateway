@@ -32,5 +32,9 @@ func BackendLoadBalancing(source *backend.LoadBalancingPolicy) *ir.LoadBalancing
 		}
 	}
 
+	if source.SlowStart != nil && source.SlowStart.Window != nil {
+		out.SlowStart = &ir.SlowStartConfig{Window: source.SlowStart.Window}
+	}
+
 	return out
 }

@@ -16,6 +16,8 @@ type translatedBackendLBPolicy struct {
 	sessionPersistence *ir.SessionPersistencePolicy
 	loadBalancing      *ir.LoadBalancingPolicy
 	circuitBreaker     *ir.CircuitBreakerConfig
+	healthCheck        *ir.HealthCheckConfig
+	outlierDetection   *ir.OutlierDetectionConfig
 	policy             backend.BackendLBPolicy
 }
 
@@ -23,6 +25,8 @@ type BackendLBPolicyIndexes struct {
 	sessionPersistence map[string]*ir.SessionPersistencePolicy
 	loadBalancing      map[string]*ir.LoadBalancingPolicy
 	circuitBreaker     map[string]*ir.CircuitBreakerConfig
+	healthCheck        map[string]*ir.HealthCheckConfig
+	outlierDetection   map[string]*ir.OutlierDetectionConfig
 }
 
 func BuildBackendLBPolicyIndexesWithIndexes(
@@ -40,7 +44,9 @@ func BuildBackendLBPolicyIndexesWithIndexes(
 		)
 		loadBalancing := BackendLoadBalancing(policy.Spec.LoadBalancing)
 		circuitBreaker := backendCircuitBreaker(policy.Spec.CircuitBreaker)
-		if sessionPersistence == nil && loadBalancing == nil && circuitBreaker == nil {
+		healthCheck := BackendHealthCheck(policy.Spec.HealthCheck)
+		outlierDetection := BackendOutlierDetection(policy.Spec.OutlierDetection)
+		if sessionPersistence == nil && loadBalancing == nil && circuitBreaker == nil && healthCheck == nil && outlierDetection == nil {
 			continue
 		}
 
@@ -54,6 +60,8 @@ func BuildBackendLBPolicyIndexesWithIndexes(
 			sessionPersistence: sessionPersistence,
 			loadBalancing:      loadBalancing,
 			circuitBreaker:     circuitBreaker,
+			healthCheck:        healthCheck,
+			outlierDetection:   outlierDetection,
 			policy:             policy,
 		})
 		translationIndex := len(translations) - 1
@@ -68,6 +76,8 @@ func BuildBackendLBPolicyIndexesWithIndexes(
 	sessionPersistence := make(map[string]*ir.SessionPersistencePolicy, len(owners))
 	loadBalancing := make(map[string]*ir.LoadBalancingPolicy, len(owners))
 	circuitBreaker := make(map[string]*ir.CircuitBreakerConfig, len(owners))
+	healthCheck := make(map[string]*ir.HealthCheckConfig, len(owners))
+	outlierDetection := make(map[string]*ir.OutlierDetectionConfig, len(owners))
 	for backendKey, ownerIndex := range owners {
 		if item := translations[ownerIndex].sessionPersistence; item != nil {
 			copyItem := *item
@@ -85,12 +95,22 @@ func BuildBackendLBPolicyIndexesWithIndexes(
 			copyItem := *item
 			circuitBreaker[backendKey] = &copyItem
 		}
+		if item := translations[ownerIndex].healthCheck; item != nil {
+			copyItem := *item
+			healthCheck[backendKey] = &copyItem
+		}
+		if item := translations[ownerIndex].outlierDetection; item != nil {
+			copyItem := *item
+			outlierDetection[backendKey] = &copyItem
+		}
 	}
 
 	return BackendLBPolicyIndexes{
 		sessionPersistence: sessionPersistence,
 		loadBalancing:      loadBalancing,
 		circuitBreaker:     circuitBreaker,
+		healthCheck:        healthCheck,
+		outlierDetection:   outlierDetection,
 	}
 }
 
@@ -150,4 +170,50 @@ func backendCircuitBreaker(cb *backend.CircuitBreakerConfig) *ir.CircuitBreakerC
 	return &ir.CircuitBreakerConfig{
 		MaxInflightRequests: int(*cb.MaxInflightRequests),
 	}
+}
+
+func BackendHealthCheck(hc *backend.HealthCheckConfig) *ir.HealthCheckConfig {
+	if hc == nil {
+		return nil
+	}
+	out := &ir.HealthCheckConfig{
+		Path:               derefStr(hc.Path),
+		Interval:           hc.Interval,
+		Timeout:            hc.Timeout,
+		HealthyThreshold:   derefU32(hc.HealthyThreshold),
+		UnhealthyThreshold: derefU32(hc.UnhealthyThreshold),
+	}
+	if hc.Type != nil {
+		out.Type = *hc.Type
+	}
+	if hc.ExpectedStatus != nil {
+		out.ExpectedStatus = *hc.ExpectedStatus
+	}
+	return out
+}
+
+func BackendOutlierDetection(od *backend.OutlierDetectionConfig) *ir.OutlierDetectionConfig {
+	if od == nil {
+		return nil
+	}
+	return &ir.OutlierDetectionConfig{
+		Consecutive5xx:     derefU32(od.Consecutive5xx),
+		Interval:           od.Interval,
+		BaseEjectionTime:   od.BaseEjectionTime,
+		MaxEjectionPercent: derefU32(od.MaxEjectionPercent),
+	}
+}
+
+func derefStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func derefU32(v *uint32) uint32 {
+	if v == nil {
+		return 0
+	}
+	return *v
 }

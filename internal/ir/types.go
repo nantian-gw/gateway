@@ -218,6 +218,8 @@ type BackendCluster struct {
 	SessionPersistence   *SessionPersistencePolicy `json:"sessionPersistence,omitempty"`
 	LoadBalancing        *LoadBalancingPolicy      `json:"loadBalancing,omitempty"`
 	CircuitBreaker       *CircuitBreakerConfig     `json:"circuitBreaker,omitempty"`
+	HealthCheck          *HealthCheckConfig        `json:"healthCheck,omitempty"`
+	OutlierDetection     *OutlierDetectionConfig   `json:"outlierDetection,omitempty"`
 	Metadata             map[string]string         `json:"metadata,omitempty"`
 	AIService            *AIServiceConfig          `json:"aiService,omitempty"`
 	TokenPolicy          *TokenPolicyConfig        `json:"tokenPolicy,omitempty"`
@@ -274,11 +276,33 @@ type CookieConfig struct {
 type LoadBalancingPolicy struct {
 	Type           string                `json:"type,omitempty"`
 	ConsistentHash *ConsistentHashPolicy `json:"consistentHash,omitempty"`
+	SlowStart      *SlowStartConfig      `json:"slowStart,omitempty"`
 }
 
 type ConsistentHashPolicy struct {
 	KeyType    string `json:"keyType,omitempty"`
 	HeaderName string `json:"headerName,omitempty"`
+}
+
+type SlowStartConfig struct {
+	Window *time.Duration `json:"window,omitempty"`
+}
+
+type HealthCheckConfig struct {
+	Type               string         `json:"type,omitempty"`
+	Path               string         `json:"path,omitempty"`
+	ExpectedStatus     int32          `json:"expectedStatus,omitempty"`
+	Interval           *time.Duration `json:"interval,omitempty"`
+	Timeout            *time.Duration `json:"timeout,omitempty"`
+	HealthyThreshold   uint32         `json:"healthyThreshold,omitempty"`
+	UnhealthyThreshold uint32         `json:"unhealthyThreshold,omitempty"`
+}
+
+type OutlierDetectionConfig struct {
+	Consecutive5xx     uint32         `json:"consecutive5xx,omitempty"`
+	Interval           *time.Duration `json:"interval,omitempty"`
+	BaseEjectionTime   *time.Duration `json:"baseEjectionTime,omitempty"`
+	MaxEjectionPercent uint32         `json:"maxEjectionPercent,omitempty"`
 }
 
 type CircuitBreakerConfig struct {
