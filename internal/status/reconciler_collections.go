@@ -21,9 +21,12 @@ import (
 )
 
 func (r *Reconciler) reconcileGatewayClasses(ctx context.Context, gatewayClasses []gatewayv1.GatewayClass) error {
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceGatewayClass))
+	defer timer.ObserveDuration()
+
 	resolver := newGatewayClassStatusSupportResolver(r)
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for _, listed := range gatewayClasses {
 		if string(listed.Spec.ControllerName) != r.controllerName {
 			continue
@@ -66,6 +69,12 @@ func (r *Reconciler) reconcileGateways(
 		return err
 	}
 
+	type gatewayStatusJob struct {
+		key  client.ObjectKey
+		seed *gatewayv1.Gateway
+		eval gatewayEvaluation
+	}
+	jobs := make([]gatewayStatusJob, 0, len(gateways))
 	for _, listed := range gateways {
 		key := client.ObjectKeyFromObject(&listed)
 		eval, ok := evals[key]
@@ -73,15 +82,11 @@ func (r *Reconciler) reconcileGateways(
 			continue
 		}
 		if _, needsProbe := refreshCandidateKeys[key]; !needsProbe {
-			if err := r.reconcileGatewayStatusWithSeed(ctx, key, &listed, eval); err != nil {
-				return err
-			}
+			jobs = append(jobs, gatewayStatusJob{key: key, seed: listed.DeepCopy(), eval: eval})
 			continue
 		}
 		if generation, ok := currentGenerations[key]; ok && generation == eval.sourceGeneration {
-			if err := r.reconcileGatewayStatusWithSeed(ctx, key, &listed, eval); err != nil {
-				return err
-			}
+			jobs = append(jobs, gatewayStatusJob{key: key, seed: listed.DeepCopy(), eval: eval})
 			continue
 		}
 
@@ -106,12 +111,21 @@ func (r *Reconciler) reconcileGateways(
 		}
 		evals[key] = refreshedEval
 
-		if err := r.reconcileGatewayStatusWithSeed(ctx, key, &current, refreshedEval); err != nil {
-			return err
-		}
+		jobs = append(jobs, gatewayStatusJob{key: key, seed: current.DeepCopy(), eval: refreshedEval})
 	}
 
-	return nil
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceGateway))
+	defer timer.ObserveDuration()
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(r.statusBatchWorkerLimit())
+	for _, job := range jobs {
+		job := job
+		g.Go(func() error {
+			return r.reconcileGatewayStatusWithSeed(ctx, job.key, job.seed, job.eval)
+		})
+	}
+	return g.Wait()
 }
 
 func gatewayNeedsGenerationProbe(
@@ -387,7 +401,7 @@ func (r *Reconciler) reconcileHTTPRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileHTTPRouteStatus(ctx, key, desiredParents)
@@ -405,7 +419,7 @@ func (r *Reconciler) reconcileGRPCRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileGRPCRouteStatus(ctx, key, desiredParents)
@@ -423,7 +437,7 @@ func (r *Reconciler) reconcileTCPRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileTCPRouteStatus(ctx, key, desiredParents)
@@ -441,7 +455,7 @@ func (r *Reconciler) reconcileUDPRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileUDPRouteStatus(ctx, key, desiredParents)
@@ -459,7 +473,7 @@ func (r *Reconciler) reconcileTLSRoutes(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for key, desiredParents := range evals {
 		g.Go(func() error {
 			return r.reconcileTLSRouteStatus(ctx, key, desiredParents)
@@ -477,7 +491,7 @@ func (r *Reconciler) reconcileBackendTLSPolicies(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
 		g.Go(func() error {
@@ -499,7 +513,7 @@ func (r *Reconciler) reconcileBackendLBPolicies(
 	defer timer.ObserveDuration()
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(3)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for _, listed := range policies {
 		key := client.ObjectKeyFromObject(&listed)
 		g.Go(func() error {

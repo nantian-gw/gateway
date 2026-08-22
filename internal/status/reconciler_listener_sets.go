@@ -3,6 +3,8 @@ package status
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -12,17 +14,22 @@ import (
 )
 
 func (r *Reconciler) reconcileListenerSetStatuses(ctx context.Context, lses []gatewayv1.ListenerSet, evals map[string]listenerSetEvaluation) error {
+	timer := prometheus.NewTimer(statusBatchDurationSeconds.WithLabelValues(statusUpdateResourceListenerSet))
+	defer timer.ObserveDuration()
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(r.statusBatchWorkerLimit())
 	for i := range lses {
 		key := client.ObjectKeyFromObject(&lses[i])
 		eval, ok := evals[lses[i].Namespace+"/"+lses[i].Name]
 		if !ok {
 			continue
 		}
-		if err := r.reconcileListenerSetStatus(ctx, key, eval); err != nil {
-			return err
-		}
+		g.Go(func() error {
+			return r.reconcileListenerSetStatus(ctx, key, eval)
+		})
 	}
-	return nil
+	return g.Wait()
 }
 
 func (r *Reconciler) reconcileListenerSetStatus(
