@@ -17,6 +17,7 @@ type snapshotDetailIndexCache struct {
 
 type snapshotDetailIndex struct {
 	snapshot        *ir.Snapshot
+	listenerList    []ir.Listener
 	visibleBackends []ir.BackendCluster
 	listeners       map[string]ir.Listener
 	backends        map[detailBackendKey]ir.BackendCluster
@@ -76,15 +77,17 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 	}
 
 	visible := visibleBackends(snapshot, false)
+	listeners := displayListeners(snapshot.Listeners)
 	index := &snapshotDetailIndex{
 		snapshot:        snapshot,
+		listenerList:    listeners,
 		visibleBackends: append([]ir.BackendCluster(nil), visible...),
-		listeners:       make(map[string]ir.Listener, len(snapshot.Listeners)),
+		listeners:       make(map[string]ir.Listener, len(listeners)),
 		backends:        make(map[detailBackendKey]ir.BackendCluster, len(visible)),
 		routes:          make(map[detailRouteKey]any, len(snapshot.HTTPRoutes)+len(snapshot.GRPCRoutes)+len(snapshot.StreamRoutes)),
 	}
 
-	for _, listener := range displayListeners(snapshot.Listeners) {
+	for _, listener := range index.listenerList {
 		if listener.Name == "" {
 			continue
 		}
@@ -139,6 +142,13 @@ func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {
 	}
 
 	return index
+}
+
+func (i *snapshotDetailIndex) listenersList() []ir.Listener {
+	if i == nil {
+		return nil
+	}
+	return i.listenerList
 }
 
 func (i *snapshotDetailIndex) visibleBackendList() []ir.BackendCluster {

@@ -14,7 +14,8 @@ func (s *Server) handleListeners(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items, meta, err := filterListeners(displayListeners(snapshot.Listeners), r.URL.Query(), s.maxListItems)
+	index := s.snapshotDetailIndex(snapshot)
+	items, meta, err := filterListeners(index.listenersList(), r.URL.Query(), s.maxListItems)
 	if err != nil {
 		s.respondQueryError(w, err)
 		return
