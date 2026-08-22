@@ -15,12 +15,12 @@ import (
 	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
-	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"

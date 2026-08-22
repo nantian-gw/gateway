@@ -1,6 +1,7 @@
 package xds
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/nantian-gw/gateway/internal/ir"
@@ -287,6 +288,44 @@ func TestDeltaDiff_sortedOutput(t *testing.T) {
 	}
 	if added[0] != "a-cluster" || added[1] != "b-cluster" || added[2] != "c-cluster" {
 		t.Fatalf("expected sorted output [a-cluster, b-cluster, c-cluster], got %v", added)
+	}
+}
+
+func TestDeltaDiffComputesEachResourceVersionOnce(t *testing.T) {
+	type versionedItem struct {
+		name    string
+		version int
+	}
+
+	const itemCount = 100
+	oldItems := make([]versionedItem, itemCount)
+	newItems := make([]versionedItem, itemCount)
+	for i := range itemCount {
+		name := "item-" + strconv.Itoa(i)
+		oldItems[i] = versionedItem{name: name, version: i}
+		newItems[i] = versionedItem{name: name, version: i}
+	}
+	newItems[itemCount/2].version++
+
+	versionCalls := 0
+	added, removed := DeltaDiff(
+		oldItems,
+		newItems,
+		func(item *versionedItem) string { return item.name },
+		func(item *versionedItem) string {
+			versionCalls++
+			return strconv.Itoa(item.version)
+		},
+	)
+
+	if len(removed) != 0 {
+		t.Fatalf("expected no removed resources, got %v", removed)
+	}
+	if len(added) != 1 || added[0] != "item-50" {
+		t.Fatalf("expected only item-50 changed, got %v", added)
+	}
+	if versionCalls != len(oldItems)+len(newItems) {
+		t.Fatalf("version function called %d times, want %d", versionCalls, len(oldItems)+len(newItems))
 	}
 }
 
@@ -657,29 +696,5 @@ func TestDeltaDiff_bothAddedAndRemoved(t *testing.T) {
 	}
 	if added[0] != "default/d" {
 		t.Fatalf("expected added[0]='default/d', got %q", added[0])
-	}
-}
-
-// ---- findByName ----
-
-func TestFindByName_found(t *testing.T) {
-	items := []ir.Listener{
-		makeListener("http", 80),
-		makeListener("https", 443),
-		makeListener("admin", 9090),
-	}
-	result := findByName(items, listenerNameFn, "https/443")
-	if result.Name != "https" || result.Port != 443 {
-		t.Fatalf("expected https/443, got %s/%d", result.Name, result.Port)
-	}
-}
-
-func TestFindByName_notFound(t *testing.T) {
-	items := []ir.Listener{
-		makeListener("http", 80),
-	}
-	result := findByName(items, listenerNameFn, "nonexistent/1234")
-	if result.Name != "" || result.Port != 0 {
-		t.Fatalf("expected zero value, got %s/%d", result.Name, result.Port)
 	}
 }

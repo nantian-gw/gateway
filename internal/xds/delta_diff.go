@@ -1,14 +1,15 @@
 package xds
 
 import (
-"crypto/rand"
-"crypto/sha256"
-"encoding/hex"
-jsoniter "github.com/json-iterator/go"
-"fmt"
-"math/big"
-"sort"
-"strconv"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"math/big"
+	"sort"
+	"strconv"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/nantian-gw/gateway/internal/ir"
 )
@@ -74,47 +75,33 @@ func DeltaDiff[T any](
 	nameFn func(*T) string,
 	oldVersionFn func(*T) string,
 ) (addedChanged, removed []string) {
-	oldMap := make(map[string]bool, len(oldItems))
-	newMap := make(map[string]bool, len(newItems))
-	newVersion := make(map[string]string, len(newItems))
-
-	for i := range newItems {
-		name := nameFn(&newItems[i])
-		newMap[name] = true
-		newVersion[name] = oldVersionFn(&newItems[i])
-	}
+	oldVersions := make(map[string]string, len(oldItems))
+	newVersions := make(map[string]string, len(newItems))
 
 	for i := range oldItems {
 		name := nameFn(&oldItems[i])
-		oldMap[name] = true
-		if !newMap[name] {
+		oldVersions[name] = oldVersionFn(&oldItems[i])
+	}
+	for i := range newItems {
+		name := nameFn(&newItems[i])
+		newVersions[name] = oldVersionFn(&newItems[i])
+	}
+
+	for name := range oldVersions {
+		if _, ok := newVersions[name]; !ok {
 			removed = append(removed, name)
 		}
 	}
 
-	for i := range newItems {
-		name := nameFn(&newItems[i])
-		if !oldMap[name] {
+	for name, newVersion := range newVersions {
+		oldVersion, ok := oldVersions[name]
+		if !ok || oldVersion != newVersion {
 			addedChanged = append(addedChanged, name)
-		} else {
-			oldVersion := ResourceVersion(findByName(oldItems, nameFn, name))
-			if oldVersion != newVersion[name] {
-				addedChanged = append(addedChanged, name)
-			}
 		}
 	}
 
 	sort.Strings(addedChanged)
 	sort.Strings(removed)
-	return
-}
-
-func findByName[T any](items []T, nameFn func(*T) string, target string) (result T) {
-	for i := range items {
-		if nameFn(&items[i]) == target {
-			return items[i]
-		}
-	}
 	return
 }
 

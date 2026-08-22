@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
 
@@ -392,6 +393,47 @@ func TestDeltaServer_AckNonce(t *testing.T) {
 	stream.waitForSendCount(t, before+1)
 	secondResp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
 	require.NotNil(t, secondResp, "expected new response after ACK")
+
+	stream.release()
+	select {
+	case err := <-result:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("stream did not return")
+	}
+}
+
+func TestDeltaServer_PushesSnapshotWhileClientIdle(t *testing.T) {
+	server, store := setupDeltaTestServer(t)
+	stream := newFakeDeltaStream().withInitialRequest(&controlv1.DeltaDiscoveryRequest{
+		NodeId:                 "dp-delta-idle",
+		Cluster:                "default",
+		ResourceNamesSubscribe: []string{typeURLListener},
+	})
+
+	snap := makeTestSnapshot()
+	store.Publish(snap)
+
+	result := make(chan error, 1)
+	go func() { result <- server.DeltaStreamConfiguration(stream) }()
+
+	stream.waitForSendCount(t, 1)
+	before := len(stream.sentResponses())
+
+	store.Publish(makeTestSnapshot(func(s *ir.Snapshot) {
+		s.ID = "snap-client-idle"
+		s.Listeners = []ir.Listener{
+			{Name: "idle-update", Port: 80, Protocol: "HTTP"},
+		}
+	}))
+
+	stream.waitForSendCount(t, before+1)
+	resp := findLastResponseByTypeURL(stream.sentResponses(), typeURLListener)
+	require.NotNil(t, resp)
+	require.Len(t, resp.GetResources(), 1)
+	var listener controlv1.Listener
+	require.NoError(t, proto.Unmarshal(resp.GetResources()[0].GetResource().GetValue(), &listener))
+	require.Equal(t, "idle-update", listener.GetName())
 
 	stream.release()
 	select {

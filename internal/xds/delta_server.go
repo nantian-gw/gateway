@@ -63,6 +63,8 @@ func (s *Server) DeltaStreamConfiguration(stream controlv1.DeltaDiscoveryService
 		ds.lastSnapshot = initial
 	}
 
+	recvCh := recvDeltaRequests(ctx, stream)
+
 	// Main loop: handle client requests and snapshot changes
 	for {
 		select {
@@ -74,19 +76,48 @@ func (s *Server) DeltaStreamConfiguration(stream controlv1.DeltaDiscoveryService
 			}
 			ds.pushDelta(ctx, ds.lastSnapshot, snap)
 			ds.lastSnapshot = snap
-		default:
+		case result, ok := <-recvCh:
+			if !ok {
+				return nil
+			}
+			if errors.Is(result.err, io.EOF) {
+				return nil
+			}
+			if result.err != nil {
+				return fmt.Errorf("delta stream recv: %w", result.err)
+			}
+			if result.req != nil {
+				ds.handleAckNack(result.req)
+			}
 		}
-
-		req, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-		if err != nil {
-			return fmt.Errorf("delta stream recv: %w", err)
-		}
-
-		ds.handleAckNack(req)
 	}
+}
+
+type deltaRequestResult struct {
+	req *controlv1.DeltaDiscoveryRequest
+	err error
+}
+
+func recvDeltaRequests(
+	ctx context.Context,
+	stream controlv1.DeltaDiscoveryService_DeltaStreamConfigurationServer,
+) <-chan deltaRequestResult {
+	out := make(chan deltaRequestResult, 1)
+	go func() {
+		defer close(out)
+		for {
+			req, err := stream.Recv()
+			select {
+			case out <- deltaRequestResult{req: req, err: err}:
+			case <-ctx.Done():
+				return
+			}
+			if err != nil {
+				return
+			}
+		}
+	}()
+	return out
 }
 
 type deltaStream struct {

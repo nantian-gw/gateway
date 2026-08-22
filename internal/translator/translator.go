@@ -21,6 +21,7 @@ import (
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/extfilter"
 	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
 	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
@@ -30,7 +31,6 @@ import (
 	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
-	"github.com/nantian-gw/gateway/internal/constants"
 	gwtls "github.com/nantian-gw/gateway/internal/tls"
 	aiservicetranslator "github.com/nantian-gw/gateway/internal/translator/aiservice"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
@@ -52,6 +52,7 @@ type Translator struct {
 const (
 	listenerAddressesMetadataKey        = "nantian.dev/listener-addresses"
 	listenerDisplayAddressesMetadataKey = "nantian.dev/display-addresses"
+	routeWorkConcurrencyLimit           = 32
 )
 
 func New(controllerName string, logger *slog.Logger) *Translator {
@@ -232,6 +233,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 
 	// Translate all routes in parallel — each route's translation is independent.
 	transGroup, groupCtx := errgroup.WithContext(ctx)
+	transGroup.SetLimit(routeWorkConcurrencyLimit)
 	snapshot.HTTPRoutes = make([]ir.HTTPRoute, len(httpRoutes.Items))
 	for i := range httpRoutes.Items {
 		transGroup.Go(func() error {
@@ -477,6 +479,7 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 	)
 
 	annotGroup, groupCtx := errgroup.WithContext(ctx)
+	annotGroup.SetLimit(routeWorkConcurrencyLimit)
 	for idx := range httpRoutes.Items {
 		annotGroup.Go(func() error {
 			backendRefs.AnnotateHTTPRoute(&snapshot.HTTPRoutes[idx], httpRoutes.Items[idx])
@@ -559,13 +562,13 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 		}
 	}
 	wasmPluginConfigs := policies.TranslateWasmPlugins(
-        wasmPlugins,
-        mergedConfigMaps,
-        policies.ServiceKeySet(filteredServices),
-        policies.ServiceImportKeySet(serviceImports),
-        routeBackends,
-        t.logger,
-    )
+		wasmPlugins,
+		mergedConfigMaps,
+		policies.ServiceKeySet(filteredServices),
+		policies.ServiceImportKeySet(serviceImports),
+		routeBackends,
+		t.logger,
+	)
 	for i := range snapshot.Backends {
 		key := shared.BackendObjectKey(snapshot.Backends[i].Namespace, snapshot.Backends[i].Name)
 		if cfg, ok := wasmPluginConfigs[key]; ok {

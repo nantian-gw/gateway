@@ -87,11 +87,8 @@ func (s *Server) handleGateways(w http.ResponseWriter, r *http.Request) {
 }
 
 func buildGatewayDetails(snapshot *ir.Snapshot, include includeFlags) []gatewayDetail {
-	// Build reverse index: gateway identity -> routes
-
 	gatewayMap := make(map[gatewayIdentity]*gatewayRoutes)
 
-	// Collect all gateway identities from route parentRefs
 	collectRoute := func(gw gatewayIdentity) *gatewayRoutes {
 		if _, ok := gatewayMap[gw]; !ok {
 			gatewayMap[gw] = &gatewayRoutes{}
@@ -132,11 +129,16 @@ func buildGatewayDetails(snapshot *ir.Snapshot, include includeFlags) []gatewayD
 		}
 	}
 
-	// Build listener-to-gateway mapping: a listener belongs to a gateway if its
-	// AttachedRoutes reference routes that belong to that gateway.
-	listenerGatewayMap := buildListenerGatewayMap(snapshot, gatewayMap)
+	var listenerGatewayMap map[gatewayIdentity][]ir.Listener
+	if include.listeners || include.summary {
+		listenerGatewayMap = buildListenerGatewayMap(snapshot, gatewayMap)
+	}
 
-	// Build result
+	var backendIndex gatewayBackendIndex
+	if include.backends {
+		backendIndex = newGatewayBackendIndex(snapshot.Backends)
+	}
+
 	out := make([]gatewayDetail, 0, len(gatewayMap))
 	for gw, routes := range gatewayMap {
 		detail := gatewayDetail{
@@ -156,8 +158,13 @@ func buildGatewayDetails(snapshot *ir.Snapshot, include includeFlags) []gatewayD
 			detail.Routes = &routesResp
 		}
 
+		var backendKeys map[string]struct{}
+		if include.backends || include.summary {
+			backendKeys = collectGatewayBackendKeys(routes)
+		}
+
 		if include.backends {
-			detail.Backends = collectGatewayBackends(snapshot, routes)
+			detail.Backends = collectGatewayBackends(backendIndex, backendKeys)
 		}
 
 		if include.summary {
@@ -167,7 +174,7 @@ func buildGatewayDetails(snapshot *ir.Snapshot, include includeFlags) []gatewayD
 				GRPCCount:     len(routes.grpc),
 				StreamCount:   len(routes.stream),
 				ListenerCount: len(listenerGatewayMap[gw]),
-				BackendCount:  len(collectGatewayBackendKeys(snapshot, routes)),
+				BackendCount:  len(backendKeys),
 			}
 			detail.Summary = summary
 		}
@@ -186,32 +193,32 @@ func buildGatewayDetails(snapshot *ir.Snapshot, include includeFlags) []gatewayD
 }
 
 func buildListenerGatewayMap(snapshot *ir.Snapshot, gatewayMap map[gatewayIdentity]*gatewayRoutes) map[gatewayIdentity][]ir.Listener {
-	// Build a set of route keys (namespace/name) per gateway
-	gwRouteKeys := make(map[gatewayIdentity]map[string]struct{})
+	routeGateways := make(map[string][]gatewayIdentity)
 	for gw, routes := range gatewayMap {
-		keys := make(map[string]struct{})
 		for _, r := range routes.http {
-			keys[r.Namespace+"/"+r.Name] = struct{}{}
+			routeGateways[r.Namespace+"/"+r.Name] = append(routeGateways[r.Namespace+"/"+r.Name], gw)
 		}
 		for _, r := range routes.grpc {
-			keys[r.Namespace+"/"+r.Name] = struct{}{}
+			routeGateways[r.Namespace+"/"+r.Name] = append(routeGateways[r.Namespace+"/"+r.Name], gw)
 		}
 		for _, r := range routes.stream {
-			keys[r.Namespace+"/"+r.Name] = struct{}{}
+			routeGateways[r.Namespace+"/"+r.Name] = append(routeGateways[r.Namespace+"/"+r.Name], gw)
 		}
-		gwRouteKeys[gw] = keys
 	}
 
-	// Map listeners to gateways by checking if their attached routes belong to that gateway
 	listenerMap := make(map[gatewayIdentity][]ir.Listener)
 	for _, listener := range displayListeners(snapshot.Listeners) {
-		// Find which gateway this listener belongs to
+		var seen map[gatewayIdentity]struct{}
 		for _, attached := range listener.AttachedRoutes {
-			for gw, routeKeys := range gwRouteKeys {
-				if _, ok := routeKeys[attached]; ok {
-					listenerMap[gw] = append(listenerMap[gw], listener)
-					break
+			for _, gw := range routeGateways[attached] {
+				if seen == nil {
+					seen = make(map[gatewayIdentity]struct{})
 				}
+				if _, ok := seen[gw]; ok {
+					continue
+				}
+				seen[gw] = struct{}{}
+				listenerMap[gw] = append(listenerMap[gw], listener)
 			}
 		}
 	}
@@ -219,22 +226,49 @@ func buildListenerGatewayMap(snapshot *ir.Snapshot, gatewayMap map[gatewayIdenti
 	return listenerMap
 }
 
-func collectGatewayBackends(snapshot *ir.Snapshot, routes *gatewayRoutes) []ir.BackendCluster {
-	keys := collectGatewayBackendKeys(snapshot, routes)
+type gatewayBackendIndex struct {
+	byKey map[string]ir.BackendCluster
+	order map[string]int
+}
+
+func newGatewayBackendIndex(backends []ir.BackendCluster) gatewayBackendIndex {
+	index := gatewayBackendIndex{
+		byKey: make(map[string]ir.BackendCluster, len(backends)),
+		order: make(map[string]int, len(backends)),
+	}
+	for i, backend := range backends {
+		key := backendKey(backend)
+		index.byKey[key] = backend
+		if _, ok := index.order[key]; !ok {
+			index.order[key] = i
+		}
+	}
+	return index
+}
+
+func collectGatewayBackends(index gatewayBackendIndex, keys map[string]struct{}) []ir.BackendCluster {
 	if len(keys) == 0 {
 		return nil
 	}
 
-	out := make([]ir.BackendCluster, 0, len(keys))
-	for _, backend := range snapshot.Backends {
-		if _, ok := keys[backendKey(backend)]; ok {
-			out = append(out, backend)
+	orderedKeys := make([]string, 0, len(keys))
+	for key := range keys {
+		if _, ok := index.byKey[key]; ok {
+			orderedKeys = append(orderedKeys, key)
 		}
+	}
+	sort.Slice(orderedKeys, func(i, j int) bool {
+		return index.order[orderedKeys[i]] < index.order[orderedKeys[j]]
+	})
+
+	out := make([]ir.BackendCluster, 0, len(keys))
+	for _, key := range orderedKeys {
+		out = append(out, index.byKey[key])
 	}
 	return out
 }
 
-func collectGatewayBackendKeys(snapshot *ir.Snapshot, routes *gatewayRoutes) map[string]struct{} {
+func collectGatewayBackendKeys(routes *gatewayRoutes) map[string]struct{} {
 	keys := make(map[string]struct{})
 
 	for _, route := range routes.http {

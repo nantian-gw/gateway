@@ -5,8 +5,6 @@ import (
 	"log/slog"
 	"sync"
 
-	"google.golang.org/protobuf/proto"
-
 	"golang.org/x/sync/singleflight"
 
 	controlv1 "github.com/nantian-gw/proto/gateway/control/v1"
@@ -22,9 +20,6 @@ type snapshotProtoCache struct {
 	// Cached snapshots are treated as immutable after construction. Stream
 	// handlers only hand them to gRPC for serialization and never mutate them.
 	snapshots map[string]*controlv1.ConfigSnapshot
-	// wireBytes caches proto-marshaled bytes for the same key, avoiding
-	// re-serialization on every push to every connected data plane.
-	wireBytes map[string][]byte
 	// group deduplicates concurrent builds of the same (version, profile) so a
 	// slow projection cannot serialize unrelated profiles or block cache hits.
 	group singleflight.Group
@@ -80,32 +75,12 @@ func (c *snapshotProtoCache) get(ctx context.Context, snapshot *ir.Snapshot, pro
 			c.snapshots = make(map[string]*controlv1.ConfigSnapshot, 32)
 		}
 		c.snapshots[profile.projectionKey] = built
-		// Pre-marshal for wire format cache
-		if b, err := proto.Marshal(built); err == nil {
-			if c.wireBytes == nil {
-				c.wireBytes = make(map[string][]byte, 32)
-			}
-			c.wireBytes[profile.projectionKey] = b
-		}
 		c.mu.Unlock()
 
 		return built, nil
 	})
 
 	return result.(*controlv1.ConfigSnapshot)
-}
-
-// getWire returns the cached proto-serialized wire bytes, or nil if not cached.
-func (c *snapshotProtoCache) getWire(snapshot *ir.Snapshot, profile projectionProfile) []byte {
-	if snapshot == nil {
-		return nil
-	}
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	if c.version != snapshot.ID || c.wireBytes == nil {
-		return nil
-	}
-	return c.wireBytes[profile.projectionKey]
 }
 
 func (c *snapshotProtoCache) lookup(version, projectionKey string) *controlv1.ConfigSnapshot {
