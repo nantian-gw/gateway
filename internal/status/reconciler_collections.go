@@ -120,7 +120,6 @@ func (r *Reconciler) reconcileGateways(
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(r.statusBatchWorkerLimit())
 	for _, job := range jobs {
-		job := job
 		g.Go(func() error {
 			return r.reconcileGatewayStatusWithSeed(ctx, job.key, job.seed, job.eval)
 		})
