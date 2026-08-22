@@ -26,8 +26,10 @@ type Metrics struct {
 	PublishedTotal                        prometheus.Counter
 	LastBuildSuccess                      prometheus.Gauge
 	SnapshotBuildDurationSeconds          prometheus.Histogram
+	SnapshotSizeBytes                     prometheus.Histogram
 	SnapshotResourceCount                 *prometheus.HistogramVec
 	SnapshotListenerAttachedRoutes        prometheus.Histogram
+	AdminDetailIndexBuildDurationSeconds  prometheus.Histogram
 	AdminAPIRequestsTotal                 *prometheus.CounterVec
 	AdminAPIRequestDurationSeconds        *prometheus.HistogramVec
 	XDSActiveStreams                      prometheus.Gauge
@@ -98,6 +100,11 @@ func NewMetrics() *Metrics {
 			Help:    "Duration of controlplane snapshot build attempts, including failed builds.",
 			Buckets: prometheus.DefBuckets,
 		}),
+		SnapshotSizeBytes: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name:    "nantian_gw_controlplane_snapshot_size_bytes",
+			Help:    "Approximate JSON serialized size of successfully built controlplane snapshots in bytes.",
+			Buckets: prometheus.ExponentialBuckets(1024, 2, 18),
+		}),
 		SnapshotResourceCount: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "nantian_gateway_snapshot_resource_count",
@@ -110,6 +117,11 @@ func NewMetrics() *Metrics {
 			Name:    "nantian_gateway_snapshot_listener_attached_routes",
 			Help:    "Observed attached route fanout per listener across successfully built snapshots.",
 			Buckets: prometheus.ExponentialBuckets(1, 2, 12),
+		}),
+		AdminDetailIndexBuildDurationSeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name:    "nantian_gw_controlplane_admin_detail_index_build_duration_seconds",
+			Help:    "Duration of rebuilding the admin snapshot detail lookup index after a snapshot change.",
+			Buckets: prometheus.DefBuckets,
 		}),
 		AdminAPIRequestsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
@@ -306,8 +318,10 @@ func NewMetrics() *Metrics {
 		m.PublishedTotal,
 		m.LastBuildSuccess,
 		m.SnapshotBuildDurationSeconds,
+		m.SnapshotSizeBytes,
 		m.SnapshotResourceCount,
 		m.SnapshotListenerAttachedRoutes,
+		m.AdminDetailIndexBuildDurationSeconds,
 		m.AdminAPIRequestsTotal,
 		m.AdminAPIRequestDurationSeconds,
 		m.SnapshotCoalescedTotal,

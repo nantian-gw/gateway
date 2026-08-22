@@ -292,3 +292,90 @@ func TestGatewaysEndpoint_omitsFields_whenNoInclude(t *testing.T) {
 		}
 	}
 }
+
+func TestParseIncludeFlagsUsesExactTokensAndAll(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		raw  string
+		want includeFlags
+	}{
+		{
+			name: "comma separated tokens",
+			raw:  " routes, LISTENERS ,backends,summary ",
+			want: includeFlags{routes: true, listeners: true, backends: true, summary: true},
+		},
+		{
+			name: "all token",
+			raw:  "all",
+			want: includeFlags{routes: true, listeners: true, backends: true, summary: true},
+		},
+		{
+			name: "substring false positives ignored",
+			raw:  "notroutes,listener,backend-summary",
+			want: includeFlags{},
+		},
+		{
+			name: "unknown tokens ignored",
+			raw:  "routes,unknown",
+			want: includeFlags{routes: true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := parseIncludeFlags(tt.raw); got != tt.want {
+				t.Fatalf("parseIncludeFlags(%q) = %+v, want %+v", tt.raw, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBuildGatewayDetailsSortsByNamespaceAndName(t *testing.T) {
+	t.Parallel()
+
+	got := buildGatewayDetails(&ir.Snapshot{
+		HTTPRoutes: []ir.HTTPRoute{
+			{
+				Name:      "route-b",
+				Namespace: "z-ns",
+				ParentRefs: []ir.ParentRef{{
+					Namespace: "z-ns",
+					Name:      "b",
+				}},
+			},
+			{
+				Name:      "route-a",
+				Namespace: "a-ns",
+				ParentRefs: []ir.ParentRef{{
+					Namespace: "a-ns",
+					Name:      "z",
+				}},
+			},
+			{
+				Name:      "route-c",
+				Namespace: "a-ns",
+				ParentRefs: []ir.ParentRef{{
+					Namespace: "a-ns",
+					Name:      "a",
+				}},
+			},
+		},
+	}, includeFlags{})
+
+	want := []gatewayIdentity{
+		{namespace: "a-ns", name: "a"},
+		{namespace: "a-ns", name: "z"},
+		{namespace: "z-ns", name: "b"},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("gateway count = %d, want %d", len(got), len(want))
+	}
+	for i, gw := range got {
+		if gw.Namespace != want[i].namespace || gw.Name != want[i].name {
+			t.Fatalf("gateway[%d] = %s/%s, want %s/%s", i, gw.Namespace, gw.Name, want[i].namespace, want[i].name)
+		}
+	}
+}

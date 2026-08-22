@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"sync"
 	"time"
@@ -311,6 +312,12 @@ func (s *Syncer) observeSnapshotBuildShape(snapshot *ir.Snapshot) {
 	if s.metrics.SnapshotListenerAttachedRoutes != nil {
 		for _, listener := range snapshot.Listeners {
 			s.metrics.SnapshotListenerAttachedRoutes.Observe(float64(len(listener.AttachedRoutes)))
+		}
+	}
+	if s.metrics.SnapshotSizeBytes != nil {
+		raw, err := json.Marshal(snapshot)
+		if err == nil {
+			s.metrics.SnapshotSizeBytes.Observe(float64(len(raw)))
 		}
 	}
 }

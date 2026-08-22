@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/observability"
 )
 
 func TestSnapshotDetailIndexCacheReusesSnapshotAndRefreshesOnPublish(t *testing.T) {
@@ -148,5 +149,38 @@ func TestSnapshotDetailIndexVisibleBackendsRefreshWithSnapshot(t *testing.T) {
 	}
 	if _, ok := refreshed.backend("ops", "metrics:9090"); !ok {
 		t.Fatal("expected refreshed visible backend lookup to include ops/metrics:9090")
+	}
+}
+
+func TestSnapshotDetailIndexRecordsBuildDurationOnlyOnCacheMiss(t *testing.T) {
+	t.Parallel()
+
+	metrics := observability.NewMetrics()
+	server := newTestServerWithOptions(t, Options{Metrics: metrics})
+	snapshot := server.store.Current()
+
+	if first := server.snapshotDetailIndex(snapshot); first == nil {
+		t.Fatal("expected initial snapshot detail index")
+	}
+	if second := server.snapshotDetailIndex(snapshot); second == nil {
+		t.Fatal("expected cached snapshot detail index")
+	}
+	if got := histogramSampleCount(t, metrics.AdminDetailIndexBuildDurationSeconds); got != 1 {
+		t.Fatalf("detail index build duration sample count = %d, want 1 after cached reuse", got)
+	}
+
+	server.store.Publish(&ir.Snapshot{
+		ID:          "v-detail-index-metrics",
+		GeneratedAt: time.Now().UTC(),
+		Listeners: []ir.Listener{{
+			Name:     "metrics",
+			Protocol: "HTTP",
+		}},
+	})
+	if refreshed := server.snapshotDetailIndex(server.store.Current()); refreshed == nil {
+		t.Fatal("expected refreshed snapshot detail index")
+	}
+	if got := histogramSampleCount(t, metrics.AdminDetailIndexBuildDurationSeconds); got != 2 {
+		t.Fatalf("detail index build duration sample count = %d, want 2 after snapshot refresh", got)
 	}
 }

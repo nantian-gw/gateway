@@ -2,14 +2,17 @@ package admin
 
 import (
 	"sync"
+	"time"
 
-	"github.com/nantian-gw/gateway/internal/ir"
 	"github.com/nantian-gw/gateway/internal/constants"
+	"github.com/nantian-gw/gateway/internal/ir"
+	"github.com/nantian-gw/gateway/internal/observability"
 )
 
 type snapshotDetailIndexCache struct {
 	mu      sync.RWMutex
 	current *snapshotDetailIndex
+	metrics *observability.Metrics
 }
 
 type snapshotDetailIndex struct {
@@ -31,8 +34,8 @@ type detailRouteKey struct {
 	name      string
 }
 
-func newSnapshotDetailIndexCache() *snapshotDetailIndexCache {
-	return &snapshotDetailIndexCache{}
+func newSnapshotDetailIndexCache(metrics *observability.Metrics) *snapshotDetailIndexCache {
+	return &snapshotDetailIndexCache{metrics: metrics}
 }
 
 func (c *snapshotDetailIndexCache) get(snapshot *ir.Snapshot) *snapshotDetailIndex {
@@ -47,7 +50,9 @@ func (c *snapshotDetailIndexCache) get(snapshot *ir.Snapshot) *snapshotDetailInd
 		return current
 	}
 
+	startedAt := time.Now()
 	built := buildSnapshotDetailIndex(snapshot)
+	c.observeBuildDuration(time.Since(startedAt))
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -56,6 +61,13 @@ func (c *snapshotDetailIndexCache) get(snapshot *ir.Snapshot) *snapshotDetailInd
 	}
 	c.current = built
 	return built
+}
+
+func (c *snapshotDetailIndexCache) observeBuildDuration(duration time.Duration) {
+	if c == nil || c.metrics == nil || c.metrics.AdminDetailIndexBuildDurationSeconds == nil {
+		return
+	}
+	c.metrics.AdminDetailIndexBuildDurationSeconds.Observe(duration.Seconds())
 }
 
 func buildSnapshotDetailIndex(snapshot *ir.Snapshot) *snapshotDetailIndex {

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/nantian-gw/gateway/internal/ir"
@@ -13,21 +14,21 @@ type gatewayIdentity struct {
 }
 
 type gatewayDetail struct {
-	Name      string             `json:"name"`
-	Namespace string             `json:"namespace"`
-	Routes    *routeListResponse `json:"routes,omitempty"`
-	Listeners []ir.Listener      `json:"listeners,omitempty"`
+	Name      string              `json:"name"`
+	Namespace string              `json:"namespace"`
+	Routes    *routeListResponse  `json:"routes,omitempty"`
+	Listeners []ir.Listener       `json:"listeners,omitempty"`
 	Backends  []ir.BackendCluster `json:"backends,omitempty"`
-	Summary   *gatewaySummary    `json:"summary,omitempty"`
+	Summary   *gatewaySummary     `json:"summary,omitempty"`
 }
 
 type gatewaySummary struct {
-	RouteCount   int `json:"routeCount"`
-	HTTPCount    int `json:"httpCount"`
-	GRPCCount    int `json:"grpcCount"`
-	StreamCount  int `json:"streamCount"`
+	RouteCount    int `json:"routeCount"`
+	HTTPCount     int `json:"httpCount"`
+	GRPCCount     int `json:"grpcCount"`
+	StreamCount   int `json:"streamCount"`
 	ListenerCount int `json:"listenerCount"`
-	BackendCount int `json:"backendCount"`
+	BackendCount  int `json:"backendCount"`
 }
 
 type gatewayRoutes struct {
@@ -44,12 +45,29 @@ type includeFlags struct {
 }
 
 func parseIncludeFlags(raw string) includeFlags {
-	return includeFlags{
-		routes:    strings.Contains(raw, "routes"),
-		listeners: strings.Contains(raw, "listeners"),
-		backends:  strings.Contains(raw, "backends"),
-		summary:   strings.Contains(raw, "summary"),
+	var flags includeFlags
+	for _, token := range strings.Split(raw, ",") {
+		switch strings.ToLower(strings.TrimSpace(token)) {
+		case "":
+			continue
+		case "all":
+			return includeFlags{
+				routes:    true,
+				listeners: true,
+				backends:  true,
+				summary:   true,
+			}
+		case "routes":
+			flags.routes = true
+		case "listeners":
+			flags.listeners = true
+		case "backends":
+			flags.backends = true
+		case "summary":
+			flags.summary = true
+		}
 	}
+	return flags
 }
 
 func (s *Server) handleGateways(w http.ResponseWriter, r *http.Request) {
@@ -156,6 +174,13 @@ func buildGatewayDetails(snapshot *ir.Snapshot, include includeFlags) []gatewayD
 
 		out = append(out, detail)
 	}
+
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Namespace != out[j].Namespace {
+			return out[i].Namespace < out[j].Namespace
+		}
+		return out[i].Name < out[j].Name
+	})
 
 	return out
 }
