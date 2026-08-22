@@ -27,6 +27,20 @@ func TestSnapshotDetailIndexCacheReusesSnapshotAndRefreshesOnPublish(t *testing.
 	if !ok || listener.Name != "web" || listener.Address != "192.0.2.10" {
 		t.Fatalf("unexpected indexed listener: %+v ok=%v", listener, ok)
 	}
+	listenerList := first.listenersList()
+	if len(listenerList) != 2 {
+		t.Fatalf("indexed listener list length = %d, want 2", len(listenerList))
+	}
+	var listedWeb ir.Listener
+	for _, item := range listenerList {
+		if item.Name == "web" {
+			listedWeb = item
+			break
+		}
+	}
+	if listedWeb.Name == "" || listedWeb.Address != "192.0.2.10" {
+		t.Fatalf("unexpected indexed listener list %v: %+v", listenerNames(listenerList), listenerList)
+	}
 
 	backend, ok := first.backend("default", "api:80")
 	if !ok || backend.Name != "api:80" || backend.Namespace != "default" {
@@ -76,6 +90,9 @@ func TestSnapshotDetailIndexCacheReusesSnapshotAndRefreshesOnPublish(t *testing.
 	}
 	if listener, ok := refreshed.listener("edge"); !ok || listener.Name != "edge" {
 		t.Fatalf("unexpected refreshed listener lookup: %+v ok=%v", listener, ok)
+	}
+	if got := refreshed.listenersList(); len(got) != 1 || got[0].Name != "edge" {
+		t.Fatalf("unexpected refreshed listener list: %+v", got)
 	}
 }
 
