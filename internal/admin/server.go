@@ -105,7 +105,7 @@ func NewServer(
 		maxResponseBodyBytes:  positiveOrDefault(opts.MaxResponseBodyBytes, defaultMaxResponseBodyBytes),
 		maxListItems:          opts.MaxListItems,
 		now:                   func() time.Time { return time.Now().UTC() },
-		detailIndex:           newSnapshotDetailIndexCache(),
+		detailIndex:           newSnapshotDetailIndexCache(opts.Metrics),
 		authOpts:              opts,
 	}
 

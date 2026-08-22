@@ -562,6 +562,21 @@ func histogramVecSampleCount(t *testing.T, vec *prometheus.HistogramVec, labelVa
 	return dtoMetric.GetHistogram().GetSampleCount()
 }
 
+func histogramSampleCount(t *testing.T, histogram prometheus.Histogram) uint64 {
+	t.Helper()
+
+	metric, ok := histogram.(prometheus.Metric)
+	if !ok {
+		t.Fatal("histogram does not implement prometheus.Metric")
+	}
+
+	dtoMetric := &dto.Metric{}
+	if err := metric.Write(dtoMetric); err != nil {
+		t.Fatalf("write histogram metric: %v", err)
+	}
+	return dtoMetric.GetHistogram().GetSampleCount()
+}
+
 func ptr[T any](value T) *T {
 	return &value
 }

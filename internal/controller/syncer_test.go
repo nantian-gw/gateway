@@ -166,6 +166,8 @@ func TestReconcilePublishesSnapshotFromGatewayInputs(t *testing.T) {
 	assert.Equal(t, float64(1), snapshotHistogramVecSampleSum(t, metrics.SnapshotResourceCount, "backends"), "snapshot resource count sum for backends")
 	assert.Equal(t, uint64(1), snapshotHistogramSampleCount(t, metrics.SnapshotListenerAttachedRoutes), "snapshot listener attached routes sample count")
 	assert.Equal(t, float64(1), snapshotHistogramSampleSum(t, metrics.SnapshotListenerAttachedRoutes), "snapshot listener attached routes sample sum")
+	assert.Equal(t, uint64(1), snapshotHistogramSampleCount(t, metrics.SnapshotSizeBytes), "snapshot size sample count")
+	assert.Positive(t, snapshotHistogramSampleSum(t, metrics.SnapshotSizeBytes), "snapshot size sample sum")
 }
 
 func TestReconcileAllowsNilMetrics(t *testing.T) {
@@ -395,10 +397,10 @@ func TestReconcileIgnoresManagedFrontendResourceChanges(t *testing.T) {
 					Name:      "nantian-gw-shared-ep-nantian-dataplane-ipv4",
 					Namespace: "nantian-gw",
 					Labels: map[string]string{
-						resources.ManagedByLabel:               resources.ManagedByValue,
-						resources.ServiceRoleKey:               resources.EndpointSliceRoleSharedFrontend,
-						discoveryv1.LabelManagedBy:             resources.ManagedByValue,
-						discoveryv1.LabelServiceName:           "nantian-dataplane",
+						resources.ManagedByLabel:     resources.ManagedByValue,
+						resources.ServiceRoleKey:     resources.EndpointSliceRoleSharedFrontend,
+						discoveryv1.LabelManagedBy:   resources.ManagedByValue,
+						discoveryv1.LabelServiceName: "nantian-dataplane",
 					},
 				},
 				AddressType: discoveryv1.AddressTypeIPv4,
@@ -1096,6 +1098,9 @@ func testMetrics() *observability.Metrics {
 		}),
 		SnapshotBuildDurationSeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Name: "test_snapshot_build_duration_seconds", Help: "test",
+		}),
+		SnapshotSizeBytes: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name: "test_snapshot_size_bytes", Help: "test",
 		}),
 		SnapshotResourceCount: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{

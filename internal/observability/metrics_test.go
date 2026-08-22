@@ -137,6 +137,8 @@ func TestHandlerExposesSnapshotObservabilityMetrics(t *testing.T) {
 	metrics.SnapshotPublishTotal.WithLabelValues("dedup").Inc()
 	metrics.SnapshotVersionSkippedTotal.Inc()
 	metrics.SnapshotDivergenceTotal.Inc()
+	metrics.SnapshotSizeBytes.Observe(2048)
+	metrics.AdminDetailIndexBuildDurationSeconds.Observe(0.01)
 
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/metrics", http.NoBody)
@@ -153,6 +155,8 @@ func TestHandlerExposesSnapshotObservabilityMetrics(t *testing.T) {
 		"\nnantian_gw_controlplane_snapshot_publish_total{result=\"published\"} 1",
 		"\nnantian_gw_controlplane_snapshot_version_skipped_total 1",
 		"\nnantian_gw_controlplane_snapshot_divergence_total 1",
+		"\nnantian_gw_controlplane_snapshot_size_bytes_count 1",
+		"\nnantian_gw_controlplane_admin_detail_index_build_duration_seconds_count 1",
 	} {
 		if !strings.Contains(body, sample) {
 			t.Fatalf("expected metric sample %q in response body", sample)
