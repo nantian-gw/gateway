@@ -2,6 +2,8 @@ package status
 
 import "time"
 
+const defaultMaxConcurrentReconciles = 5
+
 type Options struct {
 	EnableExperimentalGateway bool
 	EnableAiGateway           bool
@@ -15,7 +17,7 @@ type Options struct {
 func defaultOptions() Options {
 	return Options{
 		EnableExperimentalGateway: true,
-		MaxConcurrentReconciles:   5,
+		MaxConcurrentReconciles:   defaultMaxConcurrentReconciles,
 		RateLimiterBaseDelay:      200 * time.Millisecond,
 		RateLimiterMaxDelay:       30 * time.Second,
 		RateLimiterQPS:            10,
@@ -28,4 +30,11 @@ func normalizeOptions(options []Options) Options {
 		return defaultOptions()
 	}
 	return options[0]
+}
+
+func (r *Reconciler) statusBatchWorkerLimit() int {
+	if r == nil || r.options.MaxConcurrentReconciles <= 0 {
+		return defaultMaxConcurrentReconciles
+	}
+	return r.options.MaxConcurrentReconciles
 }

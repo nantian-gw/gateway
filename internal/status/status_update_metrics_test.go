@@ -86,4 +86,7 @@ func resetStatusUpdateMetricsForTest() {
 	statusUpdateConflictsTotal.Reset()
 	statusUpdateRetriesTotal.Reset()
 	statusUpdateErrorsTotal.Reset()
+	statusUpdatesWrittenTotal.Reset()
+	statusUpdatesSkippedTotal.Reset()
+	statusBatchDurationSeconds.Reset()
 }

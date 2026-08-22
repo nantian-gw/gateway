@@ -124,7 +124,7 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 func statusControllerOptions(opts Options) controller.Options {
 	maxConcurrent := opts.MaxConcurrentReconciles
 	if maxConcurrent <= 0 {
-		maxConcurrent = 5
+		maxConcurrent = defaultMaxConcurrentReconciles
 	}
 	baseDelay := opts.RateLimiterBaseDelay
 	if baseDelay <= 0 {
