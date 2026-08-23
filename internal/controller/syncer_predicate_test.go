@@ -23,8 +23,8 @@ func TestSnapshotInputMutationPredicateSkipsStatusOnlyHTTPRouteUpdates(t *testin
 		ControllerName: "gateway.networking.k8s.io/nantian-gw",
 	}}
 
-	if !predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
-		t.Fatal("expected status-only HTTPRoute update to trigger rebuild")
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
+		t.Fatal("expected status-only HTTPRoute update to be ignored")
 	}
 }
 
@@ -43,7 +43,7 @@ func TestSnapshotInputMutationPredicateAllowsHTTPRouteAnnotationUpdates(t *testi
 	}
 
 	if !predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
-		t.Fatal("expected annotation-only HTTPRoute update to trigger rebuild")
+		t.Fatal("expected relevant annotation-only HTTPRoute update to trigger rebuild")
 	}
 }
 
@@ -61,8 +61,8 @@ func TestSnapshotInputMutationPredicateSkipsIrrelevantHTTPRouteAnnotationUpdates
 		"example.com/trace": "enabled",
 	}
 
-	if !predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
-		t.Fatal("expected annotation-only HTTPRoute update to trigger rebuild")
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldRoute, ObjectNew: newRoute}) {
+		t.Fatal("expected irrelevant annotation-only HTTPRoute update to be ignored")
 	}
 }
 
@@ -135,8 +135,28 @@ func TestSnapshotInputMutationPredicateSkipsIrrelevantGatewayAnnotationUpdates(t
 		"example.com/trace": "enabled",
 	}
 
-	if !predicate.Update(event.UpdateEvent{ObjectOld: oldGateway, ObjectNew: newGateway}) {
-		t.Fatal("expected Gateway annotation-only update to trigger rebuild")
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldGateway, ObjectNew: newGateway}) {
+		t.Fatal("expected irrelevant Gateway annotation-only update to be ignored")
+	}
+}
+
+func TestSnapshotInputMutationPredicateAllowsLifecycleEvents(t *testing.T) {
+	predicate := snapshotInputMutationPredicate()
+	route := &gatewayv1.HTTPRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "route",
+			Namespace: "default",
+		},
+	}
+
+	if !predicate.Create(event.CreateEvent{Object: route}) {
+		t.Fatal("expected create event to trigger rebuild")
+	}
+	if !predicate.Delete(event.DeleteEvent{Object: route}) {
+		t.Fatal("expected delete event to trigger rebuild")
+	}
+	if !predicate.Generic(event.GenericEvent{Object: route}) {
+		t.Fatal("expected generic event to trigger rebuild")
 	}
 }
 
