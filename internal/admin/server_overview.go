@@ -17,6 +17,8 @@ type SnapshotHealth struct {
 }
 
 func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+
 	token := extractBearerToken(r)
 	if token == "" {
 		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "no token"})
@@ -31,6 +33,7 @@ func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
 
 	s.respondJSON(w, map[string]any{
 		"authenticated": true,
+		"readOnly":      identity.ReadOnly,
 		"subject":       identity.Subject,
 	})
 }

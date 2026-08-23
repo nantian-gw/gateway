@@ -10,6 +10,7 @@ import (
 
 type authVerifyTestResponse struct {
 	Authenticated bool   `json:"authenticated"`
+	ReadOnly      bool   `json:"readOnly"`
 	Reason        string `json:"reason"`
 	Subject       string `json:"subject"`
 }
@@ -116,6 +117,12 @@ func TestAuthVerifyAcceptsStaticFullToken(t *testing.T) {
 	if !got.Authenticated || got.Subject != "static-token" {
 		t.Fatalf("unexpected auth verify response: %+v", got)
 	}
+	if got.ReadOnly {
+		t.Fatalf("static full token should not be read-only: %+v", got)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
 }
 
 func TestAuthVerifyAcceptsStaticReadOnlyToken(t *testing.T) {
@@ -138,6 +145,12 @@ func TestAuthVerifyAcceptsStaticReadOnlyToken(t *testing.T) {
 	}
 	if !got.Authenticated || got.Subject != "static-read-only-token" {
 		t.Fatalf("unexpected auth verify response: %+v", got)
+	}
+	if !got.ReadOnly {
+		t.Fatalf("static read-only token should report readOnly: %+v", got)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
 	}
 }
 
@@ -164,6 +177,12 @@ func TestAuthVerifyAcceptsMiddlewareAuthenticatedIdentity(t *testing.T) {
 	if !got.Authenticated || got.Subject != "system:serviceaccount:nantian-gw:dashboard" {
 		t.Fatalf("unexpected auth verify response: %+v", got)
 	}
+	if got.ReadOnly {
+		t.Fatalf("kubernetes-authenticated identity should not be read-only: %+v", got)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
 }
 
 func TestAuthVerifyRejectsNoAuthAnonymousIdentity(t *testing.T) {
@@ -184,6 +203,9 @@ func TestAuthVerifyRejectsNoAuthAnonymousIdentity(t *testing.T) {
 	}
 	if got.Authenticated || got.Reason != "invalid" {
 		t.Fatalf("unexpected auth verify response: %+v", got)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
 	}
 }
 

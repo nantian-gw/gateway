@@ -35,6 +35,7 @@ type Identity struct {
 	Username string   // Kubernetes user (empty for static-token auth)
 	Groups   []string // Kubernetes groups (empty for static-token auth)
 	Subject  string   // Human-readable identity label for audit logs
+	ReadOnly bool     // True when the accepted credential can only perform reads.
 }
 
 // IdentityFromContext extracts the authenticated Identity from the request context.
@@ -419,7 +420,8 @@ func staticAuthHandler(next http.Handler, opts Options) http.Handler {
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), identityKey, &Identity{
-			Subject: subject,
+			Subject:  subject,
+			ReadOnly: subject == "static-read-only-token",
 		}))
 		next.ServeHTTP(w, r)
 	})

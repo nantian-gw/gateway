@@ -39,6 +39,24 @@ components:
           type: string
           description: Human-readable error message
 
+    AuthVerifyResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+          description: Whether the supplied bearer token was accepted by the configured admin auth path.
+        readOnly:
+          type: boolean
+          description: True when the accepted credential is limited to read-only admin API requests.
+        reason:
+          type: string
+          description: Failure reason when authenticated is false.
+        subject:
+          type: string
+          description: Authenticated subject label used for audit logs.
+      required:
+        - authenticated
+
     Summary:
       type: object
       properties:
@@ -573,6 +591,24 @@ paths:
         '503':
           description: Not ready
       security: []
+
+  /v1/auth/verify:
+    get:
+      tags: [Health]
+      summary: Verify admin API bearer token
+      description: The response is always returned with `Cache-Control: no-store`.
+      responses:
+        '200':
+          description: Authentication verification result
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthVerifyResponse'
 
   # ── Observability ───────────────────────────────────────
   /v1/summary:
