@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
@@ -21,10 +20,9 @@ func TestEndToEndSpanHierarchy(t *testing.T) {
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithSyncer(exporter),
 	)
-	otel.SetTracerProvider(provider)
 	defer func() { _ = provider.Shutdown(context.Background()) }()
 
-	tracer := otel.Tracer("test-tracer")
+	tracer := provider.Tracer("test-tracer")
 	ctx, rootSpan := tracer.Start(context.Background(), "controlplane.syncer.publish_snapshot")
 	rootSpan.SetAttributes(
 		attribute.String("snapshot.scope", "full"),
@@ -87,10 +85,9 @@ func TestEndToEndAIInferenceSpan(t *testing.T) {
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithSyncer(exporter),
 	)
-	otel.SetTracerProvider(provider)
 	defer func() { _ = provider.Shutdown(context.Background()) }()
 
-	tracer := otel.Tracer("test-ai-tracer")
+	tracer := provider.Tracer("test-ai-tracer")
 	_, span := tracer.Start(context.Background(), "ai.inference")
 	span.SetAttributes(
 		attribute.String("ai.model", "gpt-4o"),
@@ -123,8 +120,7 @@ func TestEndToEndAIInferenceSpan(t *testing.T) {
 func TestEndToEndW3CPropagationEnabled(t *testing.T) {
 	t.Parallel()
 
-	otel.SetTextMapPropagator(propagation.TraceContext{})
-	prop := otel.GetTextMapPropagator()
+	prop := propagation.TraceContext{}
 	fields := prop.Fields()
 	if len(fields) == 0 {
 		t.Error("text map propagator should have fields for W3C traceparent")
