@@ -81,7 +81,7 @@ type Server struct {
 	detailIndex           *snapshotDetailIndexCache
 	dataplaneDiscovery    *DataplaneDiscovery
 	dataplaneClient       *DataplaneClient
-	authOpts              Options
+	rbac                  *AdminRBACConfig
 }
 
 func NewServer(
@@ -106,14 +106,13 @@ func NewServer(
 		maxListItems:          opts.MaxListItems,
 		now:                   func() time.Time { return time.Now().UTC() },
 		detailIndex:           newSnapshotDetailIndexCache(opts.Metrics),
-		authOpts:              opts,
+		rbac:                  opts.RBAC,
 	}
 
 	mux := http.NewServeMux()
 	s.registerRoutes(mux)
 
 	handler := wrapAuthHandler(mux, opts)
-	handler = wrapRBACHandler(handler, opts.RBAC, opts.Logger)
 	handler = wrapAuditHandler(handler, opts)
 	if rl := newRateLimiter(opts.RateLimitRPS, opts.RateLimitBurst, opts.TrustedProxies); rl != nil {
 		s.rateLimiter = rl
@@ -143,7 +142,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 		handler := binding.handler(s)
 		mux.HandleFunc(contract.Method+" "+contract.Path, func(w http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), routeContractKey, &contract)
-			handler(w, r.WithContext(ctx))
+			r = r.WithContext(ctx)
+			if !authorizeRBACRequest(w, r, s.rbac, s.logger, &contract) {
+				return
+			}
+			handler(w, r)
 		})
 	}
 }

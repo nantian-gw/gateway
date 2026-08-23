@@ -29,41 +29,46 @@ func wrapRBACHandler(next http.Handler, cfg *AdminRBACConfig, logger *slog.Logge
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rc := routeContractFromContext(r.Context())
-		if rc == nil || rc.Permission == "" {
+		if authorizeRBACRequest(w, r, cfg, logger, routeContractFromContext(r.Context())) {
 			next.ServeHTTP(w, r)
 			return
 		}
+	})
+}
 
-		identity := IdentityFromContext(r.Context())
-		if identity == nil {
-			identity = &Identity{}
-		}
-		roleName, allowed := cfg.Authorize(identity.Username, identity.Groups, rc.Permission)
+func authorizeRBACRequest(w http.ResponseWriter, r *http.Request, cfg *AdminRBACConfig, logger *slog.Logger, rc *routeContract) bool {
+	if cfg == nil || !cfg.IsEnabled() || rc == nil || rc.Permission == "" {
+		return true
+	}
 
-		if allowed {
-			if roleName != "" && logger != nil {
-				logger.Debug("rbac allowed",
-					"role", roleName,
-					"permission", string(rc.Permission),
-					"path", r.URL.Path,
-					"method", r.Method,
-				)
-			}
-			next.ServeHTTP(w, r)
-			return
-		}
+	identity := IdentityFromContext(r.Context())
+	if identity == nil {
+		identity = &Identity{}
+	}
+	roleName, allowed := cfg.Authorize(identity.Username, identity.Groups, rc.Permission)
 
-		if logger != nil {
-			logger.Warn("rbac denied",
-				"username", identity.Username,
-				"groups", identity.Groups,
-				"required_permission", string(rc.Permission),
+	if allowed {
+		if roleName != "" && logger != nil {
+			logger.Debug("rbac allowed",
+				"role", roleName,
+				"permission", string(rc.Permission),
 				"path", r.URL.Path,
 				"method", r.Method,
 			)
 		}
+		return true
+	}
 
-		http.Error(w, "forbidden", http.StatusForbidden)
-	})
+	if logger != nil {
+		logger.Warn("rbac denied",
+			"username", identity.Username,
+			"groups", identity.Groups,
+			"required_permission", string(rc.Permission),
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
+	}
+
+	http.Error(w, "forbidden", http.StatusForbidden)
+	return false
 }

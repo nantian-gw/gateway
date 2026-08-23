@@ -20,8 +20,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/nantian-gw/gateway/internal/observability"
 	"github.com/nantian-gw/gateway/internal/constants"
+	"github.com/nantian-gw/gateway/internal/observability"
 )
 
 // contextKey is an unexported type used as a context key for admin request identity.
@@ -399,6 +399,7 @@ func staticAuthHandler(next http.Handler, opts Options) http.Handler {
 
 		fullToken, _ := resolveBearerToken(opts)
 		isWrite := r.Method != http.MethodGet && r.Method != http.MethodHead
+		subject := "static-token"
 		if isWrite {
 			if !isAuthorizedRequest(r, fullToken) {
 				deny(w)
@@ -406,14 +407,19 @@ func staticAuthHandler(next http.Handler, opts Options) http.Handler {
 			}
 		} else {
 			readOnlyToken, _ := resolveReadOnlyToken(opts)
-			if !isAuthorizedRequest(r, fullToken) && !isAuthorizedRequest(r, readOnlyToken) {
+			fullAuthorized := isAuthorizedRequest(r, fullToken)
+			readOnlyAuthorized := isAuthorizedRequest(r, readOnlyToken)
+			if !fullAuthorized && !readOnlyAuthorized {
 				deny(w)
 				return
+			}
+			if !fullAuthorized && readOnlyAuthorized {
+				subject = "static-read-only-token"
 			}
 		}
 
 		r = r.WithContext(context.WithValue(r.Context(), identityKey, &Identity{
-			Subject: "static-token",
+			Subject: subject,
 		}))
 		next.ServeHTTP(w, r)
 	})
@@ -425,7 +431,10 @@ func deny(w http.ResponseWriter) {
 }
 
 func IsAuthConfigured(opts Options) bool {
-	return strings.TrimSpace(opts.BearerTokenFile) != "" || strings.TrimSpace(opts.BearerToken) != ""
+	return strings.TrimSpace(opts.BearerTokenFile) != "" ||
+		strings.TrimSpace(opts.BearerToken) != "" ||
+		strings.TrimSpace(opts.ReadOnlyBearerTokenFile) != "" ||
+		strings.TrimSpace(opts.ReadOnlyBearerToken) != ""
 }
 
 func resolveBearerToken(opts Options) (string, bool) {
@@ -454,11 +463,11 @@ func (opts Options) IsTokenValid(token string) bool {
 
 // extractBearerToken pulls the Bearer token from the Authorization header.
 func extractBearerToken(r *http.Request) string {
-	auth := r.Header.Get("Authorization")
-	if !strings.HasPrefix(auth, "Bearer ") {
+	token, ok := bearerTokenFromHeader(r.Header.Get("Authorization"))
+	if !ok {
 		return ""
 	}
-	return strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+	return token
 }
 
 func resolveReadOnlyToken(opts Options) (string, bool) {

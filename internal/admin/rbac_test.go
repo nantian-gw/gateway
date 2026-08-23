@@ -187,3 +187,25 @@ func TestWrapRBACHandler_Allowed_MultipleRoles(t *testing.T) {
 		t.Fatalf("expected 200 for ops user with writer role, got %d", w.Code)
 	}
 }
+
+func TestServerEnforcesRBACAfterAuthAndRouteMatch(t *testing.T) {
+	server := newTestServerWithOptions(t, Options{
+		BearerToken: testAuthToken,
+		RBAC: &AdminRBACConfig{
+			Roles: []Role{{
+				Name:        "reader",
+				Permissions: []Permission{PermissionRead},
+				MatchUsers:  []string{"ops-reader"},
+			}},
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/summary", http.NoBody)
+	req.Header.Set("Authorization", "Bearer "+testAuthToken)
+	rec := httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 when matched route RBAC lacks a matching identity, got %d: %s", rec.Code, rec.Body.String())
+	}
+}

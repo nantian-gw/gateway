@@ -22,11 +22,17 @@ func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
 		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "no token"})
 		return
 	}
-	if !s.authOpts.IsTokenValid(token) {
+
+	identity := IdentityFromContext(r.Context())
+	if identity == nil || identity.Subject == "" || identity.Subject == "anonymous" {
 		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "invalid"})
 		return
 	}
-	s.respondJSON(w, map[string]any{"authenticated": true})
+
+	s.respondJSON(w, map[string]any{
+		"authenticated": true,
+		"subject":       identity.Subject,
+	})
 }
 
 func (s *Server) handleLiveness(w http.ResponseWriter, _ *http.Request) {

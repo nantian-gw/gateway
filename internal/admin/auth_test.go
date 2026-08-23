@@ -1,10 +1,18 @@
 package admin
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+type authVerifyTestResponse struct {
+	Authenticated bool   `json:"authenticated"`
+	Reason        string `json:"reason"`
+	Subject       string `json:"subject"`
+}
 
 func TestBearerTokenFromHeader(t *testing.T) {
 	tests := []struct {
@@ -65,9 +73,20 @@ func TestAuthConfigured(t *testing.T) {
 		{"no auth", Options{}, false},
 		{"bearerToken set", Options{BearerToken: "abc"}, true},
 		{"bearerTokenFile set", Options{BearerTokenFile: "/tmp/token"}, true},
+		{"readOnlyBearerToken set", Options{ReadOnlyBearerToken: "abc"}, true},
+		{"readOnlyBearerTokenFile set", Options{ReadOnlyBearerTokenFile: "/tmp/token"}, true},
 		{"both set", Options{BearerToken: "abc", BearerTokenFile: "/tmp/token"}, true},
 		{"empty strings", Options{BearerToken: "", BearerTokenFile: ""}, false},
-		{"whitespace only", Options{BearerToken: "  ", BearerTokenFile: "  "}, false},
+		{
+			"whitespace only",
+			Options{
+				BearerToken:             "  ",
+				BearerTokenFile:         "  ",
+				ReadOnlyBearerToken:     "  ",
+				ReadOnlyBearerTokenFile: "  ",
+			},
+			false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -76,6 +95,95 @@ func TestAuthConfigured(t *testing.T) {
 				t.Errorf("IsAuthConfigured() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestAuthVerifyAcceptsStaticFullToken(t *testing.T) {
+	server := newTestServerWithOptions(t, Options{BearerToken: "write-secret"})
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/verify", http.NoBody)
+	req.Header.Set("Authorization", "Bearer write-secret")
+	rec := httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got authVerifyTestResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode auth verify response: %v", err)
+	}
+	if !got.Authenticated || got.Subject != "static-token" {
+		t.Fatalf("unexpected auth verify response: %+v", got)
+	}
+}
+
+func TestAuthVerifyAcceptsStaticReadOnlyToken(t *testing.T) {
+	server := newTestServerWithOptions(t, Options{
+		BearerToken:         "write-secret",
+		ReadOnlyBearerToken: "read-secret",
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/verify", http.NoBody)
+	req.Header.Set("Authorization", "Bearer read-secret")
+	rec := httptest.NewRecorder()
+	server.server.Handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got authVerifyTestResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode auth verify response: %v", err)
+	}
+	if !got.Authenticated || got.Subject != "static-read-only-token" {
+		t.Fatalf("unexpected auth verify response: %+v", got)
+	}
+}
+
+func TestAuthVerifyAcceptsMiddlewareAuthenticatedIdentity(t *testing.T) {
+	server := &Server{maxResponseBodyBytes: defaultMaxResponseBodyBytes}
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/verify", http.NoBody)
+	req.Header.Set("Authorization", "bearer kubernetes-token")
+	req = req.WithContext(context.WithValue(req.Context(), identityKey, &Identity{
+		Username: "system:serviceaccount:nantian-gw:dashboard",
+		Groups:   []string{"system:serviceaccounts"},
+		Subject:  "system:serviceaccount:nantian-gw:dashboard",
+	}))
+	rec := httptest.NewRecorder()
+
+	server.handleAuthVerify(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got authVerifyTestResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode auth verify response: %v", err)
+	}
+	if !got.Authenticated || got.Subject != "system:serviceaccount:nantian-gw:dashboard" {
+		t.Fatalf("unexpected auth verify response: %+v", got)
+	}
+}
+
+func TestAuthVerifyRejectsNoAuthAnonymousIdentity(t *testing.T) {
+	server := &Server{maxResponseBodyBytes: defaultMaxResponseBodyBytes}
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/verify", http.NoBody)
+	req.Header.Set("Authorization", "Bearer any-token")
+	req = req.WithContext(context.WithValue(req.Context(), identityKey, &Identity{Subject: "anonymous"}))
+	rec := httptest.NewRecorder()
+
+	server.handleAuthVerify(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got authVerifyTestResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode auth verify response: %v", err)
+	}
+	if got.Authenticated || got.Reason != "invalid" {
+		t.Fatalf("unexpected auth verify response: %+v", got)
 	}
 }
 
