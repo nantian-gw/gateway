@@ -473,6 +473,19 @@ func TestCIEntrypointsUseCurrentDeployResourceNames(t *testing.T) {
 		t.Fatalf("conformance workflow still uses old GatewayClass nantian")
 	}
 
+	e2eWorkflow := string(readFile(t, repoPath(".github", "workflows", "e2e.yml")))
+	if !strings.Contains(e2eWorkflow, "-gateway-class nantian-gw") {
+		t.Fatalf("e2e workflow conformance job does not use GatewayClass nantian-gw")
+	}
+	for _, unwanted := range []string{
+		"gateway-conformance",
+		"Create conformance GatewayClass",
+	} {
+		if strings.Contains(e2eWorkflow, unwanted) {
+			t.Fatalf("e2e workflow still creates temporary GatewayClass %q", unwanted)
+		}
+	}
+
 	smokeScript := string(readFile(t, repoPath("test", "e2e", "smoke", "run.sh")))
 	for _, want := range []string{
 		`GATEWAY_CLASS_NAME="${GATEWAY_CLASS_NAME:-nantian-gw}"`,
