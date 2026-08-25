@@ -16,7 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
@@ -29,7 +28,6 @@ import (
 	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
 	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
 	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
-	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 func (s *Syncer) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -110,9 +108,8 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 
 	snapshotMutationPredicate := builder.WithPredicates(snapshotInputMutationPredicate())
 	listenerSetMutationPredicate := builder.WithPredicates(snapshotListenerSetMutationPredicate())
-	snapshotInputPredicate := builder.WithPredicates(
-		predicate.NewPredicateFuncs(resources.ShouldAffectSnapshot),
-	)
+	snapshotServicePredicate := builder.WithPredicates(snapshotServiceMutationPredicate())
+	snapshotEndpointSlicePredicate := builder.WithPredicates(snapshotEndpointSliceMutationPredicate())
 	snapshotRequests := EnqueueRequestsFromX(s.snapshotReconcileRequests)
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
@@ -132,12 +129,12 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&gatewayv1.HTTPRoute{}, snapshotRequests, snapshotMutationPredicate).
 		Watches(&gatewayv1.GRPCRoute{}, snapshotRequests, snapshotMutationPredicate).
 		Watches(&gatewayv1beta1.ReferenceGrant{}, snapshotRequests, snapshotMutationPredicate).
-		Watches(&corev1.Service{}, snapshotRequests, snapshotInputPredicate).
-		Watches(&corev1.Pod{}, snapshotRequests, snapshotInputPredicate).
+		Watches(&corev1.Service{}, snapshotRequests, snapshotServicePredicate).
+		Watches(&corev1.Pod{}, snapshotRequests).
 		Watches(&corev1.Namespace{}, snapshotRequests).
 		Watches(&corev1.Secret{}, snapshotRequests).
 		Watches(&corev1.ConfigMap{}, snapshotRequests).
-		Watches(&discoveryv1.EndpointSlice{}, snapshotRequests, snapshotInputPredicate)
+		Watches(&discoveryv1.EndpointSlice{}, snapshotRequests, snapshotEndpointSlicePredicate)
 
 	if s.options.EnableExperimentalGateway && resourceSupported(mgr, &gatewayv1alpha2.TCPRoute{}) {
 		controllerBuilder = controllerBuilder.Watches(
