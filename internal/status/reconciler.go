@@ -122,14 +122,16 @@ func (r *Reconciler) Reconcile(ctx context.Context) error {
 	if err := r.reconcileGRPCRoutes(ctx, state.grpcRoutes, routeState.grpc); err != nil {
 		return err
 	}
-	if err := r.reconcileTCPRoutes(ctx, state.tcpRoutes, routeState.tcp); err != nil {
-		return err
-	}
-	if err := r.reconcileUDPRoutes(ctx, state.udpRoutes, routeState.udp); err != nil {
-		return err
-	}
-	if err := r.reconcileTLSRoutes(ctx, state.tlsRoutes, routeState.tls); err != nil {
-		return err
+	if r.experimentalGatewayEnabled() {
+		if err := r.reconcileTCPRoutes(ctx, state.tcpRoutes, routeState.tcp); err != nil {
+			return err
+		}
+		if err := r.reconcileUDPRoutes(ctx, state.udpRoutes, routeState.udp); err != nil {
+			return err
+		}
+		if err := r.reconcileTLSRoutes(ctx, state.tlsRoutes, routeState.tls); err != nil {
+			return err
+		}
 	}
 	if err := r.reconcileBackendLBPolicies(
 		ctx,
@@ -188,13 +190,16 @@ func (r *Reconciler) ReconcileRouteStatuses(ctx context.Context) error {
 	if err := r.reconcileGRPCRoutes(ctx, state.grpcRoutes, routeState.grpc); err != nil {
 		return err
 	}
-	if err := r.reconcileTCPRoutes(ctx, state.tcpRoutes, routeState.tcp); err != nil {
-		return err
+	if r.experimentalGatewayEnabled() {
+		if err := r.reconcileTCPRoutes(ctx, state.tcpRoutes, routeState.tcp); err != nil {
+			return err
+		}
+		if err := r.reconcileUDPRoutes(ctx, state.udpRoutes, routeState.udp); err != nil {
+			return err
+		}
+		return r.reconcileTLSRoutes(ctx, state.tlsRoutes, routeState.tls)
 	}
-	if err := r.reconcileUDPRoutes(ctx, state.udpRoutes, routeState.udp); err != nil {
-		return err
-	}
-	return r.reconcileTLSRoutes(ctx, state.tlsRoutes, routeState.tls)
+	return nil
 }
 
 func (r *Reconciler) ReconcilePolicyStatuses(ctx context.Context) error {

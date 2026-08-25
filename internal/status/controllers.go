@@ -85,13 +85,13 @@ func statusControllerSetups(reconciler *Reconciler, opts Options) []controllerSe
 		},
 		&httpRouteController{reconciler: reconciler},
 		&grpcRouteController{reconciler: reconciler},
-		&tlsRouteController{reconciler: reconciler},
 	}
 
 	if opts.EnableExperimentalGateway {
 		controllers = append(controllers,
 			&tcpRouteController{reconciler: reconciler},
 			&udpRouteController{reconciler: reconciler},
+			&tlsRouteController{reconciler: reconciler},
 			&listenerSetController{reconciler: reconciler},
 		)
 	}
@@ -559,6 +559,10 @@ func (c *tlsRouteController) Reconcile(
 	req ctrl.Request,
 ) (ctrl.Result, error) {
 	return ctrl.Result{}, c.reconciler.ReconcileTLSRouteObject(ctx, req.NamespacedName)
+}
+
+func (c *tlsRouteController) watchedObject() client.Object {
+	return &gatewayv1alpha2.TLSRoute{}
 }
 
 func (c *tlsRouteController) SetupWithManager(mgr ctrl.Manager) error {

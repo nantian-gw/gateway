@@ -55,20 +55,10 @@ func TestSetupIndexesStandardModeSkipsExperimentalRouteIndexes(t *testing.T) {
 	for _, skipped := range []client.Object{
 		&gatewayv1alpha2.TCPRoute{},
 		&gatewayv1alpha2.UDPRoute{},
+		&gatewayv1alpha2.TLSRoute{},
 	} {
 		if seen[reflect.TypeOf(skipped)] {
 			t.Fatalf("standard mode registered experimental route index for %T", skipped)
-		}
-	}
-
-	// TLSRoute support is declared in SupportedFeatureNameSet() and the
-	// status evaluator loads TLS routes without any experimental gate, so
-	// its indexes must be registered in standard mode too.
-	for _, want := range []client.Object{
-		&gatewayv1alpha2.TLSRoute{},
-	} {
-		if !seen[reflect.TypeOf(want)] {
-			t.Fatalf("standard mode did not register index for %T", want)
 		}
 	}
 }
@@ -93,6 +83,38 @@ func TestSetupIndexesExperimentalModeIncludesExperimentalRouteIndexes(t *testing
 		if !seen[reflect.TypeOf(want)] {
 			t.Fatalf("experimental mode did not register index for %T", want)
 		}
+	}
+}
+
+func TestSetupIndexesIgnoresMissingExperimentalTLSRouteCRD(t *testing.T) {
+	indexer := &fakeFieldIndexer{
+		errs: map[string]error{
+			statusTLSRouteGatewayParentIndex: &meta.NoKindMatchError{
+				GroupKind: schema.GroupKind{
+					Group: gatewayv1alpha2.GroupVersion.Group,
+					Kind:  "TLSRoute",
+				},
+				SearchedVersions: []string{gatewayv1alpha2.GroupVersion.Version},
+			},
+			statusTLSRouteServiceParentIndex: &meta.NoKindMatchError{
+				GroupKind: schema.GroupKind{
+					Group: gatewayv1alpha2.GroupVersion.Group,
+					Kind:  "TLSRoute",
+				},
+				SearchedVersions: []string{gatewayv1alpha2.GroupVersion.Version},
+			},
+			statusTLSRouteBackendRefIndex: &meta.NoKindMatchError{
+				GroupKind: schema.GroupKind{
+					Group: gatewayv1alpha2.GroupVersion.Group,
+					Kind:  "TLSRoute",
+				},
+				SearchedVersions: []string{gatewayv1alpha2.GroupVersion.Version},
+			},
+		},
+	}
+
+	if err := SetupIndexes(context.Background(), indexer, Options{EnableExperimentalGateway: true}); err != nil {
+		t.Fatalf("SetupIndexes returned error for missing optional TLSRoute CRD: %v", err)
 	}
 }
 

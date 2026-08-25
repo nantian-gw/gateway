@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/gatewayexp/backend"
@@ -18,7 +19,7 @@ func TestStatusControllerSetupsStandardModeSkipsExperimentalControllers(t *testi
 	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: false})
 	for _, controller := range controllers {
 		switch controller.(type) {
-		case *tcpRouteController, *udpRouteController, *listenerSetController:
+		case *tcpRouteController, *udpRouteController, *tlsRouteController, *listenerSetController:
 			t.Fatalf("standard mode included experimental status controller %T", controller)
 		}
 	}
@@ -120,6 +121,23 @@ func TestSupportedControllersSkipsGatedControllersWhenCRDAbsent(t *testing.T) {
 		switch controller.(type) {
 		case *backendLBPolicyController, *routePolicyController:
 			t.Fatalf("expected controller %T to be skipped when its CRD is absent", controller)
+		}
+	}
+}
+
+func TestSupportedControllersSkipsTLSRouteControllerWhenCRDAbsent(t *testing.T) {
+	t.Parallel()
+
+	controllers := statusControllerSetups(nil, Options{EnableExperimentalGateway: true})
+	supported := func(object client.Object) bool {
+		_, isTLSRoute := object.(*gatewayv1alpha2.TLSRoute)
+		return !isTLSRoute
+	}
+
+	gated := supportedControllers(controllers, supported)
+	for _, controller := range gated {
+		if _, ok := controller.(*tlsRouteController); ok {
+			t.Fatal("expected TLSRoute controller to be skipped when its CRD is absent")
 		}
 	}
 }

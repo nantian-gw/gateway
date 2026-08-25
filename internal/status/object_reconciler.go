@@ -14,9 +14,9 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/infrastructure"
-	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 type routeStatusUpdater func(context.Context, client.ObjectKey, []routeParentEvaluation) error
@@ -265,12 +265,6 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 	}
 	state.grpcRoutes = grpcRoutes
 
-	tlsRoutes, err := listTLSRoutesForGateway(ctx, r.reader, key)
-	if err != nil {
-		return err
-	}
-	state.tlsRoutes = tlsRoutes
-
 	if !r.experimentalGatewayEnabled() {
 		if gatewayapi.GatewayActsAsDefault(gateway) {
 			return r.loadDefaultGatewayRoutes(ctx, state, gateway)
@@ -289,6 +283,12 @@ func (r *Reconciler) loadGatewayRoutes(ctx context.Context, state *clusterState,
 		return err
 	}
 	state.udpRoutes = udpRoutes
+
+	tlsRoutes, err := listTLSRoutesForGateway(ctx, r.reader, key)
+	if err != nil {
+		return err
+	}
+	state.tlsRoutes = tlsRoutes
 
 	if len(state.listenerSets) > 0 {
 		listenerSetRoutes, err := listHTTPRoutesWithListenerSetParents(ctx, r.reader)
@@ -334,12 +334,6 @@ func (r *Reconciler) loadDefaultGatewayRoutes(
 	}
 	state.grpcRoutes = mergeGRPCRoutesByKey(state.grpcRoutes, filterGRPCRoutesByDefaultScope(grpcRoutes.Items, gateway.Spec.DefaultScope))
 
-	var tlsRoutes gatewayv1alpha2.TLSRouteList
-	if err := r.reader.List(ctx, &tlsRoutes); err != nil {
-		return err
-	}
-	state.tlsRoutes = mergeTLSRoutesByKey(state.tlsRoutes, filterTLSRoutesByDefaultScope(tlsRoutes.Items, gateway.Spec.DefaultScope))
-
 	if !r.experimentalGatewayEnabled() {
 		return nil
 	}
@@ -355,6 +349,12 @@ func (r *Reconciler) loadDefaultGatewayRoutes(
 		return err
 	}
 	state.udpRoutes = mergeUDPRoutesByKey(state.udpRoutes, filterUDPRoutesByDefaultScope(udpRoutes.Items, gateway.Spec.DefaultScope))
+
+	var tlsRoutes gatewayv1alpha2.TLSRouteList
+	if err := r.reader.List(ctx, &tlsRoutes); err != nil {
+		return err
+	}
+	state.tlsRoutes = mergeTLSRoutesByKey(state.tlsRoutes, filterTLSRoutesByDefaultScope(tlsRoutes.Items, gateway.Spec.DefaultScope))
 
 	return nil
 }

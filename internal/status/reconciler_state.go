@@ -51,12 +51,6 @@ func (r *Reconciler) loadState(ctx context.Context) (*clusterState, error) {
 	}
 	state.grpcRoutes = grpcRoutes
 
-	tlsRoutes, err := loadTLSRoutesForState(ctx, r.listReader, state.managedGateways)
-	if err != nil {
-		return nil, err
-	}
-	state.tlsRoutes = tlsRoutes
-
 	if r.experimentalGatewayEnabled() {
 		tcpRoutes, err := loadTCPRoutesForState(ctx, r.listReader, state.managedGateways)
 		if err != nil {
@@ -69,6 +63,12 @@ func (r *Reconciler) loadState(ctx context.Context) (*clusterState, error) {
 			return nil, err
 		}
 		state.udpRoutes = udpRoutes
+
+		tlsRoutes, err := loadTLSRoutesForState(ctx, r.listReader, state.managedGateways)
+		if err != nil {
+			return nil, err
+		}
+		state.tlsRoutes = tlsRoutes
 
 		listenerSets, err := loadListenerSetsForState(ctx, r.listReader, state.managedGateways)
 		if err != nil {

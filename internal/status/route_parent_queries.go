@@ -46,13 +46,6 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer, options ...O
 			return fmt.Errorf("index UDPRoute gateway parents: %w", err)
 		}
 	}
-	// TLSRoute support is declared in SupportedFeatureNameSet(); the
-	// translator and status evaluator load TLS routes without any
-	// experimental gate, so the index must be registered in standard mode
-	// too. Skip silently when the TLSRoute CRD is not installed.
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteGatewayParentIndex, statusTLSRouteGatewayParentIndexKeys); err != nil && !meta.IsNoMatchError(err) {
-		return fmt.Errorf("index TLSRoute gateway parents: %w", err)
-	}
 	if err := indexer.IndexField(ctx, &gatewayv1.HTTPRoute{}, statusHTTPRouteServiceParentIndex, statusHTTPRouteServiceParentIndexKeys); err != nil {
 		return fmt.Errorf("index HTTPRoute service parents: %w", err)
 	}
@@ -83,12 +76,15 @@ func SetupIndexes(ctx context.Context, indexer client.FieldIndexer, options ...O
 		if err := indexer.IndexField(ctx, &gatewayv1alpha2.UDPRoute{}, statusUDPRouteBackendRefIndex, statusUDPRouteBackendRefIndexKeys); err != nil {
 			return fmt.Errorf("index UDPRoute backend refs: %w", err)
 		}
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteServiceParentIndex, statusTLSRouteServiceParentIndexKeys); err != nil && !meta.IsNoMatchError(err) {
-		return fmt.Errorf("index TLSRoute service parents: %w", err)
-	}
-	if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteBackendRefIndex, statusTLSRouteBackendRefIndexKeys); err != nil && !meta.IsNoMatchError(err) {
-		return fmt.Errorf("index TLSRoute backend refs: %w", err)
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteGatewayParentIndex, statusTLSRouteGatewayParentIndexKeys); err != nil && !meta.IsNoMatchError(err) {
+			return fmt.Errorf("index TLSRoute gateway parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteServiceParentIndex, statusTLSRouteServiceParentIndexKeys); err != nil && !meta.IsNoMatchError(err) {
+			return fmt.Errorf("index TLSRoute service parents: %w", err)
+		}
+		if err := indexer.IndexField(ctx, &gatewayv1alpha2.TLSRoute{}, statusTLSRouteBackendRefIndex, statusTLSRouteBackendRefIndexKeys); err != nil && !meta.IsNoMatchError(err) {
+			return fmt.Errorf("index TLSRoute backend refs: %w", err)
+		}
 	}
 	if err := setupPolicyTargetRefIndexes(ctx, indexer); err != nil {
 		return err

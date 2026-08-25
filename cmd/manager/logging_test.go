@@ -3,12 +3,16 @@ package main
 import (
 	"bytes"
 	"log/slog"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
+
+const loggingSubprocessEnv = "NTGW_LOGGING_SUBPROCESS"
 
 func preserveLoggingGlobals(t *testing.T) {
 	t.Helper()
@@ -39,6 +43,16 @@ func TestControllerRuntimeLoggerUsesSlogHandler(t *testing.T) {
 }
 
 func TestConfigureKubernetesLoggingRoutesKlogThroughSlog(t *testing.T) {
+	if os.Getenv(loggingSubprocessEnv) != "1" {
+		cmd := exec.Command(os.Args[0], "-test.run=^TestConfigureKubernetesLoggingRoutesKlogThroughSlog$")
+		cmd.Env = append(os.Environ(), loggingSubprocessEnv+"=1")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("logging subprocess failed: %v\n%s", err, output)
+		}
+		return
+	}
+
 	preserveLoggingGlobals(t)
 
 	var buffer bytes.Buffer
@@ -47,6 +61,7 @@ func TestConfigureKubernetesLoggingRoutesKlogThroughSlog(t *testing.T) {
 	configureKubernetesLogging(logger)
 	ctrl.Log.WithName("snapshot-syncer").Info("starting workers", "worker_count", 1)
 	klog.Background().Info("attempting to acquire leader lease", "lease", "nantian-gw/leader")
+	klog.Flush()
 
 	output := buffer.String()
 	if !strings.Contains(output, `"msg":"starting workers"`) {
@@ -71,6 +86,7 @@ func TestConfigureKubernetesLoggingRoutesLegacyKlogOutputThroughSlog(t *testing.
 
 	configureKubernetesLogging(logger)
 	klog.Infof("attempting to acquire leader lease %s", "nantian-gw/leader")
+	klog.Flush()
 
 	output := buffer.String()
 	if !strings.Contains(output, `"msg":"attempting to acquire leader lease nantian-gw/leader"`) {
@@ -98,6 +114,7 @@ func TestConfigureKubernetesLoggingPreservesLegacyKlogSeverity(t *testing.T) {
 
 	configureKubernetesLogging(logger)
 	klog.Warningf("watch jitter detected for %s", "gateway/default")
+	klog.Flush()
 
 	output := buffer.String()
 	if !strings.Contains(output, `"level":"WARN"`) {
