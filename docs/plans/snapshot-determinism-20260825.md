@@ -15,6 +15,7 @@ Repeated versions that cycle back to prior hashes were caused by fallback TLS ce
 - Gateway listener partial rebuilds did not re-run fallback injection after replacing listener TLS refs and secret material, so full and partial rebuild paths could alternate between snapshots with and without fallback TLS material.
 - Process-local fallback leaf caching is not sufficient for Kubernetes deployments with multiple control plane replicas or restarts. Each Translator instance could still generate a different leaf for the same listener, causing data planes to alternate between snapshot hashes as they reconnect to different replicas.
 - The fallback CA creation race also needs deterministic handling: if a replica loses a create race, it must reload the persisted CA rather than continuing with locally generated material.
+- Post-push CI annotations exposed generated protobuf descriptor drift in the gateway vendored Go stubs. `buf generate ../proto` updated `gen/go/gateway/control/v1/config.pb.go` without requiring proto source changes.
 
 ## Acceptance Criteria
 
@@ -37,7 +38,8 @@ Repeated versions that cycle back to prior hashes were caused by fallback TLS ce
 4. Reuse fallback injection in `BuildGatewayListenersForSnapshot` after listener/secret replacement. Done.
 5. Persist fallback TLS leaf certificates in the fallback CA Secret so separate Translator instances reuse identical material. Done.
 6. Reload the persisted fallback CA when losing a Secret create race. Done.
-7. Run focused repeated tests, full tests, and diff checks. Done.
+7. Refresh generated Go protobuf stubs after CI reported descriptor drift. Done.
+8. Run focused repeated tests, full tests, generation checks, and diff checks. Done.
 
 ## Verification Results
 
@@ -53,6 +55,8 @@ Repeated versions that cycle back to prior hashes were caused by fallback TLS ce
   - Result: passed.
   - `go test -count=100 ./internal/translator -run 'TestBuildSnapshotKeepsFallbackTLSCertificateStableAcrossRepeatedBuilds|TestBuildSnapshotKeepsFallbackTLSCertificateStableAcrossTranslatorInstances|TestBuildGatewayListenersForSnapshotPreservesFallbackTLSCertificate'`
   - Result: passed.
+  - `buf generate ../proto && go mod tidy`
+  - Result: updated `gen/go/gateway/control/v1/config.pb.go`; no module file changes.
   - `go test -count=1 -timeout 10m ./...`
   - Result: passed.
   - `git diff --check`

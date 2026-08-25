@@ -4871,7 +4871,8 @@ const file_gateway_control_v1_config_proto_rawDesc = "" +
 	"\x15ExternalAuthTransport\x12'\n" +
 	"#EXTERNAL_AUTH_TRANSPORT_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cEXTERNAL_AUTH_TRANSPORT_HTTP\x10\x01\x12 \n" +
-	"\x1cEXTERNAL_AUTH_TRANSPORT_GRPC\x10\x02B:Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1b\x06proto3"
+	"\x1cEXTERNAL_AUTH_TRANSPORT_GRPC\x10\x02B\xc9\x01\n" +
+	"\x16com.gateway.control.v1B\vConfigProtoP\x01Z8github.com/nantian-gw/proto/gateway/control/v1;controlv1\xa2\x02\x03GCX\xaa\x02\x12Gateway.Control.V1\xca\x02\x12Gateway\\Control\\V1\xe2\x02\x1eGateway\\Control\\V1\\GPBMetadata\xea\x02\x14Gateway::Control::V1b\x06proto3"
 
 var (
 	file_gateway_control_v1_config_proto_rawDescOnce sync.Once
