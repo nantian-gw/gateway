@@ -185,6 +185,31 @@ func TestAuthVerifyAcceptsMiddlewareAuthenticatedIdentity(t *testing.T) {
 	}
 }
 
+func TestAuthVerifyRejectsMissingBearerToken(t *testing.T) {
+	server := &Server{maxResponseBodyBytes: defaultMaxResponseBodyBytes}
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/verify", http.NoBody)
+	rec := httptest.NewRecorder()
+
+	server.handleAuthVerify(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got authVerifyTestResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode auth verify response: %v", err)
+	}
+	if got.Authenticated || got.Reason != "no token" {
+		t.Fatalf("unexpected auth verify response: %+v", got)
+	}
+	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
+	if got := rec.Header().Get("WWW-Authenticate"); got == "" {
+		t.Fatal("WWW-Authenticate header must be present on auth verify failures")
+	}
+}
+
 func TestAuthVerifyRejectsNoAuthAnonymousIdentity(t *testing.T) {
 	server := &Server{maxResponseBodyBytes: defaultMaxResponseBodyBytes}
 	req := httptest.NewRequest(http.MethodGet, "/v1/auth/verify", http.NoBody)
@@ -194,8 +219,8 @@ func TestAuthVerifyRejectsNoAuthAnonymousIdentity(t *testing.T) {
 
 	server.handleAuthVerify(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d: %s", rec.Code, rec.Body.String())
 	}
 	var got authVerifyTestResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
@@ -206,6 +231,9 @@ func TestAuthVerifyRejectsNoAuthAnonymousIdentity(t *testing.T) {
 	}
 	if got := rec.Header().Get("Cache-Control"); got != "no-store" {
 		t.Fatalf("Cache-Control = %q, want no-store", got)
+	}
+	if got := rec.Header().Get("WWW-Authenticate"); got == "" {
+		t.Fatal("WWW-Authenticate header must be present on auth verify failures")
 	}
 }
 

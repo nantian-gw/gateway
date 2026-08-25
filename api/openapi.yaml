@@ -599,12 +599,27 @@ paths:
       description: The response is always returned with `Cache-Control: no-store`.
       responses:
         '200':
-          description: Authentication verification result
+          description: Bearer token is authenticated
           headers:
             Cache-Control:
               schema:
                 type: string
                 example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthVerifyResponse'
+        '401':
+          description: Bearer token is missing, invalid, or only resolved to an anonymous no-auth identity
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+            WWW-Authenticate:
+              schema:
+                type: string
+                example: Bearer realm="nantian-controlplane-admin"
           content:
             application/json:
               schema:

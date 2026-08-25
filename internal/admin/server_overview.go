@@ -21,13 +21,13 @@ func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
 
 	token := extractBearerToken(r)
 	if token == "" {
-		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "no token"})
+		s.respondAuthVerifyFailure(w, "no token")
 		return
 	}
 
 	identity := IdentityFromContext(r.Context())
 	if identity == nil || identity.Subject == "" || identity.Subject == "anonymous" {
-		s.respondJSON(w, map[string]any{"authenticated": false, "reason": "invalid"})
+		s.respondAuthVerifyFailure(w, "invalid")
 		return
 	}
 
@@ -36,6 +36,12 @@ func (s *Server) handleAuthVerify(w http.ResponseWriter, r *http.Request) {
 		"readOnly":      identity.ReadOnly,
 		"subject":       identity.Subject,
 	})
+}
+
+func (s *Server) respondAuthVerifyFailure(w http.ResponseWriter, reason string) {
+	w.Header().Set("WWW-Authenticate", `Bearer realm="nantian-controlplane-admin"`)
+	w.WriteHeader(http.StatusUnauthorized)
+	s.respondJSON(w, map[string]any{"authenticated": false, "reason": reason})
 }
 
 func (s *Server) handleLiveness(w http.ResponseWriter, _ *http.Request) {
