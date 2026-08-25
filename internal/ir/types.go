@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const listenerDisplayAddressesMetadataKey = "nantian.dev/display-addresses"
+
 type Snapshot struct {
 	ID           string           `json:"id"`
 	GeneratedAt  time.Time        `json:"generatedAt"`
@@ -21,18 +23,18 @@ type Snapshot struct {
 }
 
 type Listener struct {
-	Name           string            `json:"name"`
-	Address        string            `json:"address"`
-	Addresses      []string          `json:"addresses,omitempty"`
-	Port           uint32            `json:"port"`
-	Protocol       string            `json:"protocol"`
-	Hostnames      []string          `json:"hostnames,omitempty"`
-	AttachedRoutes []string          `json:"attachedRoutes,omitempty"`
-	TLS            *TLSConfig        `json:"tls,omitempty"`
-	BackendTLS     *BackendTLSConfig `json:"backendTls,omitempty"`
-	Metadata       map[string]string `json:"metadata,omitempty"`
+	Name           string                `json:"name"`
+	Address        string                `json:"address"`
+	Addresses      []string              `json:"addresses,omitempty"`
+	Port           uint32                `json:"port"`
+	Protocol       string                `json:"protocol"`
+	Hostnames      []string              `json:"hostnames,omitempty"`
+	AttachedRoutes []string              `json:"attachedRoutes,omitempty"`
+	TLS            *TLSConfig            `json:"tls,omitempty"`
+	BackendTLS     *BackendTLSConfig     `json:"backendTls,omitempty"`
+	Metadata       map[string]string     `json:"metadata,omitempty"`
 	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
-	Status         *ListenerStatus   `json:"status,omitempty"`
+	Status         *ListenerStatus       `json:"status,omitempty"`
 }
 
 type TLSConfig struct {
@@ -70,15 +72,15 @@ type BackendSubjectName struct {
 }
 
 type HTTPRoute struct {
-	Name        string             `json:"name"`
-	Namespace   string             `json:"namespace"`
-	Hostnames   []string           `json:"hostnames,omitempty"`
-	ParentRefs  []ParentRef        `json:"parentRefs,omitempty"`
-	Rules       []HTTPRule         `json:"rules,omitempty"`
-	Labels      map[string]string  `json:"labels,omitempty"`
-	Annotations map[string]string  `json:"annotations,omitempty"`
-	Status      *RouteStatus       `json:"status,omitempty"`
-	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
+	Name           string                `json:"name"`
+	Namespace      string                `json:"namespace"`
+	Hostnames      []string              `json:"hostnames,omitempty"`
+	ParentRefs     []ParentRef           `json:"parentRefs,omitempty"`
+	Rules          []HTTPRule            `json:"rules,omitempty"`
+	Labels         map[string]string     `json:"labels,omitempty"`
+	Annotations    map[string]string     `json:"annotations,omitempty"`
+	Status         *RouteStatus          `json:"status,omitempty"`
+	RoutePolicy    *RoutePolicyConfig    `json:"routePolicy,omitempty"`
 	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 }
 
@@ -102,15 +104,15 @@ type HTTPMatch struct {
 }
 
 type GRPCRoute struct {
-	Name        string             `json:"name"`
-	Namespace   string             `json:"namespace"`
-	Hostnames   []string           `json:"hostnames,omitempty"`
-	ParentRefs  []ParentRef        `json:"parentRefs,omitempty"`
-	Rules       []GRPCRule         `json:"rules,omitempty"`
-	Labels      map[string]string  `json:"labels,omitempty"`
-	Annotations map[string]string  `json:"annotations,omitempty"`
-	Status      *RouteStatus       `json:"status,omitempty"`
-	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
+	Name           string                `json:"name"`
+	Namespace      string                `json:"namespace"`
+	Hostnames      []string              `json:"hostnames,omitempty"`
+	ParentRefs     []ParentRef           `json:"parentRefs,omitempty"`
+	Rules          []GRPCRule            `json:"rules,omitempty"`
+	Labels         map[string]string     `json:"labels,omitempty"`
+	Annotations    map[string]string     `json:"annotations,omitempty"`
+	Status         *RouteStatus          `json:"status,omitempty"`
+	RoutePolicy    *RoutePolicyConfig    `json:"routePolicy,omitempty"`
 	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 }
 
@@ -131,15 +133,15 @@ type GRPCMatch struct {
 }
 
 type StreamRoute struct {
-	Name        string             `json:"name"`
-	Namespace   string             `json:"namespace"`
-	Kind        string             `json:"kind"`
-	ParentRefs  []ParentRef        `json:"parentRefs,omitempty"`
-	Rules       []StreamRule       `json:"rules,omitempty"`
-	Labels      map[string]string  `json:"labels,omitempty"`
-	Annotations map[string]string  `json:"annotations,omitempty"`
-	Status      *RouteStatus       `json:"status,omitempty"`
-	RoutePolicy *RoutePolicyConfig `json:"routePolicy,omitempty"`
+	Name           string                `json:"name"`
+	Namespace      string                `json:"namespace"`
+	Kind           string                `json:"kind"`
+	ParentRefs     []ParentRef           `json:"parentRefs,omitempty"`
+	Rules          []StreamRule          `json:"rules,omitempty"`
+	Labels         map[string]string     `json:"labels,omitempty"`
+	Annotations    map[string]string     `json:"annotations,omitempty"`
+	Status         *RouteStatus          `json:"status,omitempty"`
+	RoutePolicy    *RoutePolicyConfig    `json:"routePolicy,omitempty"`
 	SecurityPolicy *SecurityPolicyConfig `json:"securityPolicy,omitempty"`
 }
 
@@ -691,6 +693,7 @@ func (s Snapshot) snapshotForDigest() Snapshot {
 
 	for idx, listener := range s.Listeners {
 		listener.Status = nil
+		listener.Metadata = listenerMetadataForDigest(listener.Metadata)
 		out.Listeners[idx] = listener
 	}
 
@@ -709,6 +712,15 @@ func (s Snapshot) snapshotForDigest() Snapshot {
 		out.StreamRoutes[idx] = route
 	}
 
+	return out
+}
+
+func listenerMetadataForDigest(metadata map[string]string) map[string]string {
+	out := cloneStringMap(metadata)
+	delete(out, listenerDisplayAddressesMetadataKey)
+	if len(out) == 0 {
+		return nil
+	}
 	return out
 }
 
@@ -812,13 +824,13 @@ type SecurityAuthZConfig struct {
 }
 
 type JwtAuthConfig struct {
-	Issuer        string            `json:"issuer,omitempty"`
-	JwksURL       string            `json:"jwksUrl,omitempty"`
-	Audience      string            `json:"audience,omitempty"`
-	HeaderName    string            `json:"headerName,omitempty"`
-	TokenPrefix   string            `json:"tokenPrefix,omitempty"`
-	ClaimsToHeader []ClaimToHeader  `json:"claimsToHeaders,omitempty"`
-	CacheTTLSecs  int32             `json:"cacheTtlSecs,omitempty"`
+	Issuer         string          `json:"issuer,omitempty"`
+	JwksURL        string          `json:"jwksUrl,omitempty"`
+	Audience       string          `json:"audience,omitempty"`
+	HeaderName     string          `json:"headerName,omitempty"`
+	TokenPrefix    string          `json:"tokenPrefix,omitempty"`
+	ClaimsToHeader []ClaimToHeader `json:"claimsToHeaders,omitempty"`
+	CacheTTLSecs   int32           `json:"cacheTtlSecs,omitempty"`
 }
 
 type ClaimToHeader struct {
@@ -848,11 +860,11 @@ type BasicAuthConfig struct {
 }
 
 type ExternalAuthConfig struct {
-	Protocol           string             `json:"protocol,omitempty"`
-	BackendRef         *BackendRef        `json:"backendRef,omitempty"`
-	HTTP               *ExternalHTTPAuth  `json:"http,omitempty"`
-	GRPC               *ExternalGRPCAuth  `json:"grpc,omitempty"`
-	ForwardBodyMaxSize int32              `json:"forwardBodyMaxSize,omitempty"`
+	Protocol           string            `json:"protocol,omitempty"`
+	BackendRef         *BackendRef       `json:"backendRef,omitempty"`
+	HTTP               *ExternalHTTPAuth `json:"http,omitempty"`
+	GRPC               *ExternalGRPCAuth `json:"grpc,omitempty"`
+	ForwardBodyMaxSize int32             `json:"forwardBodyMaxSize,omitempty"`
 }
 
 type ExternalHTTPAuth struct {

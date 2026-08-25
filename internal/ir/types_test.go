@@ -358,6 +358,50 @@ func TestSnapshotDigestIgnoresStatusSummaries(t *testing.T) {
 	}
 }
 
+func TestSnapshotDigestIgnoresListenerDisplayAddressesMetadata(t *testing.T) {
+	left := Snapshot{
+		Listeners: []Listener{{
+			Name:     "default/gw/http",
+			Address:  "0.0.0.0",
+			Port:     80,
+			Protocol: "HTTP",
+			Metadata: map[string]string{
+				listenerDisplayAddressesMetadataKey: "127.0.0.1",
+				"gateway":                           "gw",
+			},
+		}},
+	}
+	right := Snapshot{
+		Listeners: []Listener{{
+			Name:     "default/gw/http",
+			Address:  "0.0.0.0",
+			Port:     80,
+			Protocol: "HTTP",
+			Metadata: map[string]string{
+				listenerDisplayAddressesMetadataKey: "203.0.113.10",
+				"gateway":                           "gw",
+			},
+		}},
+	}
+
+	if err := left.Normalize(); err != nil {
+		t.Fatalf("normalize left snapshot: %v", err)
+	}
+	if err := right.Normalize(); err != nil {
+		t.Fatalf("normalize right snapshot: %v", err)
+	}
+
+	if left.ID != right.ID {
+		t.Fatalf("expected display-address metadata changes to be ignored, got %q and %q", left.ID, right.ID)
+	}
+	if got := left.Listeners[0].Metadata[listenerDisplayAddressesMetadataKey]; got != "127.0.0.1" {
+		t.Fatalf("expected normalize to preserve listener display-address metadata, got %q", got)
+	}
+	if got := right.Listeners[0].Metadata[listenerDisplayAddressesMetadataKey]; got != "203.0.113.10" {
+		t.Fatalf("expected normalize to preserve listener display-address metadata, got %q", got)
+	}
+}
+
 func TestSnapshotNormalizeStableAcrossPermutationsProperty(t *testing.T) {
 	expected := snapshotPropertyFixture()
 	if err := expected.Normalize(); err != nil {

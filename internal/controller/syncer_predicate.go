@@ -1,15 +1,23 @@
 package controller
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+
+	"github.com/nantian-gw/gateway/internal/mesh"
+	"github.com/nantian-gw/gateway/internal/resources"
 )
 
 const snapshotRelevantAnnotationPrefix = "gateway.nantian.dev/"
@@ -21,6 +29,153 @@ func snapshotInputMutationPredicate() predicate.Predicate {
 		predicate.LabelChangedPredicate{},
 		snapshotLifecycleEventPredicate(),
 	)
+}
+
+func snapshotServiceMutationPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(createEvent event.CreateEvent) bool {
+			return resources.ShouldAffectSnapshot(createEvent.Object)
+		},
+		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
+			return resources.ShouldAffectSnapshot(deleteEvent.Object)
+		},
+		GenericFunc: func(genericEvent event.GenericEvent) bool {
+			return resources.ShouldAffectSnapshot(genericEvent.Object)
+		},
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldAffects := resources.ShouldAffectSnapshot(updateEvent.ObjectOld)
+			newAffects := resources.ShouldAffectSnapshot(updateEvent.ObjectNew)
+			if !oldAffects && !newAffects {
+				return false
+			}
+
+			oldService, oldOK := updateEvent.ObjectOld.(*corev1.Service)
+			newService, newOK := updateEvent.ObjectNew.(*corev1.Service)
+			if !oldOK || !newOK {
+				return true
+			}
+
+			return !apiequality.Semantic.DeepEqual(
+				serviceSnapshotInputValue(oldService),
+				serviceSnapshotInputValue(newService),
+			)
+		},
+	}
+}
+
+type serviceSnapshotInput struct {
+	Ports       []corev1.ServicePort
+	Annotations map[string]string
+	Labels      map[string]string
+}
+
+func serviceSnapshotInputValue(service *corev1.Service) serviceSnapshotInput {
+	if service == nil {
+		return serviceSnapshotInput{}
+	}
+	return serviceSnapshotInput{
+		Ports: service.Spec.Ports,
+		Annotations: filterStringMapKeys(service.Annotations, []string{
+			mesh.ManagedServiceAnnotation,
+			mesh.ShadowServiceAnnotation,
+		}),
+		Labels: filterStringMapKeys(service.Labels, []string{
+			resources.ManagedByLabel,
+			resources.ServiceRoleKey,
+			mesh.OriginalServiceNamespaceLabel,
+			mesh.OriginalServiceNameLabel,
+		}),
+	}
+}
+
+func snapshotEndpointSliceMutationPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(createEvent event.CreateEvent) bool {
+			return resources.ShouldAffectSnapshot(createEvent.Object)
+		},
+		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
+			return resources.ShouldAffectSnapshot(deleteEvent.Object)
+		},
+		GenericFunc: func(genericEvent event.GenericEvent) bool {
+			return resources.ShouldAffectSnapshot(genericEvent.Object)
+		},
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldAffects := resources.ShouldAffectSnapshot(updateEvent.ObjectOld)
+			newAffects := resources.ShouldAffectSnapshot(updateEvent.ObjectNew)
+			if !oldAffects && !newAffects {
+				return false
+			}
+
+			oldSlice, oldOK := updateEvent.ObjectOld.(*discoveryv1.EndpointSlice)
+			newSlice, newOK := updateEvent.ObjectNew.(*discoveryv1.EndpointSlice)
+			if !oldOK || !newOK {
+				return true
+			}
+
+			return !apiequality.Semantic.DeepEqual(
+				endpointSliceSnapshotInputValue(oldSlice),
+				endpointSliceSnapshotInputValue(newSlice),
+			)
+		},
+	}
+}
+
+type endpointSliceSnapshotInput struct {
+	AddressType discoveryv1.AddressType
+	Labels      map[string]string
+	Ports       []discoveryv1.EndpointPort
+	Endpoints   []endpointSnapshotInput
+}
+
+type endpointSnapshotInput struct {
+	Addresses []string
+	Ready     string
+	Zone      string
+}
+
+func endpointSliceSnapshotInputValue(endpointSlice *discoveryv1.EndpointSlice) endpointSliceSnapshotInput {
+	if endpointSlice == nil {
+		return endpointSliceSnapshotInput{}
+	}
+
+	endpoints := make([]endpointSnapshotInput, 0, len(endpointSlice.Endpoints))
+	for _, endpoint := range endpointSlice.Endpoints {
+		addresses := append([]string(nil), endpoint.Addresses...)
+		sort.Strings(addresses)
+
+		ready := "<nil>"
+		if endpoint.Conditions.Ready != nil {
+			ready = strconv.FormatBool(*endpoint.Conditions.Ready)
+		}
+
+		zone := ""
+		if endpoint.Zone != nil {
+			zone = *endpoint.Zone
+		}
+
+		endpoints = append(endpoints, endpointSnapshotInput{
+			Addresses: addresses,
+			Ready:     ready,
+			Zone:      zone,
+		})
+	}
+	sort.Slice(endpoints, func(i, j int) bool {
+		left := strings.Join(endpoints[i].Addresses, ",") + "\x00" + endpoints[i].Ready + "\x00" + endpoints[i].Zone
+		right := strings.Join(endpoints[j].Addresses, ",") + "\x00" + endpoints[j].Ready + "\x00" + endpoints[j].Zone
+		return left < right
+	})
+
+	return endpointSliceSnapshotInput{
+		AddressType: endpointSlice.AddressType,
+		Labels: filterStringMapKeys(endpointSlice.Labels, []string{
+			discoveryv1.LabelServiceName,
+			discoveryv1.LabelManagedBy,
+			mcsv1alpha1.LabelServiceName,
+			resources.ServiceRoleKey,
+		}),
+		Ports:     endpointSlice.Ports,
+		Endpoints: endpoints,
+	}
 }
 
 func snapshotLifecycleEventPredicate() predicate.Predicate {
@@ -137,6 +292,22 @@ func filterRelevantSnapshotAnnotations(values map[string]string) map[string]stri
 	out := make(map[string]string)
 	for key, value := range values {
 		if strings.HasPrefix(key, snapshotRelevantAnnotationPrefix) {
+			out[key] = value
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func filterStringMapKeys(values map[string]string, keys []string) map[string]string {
+	if len(values) == 0 || len(keys) == 0 {
+		return nil
+	}
+	out := make(map[string]string)
+	for _, key := range keys {
+		if value, ok := values[key]; ok {
 			out[key] = value
 		}
 	}
