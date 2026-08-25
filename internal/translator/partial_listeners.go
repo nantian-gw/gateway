@@ -11,9 +11,9 @@ import (
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/gatewayapi"
 	"github.com/nantian-gw/gateway/internal/ir"
-	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/translator/backends"
 	"github.com/nantian-gw/gateway/internal/translator/policies"
 	"github.com/nantian-gw/gateway/internal/translator/shared"
@@ -96,7 +96,9 @@ func (t *Translator) BuildGatewayListenersForSnapshot(
 		updated = ApplyPartialSnapshot(current, nil, listeners)
 	}
 	secrets := rebuildGatewaySecretMaterials(current.Secrets, listeners, gatewayKeys, supportObjects.secrets)
-	return ApplyPartialSnapshotWithSecrets(updated, nil, listeners, secrets), nil
+	updated = ApplyPartialSnapshotWithSecrets(updated, nil, listeners, secrets)
+	t.injectFallbackCertificates(ctx, cl, updated)
+	return updated, nil
 }
 
 func (t *Translator) filterGatewaysByManagedClasses(

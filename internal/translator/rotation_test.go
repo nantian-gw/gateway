@@ -84,6 +84,192 @@ func TestBuildSnapshotRefreshesGatewayListenerSecretMaterialAfterRotation(t *tes
 	}
 }
 
+func TestBuildSnapshotKeepsFallbackTLSCertificateStableAcrossRepeatedBuilds(t *testing.T) {
+	scheme := rotationTestScheme(t, false)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	tlsMode := gatewayv1.TLSModeTerminate
+
+	cl := testutil.NewTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "https",
+						Protocol: gatewayv1.HTTPSProtocolType,
+						Port:     443,
+						TLS: &gatewayv1.ListenerTLSConfig{
+							Mode: &tlsMode,
+						},
+					}},
+				},
+			},
+		).
+		Build()
+
+	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator.namespace = "nantian-gw"
+
+	first, err := xlator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("first Build returned error: %v", err)
+	}
+	if err := first.Normalize(); err != nil {
+		t.Fatalf("normalize first snapshot: %v", err)
+	}
+
+	second, err := xlator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("second Build returned error: %v", err)
+	}
+	if err := second.Normalize(); err != nil {
+		t.Fatalf("normalize second snapshot: %v", err)
+	}
+
+	if first.ID != second.ID {
+		t.Fatalf("fallback TLS changed stable snapshot ID: first=%s second=%s", first.ID, second.ID)
+	}
+	if findSnapshotSecret(t, second, "_system", "_fallback_default/gw/https").CertPEM !=
+		findSnapshotSecret(t, first, "_system", "_fallback_default/gw/https").CertPEM {
+		t.Fatal("fallback TLS certificate material changed between equivalent builds")
+	}
+}
+
+func TestBuildSnapshotKeepsFallbackTLSCertificateStableAcrossTranslatorInstances(t *testing.T) {
+	scheme := rotationTestScheme(t, false)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	tlsMode := gatewayv1.TLSModeTerminate
+
+	cl := testutil.NewTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "https",
+						Protocol: gatewayv1.HTTPSProtocolType,
+						Port:     443,
+						TLS: &gatewayv1.ListenerTLSConfig{
+							Mode: &tlsMode,
+						},
+					}},
+				},
+			},
+		).
+		Build()
+
+	firstTranslator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	firstTranslator.namespace = "nantian-gw"
+	first, err := firstTranslator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("first Build returned error: %v", err)
+	}
+	if err := first.Normalize(); err != nil {
+		t.Fatalf("normalize first snapshot: %v", err)
+	}
+
+	secondTranslator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	secondTranslator.namespace = "nantian-gw"
+	second, err := secondTranslator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("second Build returned error: %v", err)
+	}
+	if err := second.Normalize(); err != nil {
+		t.Fatalf("normalize second snapshot: %v", err)
+	}
+
+	if first.ID != second.ID {
+		t.Fatalf("fallback TLS changed snapshot ID across translators: first=%s second=%s", first.ID, second.ID)
+	}
+	if findSnapshotSecret(t, second, "_system", "_fallback_default/gw/https").CertPEM !=
+		findSnapshotSecret(t, first, "_system", "_fallback_default/gw/https").CertPEM {
+		t.Fatal("fallback TLS certificate material changed across translators")
+	}
+}
+
+func TestBuildGatewayListenersForSnapshotPreservesFallbackTLSCertificate(t *testing.T) {
+	scheme := rotationTestScheme(t, false)
+	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")
+	tlsMode := gatewayv1.TLSModeTerminate
+
+	cl := testutil.NewTranslatorClientBuilder(scheme).
+		WithObjects(
+			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"}},
+			&gatewayv1.GatewayClass{
+				ObjectMeta: metav1.ObjectMeta{Name: "nantian-gw"},
+				Spec: gatewayv1.GatewayClassSpec{
+					ControllerName: controllerName,
+				},
+			},
+			&gatewayv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "gw", Namespace: "default"},
+				Spec: gatewayv1.GatewaySpec{
+					GatewayClassName: "nantian-gw",
+					Listeners: []gatewayv1.Listener{{
+						Name:     "https",
+						Protocol: gatewayv1.HTTPSProtocolType,
+						Port:     443,
+						TLS: &gatewayv1.ListenerTLSConfig{
+							Mode: &tlsMode,
+						},
+					}},
+				},
+			},
+		).
+		Build()
+
+	xlator := New(string(controllerName), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	xlator.namespace = "nantian-gw"
+
+	current, err := xlator.Build(context.Background(), cl)
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+	if err := current.Normalize(); err != nil {
+		t.Fatalf("normalize current snapshot: %v", err)
+	}
+
+	next, err := xlator.BuildGatewayListenersForSnapshot(
+		context.Background(),
+		cl,
+		current,
+		[]client.ObjectKey{{Namespace: "default", Name: "gw"}},
+	)
+	if err != nil {
+		t.Fatalf("BuildGatewayListenersForSnapshot returned error: %v", err)
+	}
+	if err := next.Normalize(); err != nil {
+		t.Fatalf("normalize next snapshot: %v", err)
+	}
+
+	if current.ID != next.ID {
+		t.Fatalf("partial listener rebuild changed fallback TLS snapshot ID: current=%s next=%s", current.ID, next.ID)
+	}
+	if got := next.Listeners[0].TLS.SecretRefs; len(got) != 1 || got[0] != "_system/_fallback_default/gw/https" {
+		t.Fatalf("partial listener rebuild lost fallback secret ref: %#v", got)
+	}
+	if findSnapshotSecret(t, next, "_system", "_fallback_default/gw/https").CertPEM !=
+		findSnapshotSecret(t, current, "_system", "_fallback_default/gw/https").CertPEM {
+		t.Fatal("partial listener rebuild changed fallback TLS certificate material")
+	}
+}
+
 func TestBuildSnapshotRefreshesSecondaryGatewayListenerSecretMaterialAfterRotation(t *testing.T) {
 	scheme := rotationTestScheme(t, false)
 	controllerName := gatewayv1.GatewayController("gateway.networking.k8s.io/nantian-gw")

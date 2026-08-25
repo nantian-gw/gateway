@@ -613,6 +613,11 @@ func (t *Translator) Build(ctx context.Context, cl client.Client) (snapshot *ir.
 }
 
 func (t *Translator) injectFallbackCertificates(ctx context.Context, cl client.Client, snapshot *ir.Snapshot) {
+	secretKeys := make(map[string]struct{}, len(snapshot.Secrets))
+	for _, secret := range snapshot.Secrets {
+		secretKeys[shared.BackendObjectKey(secret.Namespace, secret.Name)] = struct{}{}
+	}
+
 	for i := range snapshot.Listeners {
 		l := &snapshot.Listeners[i]
 		if l.TLS == nil || len(l.TLS.SecretRefs) > 0 {
@@ -634,14 +639,19 @@ func (t *Translator) injectFallbackCertificates(ctx context.Context, cl client.C
 			continue
 		}
 
-		leaf, err := t.fallbackCerts.IssueLeafCert(hostnames)
+		leaf, err := t.fallbackCerts.IssueLeafCert(ctx, cl, t.namespace, hostnames)
 		if err != nil {
 			t.logger.Warn("fallback cert: failed to issue leaf", "error", err)
 			continue
 		}
 
-		snapshot.Secrets = append(snapshot.Secrets, leaf)
-		l.TLS.SecretRefs = append(l.TLS.SecretRefs, fmt.Sprintf("%s/%s", leaf.Namespace, leaf.Name))
+		secretRef := fmt.Sprintf("%s/%s", leaf.Namespace, leaf.Name)
+		secretKey := shared.BackendObjectKey(leaf.Namespace, leaf.Name)
+		if _, ok := secretKeys[secretKey]; !ok {
+			snapshot.Secrets = append(snapshot.Secrets, leaf)
+			secretKeys[secretKey] = struct{}{}
+		}
+		l.TLS.SecretRefs = append(l.TLS.SecretRefs, secretRef)
 
 		t.logger.Info(
 			"injected fallback TLS certificate for listener without user-configured cert",
