@@ -61,33 +61,36 @@ func (s *SnapshotStore) Publish(snapshot *Snapshot) bool {
 		return false
 	}
 
-	if err := snapshot.Normalize(); err != nil {
+	owned := snapshot.Clone()
+	if err := owned.Normalize(); err != nil {
 		s.logger.Error("failed to normalize snapshot", "error", err)
 		return false
 	}
+	snapshot.ID = owned.ID
+	snapshot.GeneratedAt = owned.GeneratedAt
 
 	s.mu.Lock()
 	hooks := s.hooks
-	if s.current != nil && s.current.ID == snapshot.ID {
+	if s.current != nil && s.current.ID == owned.ID {
 		s.mu.Unlock()
 		if hooks.OnPublish != nil {
-			hooks.OnPublish(snapshot.ID, PublishResultDedup)
+			hooks.OnPublish(owned.ID, PublishResultDedup)
 		}
 		return false
 	}
 
-	s.current = snapshot
+	s.current = owned
 	subscribers := s.snapshotSubscribersLocked()
 	s.mu.Unlock()
 
 	if hooks.BeforeFanout != nil {
-		hooks.BeforeFanout(snapshot.ID, len(subscribers))
+		hooks.BeforeFanout(owned.ID, len(subscribers))
 	}
 
 	replaced := 0
 	droppedIDs := make([]string, 0, len(subscribers))
 	for _, subscriber := range subscribers {
-		if dropped, wasReplaced, delivered := pushLatestSnapshotSafe(subscriber, snapshot); delivered && wasReplaced {
+		if dropped, wasReplaced, delivered := pushLatestSnapshotSafe(subscriber, owned); delivered && wasReplaced {
 			replaced++
 			if dropped != nil && dropped.ID != "" {
 				droppedIDs = append(droppedIDs, dropped.ID)
@@ -96,29 +99,29 @@ func (s *SnapshotStore) Publish(snapshot *Snapshot) bool {
 	}
 
 	if hooks.AfterFanout != nil {
-		hooks.AfterFanout(snapshot.ID, len(subscribers))
+		hooks.AfterFanout(owned.ID, len(subscribers))
 	}
 
 	if replaced > 0 {
 		s.logger.Warn(
 			"coalesced snapshot fanout for slow subscribers",
 			"version",
-			snapshot.ID,
+			owned.ID,
 			"slow_subscribers",
 			replaced,
 			"dropped_snapshots",
 			droppedIDs,
 		)
 		if hooks.OnSubscriberQueueReplace != nil {
-			hooks.OnSubscriberQueueReplace(snapshot.ID, replaced)
+			hooks.OnSubscriberQueueReplace(owned.ID, replaced)
 		}
 	}
 
 	if hooks.OnPublish != nil {
-		hooks.OnPublish(snapshot.ID, PublishResultPublished)
+		hooks.OnPublish(owned.ID, PublishResultPublished)
 	}
 
-	s.logger.Info("published snapshot", "version", snapshot.ID)
+	s.logger.Info("published snapshot", "version", owned.ID)
 	return true
 }
 

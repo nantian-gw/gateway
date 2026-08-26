@@ -160,6 +160,28 @@ func TestParseGatewayDuration(t *testing.T) {
 	})
 }
 
+func TestSelectSlicePortUsesStableFallback(t *testing.T) {
+	httpName := "http"
+	grpcName := "grpc"
+	httpPort := int32(8080)
+	grpcPort := int32(9000)
+	ports := []discoveryv1.EndpointPort{
+		{Name: &grpcName, Port: &grpcPort},
+		{Name: &httpName, Port: &httpPort},
+	}
+
+	got := SelectSlicePort(ports, "missing", 1234)
+	if got == nil || got.Port == nil || *got.Port != grpcPort {
+		t.Fatalf("SelectSlicePort fallback port = %#v, want grpc/9000", got)
+	}
+
+	ports[0], ports[1] = ports[1], ports[0]
+	got = SelectSlicePort(ports, "missing", 1234)
+	if got == nil || got.Port == nil || *got.Port != grpcPort {
+		t.Fatalf("SelectSlicePort reordered fallback port = %#v, want grpc/9000", got)
+	}
+}
+
 func TestNewTranslatorIndexes(t *testing.T) {
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "svc"},

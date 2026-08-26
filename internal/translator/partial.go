@@ -809,17 +809,8 @@ func ApplyPartialSnapshotWithSecrets(
 		}
 	}
 
-	next := &ir.Snapshot{
-		ID:           current.ID,
-		GeneratedAt:  time.Now().UTC(),
-		Listeners:    current.Listeners,
-		HTTPRoutes:   current.HTTPRoutes,
-		GRPCRoutes:   current.GRPCRoutes,
-		StreamRoutes: current.StreamRoutes,
-		Backends:     current.Backends,
-		Secrets:      current.Secrets,
-		Workloads:    current.Workloads,
-	}
+	next := current.Clone()
+	next.GeneratedAt = time.Now().UTC()
 	if backends != nil {
 		next.Backends = backends
 	}

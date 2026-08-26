@@ -145,6 +145,23 @@ func TestSnapshotInputMutationPredicateSkipsIrrelevantGatewayAnnotationUpdates(t
 	}
 }
 
+func TestSnapshotInputMutationPredicateSkipsGatewayLabelUpdates(t *testing.T) {
+	predicate := snapshotInputMutationPredicate()
+	oldGateway := &gatewayv1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "gw",
+			Namespace:  "default",
+			Generation: 1,
+		},
+	}
+	newGateway := oldGateway.DeepCopy()
+	newGateway.Labels = map[string]string{"example.com/owner": "platform"}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldGateway, ObjectNew: newGateway}) {
+		t.Fatal("expected Gateway label-only update to be ignored")
+	}
+}
+
 func TestSnapshotInputMutationPredicateAllowsLifecycleEvents(t *testing.T) {
 	predicate := snapshotInputMutationPredicate()
 	route := &gatewayv1.HTTPRoute{
@@ -197,6 +214,22 @@ func TestSnapshotServiceMutationPredicateSkipsIrrelevantServiceMetadataUpdates(t
 	}
 }
 
+func TestSnapshotServiceMutationPredicateSkipsNonFrontendManagedByLabelUpdates(t *testing.T) {
+	predicate := snapshotServiceMutationPredicate()
+	oldService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{Name: "http", Port: 80}},
+		},
+	}
+	newService := oldService.DeepCopy()
+	newService.Labels = map[string]string{resources.ManagedByLabel: resources.ManagedByValue}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldService, ObjectNew: newService}) {
+		t.Fatal("expected non-frontend managed-by Service label update to be ignored")
+	}
+}
+
 func TestSnapshotServiceMutationPredicateAllowsPortChanges(t *testing.T) {
 	predicate := snapshotServiceMutationPredicate()
 	oldService := &corev1.Service{
@@ -210,6 +243,26 @@ func TestSnapshotServiceMutationPredicateAllowsPortChanges(t *testing.T) {
 
 	if !predicate.Update(event.UpdateEvent{ObjectOld: oldService, ObjectNew: newService}) {
 		t.Fatal("expected Service port update to trigger snapshot rebuild")
+	}
+}
+
+func TestSnapshotServiceMutationPredicateSkipsPortReordering(t *testing.T) {
+	predicate := snapshotServiceMutationPredicate()
+	appProtocol := "kubernetes.io/h2c"
+	oldService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default"},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{Name: "grpc", Port: 9000, Protocol: corev1.ProtocolTCP, AppProtocol: &appProtocol},
+				{Name: "http", Port: 80, Protocol: corev1.ProtocolTCP},
+			},
+		},
+	}
+	newService := oldService.DeepCopy()
+	newService.Spec.Ports[0], newService.Spec.Ports[1] = newService.Spec.Ports[1], newService.Spec.Ports[0]
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldService, ObjectNew: newService}) {
+		t.Fatal("expected Service port reordering to be ignored")
 	}
 }
 
@@ -331,6 +384,30 @@ func TestSnapshotEndpointSliceMutationPredicateSkipsEndpointReordering(t *testin
 	}
 }
 
+func TestSnapshotEndpointSliceMutationPredicateSkipsReadyNilToTrue(t *testing.T) {
+	predicate := snapshotEndpointSliceMutationPredicate()
+	oldSlice := endpointSliceForPredicateTest("10.0.0.10", true)
+	oldSlice.Endpoints[0].Conditions.Ready = nil
+	newSlice := endpointSliceForPredicateTest("10.0.0.10", true)
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldSlice, ObjectNew: newSlice}) {
+		t.Fatal("expected EndpointSlice ready nil-to-true update to be ignored")
+	}
+}
+
+func TestSnapshotEndpointSliceMutationPredicateSkipsPortReordering(t *testing.T) {
+	predicate := snapshotEndpointSliceMutationPredicate()
+	oldSlice := endpointSliceForPredicateTest("10.0.0.10", true)
+	grpcPort := int32(9000)
+	oldSlice.Ports = append(oldSlice.Ports, discoveryv1.EndpointPort{Name: ptr("grpc"), Port: &grpcPort})
+	newSlice := oldSlice.DeepCopy()
+	newSlice.Ports[0], newSlice.Ports[1] = newSlice.Ports[1], newSlice.Ports[0]
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldSlice, ObjectNew: newSlice}) {
+		t.Fatal("expected EndpointSlice port reordering to be ignored")
+	}
+}
+
 func TestSnapshotEndpointSliceMutationPredicateAllowsEndpointReadinessChanges(t *testing.T) {
 	predicate := snapshotEndpointSliceMutationPredicate()
 	oldSlice := endpointSliceForPredicateTest("10.0.0.10", true)
@@ -364,6 +441,17 @@ func TestSnapshotEndpointSliceMutationPredicateIgnoresManagedFrontendEndpointSli
 
 	if predicate.Update(event.UpdateEvent{ObjectOld: oldSlice, ObjectNew: newSlice}) {
 		t.Fatal("expected managed frontend EndpointSlice update to be ignored")
+	}
+}
+
+func TestSnapshotEndpointSliceMutationPredicateSkipsNonFrontendManagedByLabelUpdates(t *testing.T) {
+	predicate := snapshotEndpointSliceMutationPredicate()
+	oldSlice := endpointSliceForPredicateTest("10.0.0.10", true)
+	newSlice := oldSlice.DeepCopy()
+	newSlice.Labels[discoveryv1.LabelManagedBy] = resources.ManagedByValue
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldSlice, ObjectNew: newSlice}) {
+		t.Fatal("expected non-frontend managed-by EndpointSlice label update to be ignored")
 	}
 }
 
@@ -446,6 +534,19 @@ func TestSnapshotListenerSetMutationPredicateSkipsAttachedRouteStatusUpdates(t *
 
 	if predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
 		t.Fatal("expected attached-route-only ListenerSet status update to be ignored")
+	}
+}
+
+func TestSnapshotListenerSetMutationPredicateSkipsLabelUpdates(t *testing.T) {
+	predicate := snapshotListenerSetMutationPredicate()
+	oldSet := &gatewayv1.ListenerSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "default", Generation: 1},
+	}
+	newSet := oldSet.DeepCopy()
+	newSet.Labels = map[string]string{"example.com/owner": "platform"}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
+		t.Fatal("expected ListenerSet label-only update to be ignored")
 	}
 }
 

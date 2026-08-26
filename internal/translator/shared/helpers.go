@@ -76,7 +76,50 @@ func SelectSlicePort(ports []discoveryv1.EndpointPort, servicePortName string, s
 		}
 	}
 	if len(ports) > 0 {
-		return &ports[0]
+		selected := 0
+		for idx := 1; idx < len(ports); idx++ {
+			if endpointPortLess(ports[idx], ports[selected]) {
+				selected = idx
+			}
+		}
+		return &ports[selected]
 	}
 	return nil
+}
+
+func endpointPortLess(left, right discoveryv1.EndpointPort) bool {
+	leftName, rightName := endpointPortName(left), endpointPortName(right)
+	if leftName != rightName {
+		return leftName < rightName
+	}
+	leftPort, leftHasPort := endpointPortNumber(left)
+	rightPort, rightHasPort := endpointPortNumber(right)
+	if leftHasPort != rightHasPort {
+		return !leftHasPort
+	}
+	if leftPort != rightPort {
+		return leftPort < rightPort
+	}
+	return endpointPortProtocol(left) < endpointPortProtocol(right)
+}
+
+func endpointPortName(port discoveryv1.EndpointPort) string {
+	if port.Name == nil {
+		return ""
+	}
+	return *port.Name
+}
+
+func endpointPortNumber(port discoveryv1.EndpointPort) (int32, bool) {
+	if port.Port == nil {
+		return 0, false
+	}
+	return *port.Port, true
+}
+
+func endpointPortProtocol(port discoveryv1.EndpointPort) string {
+	if port.Protocol == nil {
+		return ""
+	}
+	return string(*port.Protocol)
 }

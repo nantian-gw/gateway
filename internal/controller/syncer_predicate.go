@@ -26,7 +26,7 @@ func snapshotInputMutationPredicate() predicate.Predicate {
 	return predicate.Or(
 		predicate.GenerationChangedPredicate{},
 		snapshotRelevantAnnotationChangedPredicate(),
-		predicate.LabelChangedPredicate{},
+		snapshotRouteLabelsChangedPredicate(),
 		snapshotLifecycleEventPredicate(),
 	)
 }
@@ -48,6 +48,9 @@ func snapshotServiceMutationPredicate() predicate.Predicate {
 			if !oldAffects && !newAffects {
 				return false
 			}
+			if oldAffects != newAffects {
+				return true
+			}
 
 			oldService, oldOK := updateEvent.ObjectOld.(*corev1.Service)
 			newService, newOK := updateEvent.ObjectNew.(*corev1.Service)
@@ -64,9 +67,16 @@ func snapshotServiceMutationPredicate() predicate.Predicate {
 }
 
 type serviceSnapshotInput struct {
-	Ports       []corev1.ServicePort
+	Ports       []servicePortSnapshotInput
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+type servicePortSnapshotInput struct {
+	Name        string
+	Port        int32
+	Protocol    corev1.Protocol
+	AppProtocol string
 }
 
 func serviceSnapshotInputValue(service *corev1.Service) serviceSnapshotInput {
@@ -74,18 +84,49 @@ func serviceSnapshotInputValue(service *corev1.Service) serviceSnapshotInput {
 		return serviceSnapshotInput{}
 	}
 	return serviceSnapshotInput{
-		Ports: service.Spec.Ports,
+		Ports: canonicalServicePorts(service.Spec.Ports),
 		Annotations: filterStringMapKeys(service.Annotations, []string{
 			mesh.ManagedServiceAnnotation,
 			mesh.ShadowServiceAnnotation,
 		}),
 		Labels: filterStringMapKeys(service.Labels, []string{
-			resources.ManagedByLabel,
 			resources.ServiceRoleKey,
 			mesh.OriginalServiceNamespaceLabel,
 			mesh.OriginalServiceNameLabel,
 		}),
 	}
+}
+
+func canonicalServicePorts(ports []corev1.ServicePort) []servicePortSnapshotInput {
+	if len(ports) == 0 {
+		return nil
+	}
+	out := make([]servicePortSnapshotInput, 0, len(ports))
+	for _, port := range ports {
+		appProtocol := ""
+		if port.AppProtocol != nil {
+			appProtocol = *port.AppProtocol
+		}
+		out = append(out, servicePortSnapshotInput{
+			Name:        port.Name,
+			Port:        port.Port,
+			Protocol:    port.Protocol,
+			AppProtocol: appProtocol,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Name != out[j].Name {
+			return out[i].Name < out[j].Name
+		}
+		if out[i].Port != out[j].Port {
+			return out[i].Port < out[j].Port
+		}
+		if out[i].Protocol != out[j].Protocol {
+			return out[i].Protocol < out[j].Protocol
+		}
+		return out[i].AppProtocol < out[j].AppProtocol
+	})
+	return out
 }
 
 func snapshotPodMutationPredicate() predicate.Predicate {
@@ -157,6 +198,9 @@ func snapshotEndpointSliceMutationPredicate() predicate.Predicate {
 			if !oldAffects && !newAffects {
 				return false
 			}
+			if oldAffects != newAffects {
+				return true
+			}
 
 			oldSlice, oldOK := updateEvent.ObjectOld.(*discoveryv1.EndpointSlice)
 			newSlice, newOK := updateEvent.ObjectNew.(*discoveryv1.EndpointSlice)
@@ -175,13 +219,20 @@ func snapshotEndpointSliceMutationPredicate() predicate.Predicate {
 type endpointSliceSnapshotInput struct {
 	AddressType discoveryv1.AddressType
 	Labels      map[string]string
-	Ports       []discoveryv1.EndpointPort
+	Ports       []endpointPortSnapshotInput
 	Endpoints   []endpointSnapshotInput
+}
+
+type endpointPortSnapshotInput struct {
+	Name     string
+	Port     int32
+	HasPort  bool
+	Protocol corev1.Protocol
 }
 
 type endpointSnapshotInput struct {
 	Addresses []string
-	Ready     string
+	Ready     bool
 	Zone      string
 }
 
@@ -195,11 +246,6 @@ func endpointSliceSnapshotInputValue(endpointSlice *discoveryv1.EndpointSlice) e
 		addresses := append([]string(nil), endpoint.Addresses...)
 		sort.Strings(addresses)
 
-		ready := "<nil>"
-		if endpoint.Conditions.Ready != nil {
-			ready = strconv.FormatBool(*endpoint.Conditions.Ready)
-		}
-
 		zone := ""
 		if endpoint.Zone != nil {
 			zone = *endpoint.Zone
@@ -207,13 +253,13 @@ func endpointSliceSnapshotInputValue(endpointSlice *discoveryv1.EndpointSlice) e
 
 		endpoints = append(endpoints, endpointSnapshotInput{
 			Addresses: addresses,
-			Ready:     ready,
+			Ready:     endpoint.Conditions.Ready == nil || *endpoint.Conditions.Ready,
 			Zone:      zone,
 		})
 	}
 	sort.Slice(endpoints, func(i, j int) bool {
-		left := strings.Join(endpoints[i].Addresses, ",") + "\x00" + endpoints[i].Ready + "\x00" + endpoints[i].Zone
-		right := strings.Join(endpoints[j].Addresses, ",") + "\x00" + endpoints[j].Ready + "\x00" + endpoints[j].Zone
+		left := strings.Join(endpoints[i].Addresses, ",") + "\x00" + strconv.FormatBool(endpoints[i].Ready) + "\x00" + endpoints[i].Zone
+		right := strings.Join(endpoints[j].Addresses, ",") + "\x00" + strconv.FormatBool(endpoints[j].Ready) + "\x00" + endpoints[j].Zone
 		return left < right
 	})
 
@@ -221,13 +267,45 @@ func endpointSliceSnapshotInputValue(endpointSlice *discoveryv1.EndpointSlice) e
 		AddressType: endpointSlice.AddressType,
 		Labels: filterStringMapKeys(endpointSlice.Labels, []string{
 			discoveryv1.LabelServiceName,
-			discoveryv1.LabelManagedBy,
 			mcsv1alpha1.LabelServiceName,
-			resources.ServiceRoleKey,
 		}),
-		Ports:     endpointSlice.Ports,
+		Ports:     canonicalEndpointPorts(endpointSlice.Ports),
 		Endpoints: endpoints,
 	}
+}
+
+func canonicalEndpointPorts(ports []discoveryv1.EndpointPort) []endpointPortSnapshotInput {
+	if len(ports) == 0 {
+		return nil
+	}
+	out := make([]endpointPortSnapshotInput, 0, len(ports))
+	for _, port := range ports {
+		item := endpointPortSnapshotInput{}
+		if port.Name != nil {
+			item.Name = *port.Name
+		}
+		if port.Port != nil {
+			item.Port = *port.Port
+			item.HasPort = true
+		}
+		if port.Protocol != nil {
+			item.Protocol = *port.Protocol
+		}
+		out = append(out, item)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Name != out[j].Name {
+			return out[i].Name < out[j].Name
+		}
+		if out[i].HasPort != out[j].HasPort {
+			return !out[i].HasPort
+		}
+		if out[i].Port != out[j].Port {
+			return out[i].Port < out[j].Port
+		}
+		return out[i].Protocol < out[j].Protocol
+	})
+	return out
 }
 
 func snapshotNamespaceMutationPredicate() predicate.Predicate {
@@ -291,7 +369,6 @@ func snapshotLifecycleEventPredicate() predicate.Predicate {
 func snapshotListenerSetMutationPredicate() predicate.Predicate {
 	return predicate.Or(
 		predicate.GenerationChangedPredicate{},
-		predicate.LabelChangedPredicate{},
 		listenerSetAcceptedStatusChangedPredicate(),
 	)
 }
@@ -358,6 +435,33 @@ func snapshotRelevantAnnotationChangedPredicate() predicate.Predicate {
 		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
 			return relevantSnapshotAnnotationsChanged(updateEvent.ObjectOld, updateEvent.ObjectNew)
 		},
+	}
+}
+
+func snapshotRouteLabelsChangedPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc:  func(event.CreateEvent) bool { return true },
+		DeleteFunc:  func(event.DeleteEvent) bool { return true },
+		GenericFunc: func(event.GenericEvent) bool { return true },
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			if !supportsRouteLabels(updateEvent.ObjectOld) || !supportsRouteLabels(updateEvent.ObjectNew) {
+				return false
+			}
+			return !stringMapsEqual(updateEvent.ObjectOld.GetLabels(), updateEvent.ObjectNew.GetLabels())
+		},
+	}
+}
+
+func supportsRouteLabels(object client.Object) bool {
+	switch object.(type) {
+	case *gatewayv1.HTTPRoute,
+		*gatewayv1.GRPCRoute,
+		*gatewayv1alpha2.TCPRoute,
+		*gatewayv1alpha2.UDPRoute,
+		*gatewayv1alpha2.TLSRoute:
+		return true
+	default:
+		return false
 	}
 }
 

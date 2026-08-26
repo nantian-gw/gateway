@@ -118,6 +118,27 @@ func TestSnapshotStoreReportsPublishResults(t *testing.T) {
 	}
 }
 
+func TestSnapshotStorePublishesOwnedSnapshotCopy(t *testing.T) {
+	store := NewSnapshotStore(testSnapshotStoreLogger())
+	source := snapshotWithListener("listener-owned")
+
+	if !store.Publish(source) {
+		t.Fatal("expected snapshot to publish")
+	}
+	if source.ID == "" {
+		t.Fatal("expected Publish to report normalized ID on source snapshot")
+	}
+
+	source.Listeners[0].Name = "listener-mutated"
+	current := store.Current()
+	if current == nil || len(current.Listeners) != 1 {
+		t.Fatalf("expected current snapshot, got %+v", current)
+	}
+	if current.Listeners[0].Name != "listener-owned" {
+		t.Fatalf("store current listener = %q, want listener-owned", current.Listeners[0].Name)
+	}
+}
+
 func TestPushLatestSnapshotReportsDroppedSnapshot(t *testing.T) {
 	ch := make(chan *Snapshot, snapshotSubscriberBufferSize)
 	first := snapshotWithListener("listener-first")
