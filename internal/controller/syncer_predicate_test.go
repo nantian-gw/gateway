@@ -251,6 +251,63 @@ func TestSnapshotServiceMutationPredicateAllowsTransitionToManagedFrontend(t *te
 	}
 }
 
+func TestSnapshotPodMutationPredicateSkipsStatusNoise(t *testing.T) {
+	predicate := snapshotPodMutationPredicate()
+	oldPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "client", Namespace: "default"},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			PodIP: "10.0.0.10",
+		},
+	}
+	newPod := oldPod.DeepCopy()
+	newPod.Status.Conditions = []corev1.PodCondition{{
+		Type:   corev1.PodReady,
+		Status: corev1.ConditionTrue,
+	}}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldPod, ObjectNew: newPod}) {
+		t.Fatal("expected Pod condition-only update to be ignored")
+	}
+}
+
+func TestSnapshotPodMutationPredicateAllowsWorkloadIdentityChanges(t *testing.T) {
+	predicate := snapshotPodMutationPredicate()
+	oldPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "client", Namespace: "default"},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			PodIP: "10.0.0.10",
+		},
+	}
+
+	newPod := oldPod.DeepCopy()
+	newPod.Status.PodIP = "10.0.0.11"
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldPod, ObjectNew: newPod}) {
+		t.Fatal("expected Pod IP update to trigger workload snapshot rebuild")
+	}
+
+	newPod = oldPod.DeepCopy()
+	newPod.Status.Phase = corev1.PodSucceeded
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldPod, ObjectNew: newPod}) {
+		t.Fatal("expected Pod phase update to trigger workload snapshot rebuild")
+	}
+}
+
+func TestSnapshotPodMutationPredicateSkipsCreateWithoutWorkloadIdentity(t *testing.T) {
+	predicate := snapshotPodMutationPredicate()
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "client", Namespace: "default"},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+		},
+	}
+
+	if predicate.Create(event.CreateEvent{Object: pod}) {
+		t.Fatal("expected Pod create without IP to be ignored")
+	}
+}
+
 func TestSnapshotEndpointSliceMutationPredicateSkipsIrrelevantMetadataUpdates(t *testing.T) {
 	predicate := snapshotEndpointSliceMutationPredicate()
 	oldSlice := endpointSliceForPredicateTest("10.0.0.10", true)
@@ -389,6 +446,95 @@ func TestSnapshotListenerSetMutationPredicateSkipsAttachedRouteStatusUpdates(t *
 
 	if predicate.Update(event.UpdateEvent{ObjectOld: oldSet, ObjectNew: newSet}) {
 		t.Fatal("expected attached-route-only ListenerSet status update to be ignored")
+	}
+}
+
+func TestSnapshotNamespaceMutationPredicateSkipsMetadataOnlyUpdates(t *testing.T) {
+	predicate := snapshotNamespaceMutationPredicate()
+	oldNamespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: "apps", Labels: map[string]string{"team": "blue"}},
+	}
+	newNamespace := oldNamespace.DeepCopy()
+	newNamespace.Annotations = map[string]string{"example.com/restarted-at": "now"}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldNamespace, ObjectNew: newNamespace}) {
+		t.Fatal("expected Namespace annotation-only update to be ignored")
+	}
+}
+
+func TestSnapshotNamespaceMutationPredicateAllowsLabelUpdates(t *testing.T) {
+	predicate := snapshotNamespaceMutationPredicate()
+	oldNamespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{Name: "apps", Labels: map[string]string{"team": "blue"}},
+	}
+	newNamespace := oldNamespace.DeepCopy()
+	newNamespace.Labels["team"] = "green"
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldNamespace, ObjectNew: newNamespace}) {
+		t.Fatal("expected Namespace label update to trigger attachment rebuild")
+	}
+}
+
+func TestSnapshotSecretMutationPredicateSkipsMetadataOnlyUpdates(t *testing.T) {
+	predicate := snapshotSecretMutationPredicate()
+	oldSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "cert", Namespace: "default"},
+		Data:       map[string][]byte{"tls.crt": []byte("cert")},
+	}
+	newSecret := oldSecret.DeepCopy()
+	newSecret.Annotations = map[string]string{"example.com/restarted-at": "now"}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldSecret, ObjectNew: newSecret}) {
+		t.Fatal("expected Secret metadata-only update to be ignored")
+	}
+}
+
+func TestSnapshotSecretMutationPredicateAllowsDataUpdates(t *testing.T) {
+	predicate := snapshotSecretMutationPredicate()
+	oldSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "cert", Namespace: "default"},
+		Data:       map[string][]byte{"tls.crt": []byte("cert")},
+	}
+	newSecret := oldSecret.DeepCopy()
+	newSecret.Data["tls.crt"] = []byte("new-cert")
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldSecret, ObjectNew: newSecret}) {
+		t.Fatal("expected Secret data update to trigger listener rebuild")
+	}
+}
+
+func TestSnapshotConfigMapMutationPredicateSkipsMetadataOnlyUpdates(t *testing.T) {
+	predicate := snapshotConfigMapMutationPredicate()
+	oldConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "filter", Namespace: "default"},
+		Data:       map[string]string{"filter.yaml": "type: RequestHeaderModifier"},
+	}
+	newConfigMap := oldConfigMap.DeepCopy()
+	newConfigMap.Labels = map[string]string{"example.com/owner": "ops"}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldConfigMap, ObjectNew: newConfigMap}) {
+		t.Fatal("expected ConfigMap metadata-only update to be ignored")
+	}
+}
+
+func TestSnapshotConfigMapMutationPredicateAllowsDataUpdates(t *testing.T) {
+	predicate := snapshotConfigMapMutationPredicate()
+	oldConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "filter", Namespace: "default"},
+		Data:       map[string]string{"filter.yaml": "type: RequestHeaderModifier"},
+		BinaryData: map[string][]byte{"plugin.wasm": []byte("wasm")},
+	}
+
+	newConfigMap := oldConfigMap.DeepCopy()
+	newConfigMap.Data["filter.yaml"] = "type: CORS"
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldConfigMap, ObjectNew: newConfigMap}) {
+		t.Fatal("expected ConfigMap data update to trigger snapshot rebuild")
+	}
+
+	newConfigMap = oldConfigMap.DeepCopy()
+	newConfigMap.BinaryData["plugin.wasm"] = []byte("new-wasm")
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldConfigMap, ObjectNew: newConfigMap}) {
+		t.Fatal("expected ConfigMap binary data update to trigger snapshot rebuild")
 	}
 }
 

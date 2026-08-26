@@ -88,6 +88,58 @@ func serviceSnapshotInputValue(service *corev1.Service) serviceSnapshotInput {
 	}
 }
 
+func snapshotPodMutationPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(createEvent event.CreateEvent) bool {
+			pod, ok := createEvent.Object.(*corev1.Pod)
+			return ok && podSnapshotInputValue(pod).HasWorkloadIdentity()
+		},
+		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
+			pod, ok := deleteEvent.Object.(*corev1.Pod)
+			return ok && podSnapshotInputValue(pod).HasWorkloadIdentity()
+		},
+		GenericFunc: func(genericEvent event.GenericEvent) bool {
+			pod, ok := genericEvent.Object.(*corev1.Pod)
+			return ok && podSnapshotInputValue(pod).HasWorkloadIdentity()
+		},
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldPod, oldOK := updateEvent.ObjectOld.(*corev1.Pod)
+			newPod, newOK := updateEvent.ObjectNew.(*corev1.Pod)
+			if !oldOK || !newOK {
+				return true
+			}
+
+			return podSnapshotInputValue(oldPod) != podSnapshotInputValue(newPod)
+		},
+	}
+}
+
+type podSnapshotInput struct {
+	Namespace string
+	Name      string
+	PodIP     string
+	Phase     corev1.PodPhase
+}
+
+func podSnapshotInputValue(pod *corev1.Pod) podSnapshotInput {
+	if pod == nil {
+		return podSnapshotInput{}
+	}
+	return podSnapshotInput{
+		Namespace: pod.Namespace,
+		Name:      pod.Name,
+		PodIP:     pod.Status.PodIP,
+		Phase:     pod.Status.Phase,
+	}
+}
+
+func (v podSnapshotInput) HasWorkloadIdentity() bool {
+	if v.Namespace == "" || v.Name == "" || v.PodIP == "" {
+		return false
+	}
+	return v.Phase == corev1.PodRunning || v.Phase == corev1.PodPending
+}
+
 func snapshotEndpointSliceMutationPredicate() predicate.Predicate {
 	return predicate.Funcs{
 		CreateFunc: func(createEvent event.CreateEvent) bool {
@@ -175,6 +227,55 @@ func endpointSliceSnapshotInputValue(endpointSlice *discoveryv1.EndpointSlice) e
 		}),
 		Ports:     endpointSlice.Ports,
 		Endpoints: endpoints,
+	}
+}
+
+func snapshotNamespaceMutationPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc:  func(event.CreateEvent) bool { return true },
+		DeleteFunc:  func(event.DeleteEvent) bool { return true },
+		GenericFunc: func(event.GenericEvent) bool { return true },
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldNamespace, oldOK := updateEvent.ObjectOld.(*corev1.Namespace)
+			newNamespace, newOK := updateEvent.ObjectNew.(*corev1.Namespace)
+			if !oldOK || !newOK {
+				return true
+			}
+			return !stringMapsEqual(oldNamespace.Labels, newNamespace.Labels)
+		},
+	}
+}
+
+func snapshotSecretMutationPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc:  func(event.CreateEvent) bool { return true },
+		DeleteFunc:  func(event.DeleteEvent) bool { return true },
+		GenericFunc: func(event.GenericEvent) bool { return true },
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldSecret, oldOK := updateEvent.ObjectOld.(*corev1.Secret)
+			newSecret, newOK := updateEvent.ObjectNew.(*corev1.Secret)
+			if !oldOK || !newOK {
+				return true
+			}
+			return !apiequality.Semantic.DeepEqual(oldSecret.Data, newSecret.Data)
+		},
+	}
+}
+
+func snapshotConfigMapMutationPredicate() predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc:  func(event.CreateEvent) bool { return true },
+		DeleteFunc:  func(event.DeleteEvent) bool { return true },
+		GenericFunc: func(event.GenericEvent) bool { return true },
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldConfigMap, oldOK := updateEvent.ObjectOld.(*corev1.ConfigMap)
+			newConfigMap, newOK := updateEvent.ObjectNew.(*corev1.ConfigMap)
+			if !oldOK || !newOK {
+				return true
+			}
+			return !apiequality.Semantic.DeepEqual(oldConfigMap.Data, newConfigMap.Data) ||
+				!apiequality.Semantic.DeepEqual(oldConfigMap.BinaryData, newConfigMap.BinaryData)
+		},
 	}
 }
 

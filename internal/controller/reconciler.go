@@ -110,6 +110,10 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 	listenerSetMutationPredicate := builder.WithPredicates(snapshotListenerSetMutationPredicate())
 	snapshotServicePredicate := builder.WithPredicates(snapshotServiceMutationPredicate())
 	snapshotEndpointSlicePredicate := builder.WithPredicates(snapshotEndpointSliceMutationPredicate())
+	snapshotPodPredicate := builder.WithPredicates(snapshotPodMutationPredicate())
+	snapshotNamespacePredicate := builder.WithPredicates(snapshotNamespaceMutationPredicate())
+	snapshotSecretPredicate := builder.WithPredicates(snapshotSecretMutationPredicate())
+	snapshotConfigMapPredicate := builder.WithPredicates(snapshotConfigMapMutationPredicate())
 	snapshotRequests := EnqueueRequestsFromX(s.snapshotReconcileRequests)
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
@@ -130,10 +134,10 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&gatewayv1.GRPCRoute{}, snapshotRequests, snapshotMutationPredicate).
 		Watches(&gatewayv1beta1.ReferenceGrant{}, snapshotRequests, snapshotMutationPredicate).
 		Watches(&corev1.Service{}, snapshotRequests, snapshotServicePredicate).
-		Watches(&corev1.Pod{}, snapshotRequests).
-		Watches(&corev1.Namespace{}, snapshotRequests).
-		Watches(&corev1.Secret{}, snapshotRequests).
-		Watches(&corev1.ConfigMap{}, snapshotRequests).
+		Watches(&corev1.Pod{}, snapshotRequests, snapshotPodPredicate).
+		Watches(&corev1.Namespace{}, snapshotRequests, snapshotNamespacePredicate).
+		Watches(&corev1.Secret{}, snapshotRequests, snapshotSecretPredicate).
+		Watches(&corev1.ConfigMap{}, snapshotRequests, snapshotConfigMapPredicate).
 		Watches(&discoveryv1.EndpointSlice{}, snapshotRequests, snapshotEndpointSlicePredicate)
 
 	if s.options.EnableExperimentalGateway && resourceSupported(mgr, &gatewayv1alpha2.TCPRoute{}) {
