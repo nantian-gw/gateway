@@ -6,10 +6,18 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
 )
@@ -656,6 +664,183 @@ func TestSnapshotConfigMapMutationPredicateAllowsDataUpdates(t *testing.T) {
 	}
 }
 
+func TestSnapshotServiceImportMutationPredicateSkipsStatusOnlyUpdates(t *testing.T) {
+	predicate := snapshotServiceImportMutationPredicate()
+	oldImport := &mcsv1alpha1.ServiceImport{
+		ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default", Generation: 1},
+		Spec: mcsv1alpha1.ServiceImportSpec{
+			Type:  mcsv1alpha1.ClusterSetIP,
+			Ports: []mcsv1alpha1.ServicePort{{Name: "http", Port: 80, Protocol: corev1.ProtocolTCP}},
+		},
+	}
+	newImport := oldImport.DeepCopy()
+	newImport.Generation = 2
+	newImport.Status.Clusters = []mcsv1alpha1.ClusterStatus{{Cluster: "cluster-a"}}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldImport, ObjectNew: newImport}) {
+		t.Fatal("expected ServiceImport status-only update to be ignored")
+	}
+}
+
+func TestSnapshotServiceImportMutationPredicateAllowsPortChanges(t *testing.T) {
+	predicate := snapshotServiceImportMutationPredicate()
+	oldImport := &mcsv1alpha1.ServiceImport{
+		ObjectMeta: metav1.ObjectMeta{Name: "echo", Namespace: "default", Generation: 1},
+		Spec: mcsv1alpha1.ServiceImportSpec{
+			Type:  mcsv1alpha1.ClusterSetIP,
+			Ports: []mcsv1alpha1.ServicePort{{Name: "http", Port: 80, Protocol: corev1.ProtocolTCP}},
+		},
+	}
+	newImport := oldImport.DeepCopy()
+	newImport.Generation = 2
+	newImport.Spec.Ports[0].Port = 8080
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldImport, ObjectNew: newImport}) {
+		t.Fatal("expected ServiceImport port update to trigger snapshot rebuild")
+	}
+}
+
+func TestSnapshotBackendLBPolicyMutationPredicateSkipsStatusOnlyUpdates(t *testing.T) {
+	predicate := snapshotBackendLBPolicyMutationPredicate()
+	oldPolicy := &backend.BackendLBPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "echo-lb", Namespace: "default", Generation: 1},
+		Spec: backend.BackendLBPolicySpec{
+			TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "Service", Name: "echo"}},
+		},
+	}
+	newPolicy := oldPolicy.DeepCopy()
+	newPolicy.Generation = 2
+	newPolicy.Status.Ancestors = []gatewayv1.PolicyAncestorStatus{{
+		ControllerName: gatewayv1.GatewayController("gateway.nantian.dev/controller"),
+	}}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldPolicy, ObjectNew: newPolicy}) {
+		t.Fatal("expected BackendLBPolicy status-only update to be ignored")
+	}
+}
+
+func TestSnapshotRoutePolicyMutationPredicateSkipsStatusOnlyUpdates(t *testing.T) {
+	predicate := snapshotRoutePolicyMutationPredicate()
+	oldPolicy := &routepolicy.RoutePolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "route-policy", Namespace: "default", Generation: 1},
+		Spec: routepolicy.RoutePolicySpec{
+			TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "HTTPRoute", Name: "route"}},
+		},
+	}
+	newPolicy := oldPolicy.DeepCopy()
+	newPolicy.Generation = 2
+	newPolicy.Status.Conditions = []metav1.Condition{{
+		Type:               string(gatewayv1.PolicyConditionAccepted),
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: 2,
+	}}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldPolicy, ObjectNew: newPolicy}) {
+		t.Fatal("expected RoutePolicy status-only update to be ignored")
+	}
+}
+
+func TestSnapshotAIServiceMutationPredicateSkipsStatusOnlyUpdates(t *testing.T) {
+	predicate := snapshotAIServiceMutationPredicate()
+	oldService := &aiservice.AIService{
+		ObjectMeta: metav1.ObjectMeta{Name: "openai", Namespace: "default", Generation: 1},
+		Spec: aiservice.AIServiceSpec{
+			Provider: "openai",
+			Model:    "gpt-4o",
+		},
+	}
+	newService := oldService.DeepCopy()
+	newService.Generation = 2
+	newService.Status.Conditions = []metav1.Condition{{
+		Type:               "Accepted",
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: 2,
+	}}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldService, ObjectNew: newService}) {
+		t.Fatal("expected AIService status-only update to be ignored")
+	}
+}
+
+func TestSnapshotTokenPolicyMutationPredicateAllowsSpecChanges(t *testing.T) {
+	predicate := snapshotTokenPolicyMutationPredicate()
+	oldPolicy := &tokenpolicy.TokenPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "token-limit", Namespace: "default", Generation: 1},
+		Spec: tokenpolicy.TokenPolicySpec{
+			TargetRefs:      []gatewayv1.LocalPolicyTargetReference{{Kind: "Service", Name: "echo"}},
+			TokensPerMinute: 100,
+		},
+	}
+	newPolicy := oldPolicy.DeepCopy()
+	newPolicy.Generation = 2
+	newPolicy.Spec.TokensPerMinute = 200
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldPolicy, ObjectNew: newPolicy}) {
+		t.Fatal("expected TokenPolicy spec update to trigger snapshot rebuild")
+	}
+}
+
+func TestSnapshotWasmPluginMutationPredicateSkipsStatusOnlyUpdates(t *testing.T) {
+	predicate := snapshotWasmPluginMutationPredicate()
+	oldPlugin := &wasmplugin.WasmPlugin{
+		ObjectMeta: metav1.ObjectMeta{Name: "authz", Namespace: "default", Generation: 1},
+		Spec: wasmplugin.WasmPluginSpec{
+			TargetRefs: []wasmplugin.WasmPluginTargetRef{{Group: "", Kind: "Service", Name: "echo"}},
+			Wasm:       wasmplugin.WasmSource{SHA256: "abc123"},
+		},
+	}
+	newPlugin := oldPlugin.DeepCopy()
+	newPlugin.Generation = 2
+	newPlugin.Status.Conditions = []metav1.Condition{{
+		Type:               "Accepted",
+		Status:             metav1.ConditionTrue,
+		ObservedGeneration: 2,
+	}}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldPlugin, ObjectNew: newPlugin}) {
+		t.Fatal("expected WasmPlugin status-only update to be ignored")
+	}
+}
+
+func TestSnapshotBackendTLSPolicyMutationPredicateSkipsStatusOnlyUpdates(t *testing.T) {
+	predicate := snapshotBackendTLSPolicyMutationPredicate()
+	oldPolicy := backendTLSPolicyForPredicateTest("echo.default.svc")
+	newPolicy := oldPolicy.DeepCopy()
+	newPolicy.SetGeneration(2)
+	if err := unstructured.SetNestedField(
+		newPolicy.Object,
+		[]any{map[string]any{"controllerName": "gateway.nantian.dev/controller"}},
+		"status",
+		"ancestors",
+	); err != nil {
+		t.Fatalf("set BackendTLSPolicy status: %v", err)
+	}
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldPolicy, ObjectNew: newPolicy}) {
+		t.Fatal("expected BackendTLSPolicy status-only update to be ignored")
+	}
+}
+
+func TestSnapshotBackendTLSPolicyMutationPredicateAllowsSpecChanges(t *testing.T) {
+	predicate := snapshotBackendTLSPolicyMutationPredicate()
+	oldPolicy := backendTLSPolicyForPredicateTest("echo.default.svc")
+	newPolicy := oldPolicy.DeepCopy()
+	newPolicy.SetGeneration(2)
+	if err := unstructured.SetNestedField(
+		newPolicy.Object,
+		"orders.default.svc",
+		"spec",
+		"validation",
+		"hostname",
+	); err != nil {
+		t.Fatalf("set BackendTLSPolicy validation hostname: %v", err)
+	}
+
+	if !predicate.Update(event.UpdateEvent{ObjectOld: oldPolicy, ObjectNew: newPolicy}) {
+		t.Fatal("expected BackendTLSPolicy spec update to trigger snapshot rebuild")
+	}
+}
+
 func endpointSliceForPredicateTest(address string, ready bool) *discoveryv1.EndpointSlice {
 	port := int32(8080)
 	return &discoveryv1.EndpointSlice{
@@ -673,4 +858,26 @@ func endpointSliceForPredicateTest(address string, ready bool) *discoveryv1.Endp
 			Conditions: discoveryv1.EndpointConditions{Ready: &ready},
 		}},
 	}
+}
+
+func backendTLSPolicyForPredicateTest(hostname string) *unstructured.Unstructured {
+	item := gatewayapi.NewBackendTLSPolicyV1Object()
+	item.SetName("echo-tls")
+	item.SetNamespace("default")
+	item.SetGeneration(1)
+	item.SetCreationTimestamp(metav1.Unix(100, 0))
+	item.Object["spec"] = map[string]any{
+		"targetRefs": []any{
+			map[string]any{
+				"group": "",
+				"kind":  "Service",
+				"name":  "echo",
+			},
+		},
+		"validation": map[string]any{
+			"hostname":                hostname,
+			"wellKnownCACertificates": "System",
+		},
+	}
+	return item
 }

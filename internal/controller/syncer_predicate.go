@@ -9,14 +9,22 @@ import (
 	discoveryv1 "k8s.io/api/discovery/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	gatewayv1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gatewayv1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
 	"github.com/nantian-gw/gateway/internal/constants"
+	"github.com/nantian-gw/gateway/internal/gatewayapi"
+	aiservice "github.com/nantian-gw/gateway/internal/gatewayexp/aiservice"
+	backend "github.com/nantian-gw/gateway/internal/gatewayexp/backend"
+	routepolicy "github.com/nantian-gw/gateway/internal/gatewayexp/routepolicy"
+	tokenpolicy "github.com/nantian-gw/gateway/internal/gatewayexp/tokenpolicy"
+	wasmplugin "github.com/nantian-gw/gateway/internal/gatewayexp/wasmplugin"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
 )
@@ -28,6 +36,24 @@ func snapshotInputMutationPredicate() predicate.Predicate {
 		snapshotRouteLabelsChangedPredicate(),
 		snapshotLifecycleEventPredicate(),
 	)
+}
+
+type snapshotObjectInputFunc func(client.Object) (any, bool)
+
+func snapshotObjectMutationPredicate(input snapshotObjectInputFunc) predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc:  func(event.CreateEvent) bool { return true },
+		DeleteFunc:  func(event.DeleteEvent) bool { return true },
+		GenericFunc: func(event.GenericEvent) bool { return true },
+		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+			oldInput, oldOK := input(updateEvent.ObjectOld)
+			newInput, newOK := input(updateEvent.ObjectNew)
+			if !oldOK || !newOK {
+				return true
+			}
+			return !apiequality.Semantic.DeepEqual(oldInput, newInput)
+		},
+	}
 }
 
 func snapshotServiceMutationPredicate() predicate.Predicate {
@@ -358,6 +384,184 @@ func snapshotConfigMapMutationPredicate() predicate.Predicate {
 				!apiequality.Semantic.DeepEqual(oldConfigMap.BinaryData, newConfigMap.BinaryData)
 		},
 	}
+}
+
+func snapshotServiceImportMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(serviceImportSnapshotInputValue)
+}
+
+type serviceImportSnapshotInput struct {
+	Namespace string
+	Name      string
+	Spec      mcsv1alpha1.ServiceImportSpec
+}
+
+func serviceImportSnapshotInputValue(object client.Object) (any, bool) {
+	item, ok := object.(*mcsv1alpha1.ServiceImport)
+	if !ok || item == nil {
+		return nil, false
+	}
+	return serviceImportSnapshotInput{
+		Namespace: item.Namespace,
+		Name:      item.Name,
+		Spec:      item.Spec,
+	}, true
+}
+
+func snapshotBackendTLSPolicyMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(backendTLSPolicySnapshotInputValue)
+}
+
+type backendTLSPolicySnapshotInput struct {
+	Namespace         string
+	Name              string
+	CreationTimestamp metav1.Time
+	Spec              gatewayv1.BackendTLSPolicySpec
+}
+
+func backendTLSPolicySnapshotInputValue(object client.Object) (any, bool) {
+	switch item := object.(type) {
+	case *gatewayv1alpha3.BackendTLSPolicy:
+		if item == nil {
+			return nil, false
+		}
+		return backendTLSPolicySnapshotInput{
+			Namespace:         item.Namespace,
+			Name:              item.Name,
+			CreationTimestamp: item.CreationTimestamp,
+			Spec:              item.Spec,
+		}, true
+	case *unstructured.Unstructured:
+		if item == nil || item.GroupVersionKind() != gatewayapi.BackendTLSPolicyV1GVK {
+			return nil, false
+		}
+		policy, err := gatewayapi.DecodeBackendTLSPolicyV1(item)
+		if err != nil {
+			return nil, false
+		}
+		return backendTLSPolicySnapshotInput{
+			Namespace:         policy.Namespace,
+			Name:              policy.Name,
+			CreationTimestamp: policy.CreationTimestamp,
+			Spec:              policy.Spec,
+		}, true
+	default:
+		return nil, false
+	}
+}
+
+func snapshotBackendLBPolicyMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(backendLBPolicySnapshotInputValue)
+}
+
+type backendLBPolicySnapshotInput struct {
+	Namespace         string
+	Name              string
+	CreationTimestamp metav1.Time
+	Spec              backend.BackendLBPolicySpec
+}
+
+func backendLBPolicySnapshotInputValue(object client.Object) (any, bool) {
+	item, ok := object.(*backend.BackendLBPolicy)
+	if !ok || item == nil {
+		return nil, false
+	}
+	return backendLBPolicySnapshotInput{
+		Namespace:         item.Namespace,
+		Name:              item.Name,
+		CreationTimestamp: item.CreationTimestamp,
+		Spec:              item.Spec,
+	}, true
+}
+
+func snapshotAIServiceMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(aiServiceSnapshotInputValue)
+}
+
+type aiServiceSnapshotInput struct {
+	Namespace string
+	Name      string
+	Spec      aiservice.AIServiceSpec
+}
+
+func aiServiceSnapshotInputValue(object client.Object) (any, bool) {
+	item, ok := object.(*aiservice.AIService)
+	if !ok || item == nil {
+		return nil, false
+	}
+	return aiServiceSnapshotInput{
+		Namespace: item.Namespace,
+		Name:      item.Name,
+		Spec:      item.Spec,
+	}, true
+}
+
+func snapshotTokenPolicyMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(tokenPolicySnapshotInputValue)
+}
+
+type tokenPolicySnapshotInput struct {
+	Namespace string
+	Name      string
+	Spec      tokenpolicy.TokenPolicySpec
+}
+
+func tokenPolicySnapshotInputValue(object client.Object) (any, bool) {
+	item, ok := object.(*tokenpolicy.TokenPolicy)
+	if !ok || item == nil {
+		return nil, false
+	}
+	return tokenPolicySnapshotInput{
+		Namespace: item.Namespace,
+		Name:      item.Name,
+		Spec:      item.Spec,
+	}, true
+}
+
+func snapshotWasmPluginMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(wasmPluginSnapshotInputValue)
+}
+
+type wasmPluginSnapshotInput struct {
+	Namespace string
+	Name      string
+	Spec      wasmplugin.WasmPluginSpec
+}
+
+func wasmPluginSnapshotInputValue(object client.Object) (any, bool) {
+	item, ok := object.(*wasmplugin.WasmPlugin)
+	if !ok || item == nil {
+		return nil, false
+	}
+	return wasmPluginSnapshotInput{
+		Namespace: item.Namespace,
+		Name:      item.Name,
+		Spec:      item.Spec,
+	}, true
+}
+
+func snapshotRoutePolicyMutationPredicate() predicate.Predicate {
+	return snapshotObjectMutationPredicate(routePolicySnapshotInputValue)
+}
+
+type routePolicySnapshotInput struct {
+	Namespace         string
+	Name              string
+	CreationTimestamp metav1.Time
+	Spec              routepolicy.RoutePolicySpec
+}
+
+func routePolicySnapshotInputValue(object client.Object) (any, bool) {
+	item, ok := object.(*routepolicy.RoutePolicy)
+	if !ok || item == nil {
+		return nil, false
+	}
+	return routePolicySnapshotInput{
+		Namespace:         item.Namespace,
+		Name:              item.Name,
+		CreationTimestamp: item.CreationTimestamp,
+		Spec:              item.Spec,
+	}, true
 }
 
 func snapshotLifecycleEventPredicate() predicate.Predicate {
