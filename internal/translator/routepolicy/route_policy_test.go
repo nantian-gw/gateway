@@ -492,6 +492,42 @@ func TestBuildRoutePolicyIndexes_ConflictDetection_TwoRoutePoliciesForSameRoute(
 	}
 }
 
+func TestBuildRoutePolicyIndexes_ConflictDetection_TieBreaksByPolicyKey(t *testing.T) {
+	earlierNameDuration := metav1.Duration{Duration: 5 * time.Second}
+	laterNameDuration := metav1.Duration{Duration: 10 * time.Second}
+	created := metav1.NewTime(time.Unix(100, 0))
+
+	policies := []rp.RoutePolicy{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "z-policy", Namespace: "default", CreationTimestamp: created},
+			Spec: rp.RoutePolicySpec{
+				TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "HTTPRoute", Name: "route1"}},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &laterNameDuration},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-policy", Namespace: "default", CreationTimestamp: created},
+			Spec: rp.RoutePolicySpec{
+				TargetRefs: []gatewayv1.LocalPolicyTargetReference{{Kind: "HTTPRoute", Name: "route1"}},
+				Default: &rp.RoutePolicyDefault{
+					Timeout: &rp.TimeoutConfig{Request: &earlierNameDuration},
+				},
+			},
+		},
+	}
+
+	result := BuildRoutePolicyIndexes(policies, []ir.HTTPRoute{{Name: "route1", Namespace: "default"}}, nil)
+	cfg, ok := result["default/route1"]
+	if !ok {
+		t.Fatalf("expected route policy config, got %d configs", len(result))
+	}
+	if cfg.Timeout == nil || cfg.Timeout.Request != earlierNameDuration.Duration {
+		t.Fatalf("expected lexically earliest policy timeout %v, got %#v", earlierNameDuration.Duration, cfg.Timeout)
+	}
+}
+
 func TestBuildRoutePolicyIndexes_Conflict_NamespaceConflictDoesNotBlockNonConflicting(t *testing.T) {
 	nsDur1 := metav1.Duration{Duration: 5 * time.Second}
 	nsDur2 := metav1.Duration{Duration: 10 * time.Second}

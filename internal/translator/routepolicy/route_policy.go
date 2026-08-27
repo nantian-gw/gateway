@@ -26,6 +26,8 @@ var routePolicyScopeOrder = []routePolicyScope{
 }
 
 type translatedRoutePolicy struct {
+	namespace string
+	name      string
 	routeKeys []string
 	config    *ir.RoutePolicyConfig
 	scope     routePolicyScope
@@ -52,6 +54,8 @@ func BuildRoutePolicyIndexes(
 		}
 
 		translations = append(translations, translatedRoutePolicy{
+			namespace: policy.Namespace,
+			name:      policy.Name,
 			routeKeys: routeKeys,
 			config:    config,
 			scope:     scope,
@@ -74,7 +78,7 @@ func BuildRoutePolicyIndexes(
 					winners[routeKey] = make(map[routePolicyScope]translatedRoutePolicy)
 				}
 				current, exists := winners[routeKey][scope]
-				if !exists || tp.createdAt.Before(current.createdAt) {
+				if !exists || routePolicyPrecedes(tp, current) {
 					winners[routeKey][scope] = tp
 				}
 			}
@@ -102,6 +106,19 @@ func BuildRoutePolicyIndexes(
 	}
 
 	return result
+}
+
+func routePolicyPrecedes(left, right translatedRoutePolicy) bool {
+	if left.createdAt.Before(right.createdAt) {
+		return true
+	}
+	if right.createdAt.Before(left.createdAt) {
+		return false
+	}
+	if left.namespace != right.namespace {
+		return left.namespace < right.namespace
+	}
+	return left.name < right.name
 }
 
 func buildGatewayRouteIndex(

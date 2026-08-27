@@ -114,6 +114,13 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 	snapshotNamespacePredicate := builder.WithPredicates(snapshotNamespaceMutationPredicate())
 	snapshotSecretPredicate := builder.WithPredicates(snapshotSecretMutationPredicate())
 	snapshotConfigMapPredicate := builder.WithPredicates(snapshotConfigMapMutationPredicate())
+	snapshotServiceImportPredicate := builder.WithPredicates(snapshotServiceImportMutationPredicate())
+	snapshotBackendTLSPolicyPredicate := builder.WithPredicates(snapshotBackendTLSPolicyMutationPredicate())
+	snapshotBackendLBPolicyPredicate := builder.WithPredicates(snapshotBackendLBPolicyMutationPredicate())
+	snapshotAIServicePredicate := builder.WithPredicates(snapshotAIServiceMutationPredicate())
+	snapshotTokenPolicyPredicate := builder.WithPredicates(snapshotTokenPolicyMutationPredicate())
+	snapshotWasmPluginPredicate := builder.WithPredicates(snapshotWasmPluginMutationPredicate())
+	snapshotRoutePolicyPredicate := builder.WithPredicates(snapshotRoutePolicyMutationPredicate())
 	snapshotRequests := EnqueueRequestsFromX(s.snapshotReconcileRequests)
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
@@ -173,49 +180,49 @@ func (s *Syncer) SetupWithManager(mgr ctrl.Manager) error {
 		controllerBuilder = controllerBuilder.Watches(
 			gatewayapi.NewBackendTLSPolicyV1Object(),
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotBackendTLSPolicyPredicate,
 		)
 	}
 	if resourceSupported(mgr, &backend.BackendLBPolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&backend.BackendLBPolicy{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotBackendLBPolicyPredicate,
 		)
 	}
 	if resourceSupported(mgr, &mcsv1alpha1.ServiceImport{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&mcsv1alpha1.ServiceImport{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotServiceImportPredicate,
 		)
 	}
 	if s.options.EnableAiGateway && resourceSupported(mgr, &aiservice.AIService{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&aiservice.AIService{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotAIServicePredicate,
 		)
 	}
 	if s.options.EnableAiGateway && resourceSupported(mgr, &tokenpolicy.TokenPolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&tokenpolicy.TokenPolicy{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotTokenPolicyPredicate,
 		)
 	}
 	if resourceSupported(mgr, &wasmplugin.WasmPlugin{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&wasmplugin.WasmPlugin{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotWasmPluginPredicate,
 		)
 	}
 	if resourceSupported(mgr, &routepolicy.RoutePolicy{}) {
 		controllerBuilder = controllerBuilder.Watches(
 			&routepolicy.RoutePolicy{},
 			snapshotRequests,
-			snapshotMutationPredicate,
+			snapshotRoutePolicyPredicate,
 		)
 	}
 
