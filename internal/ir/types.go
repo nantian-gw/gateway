@@ -5,7 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"sort"
+	"strings"
 	"time"
+
+	"github.com/nantian-gw/gateway/internal/constants"
 )
 
 const listenerDisplayAddressesMetadataKey = "nantian.dev/display-addresses"
@@ -699,19 +702,39 @@ func (s Snapshot) snapshotForDigest() Snapshot {
 
 	for idx, route := range s.HTTPRoutes {
 		route.Status = nil
+		route.Annotations = routeAnnotationsForDigest(route.Annotations)
 		out.HTTPRoutes[idx] = route
 	}
 
 	for idx, route := range s.GRPCRoutes {
 		route.Status = nil
+		route.Annotations = routeAnnotationsForDigest(route.Annotations)
 		out.GRPCRoutes[idx] = route
 	}
 
 	for idx, route := range s.StreamRoutes {
 		route.Status = nil
+		route.Annotations = routeAnnotationsForDigest(route.Annotations)
 		out.StreamRoutes[idx] = route
 	}
 
+	return out
+}
+
+func routeAnnotationsForDigest(annotations map[string]string) map[string]string {
+	if len(annotations) == 0 {
+		return nil
+	}
+
+	out := make(map[string]string)
+	for key, value := range annotations {
+		if strings.HasPrefix(key, constants.SnapshotRelevantAnnotationPrefix) {
+			out[key] = value
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
 	return out
 }
 

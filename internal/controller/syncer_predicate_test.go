@@ -324,6 +324,23 @@ func TestSnapshotPodMutationPredicateSkipsStatusNoise(t *testing.T) {
 	}
 }
 
+func TestSnapshotPodMutationPredicateSkipsEquivalentWorkloadPhaseChange(t *testing.T) {
+	predicate := snapshotPodMutationPredicate()
+	oldPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "client", Namespace: "default"},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodPending,
+			PodIP: "10.0.0.10",
+		},
+	}
+	newPod := oldPod.DeepCopy()
+	newPod.Status.Phase = corev1.PodRunning
+
+	if predicate.Update(event.UpdateEvent{ObjectOld: oldPod, ObjectNew: newPod}) {
+		t.Fatal("expected Pending-to-Running with the same Pod IP to be ignored")
+	}
+}
+
 func TestSnapshotPodMutationPredicateAllowsWorkloadIdentityChanges(t *testing.T) {
 	predicate := snapshotPodMutationPredicate()
 	oldPod := &corev1.Pod{

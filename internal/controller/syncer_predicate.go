@@ -16,11 +16,10 @@ import (
 	gatewayv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	mcsv1alpha1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 
+	"github.com/nantian-gw/gateway/internal/constants"
 	"github.com/nantian-gw/gateway/internal/mesh"
 	"github.com/nantian-gw/gateway/internal/resources"
 )
-
-const snapshotRelevantAnnotationPrefix = "gateway.nantian.dev/"
 
 func snapshotInputMutationPredicate() predicate.Predicate {
 	return predicate.Or(
@@ -159,7 +158,7 @@ type podSnapshotInput struct {
 	Namespace string
 	Name      string
 	PodIP     string
-	Phase     corev1.PodPhase
+	Included  bool
 }
 
 func podSnapshotInputValue(pod *corev1.Pod) podSnapshotInput {
@@ -170,15 +169,19 @@ func podSnapshotInputValue(pod *corev1.Pod) podSnapshotInput {
 		Namespace: pod.Namespace,
 		Name:      pod.Name,
 		PodIP:     pod.Status.PodIP,
-		Phase:     pod.Status.Phase,
+		Included:  podContributesWorkload(pod.Status),
 	}
 }
 
 func (v podSnapshotInput) HasWorkloadIdentity() bool {
-	if v.Namespace == "" || v.Name == "" || v.PodIP == "" {
+	return v.Namespace != "" && v.Name != "" && v.PodIP != "" && v.Included
+}
+
+func podContributesWorkload(status corev1.PodStatus) bool {
+	if status.PodIP == "" {
 		return false
 	}
-	return v.Phase == corev1.PodRunning || v.Phase == corev1.PodPending
+	return status.Phase == corev1.PodRunning || status.Phase == corev1.PodPending
 }
 
 func snapshotEndpointSliceMutationPredicate() predicate.Predicate {
@@ -496,7 +499,7 @@ func filterRelevantSnapshotAnnotations(values map[string]string) map[string]stri
 
 	out := make(map[string]string)
 	for key, value := range values {
-		if strings.HasPrefix(key, snapshotRelevantAnnotationPrefix) {
+		if strings.HasPrefix(key, constants.SnapshotRelevantAnnotationPrefix) {
 			out[key] = value
 		}
 	}

@@ -4,14 +4,14 @@ package constants
 
 // Kubernetes resource kind constants
 const (
-	KubeService       = "Service"
-	KubeSecret        = "Secret"
-	KubeConfigMap     = "ConfigMap"
-	KubeServiceImport = "ServiceImport"
-	KubeNamespace     = "namespace"
-	KubeGateway       = "Gateway"
-	KubeHTTPRoute     = "HTTPRoute"
-	KubeResource      = "resource"
+	KubeService        = "Service"
+	KubeSecret         = "Secret"
+	KubeConfigMap      = "ConfigMap"
+	KubeServiceImport  = "ServiceImport"
+	KubeNamespace      = "namespace"
+	KubeGateway        = "Gateway"
+	KubeHTTPRoute      = "HTTPRoute"
+	KubeResource       = "resource"
 	KubeReferenceGrant = "ReferenceGrant"
 )
 
@@ -42,7 +42,7 @@ const (
 
 // Content type constants
 const (
-	ContentTypeJSON = "application/json"
+	ContentTypeJSON          = "application/json"
 	AuthBearerWhenConfigured = "bearer-when-configured"
 )
 
@@ -58,7 +58,7 @@ const (
 
 // Status message constants
 const (
-	MsgListenerResolved = "Listener references are resolved"
+	MsgListenerResolved  = "Listener references are resolved"
 	MsgGatewayProgrammed = "Gateway is programmed"
 	MsgExtensionResolved = "ExtensionRef was resolved"
 )
@@ -82,7 +82,7 @@ const (
 
 // Controller constants
 const (
-	NameDataplane = "nantian-gw-dataplane"
-	FullSnapshotRebuild = "full snapshot rebuild when dependency lookup cannot use the index"
+	NameDataplane                    = "nantian-gw-dataplane"
+	FullSnapshotRebuild              = "full snapshot rebuild when dependency lookup cannot use the index"
+	SnapshotRelevantAnnotationPrefix = "gateway.nantian.dev/"
 )
-

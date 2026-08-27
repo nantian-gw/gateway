@@ -402,6 +402,88 @@ func TestSnapshotDigestIgnoresListenerDisplayAddressesMetadata(t *testing.T) {
 	}
 }
 
+func TestSnapshotDigestIgnoresIrrelevantRouteAnnotations(t *testing.T) {
+	base := Snapshot{
+		HTTPRoutes: []HTTPRoute{{
+			Name:      "http",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"gateway.nantian.dev/access-log-mode": "json",
+				"kubectl.kubernetes.io/restartedAt":   "2026-08-25T04:13:49Z",
+			},
+		}},
+		GRPCRoutes: []GRPCRoute{{
+			Name:      "grpc",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"gateway.nantian.dev/access-log-enabled": "true",
+				"example.com/trace":                      "a",
+			},
+		}},
+		StreamRoutes: []StreamRoute{{
+			Name:      "tcp",
+			Namespace: "default",
+			Kind:      "TCP",
+			Annotations: map[string]string{
+				"gateway.nantian.dev/access-log-path": "/var/log/nantian-gw/tcp.log",
+				"example.com/revision":                "1",
+			},
+		}},
+	}
+
+	left := base.Clone()
+	right := base.Clone()
+	right.HTTPRoutes[0].Annotations["kubectl.kubernetes.io/restartedAt"] = "2026-08-25T04:15:40Z"
+	right.GRPCRoutes[0].Annotations["example.com/trace"] = "b"
+	right.StreamRoutes[0].Annotations["example.com/revision"] = "2"
+
+	if err := left.Normalize(); err != nil {
+		t.Fatalf("normalize left snapshot: %v", err)
+	}
+	if err := right.Normalize(); err != nil {
+		t.Fatalf("normalize right snapshot: %v", err)
+	}
+
+	if left.ID != right.ID {
+		t.Fatalf("expected irrelevant annotation changes to be ignored, got %q and %q", left.ID, right.ID)
+	}
+	if got := right.HTTPRoutes[0].Annotations["kubectl.kubernetes.io/restartedAt"]; got != "2026-08-25T04:15:40Z" {
+		t.Fatalf("expected normalize to preserve irrelevant annotations on stored snapshot, got %q", got)
+	}
+}
+
+func TestSnapshotDigestIncludesRelevantRouteAnnotations(t *testing.T) {
+	left := Snapshot{
+		HTTPRoutes: []HTTPRoute{{
+			Name:      "http",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"gateway.nantian.dev/access-log-mode": "text",
+			},
+		}},
+	}
+	right := Snapshot{
+		HTTPRoutes: []HTTPRoute{{
+			Name:      "http",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"gateway.nantian.dev/access-log-mode": "json",
+			},
+		}},
+	}
+
+	if err := left.Normalize(); err != nil {
+		t.Fatalf("normalize left snapshot: %v", err)
+	}
+	if err := right.Normalize(); err != nil {
+		t.Fatalf("normalize right snapshot: %v", err)
+	}
+
+	if left.ID == right.ID {
+		t.Fatalf("expected relevant annotation changes to alter digest, both were %q", left.ID)
+	}
+}
+
 func TestSnapshotNormalizeStableAcrossPermutationsProperty(t *testing.T) {
 	expected := snapshotPropertyFixture()
 	if err := expected.Normalize(); err != nil {
